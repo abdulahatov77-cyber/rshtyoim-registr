@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RSHTYOIM — Infarkt va Insult Registr Platformasi</title>
+  <meta name="description" content="Respublika Shoshilinch Tibbiy Yordam Ilmiy Markazi — Infarkt va Insult bemorlari registri" />
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+  <!-- Supabase JS -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <!-- App CSS -->
+  <link rel="stylesheet" href="css/style.css" />
+
+  <script>
+    // Tailwind config
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter', 'sans-serif'] },
+          colors: {
+            primary: { 50:'#eff6ff', 100:'#dbeafe', 200:'#bfdbfe', 300:'#93c5fd', 400:'#60a5fa', 500:'#3b82f6', 600:'#2563eb', 700:'#1d4ed8', 800:'#1e40af', 900:'#1e3a8a' },
+            medical: { 50:'#f0f9ff', 100:'#e0f2fe', 200:'#bae6fd', 300:'#7dd3fc', 400:'#38bdf8', 500:'#0ea5e9', 600:'#0284c7', 700:'#0369a1', 800:'#075985', 900:'#0c4a6e' },
+            danger: { 400:'#f87171', 500:'#ef4444', 600:'#dc2626' },
+            success: { 400:'#4ade80', 500:'#22c55e', 600:'#16a34a' },
+            warning: { 400:'#facc15', 500:'#eab308', 600:'#ca8a04' }
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-slate-50 font-sans text-slate-800 min-h-screen">
+
+  <!-- App Root -->
+  <div id="app">
+    <div class="flex items-center justify-center min-h-screen">
+      <div class="text-center">
+        <div class="w-16 h-16 border-4 border-primary-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+        <p class="text-slate-500 text-sm">Yuklanmoqda...</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast container -->
+  <div id="toast-container" class="fixed top-4 right-4 z-50 flex flex-col gap-2"></div>
+
+  <!-- Modal container -->
+  <div id="modal-container"></div>
+
+  <!-- Core modules -->
+  <script src="js/config.js"></script>
+  <script src="js/supabase.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/components.js"></script>
+  <script src="js/router.js"></script>
+
+  <!-- Pages -->
+  <script src="js/pages/login.js"></script>
+  <script src="js/pages/dashboard.js"></script>
+  <script src="js/pages/infarkt-yangi.js"></script>
+  <script src="js/pages/insult-yangi.js"></script>
+  <script src="js/pages/bemor-karta.js"></script>
+  <script src="js/pages/bemorlar.js"></script>
+  <script src="js/pages/hisobot.js"></script>
+
+  <!-- App init -->
+  <script src="js/app.js"></script>
+</body>
+</html>
