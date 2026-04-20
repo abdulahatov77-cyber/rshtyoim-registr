@@ -27,6 +27,17 @@ const Auth = {
     return data;
   },
 
+  async signUp(email, password, metadata = {}) {
+    const sb = getSupabase();
+    const { data, error } = await sb.auth.signUp({
+      email,
+      password,
+      options: { data: metadata }
+    });
+    if (error) throw error;
+    return data;
+  },
+
   async signOut() {
     const sb = getSupabase();
     const { error } = await sb.auth.signOut();
