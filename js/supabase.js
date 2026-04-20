@@ -416,24 +416,51 @@ const Telegram = {
 const Realtime = {
   _channels: {},
 
-  subscribeBemorlar(callback) {
+  async subscribeBemorlar(callback) {
     const sb = getSupabase();
-    const ch = sb.channel('bemorlar-changes')
+
+    // Avval eski channelni o'chir (xato oldini olish uchun)
+    if (this._channels['bemorlar']) {
+      try {
+        await sb.removeChannel(this._channels['bemorlar']);
+      } catch (e) {
+        console.warn('Realtime: eski channel o\'chirishda xato:', e.message);
+      }
+      delete this._channels['bemorlar'];
+    }
+
+    // Har safar yangi unikal channel nomi (takrorlanishni oldini oladi)
+    const channelName = `bemorlar-changes-${Date.now()}`;
+
+    const ch = sb.channel(channelName)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'infarkt_qabul' }, callback)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'insult_qabul' }, callback)
-      .subscribe();
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          console.log('✅ Realtime ulandi:', channelName);
+        } else if (status === 'CHANNEL_ERROR') {
+          console.warn('⚠️ Realtime xato:', channelName);
+        }
+      });
+
     this._channels['bemorlar'] = ch;
     return ch;
   },
 
-  unsubscribe(key) {
+  async unsubscribe(key) {
     if (this._channels[key]) {
-      getSupabase().removeChannel(this._channels[key]);
+      try {
+        await getSupabase().removeChannel(this._channels[key]);
+      } catch (e) {
+        console.warn('Realtime unsubscribe xato:', e.message);
+      }
       delete this._channels[key];
     }
   },
 
-  unsubscribeAll() {
-    Object.keys(this._channels).forEach(k => this.unsubscribe(k));
+  async unsubscribeAll() {
+    for (const k of Object.keys(this._channels)) {
+      await this.unsubscribe(k);
+    }
   }
 };
