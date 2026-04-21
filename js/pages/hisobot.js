@@ -5,8 +5,8 @@ const HisobotPage = {
   async render() {
     const user = await Auth.getUser();
     document.getElementById('app').innerHTML = Components.renderLayout(
-      'hisobot', '📈 Hisobotlar', 'Statistik tahlil va hisobotlar',
-      `<div id="hisobot-inner"></div>`, user
+      'hisobot', 'Hisobotlar', 'Statistik tahlil va hisobotlar',
+      `<div id="hisobot-inner" class="animate-fadein"></div>`, user
     );
     Components.startClock();
     HisobotPage.renderUI();
@@ -18,43 +18,88 @@ const HisobotPage = {
     const inner = document.getElementById('hisobot-inner');
     if (!inner) return;
     inner.innerHTML = `
+      <style>
+        .h-card {
+          background: #ffffff;
+          border-radius: 20px;
+          padding: 24px;
+          box-shadow: 0 4px 20px -2px rgba(0,0,0,0.05);
+          border: 1px solid rgba(226,232,240,0.8);
+          margin-bottom: 20px;
+        }
+        .h-stat {
+          background: #f8fafc;
+          border-radius: 16px;
+          padding: 20px;
+          display: flex;
+          align-items: center;
+          gap: 16px;
+          border: 1px solid #e2e8f0;
+          transition: transform 0.2s;
+        }
+        .h-stat:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        .h-stat-icon {
+          width: 52px; height: 52px;
+          border-radius: 14px;
+          display: flex; align-items: center; justify-content: center;
+          box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .h-row {
+          display: flex; justify-content: space-between; align-items: center;
+          padding: 12px 16px;
+          border-bottom: 1px dashed #cbd5e1;
+          transition: background 0.1s;
+        }
+        .h-row:hover { background: #f1f5f9; border-radius: 8px; }
+        .h-row:last-child { border-bottom: none; }
+        .h-label { color: #1e3a8a; font-weight: 600; font-size: 14px; }
+        .h-val { font-weight: 800; font-size: 15px; }
+        .h-title { color: #1e3a8a; font-weight: 800; font-size: 18px; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+        
+        .dark-blue-text { color: #1e3a8a; }
+      </style>
+
       <!-- Filter -->
-      <div class="card mb-4">
-        <div class="card-body">
-          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 items-end">
-            <div>
-              <label class="form-label">Davr turi</label>
-              <select id="h-period" class="form-select" onchange="HisobotPage.onPeriodChange()">
-                <option value="custom">Maxsus sana</option>
-                <option value="today">Bugun</option>
-                <option value="week">So'nggi 7 kun</option>
-                <option value="month" selected>So'nggi 30 kun</option>
-                <option value="year">So'nggi 1 yil</option>
-              </select>
-            </div>
-            <div>
-              <label class="form-label">Dan</label>
-              <input id="h-from" type="date" class="form-input" value="${monthAgo}"/>
-            </div>
-            <div>
-              <label class="form-label">Gacha</label>
-              <input id="h-to" type="date" class="form-input" value="${today}"/>
-            </div>
-            <div class="flex gap-2">
-              <button class="btn btn-primary flex-1" onclick="HisobotPage.loadReport()">📊 Ko'rish</button>
-              <button class="btn btn-success" onclick="HisobotPage.exportReport()" title="Eksport">📥</button>
-            </div>
+      <div class="h-card">
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 items-end">
+          <div>
+            <label class="form-label !text-blue-900 font-semibold mb-1 block">Davr turi</label>
+            <select id="h-period" class="form-select bg-slate-50 text-blue-900 border-blue-200 focus:border-blue-500 font-medium" onchange="HisobotPage.onPeriodChange()">
+              <option value="custom">Maxsus sana</option>
+              <option value="today">Bugun</option>
+              <option value="week">So'nggi 7 kun</option>
+              <option value="month" selected>So'nggi 30 kun</option>
+              <option value="year">So'nggi 1 yil</option>
+            </select>
+          </div>
+          <div>
+            <label class="form-label !text-blue-900 font-semibold mb-1 block">Dan</label>
+            <input id="h-from" type="date" class="form-input bg-slate-50 text-blue-900 border-blue-200 font-medium" value="${monthAgo}"/>
+          </div>
+          <div>
+            <label class="form-label !text-blue-900 font-semibold mb-1 block">Gacha</label>
+            <input id="h-to" type="date" class="form-input bg-slate-50 text-blue-900 border-blue-200 font-medium" value="${today}"/>
+          </div>
+          <div class="flex gap-3">
+            <button class="btn btn-primary flex-1 shadow-md hover:shadow-lg flex items-center justify-center gap-2 rounded-xl" onclick="HisobotPage.loadReport()">
+              ${icon('bar-chart-2', 18)} Ko'rish
+            </button>
+            <button class="btn btn-success shadow-md hover:shadow-lg flex items-center justify-center px-4 rounded-xl" onclick="HisobotPage.exportReport()" title="Eksport">
+              ${icon('download', 18)}
+            </button>
           </div>
         </div>
       </div>
 
       <div id="h-results">
-        <div class="empty-state py-16">
-          <div class="empty-state-icon">📊</div>
-          <div class="empty-state-title">Hisobotni ko'rish uchun "Ko'rish" tugmasini bosing</div>
+        <div class="h-card text-center py-20 flex flex-col items-center justify-center">
+          <div class="text-blue-200 mb-4 animate-pulse">${icon('pie-chart', 64)}</div>
+          <h3 class="text-2xl font-bold text-blue-900 mb-2">Hisobotni shakllantirish</h3>
+          <p class="text-slate-500">Davrni tanlang va "Ko'rish" tugmasini bosing</p>
         </div>
       </div>
     `;
+    initIcons();
   },
 
   onPeriodChange() {
@@ -76,7 +121,13 @@ const HisobotPage = {
     if (!from||!to) { showToast('Sana oralig\'ini tanlang','warning'); return; }
     const el = document.getElementById('h-results');
     if (!el) return;
-    el.innerHTML = `<div class="flex justify-center py-12"><div class="spinner" style="width:32px;height:32px"></div></div>`;
+    
+    el.innerHTML = `
+      <div class="h-card flex flex-col items-center justify-center py-16">
+        <div class="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-4"></div>
+        <p class="text-blue-900 font-semibold">Hisobot tayyorlanmoqda...</p>
+      </div>`;
+      
     try {
       const profile = await Profile.getCurrent();
       const filters = { from: from+'T00:00:00', to: to+'T23:59:59' };
@@ -91,7 +142,13 @@ const HisobotPage = {
       HisobotPage._lastData = { infs, ins, from, to };
       HisobotPage.renderReport(infs, ins, from, to);
     } catch(err) {
-      if (el) el.innerHTML = `<div class="card p-8 text-center text-red-500">${err.message}</div>`;
+      if (el) el.innerHTML = `
+        <div class="h-card text-center text-red-600 py-12">
+          <div class="mx-auto w-16 h-16 bg-red-100 text-red-500 rounded-full flex items-center justify-center mb-4">${icon('alert-triangle', 32)}</div>
+          <h3 class="text-xl font-bold mb-2">Xatolik yuz berdi</h3>
+          <p>${err.message}</p>
+        </div>`;
+      initIcons();
     }
   },
 
@@ -110,86 +167,158 @@ const HisobotPage = {
     const vafot_inf = infs.filter(p=>p.status==='vafot').length;
     const vafot_ins = ins.filter(p=>p.status==='vafot').length;
 
-    const stat = (label, val, cls='badge-blue') =>
-      `<div class="flex justify-between items-center py-2 border-b border-slate-50">
-        <span class="text-sm text-slate-600">${label}</span>
-        <span class="badge ${cls} font-bold">${val}</span>
+    const statRow = (label, val, iconName, colorClass) =>
+      `<div class="h-row">
+        <span class="h-label flex items-center gap-2">${icon(iconName, 16)} ${label}</span>
+        <span class="h-val ${colorClass} bg-white px-3 py-1 rounded-lg border border-slate-200 shadow-sm">${val}</span>
       </div>`;
 
     if (!el) return;
     el.innerHTML = `
-      <!-- Summary -->
-      <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
-        <div class="stat-card"><div class="stat-icon" style="background:#fee2e2">🫀</div><div><div class="stat-value text-red-600">${infs.length}</div><div class="stat-label">Jami infarkt</div></div></div>
-        <div class="stat-card"><div class="stat-icon" style="background:#ede9fe">🧠</div><div><div class="stat-value text-purple-700">${ins.length}</div><div class="stat-label">Jami insult</div></div></div>
-        <div class="stat-card"><div class="stat-icon" style="background:#fef9c3">⚠️</div><div><div class="stat-value text-orange-600">${killip34+nihss15}</div><div class="stat-label">Kritik holatlar</div></div></div>
-        <div class="stat-card"><div class="stat-icon" style="background:#fee2e2">💔</div><div><div class="stat-value text-red-700">${vafot_inf+vafot_ins}</div><div class="stat-label">Vafot holatlari</div></div></div>
-      </div>
-
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
-        <!-- Infarkt stats -->
-        <div class="card">
-          <div class="card-header"><span class="card-title">🫀 Infarkt (${infs.length} ta)</span></div>
-          <div class="card-body">
-            ${stat('STEMI',stemi,'badge-red')}
-            ${stat('NSTEMI',nstemi,'badge-orange')}
-            ${stat('PCI / Stentlash',pci,'badge-blue')}
-            ${stat('Trombolitik terapiya (TLT)',tlt_inf,'badge-purple')}
-            ${stat('Killip III-IV (kritik)',killip34,'badge-red')}
-            ${stat('Vafot',vafot_inf,'badge-red')}
+      <!-- Summary Blocks -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div class="h-stat group">
+          <div class="h-stat-icon bg-red-100 text-red-600 group-hover:scale-110 transition-transform">${icon('activity', 28)}</div>
+          <div>
+            <div class="text-3xl font-black text-blue-900">${infs.length}</div>
+            <div class="text-xs font-bold text-slate-500 uppercase tracking-wide">Jami infarkt</div>
           </div>
         </div>
-        <!-- Insult stats -->
-        <div class="card">
-          <div class="card-header"><span class="card-title">🧠 Insult (${ins.length} ta)</span></div>
-          <div class="card-body">
-            ${stat('Ishemik insult',ishemik,'badge-blue')}
-            ${stat('Gemorragik insult',gemorragik,'badge-red')}
-            ${stat('TIA',tia,'badge-yellow')}
-            ${stat('NIHSS ≥ 15 (og\'ir)',nihss15,'badge-red')}
-            ${stat('Vafot',vafot_ins,'badge-red')}
+        <div class="h-stat group">
+          <div class="h-stat-icon bg-purple-100 text-purple-600 group-hover:scale-110 transition-transform">${icon('brain', 28)}</div>
+          <div>
+            <div class="text-3xl font-black text-blue-900">${ins.length}</div>
+            <div class="text-xs font-bold text-slate-500 uppercase tracking-wide">Jami insult</div>
+          </div>
+        </div>
+        <div class="h-stat group">
+          <div class="h-stat-icon bg-amber-100 text-amber-600 group-hover:scale-110 transition-transform">${icon('alert-triangle', 28)}</div>
+          <div>
+            <div class="text-3xl font-black text-blue-900">${killip34+nihss15}</div>
+            <div class="text-xs font-bold text-slate-500 uppercase tracking-wide">Kritik holatlar</div>
+          </div>
+        </div>
+        <div class="h-stat group">
+          <div class="h-stat-icon bg-slate-200 text-slate-700 group-hover:scale-110 transition-transform">${icon('heart-crack', 28)}</div>
+          <div>
+            <div class="text-3xl font-black text-blue-900">${vafot_inf+vafot_ins}</div>
+            <div class="text-xs font-bold text-slate-500 uppercase tracking-wide">Vafot holatlari</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Detail Cards -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        
+        <!-- Infarkt Detail -->
+        <div class="h-card !p-0 overflow-hidden">
+          <div class="bg-red-50 p-5 border-b border-red-100">
+            <h3 class="h-title !mb-0 text-red-900">${icon('activity', 24)} Infarkt tahlili (${infs.length} ta)</h3>
+          </div>
+          <div class="p-2">
+            ${statRow('STEMI', stemi, 'activity', 'text-red-700')}
+            ${statRow('NSTEMI', nstemi, 'pulse', 'text-orange-600')}
+            ${statRow('PCI / Stentlash', pci, 'syringe', 'text-blue-700')}
+            ${statRow('Trombolitik terapiya (TLT)', tlt_inf, 'droplets', 'text-purple-700')}
+            ${statRow('Killip III-IV (kritik)', killip34, 'alert-circle', 'text-red-600')}
+            ${statRow('Vafot', vafot_inf, 'heart-crack', 'text-slate-700')}
+          </div>
+        </div>
+        
+        <!-- Insult Detail -->
+        <div class="h-card !p-0 overflow-hidden">
+          <div class="bg-purple-50 p-5 border-b border-purple-100">
+            <h3 class="h-title !mb-0 text-purple-900">${icon('brain', 24)} Insult tahlili (${ins.length} ta)</h3>
+          </div>
+          <div class="p-2">
+            ${statRow('Ishemik insult', ishemik, 'circle-dot', 'text-blue-700')}
+            ${statRow('Gemorragik insult', gemorragik, 'droplet', 'text-red-700')}
+            ${statRow('TIA', tia, 'zap', 'text-amber-600')}
+            ${statRow('NIHSS ≥ 15 (og\'ir)', nihss15, 'alert-octagon', 'text-red-600')}
+            ${statRow('Vafot', vafot_ins, 'heart-crack', 'text-slate-700')}
           </div>
         </div>
       </div>
 
       <!-- Charts -->
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div class="card">
-          <div class="card-header"><span class="card-title">🫀 Infarkt muolajalar</span></div>
-          <div class="card-body"><canvas id="h-inf-chart" height="200"></canvas></div>
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="h-card">
+          <h3 class="h-title">${icon('pie-chart', 20)} Infarkt muolajalar</h3>
+          <div style="height:250px; position:relative;">
+            <canvas id="h-inf-chart"></canvas>
+          </div>
         </div>
-        <div class="card">
-          <div class="card-header"><span class="card-title">🧠 Insult turlari</span></div>
-          <div class="card-body"><canvas id="h-ins-chart" height="200"></canvas></div>
+        <div class="h-card">
+          <h3 class="h-title">${icon('pie-chart', 20)} Insult turlari</h3>
+          <div style="height:250px; position:relative;">
+            <canvas id="h-ins-chart"></canvas>
+          </div>
         </div>
       </div>
 
-      <div class="mt-4 p-3 bg-blue-50 border border-blue-100 rounded-xl text-xs text-blue-600 text-center">
-        📅 Hisobot davri: <b>${from}</b> dan <b>${to}</b> gacha · Jami: <b>${infs.length+ins.length}</b> ta bemor
+      <div class="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-2xl text-sm font-semibold text-blue-900 text-center shadow-sm flex items-center justify-center gap-2">
+        ${icon('calendar', 18)} 
+        Hisobot davri: <span class="bg-white px-2 py-1 rounded border border-blue-200">${from}</span> dan 
+        <span class="bg-white px-2 py-1 rounded border border-blue-200">${to}</span> gacha · 
+        Jami: <span class="text-blue-600">${infs.length+ins.length}</span> ta bemor
       </div>
     `;
 
-    // Muolaja chart
-    const muolajaCounts = {};
-    infs.forEach(p => { if(p.muolaja_turi) muolajaCounts[p.muolaja_turi] = (muolajaCounts[p.muolaja_turi]||0)+1; });
-    const mLabels = Object.keys(muolajaCounts).map(k=>k.slice(0,20));
-    const mVals = Object.values(muolajaCounts);
-    const ctx1 = document.getElementById('h-inf-chart')?.getContext('2d');
-    if (ctx1 && mLabels.length) {
-      new Chart(ctx1, { type:'bar', data:{
-        labels: mLabels,
-        datasets:[{data:mVals,backgroundColor:'rgba(239,68,68,0.7)',borderRadius:6}]
-      }, options:{plugins:{legend:{display:false}},scales:{x:{ticks:{font:{size:10}}},y:{beginAtZero:true,ticks:{stepSize:1}}},responsive:true}});
-    }
-    // Insult pie
-    const ctx2 = document.getElementById('h-ins-chart')?.getContext('2d');
-    if (ctx2) {
-      new Chart(ctx2, { type:'doughnut', data:{
-        labels:['Ishemik','Gemorragik','TIA','Aniqlanmagan'],
-        datasets:[{data:[ishemik,gemorragik,tia,ins.length-ishemik-gemorragik-tia],
-          backgroundColor:['#3b82f6','#ef4444','#eab308','#94a3b8'],borderWidth:0}]
-      }, options:{plugins:{legend:{position:'bottom',labels:{font:{size:11}}}},responsive:true,maintainAspectRatio:false}});
-    }
+    initIcons();
+
+    // Make charts render in next frame to ensure DOM is ready
+    requestAnimationFrame(() => {
+      // Muolaja chart
+      const muolajaCounts = {};
+      infs.forEach(p => { if(p.muolaja_turi) muolajaCounts[p.muolaja_turi] = (muolajaCounts[p.muolaja_turi]||0)+1; });
+      const mLabels = Object.keys(muolajaCounts).map(k=>k.slice(0,20));
+      const mVals = Object.values(muolajaCounts);
+      const ctx1 = document.getElementById('h-inf-chart')?.getContext('2d');
+      if (ctx1 && mLabels.length) {
+        new Chart(ctx1, { 
+          type:'bar', 
+          data:{
+            labels: mLabels,
+            datasets:[{
+              data: mVals,
+              backgroundColor: 'rgba(59, 130, 246, 0.8)',
+              hoverBackgroundColor: 'rgba(37, 99, 235, 1)',
+              borderRadius: 6
+            }]
+          }, 
+          options: {
+            plugins:{ legend:{display:false} },
+            scales: {
+              x:{ grid:{display:false}, ticks:{font:{size:11, family:'Inter'}, color:'#1e3a8a'} },
+              y:{ border:{display:false}, grid:{color:'#f1f5f9'}, beginAtZero:true, ticks:{stepSize:1, font:{size:11, family:'Inter'}, color:'#64748b'} }
+            },
+            responsive:true, maintainAspectRatio:false
+          }
+        });
+      }
+
+      // Insult pie
+      const ctx2 = document.getElementById('h-ins-chart')?.getContext('2d');
+      if (ctx2) {
+        new Chart(ctx2, { 
+          type:'doughnut', 
+          data:{
+            labels:['Ishemik','Gemorragik','TIA','Aniqlanmagan'],
+            datasets:[{
+              data:[ishemik, gemorragik, tia, Math.max(0, ins.length-ishemik-gemorragik-tia)],
+              backgroundColor:['#3b82f6','#ef4444','#f59e0b','#94a3b8'],
+              borderWidth: 3, borderColor: '#ffffff', hoverOffset: 6
+            }]
+          }, 
+          options: {
+            plugins: { 
+              legend: { position:'right', labels:{ font:{size:12, family:'Inter'}, color:'#1e3a8a', padding: 20 } } 
+            },
+            responsive:true, maintainAspectRatio:false, cutout: '65%'
+          }
+        });
+      }
+    });
   },
 
   exportReport() {
