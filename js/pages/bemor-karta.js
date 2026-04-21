@@ -313,20 +313,21 @@ const BemorKartaPage = {
       const type = BemorKartaPage._type;
       
       if (type === 'infarkt') {
-        await DB.infarktUpdate(kt_no, { status: status, qoshimcha: xulosa });
+        await DB.infarktUpdate(kt_no, { status: status });
         await DB.infarktChiqarish({
           kt_no: kt_no,
-          chiqish_sanasi: document.getElementById('ch-date')?.value || new Date().toISOString(),
-          xulosa_epikriz: xulosa,
-          vafot_sababi: vafot_sabab || null
+          chiqish_sana: document.getElementById('ch-date')?.value || new Date().toISOString().split('T')[0],
+          chiqish_holat: status,
+          yakuniy_diagnoz: xulosa,
+          olim_sababi: vafot_sabab || null
         });
       } else {
-        await DB.insultUpdate(kt_no, { status: status, qoshimcha: xulosa });
+        await DB.insultUpdate(kt_no, { status: status });
         await DB.insultChiqarish({
           kt_no: kt_no,
-          chiqish_sanasi: document.getElementById('ch-date')?.value || new Date().toISOString(),
-          xulosa_epikriz: xulosa,
-          vafot_sababi: vafot_sabab || null
+          chiqish_sana: document.getElementById('ch-date')?.value || new Date().toISOString().split('T')[0],
+          natija: status,
+          boshqa_shifo: vafot_sabab ? "O'lim sababi: " + vafot_sabab + ". Xulosa: " + xulosa : xulosa
         });
       }
       
