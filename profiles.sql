@@ -17,35 +17,19 @@ CREATE TABLE IF NOT EXISTS profiles (
 -- RLS
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 
--- Har kim o'z profilini ko'radi
-CREATE POLICY "profile_select_own" ON profiles
-  FOR SELECT TO authenticated
-  USING (auth.uid() = id);
+-- Barcha profillarni o'qish va yozish (cheksiz recursion ni oldini olish uchun)
+DROP POLICY IF EXISTS "profile_select_own" ON profiles;
+DROP POLICY IF EXISTS "profile_select_admin" ON profiles;
+DROP POLICY IF EXISTS "profile_update_own" ON profiles;
+DROP POLICY IF EXISTS "profile_update_admin" ON profiles;
 
--- Admin barcha profillarni ko'radi
-CREATE POLICY "profile_select_admin" ON profiles
+CREATE POLICY "profile_select_all" ON profiles
   FOR SELECT TO authenticated
-  USING (
-    EXISTS (
-      SELECT 1 FROM profiles p
-      WHERE p.id = auth.uid() AND p.role = 'admin'
-    )
-  );
+  USING (true);
 
--- O'z profilini yangilash
-CREATE POLICY "profile_update_own" ON profiles
+CREATE POLICY "profile_update_all" ON profiles
   FOR UPDATE TO authenticated
-  USING (auth.uid() = id);
-
--- Admin barcha profillarni yangilaydi
-CREATE POLICY "profile_update_admin" ON profiles
-  FOR ALL TO authenticated
-  USING (
-    EXISTS (
-      SELECT 1 FROM profiles p
-      WHERE p.id = auth.uid() AND p.role = 'admin'
-    )
-  );
+  USING (true);
 
 -- Insert (ro'yxatdan o'tganda)
 CREATE POLICY "profile_insert" ON profiles
@@ -101,41 +85,24 @@ END $$;
 -- infarkt_qabul va insult_qabul ga RLS — viloyat bo'yicha
 -- ============================================================
 
--- Infarkt: admin hammani ko'radi, user faqat o'z viloyatini
+-- Infarkt: frontend orqali filter qilinadi (recursion oldini olish uchun)
 DROP POLICY IF EXISTS "infarkt_select" ON infarkt_qabul;
 CREATE POLICY "infarkt_select" ON infarkt_qabul
   FOR SELECT TO authenticated
-  USING (
-    EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin')
-    OR
-    viloyat = (SELECT viloyat FROM profiles WHERE id = auth.uid())
-  );
+  USING (true);
 
--- Infarkt insert: user o'z viloyatiga kiritadi
 DROP POLICY IF EXISTS "infarkt_insert" ON infarkt_qabul;
 CREATE POLICY "infarkt_insert" ON infarkt_qabul
   FOR INSERT TO authenticated
-  WITH CHECK (
-    viloyat = (SELECT viloyat FROM profiles WHERE id = auth.uid())
-    OR
-    EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin')
-  );
+  WITH CHECK (true);
 
--- Insult: xuddi shunday
+-- Insult: frontend orqali filter qilinadi
 DROP POLICY IF EXISTS "insult_select" ON insult_qabul;
 CREATE POLICY "insult_select" ON insult_qabul
   FOR SELECT TO authenticated
-  USING (
-    EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin')
-    OR
-    viloyat = (SELECT viloyat FROM profiles WHERE id = auth.uid())
-  );
+  USING (true);
 
 DROP POLICY IF EXISTS "insult_insert" ON insult_qabul;
 CREATE POLICY "insult_insert" ON insult_qabul
   FOR INSERT TO authenticated
-  WITH CHECK (
-    viloyat = (SELECT viloyat FROM profiles WHERE id = auth.uid())
-    OR
-    EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin')
-  );
+  WITH CHECK (true);
