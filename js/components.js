@@ -78,15 +78,9 @@ const Components = {
 
     return `
       <aside class="sidebar" id="sidebar">
-        <div class="sidebar-logo">
-          <div class="sidebar-logo-icon bg-red-600 text-white rounded-full flex items-center justify-center p-1 border-2 border-white shadow-lg w-10 h-10 overflow-hidden relative">
-            <div class="absolute inset-0 bg-red-600 rounded-full" style="clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);"></div>
-            <div class="absolute left-1/4 top-0 w-full h-full bg-white rounded-full"></div>
-          </div>
-          <div class="flex flex-col ml-2">
-            <span class="sidebar-logo-text" style="letter-spacing: 3px; font-size: 18px; color: #EF4444;">RShTYoIM</span>
-            <span class="text-[10px] text-blue-200 uppercase tracking-widest font-semibold mt-0.5">Tibbiy registr</span>
-          </div>
+        <div class="sidebar-logo bg-white flex flex-col justify-center items-center" style="height: 90px; padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.05);">
+          <img src="img/logo.png" alt="RShTYoIM" style="max-height: 50px; width: auto; object-fit: contain;" onerror="this.outerHTML='<div class=\\'text-red-600 font-bold text-xl\\'>RShTYoIM</div>'">
+          <span class="text-[10px] text-gray-500 uppercase tracking-widest font-semibold mt-1">Tibbiy registr</span>
         </div>
 
         <nav class="sidebar-nav">
