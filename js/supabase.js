@@ -97,7 +97,7 @@ const DB = {
 
   async infarktUpdate(kt_no, updates) {
     const { data, error } = await getSupabase()
-      .from('infarkt_qabul').update(updates).eq('kt_no', kt_no);
+      .from('infarkt_qabul').update(updates).eq('kt_no', kt_no).select().single();
     if (error) throw error;
     return data;
   },
@@ -136,7 +136,7 @@ const DB = {
 
   async insultUpdate(kt_no, updates) {
     const { data, error } = await getSupabase()
-      .from('insult_qabul').update(updates).eq('kt_no', kt_no);
+      .from('insult_qabul').update(updates).eq('kt_no', kt_no).select().single();
     if (error) throw error;
     return data;
   },
