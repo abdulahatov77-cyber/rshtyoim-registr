@@ -211,15 +211,23 @@ const DB = {
     const todayISO = today.toISOString();
 
     const [
-      { count: infarktAktiv },
-      { count: insultAktiv },
+      { count: infAll },
+      { count: insAll },
+      { count: infAktiv },
+      { count: insAktiv },
+      { count: infVafot },
+      { count: insVafot },
       { count: infarktBugun },
       { count: insultBugun },
       { count: kritikInfarkt },
       { count: kritikInsult }
     ] = await Promise.all([
+      eqViloyat(getSupabase().from('infarkt_qabul').select('id', { count: 'exact', head: true })),
+      eqViloyat(getSupabase().from('insult_qabul').select('id', { count: 'exact', head: true })),
       eqViloyat(getSupabase().from('infarkt_qabul').select('id', { count: 'exact', head: true }).eq('status', 'active')),
       eqViloyat(getSupabase().from('insult_qabul').select('id', { count: 'exact', head: true }).eq('status', 'active')),
+      eqViloyat(getSupabase().from('infarkt_qabul').select('id', { count: 'exact', head: true }).eq('status', 'vafot')),
+      eqViloyat(getSupabase().from('insult_qabul').select('id', { count: 'exact', head: true }).eq('status', 'vafot')),
       eqViloyat(getSupabase().from('infarkt_qabul').select('id', { count: 'exact', head: true }).gte('qabul_vaqt', todayISO)),
       eqViloyat(getSupabase().from('insult_qabul').select('id', { count: 'exact', head: true }).gte('qabul_vaqt', todayISO)),
       eqViloyat(getSupabase().from('infarkt_qabul').select('id', { count: 'exact', head: true }).eq('status', 'active')).in('killip', ['Killip III — o\'pka shishi', 'Killip IV — kardiogen shok']),
@@ -227,13 +235,16 @@ const DB = {
     ]);
 
     return {
-      infarktAktiv: infarktAktiv || 0,
-      insultAktiv: insultAktiv || 0,
+      jamiInfarkt: infAll || 0,
+      jamiInsult: insAll || 0,
+      jami: (infAll || 0) + (insAll || 0),
+      infarktAktiv: infAktiv || 0,
+      insultAktiv: insAktiv || 0,
+      vafot: (infVafot || 0) + (insVafot || 0),
       infarktBugun: infarktBugun || 0,
       insultBugun: insultBugun || 0,
       kritikInfarkt: kritikInfarkt || 0,
-      kritikInsult: kritikInsult || 0,
-      jami: (infarktAktiv || 0) + (insultAktiv || 0)
+      kritikInsult: kritikInsult || 0
     };
   },
 
