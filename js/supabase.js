@@ -32,7 +32,13 @@ const Auth = {
     const { data, error } = await sb.auth.signUp({
       email,
       password,
-      options: { data: metadata }
+      options: {
+        data: {
+          full_name: metadata.full_name || '',
+          viloyat:   metadata.viloyat   || '',
+          role:      metadata.role      || 'user'
+        }
+      }
     });
     if (error) throw error;
     return data;
@@ -124,6 +130,27 @@ const Profile = {
       .from('profiles').update({ viloyat, updated_at: new Date().toISOString() })
       .eq('id', userId).select().single();
     if (error) throw error;
+    return data;
+  },
+
+  // Admin: profilni o'chirish (faqat profiles jadvalidan)
+  async deleteProfile(userId) {
+    const { error } = await getSupabase()
+      .from('profiles').delete().eq('id', userId);
+    if (error) throw error;
+    return true;
+  },
+
+  // Joriy foydalanuvchi profilini yangilash (viloyat, full_name)
+  async updateSelf(updates) {
+    const user = await Auth.getUser();
+    if (!user) throw new Error('Foydalanuvchi topilmadi');
+    const { data, error } = await getSupabase()
+      .from('profiles')
+      .update({ ...updates, updated_at: new Date().toISOString() })
+      .eq('id', user.id).select().single();
+    if (error) throw error;
+    this._cache = data;
     return data;
   }
 };

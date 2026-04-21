@@ -3,6 +3,9 @@ const LoginPage = {
   _mode: 'login',
 
   render() {
+    const viloyatOptions = APP_CONFIG.VILOYATLAR
+      .map(v => `<option value="${v}">${v}</option>`).join('');
+
     document.getElementById('app').innerHTML = `
       <div id="login-page">
         <div class="login-card animate-fadein">
@@ -69,6 +72,16 @@ const LoginPage = {
               <label class="form-label">Parolni tasdiqlang</label>
               <input type="password" id="reg-password2" class="form-input" placeholder="••••••••" autocomplete="new-password" required minlength="6"/>
             </div>
+            <div class="form-group">
+              <label class="form-label" style="display:flex;align-items:center;gap:6px">
+                ${icon('map-pin',14)} Viloyatingizni tanlang <span style="color:#f87171">*</span>
+              </label>
+              <select id="reg-viloyat" class="form-input" required
+                style="appearance:none;-webkit-appearance:none;background-image:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E\");background-repeat:no-repeat;background-position:right 12px center;padding-right:36px">
+                <option value="">— Viloyatni tanlang —</option>
+                ${viloyatOptions}
+              </select>
+            </div>
             <div id="reg-error" class="hidden" style="margin-bottom:12px;padding:10px 14px;background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.25);border-radius:10px;color:#f87171;font-size:13px"></div>
             <div id="reg-success" class="hidden" style="margin-bottom:12px;padding:10px 14px;background:rgba(16,185,129,0.12);border:1px solid rgba(16,185,129,0.25);border-radius:10px;color:#34d399;font-size:13px"></div>
             <button type="submit" id="register-btn" class="btn btn-success btn-full btn-lg" style="margin-top:4px">
@@ -122,6 +135,8 @@ const LoginPage = {
     setLoading(btn, true, 'Kirilmoqda...');
     try {
       await Auth.signIn(email, password);
+      // Profile cache'ni tozalash
+      Profile.clearCache();
       showToast('✅ Muvaffaqiyatli kirdingiz!', 'success');
       Router.go('dashboard');
     } catch (err) {
@@ -138,21 +153,45 @@ const LoginPage = {
     const email     = document.getElementById('reg-email').value.trim();
     const password  = document.getElementById('reg-password').value;
     const password2 = document.getElementById('reg-password2').value;
+    const viloyat   = document.getElementById('reg-viloyat').value;
     const btn       = document.getElementById('register-btn');
     const errEl     = document.getElementById('reg-error');
     const succEl    = document.getElementById('reg-success');
     errEl.classList.add('hidden'); succEl.classList.add('hidden');
-    if (password !== password2) { errEl.textContent = '❌ Parollar mos kelmayapti'; errEl.classList.remove('hidden'); return; }
-    if (password.length < 6) { errEl.textContent = '❌ Parol kamida 6 belgi bo\'lishi kerak'; errEl.classList.remove('hidden'); return; }
+
+    if (!viloyat) {
+      errEl.textContent = '❌ Iltimos, viloyatingizni tanlang';
+      errEl.classList.remove('hidden');
+      return;
+    }
+    if (password !== password2) {
+      errEl.textContent = '❌ Parollar mos kelmayapti';
+      errEl.classList.remove('hidden');
+      return;
+    }
+    if (password.length < 6) {
+      errEl.textContent = '❌ Parol kamida 6 belgi bo\'lishi kerak';
+      errEl.classList.remove('hidden');
+      return;
+    }
+
     setLoading(btn, true, 'Ro\'yxatdan o\'tilmoqda...');
     try {
-      await Auth.signUp(email, password, { full_name: name });
-      succEl.innerHTML = '✅ <b>Muvaffaqiyatli ro\'yxatdan o\'tdingiz!</b> Email tasdiqlang va kiring.';
+      await Auth.signUp(email, password, {
+        full_name: name,
+        viloyat:   viloyat,
+        role:      'user'
+      });
+      succEl.innerHTML = `✅ <b>Muvaffaqiyatli ro'yxatdan o'tdingiz!</b><br>
+        📍 Viloyat: <b>${viloyat}</b><br>
+        Email tasdiqlang va kiring.`;
       succEl.classList.remove('hidden');
       setLoading(btn, false);
-      setTimeout(() => LoginPage.switchMode('login'), 3000);
+      setTimeout(() => LoginPage.switchMode('login'), 4000);
     } catch (err) {
-      const msg = err.message === 'User already registered' ? 'Bu email allaqachon ro\'yxatdan o\'tgan' : err.message;
+      const msg = err.message === 'User already registered'
+        ? 'Bu email allaqachon ro\'yxatdan o\'tgan'
+        : err.message;
       errEl.textContent = '❌ ' + msg;
       errEl.classList.remove('hidden');
       setLoading(btn, false);

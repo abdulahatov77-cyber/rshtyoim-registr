@@ -1,9 +1,11 @@
 -- ============================================================
--- PROFILES jadvali — foydalanuvchi rollari
--- Supabase SQL Editor ga alohida qo'shing
+-- PROFILES jadvali — foydalanuvchi rollari (v2)
+-- Supabase SQL Editor ga to'liq joylashtiring va Run bosing
 -- ============================================================
 
--- Profiles jadvali
+-- ============================================================
+-- 1. PROFILES jadvali
+-- ============================================================
 CREATE TABLE IF NOT EXISTS profiles (
   id         UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   email      TEXT,
@@ -14,8 +16,17 @@ CREATE TABLE IF NOT EXISTS profiles (
   updated_at TIMESTAMPTZ DEFAULT now()
 );
 
--- RLS
+-- ============================================================
+-- 2. ROW LEVEL SECURITY
+-- ============================================================
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
+
+-- Eski policylarni o'chirish
+DROP POLICY IF EXISTS "profile_select_own"   ON profiles;
+DROP POLICY IF EXISTS "profile_select_admin" ON profiles;
+DROP POLICY IF EXISTS "profile_update_own"   ON profiles;
+DROP POLICY IF EXISTS "profile_update_admin" ON profiles;
+DROP POLICY IF EXISTS "profile_insert"       ON profiles;
 
 -- Har kim o'z profilini ko'radi
 CREATE POLICY "profile_select_own" ON profiles
@@ -37,7 +48,7 @@ CREATE POLICY "profile_update_own" ON profiles
   FOR UPDATE TO authenticated
   USING (auth.uid() = id);
 
--- Admin barcha profillarni yangilaydi
+-- Admin barcha profillarni boshqaradi
 CREATE POLICY "profile_update_admin" ON profiles
   FOR ALL TO authenticated
   USING (
@@ -53,7 +64,7 @@ CREATE POLICY "profile_insert" ON profiles
   WITH CHECK (auth.uid() = id);
 
 -- ============================================================
--- TRIGGER: yangi foydalanuvchi yaratilganda profil avtomatik
+-- 3. TRIGGER: yangi foydalanuvchi yaratilganda profil avtomatik
 -- ============================================================
 CREATE OR REPLACE FUNCTION handle_new_user()
 RETURNS TRIGGER AS $$
@@ -67,9 +78,14 @@ BEGIN
       WHEN NEW.email = 'abdulaxatov77@gmail.com' THEN 'admin'
       ELSE COALESCE(NEW.raw_user_meta_data->>'role', 'user')
     END,
-    NEW.raw_user_meta_data->>'viloyat'
+    COALESCE(NEW.raw_user_meta_data->>'viloyat', NULL)
   )
-  ON CONFLICT (id) DO NOTHING;
+  ON CONFLICT (id) DO UPDATE
+    SET
+      email      = EXCLUDED.email,
+      full_name  = COALESCE(EXCLUDED.full_name, profiles.full_name),
+      viloyat    = COALESCE(EXCLUDED.viloyat, profiles.viloyat),
+      updated_at = now();
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
@@ -80,8 +96,8 @@ CREATE TRIGGER on_auth_user_created
   FOR EACH ROW EXECUTE FUNCTION handle_new_user();
 
 -- ============================================================
--- Admin foydalanuvchisini admin qilish
--- (abdulaxatov77@gmail.com ni topib admin qiladi)
+-- 4. Admin foydalanuvchisini admin qilish
+--    (abdulaxatov77@gmail.com ni topib admin qiladi)
 -- ============================================================
 DO $$
 DECLARE v_uid UUID;
@@ -90,19 +106,21 @@ BEGIN
   IF v_uid IS NOT NULL THEN
     INSERT INTO profiles (id, email, role)
     VALUES (v_uid, 'abdulaxatov77@gmail.com', 'admin')
-    ON CONFLICT (id) DO UPDATE SET role = 'admin';
+    ON CONFLICT (id) DO UPDATE SET role = 'admin', updated_at = now();
     RAISE NOTICE 'Admin tayinlandi: %', v_uid;
   ELSE
-    RAISE NOTICE 'abdulaxatov77@gmail.com topilmadi — tizimga kirganida admin bo''ladi';
+    RAISE NOTICE 'abdulaxatov77@gmail.com topilmadi — tizimga kirganida admin boʻladi';
   END IF;
 END $$;
 
 -- ============================================================
--- infarkt_qabul va insult_qabul ga RLS — viloyat bo'yicha
+-- 5. infarkt_qabul — viloyat bo'yicha RLS
 -- ============================================================
-
--- Infarkt: admin hammani ko'radi, user faqat o'z viloyatini
 DROP POLICY IF EXISTS "infarkt_select" ON infarkt_qabul;
+DROP POLICY IF EXISTS "infarkt_insert" ON infarkt_qabul;
+DROP POLICY IF EXISTS "infarkt_update" ON infarkt_qabul;
+
+-- SELECT: admin hammani, user faqat o'z viloyatini ko'radi
 CREATE POLICY "infarkt_select" ON infarkt_qabul
   FOR SELECT TO authenticated
   USING (
@@ -111,18 +129,31 @@ CREATE POLICY "infarkt_select" ON infarkt_qabul
     viloyat = (SELECT viloyat FROM profiles WHERE id = auth.uid())
   );
 
--- Infarkt insert: user o'z viloyatiga kiritadi
-DROP POLICY IF EXISTS "infarkt_insert" ON infarkt_qabul;
+-- INSERT: user faqat o'z viloyatiga kiritadi
 CREATE POLICY "infarkt_insert" ON infarkt_qabul
   FOR INSERT TO authenticated
   WITH CHECK (
-    viloyat = (SELECT viloyat FROM profiles WHERE id = auth.uid())
-    OR
     EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin')
+    OR
+    viloyat = (SELECT viloyat FROM profiles WHERE id = auth.uid())
   );
 
--- Insult: xuddi shunday
+-- UPDATE: admin yoki o'z viloyati
+CREATE POLICY "infarkt_update" ON infarkt_qabul
+  FOR UPDATE TO authenticated
+  USING (
+    EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin')
+    OR
+    viloyat = (SELECT viloyat FROM profiles WHERE id = auth.uid())
+  );
+
+-- ============================================================
+-- 6. insult_qabul — viloyat bo'yicha RLS
+-- ============================================================
 DROP POLICY IF EXISTS "insult_select" ON insult_qabul;
+DROP POLICY IF EXISTS "insult_insert" ON insult_qabul;
+DROP POLICY IF EXISTS "insult_update" ON insult_qabul;
+
 CREATE POLICY "insult_select" ON insult_qabul
   FOR SELECT TO authenticated
   USING (
@@ -131,11 +162,67 @@ CREATE POLICY "insult_select" ON insult_qabul
     viloyat = (SELECT viloyat FROM profiles WHERE id = auth.uid())
   );
 
-DROP POLICY IF EXISTS "insult_insert" ON insult_qabul;
 CREATE POLICY "insult_insert" ON insult_qabul
   FOR INSERT TO authenticated
   WITH CHECK (
-    viloyat = (SELECT viloyat FROM profiles WHERE id = auth.uid())
-    OR
     EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin')
+    OR
+    viloyat = (SELECT viloyat FROM profiles WHERE id = auth.uid())
   );
+
+CREATE POLICY "insult_update" ON insult_qabul
+  FOR UPDATE TO authenticated
+  USING (
+    EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin')
+    OR
+    viloyat = (SELECT viloyat FROM profiles WHERE id = auth.uid())
+  );
+
+-- ============================================================
+-- 7. insult_chiqarish va infarkt_chiqarish — RLS
+-- ============================================================
+DROP POLICY IF EXISTS "i_chiq_select" ON insult_chiqarish;
+DROP POLICY IF EXISTS "i_chiq_insert" ON insult_chiqarish;
+DROP POLICY IF EXISTS "i_chiq_update" ON insult_chiqarish;
+
+CREATE POLICY "i_chiq_select" ON insult_chiqarish
+  FOR SELECT TO authenticated
+  USING (
+    EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin')
+    OR
+    viloyat = (SELECT viloyat FROM profiles WHERE id = auth.uid())
+  );
+CREATE POLICY "i_chiq_insert" ON insult_chiqarish
+  FOR INSERT TO authenticated
+  WITH CHECK (true);
+CREATE POLICY "i_chiq_update" ON insult_chiqarish
+  FOR UPDATE TO authenticated
+  USING (true);
+
+DROP POLICY IF EXISTS "inf_chiq_select" ON infarkt_chiqarish;
+DROP POLICY IF EXISTS "inf_chiq_insert" ON infarkt_chiqarish;
+DROP POLICY IF EXISTS "inf_chiq_update" ON infarkt_chiqarish;
+
+CREATE POLICY "inf_chiq_select" ON infarkt_chiqarish
+  FOR SELECT TO authenticated USING (true);
+CREATE POLICY "inf_chiq_insert" ON infarkt_chiqarish
+  FOR INSERT TO authenticated WITH CHECK (true);
+CREATE POLICY "inf_chiq_update" ON infarkt_chiqarish
+  FOR UPDATE TO authenticated USING (true);
+
+-- ============================================================
+-- 8. davolash va holat_baxolash — RLS
+-- ============================================================
+DROP POLICY IF EXISTS "dav_select" ON davolash;
+DROP POLICY IF EXISTS "dav_insert" ON davolash;
+DROP POLICY IF EXISTS "dav_update" ON davolash;
+CREATE POLICY "dav_select" ON davolash FOR SELECT TO authenticated USING (true);
+CREATE POLICY "dav_insert" ON davolash FOR INSERT TO authenticated WITH CHECK (true);
+CREATE POLICY "dav_update" ON davolash FOR UPDATE TO authenticated USING (true);
+
+DROP POLICY IF EXISTS "holat_select" ON holat_baxolash;
+DROP POLICY IF EXISTS "holat_insert" ON holat_baxolash;
+DROP POLICY IF EXISTS "holat_update" ON holat_baxolash;
+CREATE POLICY "holat_select" ON holat_baxolash FOR SELECT TO authenticated USING (true);
+CREATE POLICY "holat_insert" ON holat_baxolash FOR INSERT TO authenticated WITH CHECK (true);
+CREATE POLICY "holat_update" ON holat_baxolash FOR UPDATE TO authenticated USING (true);
