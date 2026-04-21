@@ -203,6 +203,9 @@ const DB = {
 
   // Dashboard stats
   async getDashboardStats() {
+    const p = await Profile.getCurrent();
+    const viloyat = p?.role === 'admin' ? null : p?.viloyat;
+    const eqViloyat = (q) => viloyat ? q.eq('viloyat', viloyat) : q;
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const todayISO = today.toISOString();
@@ -215,12 +218,12 @@ const DB = {
       { count: kritikInfarkt },
       { count: kritikInsult }
     ] = await Promise.all([
-      getSupabase().from('infarkt_qabul').select('id', { count: 'exact', head: true }).eq('status', 'active'),
-      getSupabase().from('insult_qabul').select('id', { count: 'exact', head: true }).eq('status', 'active'),
-      getSupabase().from('infarkt_qabul').select('id', { count: 'exact', head: true }).gte('qabul_vaqt', todayISO),
-      getSupabase().from('insult_qabul').select('id', { count: 'exact', head: true }).gte('qabul_vaqt', todayISO),
-      getSupabase().from('infarkt_qabul').select('id', { count: 'exact', head: true }).eq('status', 'active').in('killip', ['Killip III — o\'pka shishi', 'Killip IV — kardiogen shok']),
-      getSupabase().from('insult_qabul').select('id', { count: 'exact', head: true }).eq('status', 'active').gte('nihss_qabul', 15)
+      eqViloyat(getSupabase().from('infarkt_qabul').select('id', { count: 'exact', head: true }).eq('status', 'active')),
+      eqViloyat(getSupabase().from('insult_qabul').select('id', { count: 'exact', head: true }).eq('status', 'active')),
+      eqViloyat(getSupabase().from('infarkt_qabul').select('id', { count: 'exact', head: true }).gte('qabul_vaqt', todayISO)),
+      eqViloyat(getSupabase().from('insult_qabul').select('id', { count: 'exact', head: true }).gte('qabul_vaqt', todayISO)),
+      eqViloyat(getSupabase().from('infarkt_qabul').select('id', { count: 'exact', head: true }).eq('status', 'active')).in('killip', ['Killip III — o\'pka shishi', 'Killip IV — kardiogen shok']),
+      eqViloyat(getSupabase().from('insult_qabul').select('id', { count: 'exact', head: true }).eq('status', 'active')).gte('nihss_qabul', 15)
     ]);
 
     return {
@@ -236,13 +239,16 @@ const DB = {
 
   // Last 30 days trend
   async getTrend30() {
+    const p = await Profile.getCurrent();
+    const viloyat = p?.role === 'admin' ? null : p?.viloyat;
+    const eqViloyat = (q) => viloyat ? q.eq('viloyat', viloyat) : q;
     const from = new Date();
     from.setDate(from.getDate() - 29);
     from.setHours(0, 0, 0, 0);
 
     const [{ data: inf }, { data: ins }] = await Promise.all([
-      getSupabase().from('infarkt_qabul').select('qabul_vaqt').gte('qabul_vaqt', from.toISOString()),
-      getSupabase().from('insult_qabul').select('qabul_vaqt').gte('qabul_vaqt', from.toISOString())
+      eqViloyat(getSupabase().from('infarkt_qabul').select('qabul_vaqt').gte('qabul_vaqt', from.toISOString())),
+      eqViloyat(getSupabase().from('insult_qabul').select('qabul_vaqt').gte('qabul_vaqt', from.toISOString()))
     ]);
 
     const labels = [], infData = [], insData = [];
@@ -259,9 +265,12 @@ const DB = {
 
   // Recent patients
   async getRecentPatients(limit = 10) {
+    const p = await Profile.getCurrent();
+    const viloyat = p?.role === 'admin' ? null : p?.viloyat;
+    const eqViloyat = (q) => viloyat ? q.eq('viloyat', viloyat) : q;
     const [{ data: inf }, { data: ins }] = await Promise.all([
-      getSupabase().from('infarkt_qabul').select('*').order('created_at', { ascending: false }).limit(limit),
-      getSupabase().from('insult_qabul').select('*').order('created_at', { ascending: false }).limit(limit)
+      eqViloyat(getSupabase().from('infarkt_qabul').select('*').order('created_at', { ascending: false }).limit(limit)),
+      eqViloyat(getSupabase().from('insult_qabul').select('*').order('created_at', { ascending: false }).limit(limit))
     ]);
     const combined = [
       ...(inf || []).map(r => ({ ...r, _type: 'infarkt' })),
@@ -273,9 +282,12 @@ const DB = {
 
   // Viloyat distribution
   async getViloyatStats() {
+    const p = await Profile.getCurrent();
+    const viloyat = p?.role === 'admin' ? null : p?.viloyat;
+    const eqViloyat = (q) => viloyat ? q.eq('viloyat', viloyat) : q;
     const [{ data: inf }, { data: ins }] = await Promise.all([
-      getSupabase().from('infarkt_qabul').select('viloyat').eq('status', 'active'),
-      getSupabase().from('insult_qabul').select('viloyat').eq('status', 'active')
+      eqViloyat(getSupabase().from('infarkt_qabul').select('viloyat').eq('status', 'active')),
+      eqViloyat(getSupabase().from('insult_qabul').select('viloyat').eq('status', 'active'))
     ]);
     const map = {};
     [...(inf || []), ...(ins || [])].forEach(r => {
@@ -473,5 +485,52 @@ const Realtime = {
     for (const k of Object.keys(this._channels)) {
       await this.unsubscribe(k);
     }
+  }
+};
+
+// ==================== PROFILE ====================
+const Profile = {
+  _cache: {},
+  async get(userId) {
+    if (this._cache[userId]) return this._cache[userId];
+    const sb = getSupabase();
+    const { data, error } = await sb.from('profiles').select('*').eq('id', userId).single();
+    if (error) {
+      console.warn('Profile get error:', error);
+      return null;
+    }
+    if (data) this._cache[userId] = data;
+    return data;
+  },
+  async getCurrent() {
+    const user = await Auth.getUser();
+    if (!user) return null;
+    return await this.get(user.id);
+  },
+  async isAdmin() {
+    const p = await this.getCurrent();
+    return p?.role === 'admin';
+  },
+  async listAll() {
+    const { data, error } = await getSupabase().from('profiles').select('*').order('created_at', { ascending: false });
+    if (error) throw error;
+    return data || [];
+  },
+  async setRole(userId, role) {
+    const { data, error } = await getSupabase().from('profiles').update({ role }).eq('id', userId).select().single();
+    if (error) throw error;
+    this._cache[userId] = data;
+    return data;
+  },
+  async setViloyat(userId, viloyat) {
+    const { data, error } = await getSupabase().from('profiles').update({ viloyat }).eq('id', userId).select().single();
+    if (error) throw error;
+    this._cache[userId] = data;
+    return data;
+  },
+  async deleteProfile(userId) {
+    const { error } = await getSupabase().from('profiles').delete().eq('id', userId);
+    if (error) throw error;
+    delete this._cache[userId];
   }
 };

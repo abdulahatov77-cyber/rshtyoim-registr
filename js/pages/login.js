@@ -54,6 +54,13 @@ const LoginPage = {
               <input type="text" id="reg-name" class="form-input" placeholder="Familiya Ism Otasining ismi"/>
             </div>
             <div class="form-group">
+              <label class="form-label">Viloyat</label>
+              <select id="reg-viloyat" class="form-select" required>
+                <option value="">— Viloyatni tanlang —</option>
+                ${APP_CONFIG.VILOYATLAR.map(v=>`<option value="${v}">${v}</option>`).join('')}
+              </select>
+            </div>
+            <div class="form-group">
               <label class="form-label">Elektron pochta</label>
               <input type="email" id="reg-email" class="form-input" placeholder="shifokor@rshtyoim.uz" autocomplete="email" required />
             </div>
@@ -135,6 +142,7 @@ const LoginPage = {
   async handleRegister(e) {
     e.preventDefault();
     const name      = document.getElementById('reg-name').value.trim();
+    const viloyat   = document.getElementById('reg-viloyat').value;
     const email     = document.getElementById('reg-email').value.trim();
     const password  = document.getElementById('reg-password').value;
     const password2 = document.getElementById('reg-password2').value;
@@ -142,11 +150,12 @@ const LoginPage = {
     const errEl     = document.getElementById('reg-error');
     const succEl    = document.getElementById('reg-success');
     errEl.classList.add('hidden'); succEl.classList.add('hidden');
+    if (!viloyat) { errEl.textContent = '❌ Viloyatni tanlang'; errEl.classList.remove('hidden'); return; }
     if (password !== password2) { errEl.textContent = '❌ Parollar mos kelmayapti'; errEl.classList.remove('hidden'); return; }
     if (password.length < 6) { errEl.textContent = '❌ Parol kamida 6 belgi bo\'lishi kerak'; errEl.classList.remove('hidden'); return; }
     setLoading(btn, true, 'Ro\'yxatdan o\'tilmoqda...');
     try {
-      await Auth.signUp(email, password, { full_name: name });
+      await Auth.signUp(email, password, { full_name: name, viloyat: viloyat, role: 'user' });
       succEl.innerHTML = '✅ <b>Muvaffaqiyatli ro\'yxatdan o\'tdingiz!</b> Email tasdiqlang va kiring.';
       succEl.classList.remove('hidden');
       setLoading(btn, false);

@@ -6,10 +6,13 @@ const InsultYangiPage = {
 
   async render() {
     const user = await Auth.getUser();
+    const profile = await Profile.getCurrent();
+    InsultYangiPage._profile = profile;
     InsultYangiPage._step = 0;
     InsultYangiPage._data = {
       kt_no: Utils.generateKtNo(),
-      qabul_vaqt: Utils.formatDateInput(new Date())
+      qabul_vaqt: Utils.formatDateInput(new Date()),
+      viloyat: profile?.role === 'admin' ? '' : (profile?.viloyat || '')
     };
     document.getElementById('app').innerHTML = Components.renderLayout(
       'insult-yangi', '🧠 Yangi Insult Bemori', 'Insult bemori qabul qilish formasi',
@@ -56,7 +59,7 @@ const InsultYangiPage = {
     const d = InsultYangiPage._data;
     return `
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6">
-        ${Components.field('i-viloyat','Viloyat',`<select id="i-viloyat" class="form-select">
+        ${Components.field('i-viloyat','Viloyat',`<select id="i-viloyat" class="form-select" ${InsultYangiPage._profile?.role !== 'admin' ? 'disabled' : ''}>
           <option value="">Tanlang...</option>
           ${APP_CONFIG.VILOYATLAR.map(v=>`<option value="${v}" ${d.viloyat===v?'selected':''}>${v}</option>`).join('')}</select>`,true)}
         ${Components.field('i-muassasa','Muassasa to\'liq nomi',`<input id="i-muassasa" class="form-input" value="${d.muassasa||''}" placeholder="Muassasa nomini kiriting"/>`,true)}
@@ -124,7 +127,9 @@ const InsultYangiPage = {
   collectStep(step) {
     const d = InsultYangiPage._data;
     if (step === 0) {
-      d.viloyat = document.getElementById('i-viloyat')?.value;
+      if (InsultYangiPage._profile?.role === 'admin') {
+        d.viloyat = document.getElementById('i-viloyat')?.value;
+      }
       d.muassasa = document.getElementById('i-muassasa')?.value;
       d.kt_no = document.getElementById('i-kt_no')?.value;
       d.qabul_vaqt = document.getElementById('i-qabul_vaqt')?.value;

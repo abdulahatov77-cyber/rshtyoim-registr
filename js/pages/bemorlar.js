@@ -4,11 +4,18 @@ const BemorlarPage = {
 
   async render() {
     const user = await Auth.getUser();
+    BemorlarPage._profile = await Profile.getCurrent();
+    
     document.getElementById('app').innerHTML = Components.renderLayout(
       'bemorlar', '👥 Bemorlar ro\'yxati', 'Barcha registr bemorlari',
       `<div id="bemorlar-inner"></div>`, user
     );
     Components.startClock();
+    
+    if (BemorlarPage._profile?.role !== 'admin') {
+      BemorlarPage._filters.viloyat = BemorlarPage._profile?.viloyat || '';
+    }
+    
     BemorlarPage.renderFilters();
     await BemorlarPage.loadData();
   },
@@ -39,13 +46,15 @@ const BemorlarPage = {
                 <option value="vafot">☠️ Vafot</option>
               </select>
             </div>
+            ${BemorlarPage._profile?.role === 'admin' ? `
             <div>
               <label class="form-label">Viloyat</label>
               <select id="f-viloyat" class="form-select" onchange="BemorlarPage.applyFilter()">
                 <option value="">Barchasi</option>
-                ${APP_CONFIG.VILOYATLAR.map(v=>`<option value="${v}">${v}</option>`).join('')}
+                ${APP_CONFIG.VILOYATLAR.map(v=>`<option value="${v}" ${f.viloyat===v?'selected':''}>${v}</option>`).join('')}
               </select>
             </div>
+            ` : ''}
             <div>
               <label class="form-label">Qidiruv</label>
               <input id="f-search" class="form-input" placeholder="F.I.O yoki K/T No..."
@@ -78,13 +87,17 @@ const BemorlarPage = {
   applyFilter() {
     BemorlarPage._filters.type = document.getElementById('f-type')?.value || 'all';
     BemorlarPage._filters.status = document.getElementById('f-status')?.value || '';
-    BemorlarPage._filters.viloyat = document.getElementById('f-viloyat')?.value || '';
+    if (BemorlarPage._profile?.role === 'admin') {
+      BemorlarPage._filters.viloyat = document.getElementById('f-viloyat')?.value || '';
+    } else {
+      BemorlarPage._filters.viloyat = BemorlarPage._profile?.viloyat || '';
+    }
     BemorlarPage._filters.search = document.getElementById('f-search')?.value || '';
     BemorlarPage.loadData();
   },
 
   resetFilters() {
-    BemorlarPage._filters = { type: 'all', status: '', viloyat: '', search: '' };
+    BemorlarPage._filters = { type: 'all', status: '', search: '', viloyat: BemorlarPage._profile?.role === 'admin' ? '' : (BemorlarPage._profile?.viloyat || '') };
     BemorlarPage.renderFilters();
     BemorlarPage.loadData();
   },

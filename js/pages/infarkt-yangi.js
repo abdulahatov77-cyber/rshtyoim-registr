@@ -6,10 +6,13 @@ const InfarktYangiPage = {
 
   async render() {
     const user = await Auth.getUser();
+    const profile = await Profile.getCurrent();
+    InfarktYangiPage._profile = profile;
     InfarktYangiPage._step = 0;
     InfarktYangiPage._data = {
       kt_no: Utils.generateKtNo(),
-      qabul_vaqt: Utils.formatDateInput(new Date())
+      qabul_vaqt: Utils.formatDateInput(new Date()),
+      viloyat: profile?.role === 'admin' ? '' : (profile?.viloyat || '')
     };
 
     document.getElementById('app').innerHTML = Components.renderLayout(
@@ -61,7 +64,7 @@ const InfarktYangiPage = {
     const d = InfarktYangiPage._data;
     return `
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6">
-        ${Components.field('viloyat','Viloyat',`<select id="viloyat" class="form-select"><option value="">Tanlang...</option>
+        ${Components.field('viloyat','Viloyat',`<select id="viloyat" class="form-select" ${InfarktYangiPage._profile?.role !== 'admin' ? 'disabled' : ''}><option value="">Tanlang...</option>
           ${APP_CONFIG.VILOYATLAR.map(v=>`<option value="${v}" ${d.viloyat===v?'selected':''}>${v}</option>`).join('')}</select>`,true)}
         ${Components.field('muassasa','Muassasa to\'liq nomi',`<input id="muassasa" class="form-input" value="${d.muassasa||''}" placeholder="Muassasa nomini kiriting"/>`,true)}
         ${Components.field('kt_no','Kasallik tarixi №',`<input id="kt_no" class="form-input" value="${d.kt_no||''}" placeholder="KT-YYYYMMDD-0000"/>`,true,'Avtomatik yaratiladi, o\'zgartirishingiz mumkin')}
@@ -146,7 +149,9 @@ const InfarktYangiPage = {
   collectStep(step) {
     const d = InfarktYangiPage._data;
     if (step === 0) {
-      d.viloyat = document.getElementById('viloyat')?.value;
+      if (InfarktYangiPage._profile?.role === 'admin') {
+        d.viloyat = document.getElementById('viloyat')?.value;
+      }
       d.muassasa = document.getElementById('muassasa')?.value;
       d.kt_no = document.getElementById('kt_no')?.value;
       d.qabul_vaqt = document.getElementById('qabul_vaqt')?.value;

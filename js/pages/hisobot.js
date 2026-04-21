@@ -78,7 +78,12 @@ const HisobotPage = {
     if (!el) return;
     el.innerHTML = `<div class="flex justify-center py-12"><div class="spinner" style="width:32px;height:32px"></div></div>`;
     try {
+      const profile = await Profile.getCurrent();
       const filters = { from: from+'T00:00:00', to: to+'T23:59:59' };
+      if (profile?.role !== 'admin' && profile?.viloyat) {
+        filters.viloyat = profile.viloyat;
+      }
+      
       const [infs, ins] = await Promise.all([
         DB.infarktList(filters),
         DB.insultList(filters)
