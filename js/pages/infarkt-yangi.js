@@ -113,9 +113,9 @@ const InfarktYangiPage = {
   toggleCheckbox(el) {
     const parent = el.closest('label');
     const isSel = el.checked;
-    parent.className = \`flex items-center gap-3 p-3 border rounded-xl cursor-pointer transition-all \${isSel ? 'border-red-500 bg-red-50 text-red-700 font-medium shadow-sm' : 'border-gray-200 hover:border-red-300 hover:bg-gray-50 text-gray-600'}\`;
+    parent.className = `flex items-center gap-3 p-3 border rounded-xl cursor-pointer transition-all ${isSel ? 'border-red-500 bg-red-50 text-red-700 font-medium shadow-sm' : 'border-gray-200 hover:border-red-300 hover:bg-gray-50 text-gray-600'}`;
     const box = parent.querySelector('div');
-    box.className = \`w-5 h-5 rounded border flex items-center justify-center flex-shrink-0 transition-colors \${isSel ? 'bg-red-500 border-red-500 text-white' : 'border-gray-300 bg-white'}\`;
+    box.className = `w-5 h-5 rounded border flex items-center justify-center flex-shrink-0 transition-colors ${isSel ? 'bg-red-500 border-red-500 text-white' : 'border-gray-300 bg-white'}`;
     box.innerHTML = isSel ? icon('check', 14) : '';
   },
 
@@ -244,7 +244,7 @@ const InfarktYangiPage = {
     if (jinsEl) InfarktYangiPage._data.jins = jinsEl.value;
 
     ['ekg_natija', 'xavf_omillari'].forEach(name => {
-      const els = document.querySelectorAll(\`input[name="\${name}"]:checked\`);
+      const els = document.querySelectorAll(`input[name="${name}"]:checked`);
       if (els.length > 0) InfarktYangiPage._data[name] = Array.from(els).map(e=>e.value);
     });
   },
