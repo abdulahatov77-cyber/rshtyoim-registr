@@ -1,5 +1,5 @@
 // ==================== LUCIDE ICON HELPER ====================
-function icon(name, size = 18, cls = '') {
+function icon(name, size = 20, cls = '') {
   return `<i data-lucide="${name}" style="width:${size}px;height:${size}px" class="${cls}"></i>`;
 }
 function initIcons() {
@@ -13,35 +13,46 @@ function showToast(msg, type = 'info', duration = 4000) {
   const el = document.createElement('div');
   const icons = { success:'check-circle', error:'x-circle', warning:'alert-triangle', info:'info' };
   el.className = `toast toast-${type}`;
-  el.innerHTML = `${icon(icons[type]||'info',16)} <span>${msg}</span>`;
+  
+  let color = 'var(--color-blue)';
+  if (type === 'success') color = 'var(--color-green)';
+  if (type === 'error') color = 'var(--color-infarkt)';
+  if (type === 'warning') color = '#F59E0B';
+  el.style.borderLeftColor = color;
+  
+  el.innerHTML = `<span style="color:${color}">${icon(icons[type]||'info', 20)}</span> <span>${msg}</span>`;
   container.appendChild(el);
   setTimeout(() => el.remove(), duration);
+  initIcons();
 }
 
 function showModal({ title, body, footer }) {
   const container = document.getElementById('modal-container');
   container.innerHTML = `
     <div class="modal-overlay" onclick="if(event.target===this)closeModal()">
-      <div class="modal-box">
-        <div class="modal-header">
-          <span class="modal-title">${title}</span>
-          <button class="btn btn-ghost btn-sm" onclick="closeModal()" style="padding:4px 8px;font-size:18px">×</button>
+      <div class="modal-box bg-white border border-gray-200 rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl">
+        <div class="p-5 border-b border-gray-100 flex items-center justify-between">
+          <span class="text-lg font-bold text-gray-900">${title}</span>
+          <button class="p-2 hover:bg-gray-100 rounded-lg text-gray-500 transition-colors" onclick="closeModal()">
+            ${icon('x', 20)}
+          </button>
         </div>
-        <div class="modal-body">${body}</div>
-        ${footer ? `<div class="modal-footer">${footer}</div>` : ''}
+        <div class="p-6">${body}</div>
+        ${footer ? `<div class="p-5 border-t border-gray-100 flex justify-end gap-3 bg-gray-50 rounded-b-2xl">${footer}</div>` : ''}
       </div>
     </div>`;
   initIcons();
 }
 function closeModal() {
-  document.getElementById('modal-container').innerHTML = '';
+  const container = document.getElementById('modal-container');
+  if (container) container.innerHTML = '';
 }
 
 function setLoading(btn, loading, text = '') {
   if (!btn) return;
   if (loading) {
     btn._origText = btn.innerHTML;
-    btn.innerHTML = `<span class="spinner" style="width:16px;height:16px;border-width:2px"></span> ${text}`;
+    btn.innerHTML = `<span class="spinner inline-block mr-2 align-middle"></span> ${text}`;
     btn.disabled = true;
   } else {
     btn.innerHTML = btn._origText || btn.innerHTML;
@@ -60,18 +71,21 @@ const Components = {
     const navItems = [
       { page: 'dashboard',    icon: 'layout-dashboard', label: 'Dashboard' },
       { page: 'bemorlar',     icon: 'users',            label: 'Bemorlar ro\'yxati' },
-      { page: 'infarkt-yangi',icon: 'heart-pulse',      label: 'Yangi infarkt' },
+      { page: 'infarkt-yangi',icon: 'heart',            label: 'Yangi infarkt' },
       { page: 'insult-yangi', icon: 'brain',            label: 'Yangi insult' },
-      { page: 'hisobot',      icon: 'bar-chart-2',      label: 'Hisobotlar' },
+      { page: 'hisobot',      icon: 'bar-chart-3',      label: 'Hisobotlar' },
     ];
 
     return `
       <aside class="sidebar" id="sidebar">
         <div class="sidebar-logo">
-          <div class="sidebar-logo-icon">🏥</div>
-          <div>
-            <div class="sidebar-logo-text">RSHTYOIM</div>
-            <div class="sidebar-logo-sub">Tibbiy registr</div>
+          <div class="sidebar-logo-icon bg-red-600 text-white rounded-full flex items-center justify-center p-1 border-2 border-white shadow-lg w-10 h-10 overflow-hidden relative">
+            <div class="absolute inset-0 bg-red-600 rounded-full" style="clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);"></div>
+            <div class="absolute left-1/4 top-0 w-full h-full bg-white rounded-full"></div>
+          </div>
+          <div class="flex flex-col ml-2">
+            <span class="sidebar-logo-text" style="letter-spacing: 3px; font-size: 18px; color: #EF4444;">RShTYoIM</span>
+            <span class="text-[10px] text-blue-200 uppercase tracking-widest font-semibold mt-0.5">Tibbiy registr</span>
           </div>
         </div>
 
@@ -79,23 +93,23 @@ const Components = {
           <div class="sidebar-section">Asosiy</div>
           ${navItems.slice(0,2).map(n => `
             <a class="nav-item ${activePage===n.page?'active':''}" onclick="Router.go('${n.page}'); closeSidebar()">
-              ${icon(n.icon, 17, 'nav-icon')} ${n.label}
+              <span class="nav-icon">${icon(n.icon, 20)}</span> ${n.label}
             </a>`).join('')}
 
-          <div class="sidebar-section" style="margin-top:8px">Qabul qilish</div>
+          <div class="sidebar-section mt-4">Qabul qilish</div>
           ${navItems.slice(2,4).map(n => `
             <a class="nav-item ${activePage===n.page?'active':''}" onclick="Router.go('${n.page}'); closeSidebar()">
-              ${icon(n.icon, 17, 'nav-icon')} ${n.label}
+              <span class="nav-icon">${icon(n.icon, 20)}</span> ${n.label}
             </a>`).join('')}
 
-          <div class="sidebar-section" style="margin-top:8px">Tahlil</div>
+          <div class="sidebar-section mt-4">Tahlil</div>
           <a class="nav-item ${activePage==='hisobot'?'active':''}" onclick="Router.go('hisobot'); closeSidebar()">
-            ${icon('bar-chart-2', 17, 'nav-icon')} Hisobotlar
+            <span class="nav-icon">${icon('bar-chart-3', 20)}</span> Hisobotlar
           </a>
 
-          <div class="sidebar-section" style="margin-top:8px" id="admin-nav-section" style="display:none">Admin</div>
+          <div class="sidebar-section mt-4" id="admin-nav-section" style="display:none">Admin</div>
           <a class="nav-item ${activePage==='admin'?'active':''}" id="admin-nav-item" style="display:none" onclick="Router.go('admin'); closeSidebar()">
-            ${icon('shield', 17, 'nav-icon')} Admin Panel
+            <span class="nav-icon">${icon('shield', 20)}</span> Admin Panel
           </a>
         </nav>
 
@@ -118,8 +132,8 @@ const Components = {
               <div class="sidebar-user-name truncate">${email}</div>
               <div class="sidebar-user-role">Shifokor</div>
             </div>
-            <button class="topbar-btn" onclick="App.logout()" title="Chiqish" style="width:30px;height:30px;border-radius:8px">
-              ${icon('log-out', 15)}
+            <button class="logout-btn" onclick="App.logout()" title="Chiqish">
+              ${icon('log-out', 18)}
             </button>
           </div>
         </div>
@@ -131,170 +145,137 @@ const Components = {
   renderTopbar(title, subtitle) {
     return `
       <header class="topbar">
-        <div style="display:flex;align-items:center;gap:14px">
-          <button class="mobile-menu-btn" onclick="openSidebar()">
-            ${icon('menu', 20)}
+        <div class="flex items-center gap-4">
+          <button class="mobile-menu-btn text-gray-500 hover:text-gray-900 transition-colors" onclick="openSidebar()">
+            ${icon('menu', 24)}
           </button>
           <div>
-            <div class="topbar-title">${title}</div>
+            <div class="flex items-center gap-3 mb-1">
+              ${icon(this.getPageIcon(title), 24, 'text-blue-600')}
+              <h1 class="page-title leading-none m-0">${title}</h1>
+            </div>
             ${subtitle ? `<div class="topbar-sub">${subtitle}</div>` : ''}
           </div>
         </div>
-        <div class="topbar-right">
-          <div class="topbar-clock" id="topbar-clock">--:--</div>
-          <button class="topbar-btn" onclick="Router.go('dashboard')" title="Bosh sahifa">
-            ${icon('home', 16)}
+        <div class="flex items-center gap-3">
+          <div class="bg-blue-50 text-blue-700 px-4 py-2 rounded-full border border-blue-100 flex items-center gap-2 shadow-sm">
+            ${icon('clock', 16)} <span id="top-clock" class="font-semibold text-sm tracking-wide">--:--:--</span>
+          </div>
+          <button class="w-10 h-10 bg-white border border-gray-200 rounded-xl flex items-center justify-center text-gray-500 hover:bg-gray-50 hover:text-blue-600 transition-all shadow-sm" onclick="Router.go('dashboard')" title="Asosiy">
+            ${icon('home', 20)}
           </button>
         </div>
       </header>`;
   },
 
-  // ── Full layout ──
-  renderLayout(activePage, title, subtitle, content, user) {
+  getPageIcon(title) {
+    title = title.toLowerCase();
+    if (title.includes('dashboard')) return 'layout-dashboard';
+    if (title.includes('bemor')) return 'users';
+    if (title.includes('hisobot')) return 'bar-chart-3';
+    if (title.includes('infarkt')) return 'heart';
+    if (title.includes('insult')) return 'brain';
+    return 'activity';
+  },
+
+  // ── Layout Wrapper ──
+  renderLayout(pageName, title, subtitle, innerHTML, user) {
     return `
       <div class="app-layout">
-        ${Components.renderSidebar(activePage, user)}
+        ${this.renderSidebar(pageName, user)}
         <div class="main-content">
-          ${Components.renderTopbar(title, subtitle)}
-          <div class="page-body">${content}</div>
+          ${this.renderTopbar(title, subtitle)}
+          <main class="page-body">
+            ${innerHTML}
+          </main>
         </div>
-      </div>`;
+      </div>
+      <div id="toast-container" style="position:fixed;bottom:24px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:12px;pointer-events:none"></div>
+      <div id="modal-container"></div>
+    `;
   },
 
   // ── Clock ──
   startClock() {
     if (this._clockInterval) clearInterval(this._clockInterval);
+    const el = document.getElementById('top-clock');
+    if (!el) return;
     const update = () => {
-      const el = document.getElementById('topbar-clock');
-      if (el) el.textContent = new Date().toLocaleTimeString('uz-UZ', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+      const now = new Date();
+      el.textContent = now.toLocaleTimeString('uz-Cyrl-UZ', { hour12: false });
     };
     update();
     this._clockInterval = setInterval(update, 1000);
-    initIcons();
   },
 
-  stopClock() {
-    if (this._clockInterval) { clearInterval(this._clockInterval); this._clockInterval = null; }
-  },
-
-  // ── Step progress ──
-  stepProgress(steps, current) {
-    return `
-      <div style="display:flex;align-items:flex-start;margin-bottom:24px;overflow-x:auto;padding-bottom:4px">
-        ${steps.map((s, i) => `
-          <div style="display:flex;flex-direction:column;align-items:center;flex:1;min-width:60px">
-            <div style="display:flex;align-items:center;width:100%">
-              ${i > 0 ? `<div style="flex:1;height:2px;background:${i<=current?'#10b981':'rgba(99,118,158,0.2)'}"></div>` : ''}
-              <div class="step-circle ${i<current?'done':i===current?'active':''}" style="flex-shrink:0">
-                ${i < current ? icon('check', 14) : i + 1}
-              </div>
-              ${i < steps.length-1 ? `<div style="flex:1;height:2px;background:${i<current?'#10b981':'rgba(99,118,158,0.2)'}"></div>` : ''}
-            </div>
-            <div class="step-label" style="color:${i===current?'#93c5fd':i<current?'#34d399':'#64748b'}">${s}</div>
-          </div>`).join('')}
-      </div>`;
-  },
-
-  // ── Tabs ──
-  renderTabs(labels, activeIdx, switchFn) {
-    return `
-      <div class="tabs-container">
-        ${labels.map((l, i) => `
-          <button class="tab-btn ${i===activeIdx?'active':''}" id="tab-btn-${i}" onclick="${switchFn}(${i})">${l}</button>
-        `).join('')}
-      </div>
-      ${labels.map((_, i) => `<div class="tab-content ${i===activeIdx?'active':''}" id="tab-${i}"></div>`).join('')}`;
-  },
-
-  // ── Form field ──
-  field(id, label, inputHtml, required = false, hint = '') {
-    return `
-      <div class="form-group">
-        <label class="form-label ${required?'required':''}" for="${id}">${label}</label>
-        ${inputHtml}
-        ${hint ? `<div class="form-hint">${hint}</div>` : ''}
-        <div class="form-error hidden" id="err-${id}"></div>
-      </div>`;
-  },
-
-  // ── Select options ──
-  selectOptions(arr, selected = '') {
-    return `<option value="">Tanlang...</option>` +
-      arr.map(v => `<option value="${v}" ${v===selected?'selected':''}>${v}</option>`).join('');
-  },
-
-  // ── Checkbox group ──
-  checkboxGroup(name, options, selected = []) {
-    return `<div class="checkbox-grid">${options.map(opt => `
-      <label class="checkbox-item ${selected.includes(opt)?'selected':''}" onclick="Components.toggleCheckbox(this)">
-        <input type="checkbox" name="${name}" value="${opt}" ${selected.includes(opt)?'checked':''} style="display:none">
-        <div class="checkbox-box">${selected.includes(opt)?'✓':''}</div>
-        <span style="font-size:12px">${opt}</span>
-      </label>`).join('')}</div>`;
-  },
-
-  toggleCheckbox(label) {
-    label.classList.toggle('selected');
-    const box = label.querySelector('.checkbox-box');
-    const inp = label.querySelector('input');
-    inp.checked = !inp.checked;
-    box.textContent = inp.checked ? '✓' : '';
-  },
-
-  getChecked(name) {
-    return [...document.querySelectorAll(`input[name="${name}"]:checked`)].map(el => el.value);
-  },
-
-  toggleRadio(input) {
-    document.querySelectorAll(`input[name="${input.name}"]`).forEach(r => {
-      r.closest('.radio-item')?.classList.toggle('selected', r === input);
+  // ── Step Progress ──
+  renderSteps(steps, currentIdx) {
+    let html = '<div class="progress-container"><div class="progress-bar" style="width: ' + ((currentIdx + 1) / steps.length * 100) + '%"></div></div>';
+    html += '<div class="flex items-center justify-between mb-8">';
+    steps.forEach((st, i) => {
+      const isDone = i < currentIdx;
+      const isActive = i === currentIdx;
+      let clr = 'text-gray-400';
+      if (isActive) clr = 'text-blue-600 font-bold';
+      if (isDone) clr = 'text-green-600';
+      
+      html += `
+        <div class="flex flex-col items-center flex-1">
+          <div class="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold border-2 mb-2 transition-all ${isActive ? 'bg-blue-600 text-white border-blue-600 shadow-md ring-4 ring-blue-100' : isDone ? 'bg-green-500 text-white border-green-500' : 'bg-white text-gray-400 border-gray-300'}">
+            ${isDone ? icon('check', 18) : (i + 1)}
+          </div>
+          <span class="text-xs text-center ${clr}">${st}</span>
+        </div>
+      `;
     });
+    html += '</div>';
+    return html;
   },
 
-  getRadio(name) {
-    return document.querySelector(`input[name="${name}"]:checked`)?.value || '';
-  },
-
-  // ── Patient row ──
+  // ── Patient Row ──
   patientRow(p, type) {
-    const age = p.tugilgan_yil ? new Date().getFullYear() - parseInt(p.tugilgan_yil.toString().slice(0,4)) : '?';
-    const statusMap = {
-      active:      '<span class="badge badge-green">● Aktiv</span>',
-      chiqarildi:  '<span class="badge badge-blue">✓ Chiqarildi</span>',
-      vafot:       '<span class="badge badge-red">✕ Vafot</span>'
-    };
-    const typeIcon = type === 'infarkt'
-      ? `<span class="badge badge-red">🫀 Infarkt</span>`
-      : `<span class="badge badge-purple">🧠 Insult</span>`;
+    const isInf = type === 'infarkt';
+    const bColor = isInf ? 'badge-red' : 'badge-purple';
+    const typeLabel = isInf ? 'Infarkt' : 'Insult';
+    const typeIcon = isInf ? 'heart' : 'brain';
+    const age = Utils.calculateAge(p.tugilgan_yil) || '—';
+    const stBadge = Utils.statusBadge(p.status);
 
-    return `<tr onclick="Router.go('bemor-karta',{kt_no:'${p.kt_no}',type:'${type}'})">
-      <td>${typeIcon}</td>
-      <td><code style="background:rgba(59,130,246,0.1);padding:2px 8px;border-radius:6px;font-size:12px;color:#93c5fd">${p.kt_no}</code></td>
-      <td style="font-weight:600;color:#f1f5f9">${p.fio||'—'}</td>
-      <td>${age} · ${p.jins||'—'}</td>
-      <td>${p.viloyat||'—'}</td>
-      <td style="font-size:12px;color:#64748b">${Utils.formatDateTime(p.qabul_vaqt)}</td>
-      <td>${statusMap[p.status]||'<span class="badge badge-gray">—</span>'}</td>
-      <td><button class="btn btn-ghost btn-sm">${icon('chevron-right',15)}</button></td>
-    </tr>`;
-  },
-
-  clearErrors() {
-    document.querySelectorAll('.form-error').forEach(el => { el.textContent=''; el.classList.add('hidden'); });
-  },
-
-  setError(id, msg) {
-    const el = document.getElementById(`err-${id}`);
-    if (el) { el.textContent = msg; el.classList.remove('hidden'); }
+    return `
+      <tr onclick="Router.go('bemor-karta', {kt_no:'${p.kt_no}', type:'${type}'})">
+        <td>
+          <span class="badge ${bColor} flex items-center gap-1.5 w-fit">
+            ${icon(typeIcon, 14)} ${typeLabel}
+          </span>
+        </td>
+        <td class="font-mono text-xs text-gray-500">${p.kt_no}</td>
+        <td>
+          <div class="font-semibold text-gray-900">${p.fio || '—'}</div>
+        </td>
+        <td>${age} yosh · ${p.jinsi==='erkak'?'Erkak':p.jinsi==='ayol'?'Ayol':'—'}</td>
+        <td>
+          <div class="flex items-center gap-1.5 text-gray-600">
+            ${icon('map-pin', 14)} ${p.viloyat || '—'}
+          </div>
+        </td>
+        <td>
+          <div class="flex flex-col">
+            <span class="text-gray-900">${Utils.formatDate(p.qabul_vaqt)}</span>
+            <span class="text-xs text-gray-500">${Utils.formatDateTime(p.qabul_vaqt).split(', ')[1] || ''}</span>
+          </div>
+        </td>
+        <td>${stBadge}</td>
+        <td class="text-right text-gray-400">${icon('chevron-right', 20)}</td>
+      </tr>
+    `;
   }
 };
 
-// ── Mobile sidebar ──
-function openSidebar() {
+window.openSidebar = function() {
   document.getElementById('sidebar')?.classList.add('open');
   document.getElementById('sidebar-overlay')?.classList.add('open');
 }
-function closeSidebar() {
+window.closeSidebar = function() {
   document.getElementById('sidebar')?.classList.remove('open');
   document.getElementById('sidebar-overlay')?.classList.remove('open');
 }

@@ -1,14 +1,16 @@
 // ==================== BEMORLAR RO'YXATI ====================
 const BemorlarPage = {
-  _filters: { type: 'all', status: '', viloyat: '', search: '' },
+  _filters: { type: 'all', status: '', viloyat: '', search: '', date: '' },
+  _currentPage: 1,
+  _perPage: 20,
 
   async render() {
     const user = await Auth.getUser();
     BemorlarPage._profile = await Profile.getCurrent();
     
     document.getElementById('app').innerHTML = Components.renderLayout(
-      'bemorlar', '👥 Bemorlar ro\'yxati', 'Barcha registr bemorlari',
-      `<div id="bemorlar-inner"></div>`, user
+      'bemorlar', 'Bemorlar ro\'yxati', 'Barcha registr bemorlari',
+      `<div id="bemorlar-inner" class="animate-fadein"></div>`, user
     );
     Components.startClock();
     
@@ -24,64 +26,84 @@ const BemorlarPage = {
     const f = BemorlarPage._filters;
     const inner = document.getElementById('bemorlar-inner');
     if (!inner) return;
+    
     inner.innerHTML = `
       <!-- Filter Card -->
-      <div class="card mb-4">
-        <div class="card-body">
-          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-3">
-            <div>
-              <label class="form-label">Registr turi</label>
-              <select id="f-type" class="form-select" onchange="BemorlarPage.applyFilter()">
-                <option value="all">Barchasi</option>
-                <option value="infarkt" ${f.type==='infarkt'?'selected':''}>🫀 Infarkt</option>
-                <option value="insult" ${f.type==='insult'?'selected':''}>🧠 Insult</option>
-              </select>
-            </div>
-            <div>
-              <label class="form-label">Holat</label>
-              <select id="f-status" class="form-select" onchange="BemorlarPage.applyFilter()">
-                <option value="">Barchasi</option>
-                <option value="active">✅ Aktiv</option>
-                <option value="chiqarildi">📤 Chiqarildi</option>
-                <option value="vafot">☠️ Vafot</option>
-              </select>
-            </div>
-            ${BemorlarPage._profile?.role === 'admin' ? `
-            <div>
-              <label class="form-label">Viloyat</label>
-              <select id="f-viloyat" class="form-select" onchange="BemorlarPage.applyFilter()">
-                <option value="">Barchasi</option>
-                ${APP_CONFIG.VILOYATLAR.map(v=>`<option value="${v}" ${f.viloyat===v?'selected':''}>${v}</option>`).join('')}
-              </select>
-            </div>
-            ` : ''}
-            <div>
-              <label class="form-label">Qidiruv</label>
-              <input id="f-search" class="form-input" placeholder="F.I.O yoki K/T No..."
-                oninput="BemorlarPage.searchDebounced()" value="${f.search}"/>
-            </div>
+      <div class="card mb-6 border-t-4 border-t-blue-500">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-4">
+          <div>
+            <label class="form-label">${icon('filter', 14)} Registr turi</label>
+            <select id="f-type" class="form-select" onchange="BemorlarPage.applyFilter()">
+              <option value="all">Barchasi</option>
+              <option value="infarkt" ${f.type==='infarkt'?'selected':''}>Infarkt</option>
+              <option value="insult" ${f.type==='insult'?'selected':''}>Insult</option>
+            </select>
           </div>
-          <div class="flex gap-2 justify-end">
-            <button class="btn btn-ghost btn-sm" onclick="BemorlarPage.resetFilters()">🔄 Tozalash</button>
-            <button class="btn btn-success btn-sm" onclick="BemorlarPage.exportData()">📥 Excel/CSV</button>
+          <div>
+            <label class="form-label">${icon('activity', 14)} Holat</label>
+            <select id="f-status" class="form-select" onchange="BemorlarPage.applyFilter()">
+              <option value="">Barchasi</option>
+              <option value="active">Aktiv</option>
+              <option value="chiqarildi">Chiqarildi</option>
+              <option value="vafot">Vafot</option>
+            </select>
+          </div>
+          ${BemorlarPage._profile?.role === 'admin' ? `
+          <div>
+            <label class="form-label">${icon('map-pin', 14)} Viloyat</label>
+            <select id="f-viloyat" class="form-select" onchange="BemorlarPage.applyFilter()">
+              <option value="">Barchasi</option>
+              ${APP_CONFIG.VILOYATLAR.map(v=>`<option value="${v}" ${f.viloyat===v?'selected':''}>${v}</option>`).join('')}
+            </select>
+          </div>
+          ` : ''}
+          <div>
+            <label class="form-label">${icon('calendar', 14)} Sana (dan)</label>
+            <input type="date" id="f-date" class="form-input" onchange="BemorlarPage.applyFilter()" value="${f.date}"/>
+          </div>
+          <div>
+            <label class="form-label">${icon('search', 14)} Qidiruv</label>
+            <div class="relative">
+              <input id="f-search" class="form-input pl-9" placeholder="F.I.O yoki K/T No..."
+                oninput="BemorlarPage.searchDebounced()" value="${f.search}"/>
+              <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">${icon('search', 16)}</span>
+            </div>
           </div>
         </div>
+        <div class="flex gap-3 justify-end border-t border-gray-100 pt-4 mt-2">
+          <button class="btn btn-secondary flex items-center gap-2" onclick="BemorlarPage.resetFilters()">
+            ${icon('refresh-cw', 16)} Tozalash
+          </button>
+          <button class="btn btn-primary flex items-center gap-2" onclick="BemorlarPage.exportData()">
+            ${icon('download', 16)} Export CSV
+          </button>
+        </div>
       </div>
+
       <!-- Table area -->
-      <div class="card">
-        <div class="card-header">
-          <span class="card-title" id="bl-count">Yuklanmoqda...</span>
-          <div class="flex gap-2">
-            <button class="btn btn-primary btn-sm" onclick="Router.go('infarkt-yangi')">🫀 Infarkt</button>
-            <button class="btn btn-sm" style="background:linear-gradient(135deg,#7c3aed,#6d28d9);color:#fff" onclick="Router.go('insult-yangi')">🧠 Insult</button>
+      <div class="card !p-0 overflow-hidden">
+        <div class="card-header bg-gray-50 !mb-0 !border-b-gray-200">
+          <span class="card-title text-gray-900" id="bl-count">Yuklanmoqda...</span>
+          <div class="flex gap-3">
+            <button class="btn btn-infarkt flex items-center gap-2" onclick="Router.go('infarkt-yangi')">
+              ${icon('heart', 16)} Yangi Infarkt
+            </button>
+            <button class="btn btn-insult flex items-center gap-2" onclick="Router.go('insult-yangi')">
+              ${icon('brain', 16)} Yangi Insult
+            </button>
           </div>
         </div>
         <div class="overflow-x-auto" id="bl-table-wrap">
-          <div class="flex justify-center py-12"><div class="spinner" style="width:28px;height:28px"></div></div>
+          <div class="flex justify-center py-16">
+            <div class="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+          </div>
         </div>
+        <!-- Pagination -->
+        <div id="bl-pagination" class="p-4 border-t border-gray-200 bg-gray-50 flex items-center justify-between"></div>
       </div>
     `;
     BemorlarPage.searchDebounced = Utils.debounce(BemorlarPage.applyFilter, 500);
+    initIcons();
   },
 
   applyFilter() {
@@ -92,12 +114,18 @@ const BemorlarPage = {
     } else {
       BemorlarPage._filters.viloyat = BemorlarPage._profile?.viloyat || '';
     }
+    BemorlarPage._filters.date = document.getElementById('f-date')?.value || '';
     BemorlarPage._filters.search = document.getElementById('f-search')?.value || '';
+    BemorlarPage._currentPage = 1;
     BemorlarPage.loadData();
   },
 
   resetFilters() {
-    BemorlarPage._filters = { type: 'all', status: '', search: '', viloyat: BemorlarPage._profile?.role === 'admin' ? '' : (BemorlarPage._profile?.viloyat || '') };
+    BemorlarPage._filters = { 
+      type: 'all', status: '', search: '', date: '',
+      viloyat: BemorlarPage._profile?.role === 'admin' ? '' : (BemorlarPage._profile?.viloyat || '') 
+    };
+    BemorlarPage._currentPage = 1;
     BemorlarPage.renderFilters();
     BemorlarPage.loadData();
   },
@@ -115,33 +143,103 @@ const BemorlarPage = {
         const ins = await DB.insultList(fObj);
         combined.push(...ins.map(r=>({...r,_type:'insult'})));
       }
+      
+      // Additional client side date filtering if provided
+      if (f.date) {
+        combined = combined.filter(p => p.qabul_vaqt && p.qabul_vaqt.startsWith(f.date));
+      }
+
       combined.sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
       BemorlarPage._allData = combined;
-      BemorlarPage.renderTable(combined);
+      BemorlarPage.renderTable();
     } catch(err) {
       const wrap = document.getElementById('bl-table-wrap');
       if (wrap) {
-        wrap.innerHTML = `<div class="p-8 text-center text-red-500">${err.message}</div>`;
+        wrap.innerHTML = `
+          <div class="py-16 text-center">
+            <div class="text-red-500 mb-3">${icon('alert-circle', 40, 'mx-auto')}</div>
+            <h3 class="text-lg font-bold text-gray-900 mb-2">Xatolik yuz berdi</h3>
+            <p class="text-gray-500">${err.message}</p>
+          </div>`;
+        initIcons();
       }
     }
   },
 
-  renderTable(data) {
+  renderTable() {
+    const data = BemorlarPage._allData || [];
     const countEl = document.getElementById('bl-count');
-    if (countEl) countEl.textContent = `Jami: ${data.length} ta bemor`;
+    if (countEl) countEl.innerHTML = `${icon('users', 18)} Jami: ${data.length} ta bemor`;
+
     const wrap = document.getElementById('bl-table-wrap');
     if (!wrap) return;
+
     if (data.length === 0) {
-      wrap.innerHTML = `<div class="empty-state py-12"><div class="empty-state-icon">📭</div><div class="empty-state-title">Bemor topilmadi</div><div class="empty-state-text">Filtrlarni o'zgartiring</div></div>`;
+      wrap.innerHTML = `
+        <div class="py-16 text-center bg-white">
+          <div class="text-gray-300 mb-4">${icon('inbox', 48, 'mx-auto')}</div>
+          <h3 class="text-lg font-bold text-gray-900 mb-1">Bemor topilmadi</h3>
+          <p class="text-gray-500 text-sm">Tanlangan filtrlar bo'yicha ma'lumot yo'q</p>
+        </div>`;
+      document.getElementById('bl-pagination').innerHTML = '';
+      initIcons();
       return;
     }
+
+    // Pagination logic
+    const total = data.length;
+    const totalPages = Math.ceil(total / BemorlarPage._perPage);
+    if (BemorlarPage._currentPage > totalPages) BemorlarPage._currentPage = totalPages;
+    const start = (BemorlarPage._currentPage - 1) * BemorlarPage._perPage;
+    const pagedData = data.slice(start, start + BemorlarPage._perPage);
+
     wrap.innerHTML = `
       <table class="data-table">
         <thead>
-          <tr><th>Turi</th><th>K/T No</th><th>Bemor F.I.O</th><th>Yosh·Jins</th><th>Viloyat</th><th>Qabul vaqti</th><th>Holat</th><th></th></tr>
+          <tr>
+            <th style="width:12%">Tur</th>
+            <th style="width:12%">K/T No</th>
+            <th style="width:25%">Bemor F.I.O</th>
+            <th style="width:10%">Yosh / Jins</th>
+            <th style="width:15%">Viloyat</th>
+            <th style="width:14%">Qabul vaqti</th>
+            <th style="width:10%">Holat</th>
+            <th style="width:2%"></th>
+          </tr>
         </thead>
-        <tbody>${data.map(p=>Components.patientRow(p, p._type)).join('')}</tbody>
+        <tbody>${pagedData.map(p=>Components.patientRow(p, p._type)).join('')}</tbody>
       </table>`;
+
+    // Render Pagination Controls
+    const pag = document.getElementById('bl-pagination');
+    if (pag) {
+      if (totalPages > 1) {
+        pag.innerHTML = `
+          <div class="text-sm text-gray-500">
+            Ko'rsatilmoqda <span class="font-bold text-gray-900">${start+1}</span> - <span class="font-bold text-gray-900">${Math.min(start+BemorlarPage._perPage, total)}</span> / jami <span class="font-bold text-gray-900">${total}</span> ta
+          </div>
+          <div class="flex items-center gap-1">
+            <button class="btn btn-secondary !px-2 !py-1 ${BemorlarPage._currentPage === 1 ? 'opacity-50 cursor-not-allowed' : ''}" 
+              onclick="if(BemorlarPage._currentPage>1){BemorlarPage._currentPage--; BemorlarPage.renderTable();}" ${BemorlarPage._currentPage === 1 ? 'disabled' : ''}>
+              ${icon('chevron-left', 18)}
+            </button>
+            <span class="px-4 py-1 text-sm font-semibold text-gray-700 bg-white border border-gray-200 rounded">
+              ${BemorlarPage._currentPage} / ${totalPages}
+            </span>
+            <button class="btn btn-secondary !px-2 !py-1 ${BemorlarPage._currentPage === totalPages ? 'opacity-50 cursor-not-allowed' : ''}" 
+              onclick="if(BemorlarPage._currentPage<${totalPages}){BemorlarPage._currentPage++; BemorlarPage.renderTable();}" ${BemorlarPage._currentPage === totalPages ? 'disabled' : ''}>
+              ${icon('chevron-right', 18)}
+            </button>
+          </div>
+        `;
+      } else {
+        pag.innerHTML = `
+          <div class="text-sm text-gray-500 w-full text-center">
+            Barcha <span class="font-bold text-gray-900">${total}</span> ta bemor ko'rsatilmoqda
+          </div>`;
+      }
+    }
+    initIcons();
   },
 
   exportData() {
@@ -151,7 +249,7 @@ const BemorlarPage = {
       Viloyat: p.viloyat, Muassasa: p.muassasa,
       'Qabul vaqti': Utils.formatDateTime(p.qabul_vaqt),
       Holat: p.status, Jins: p.jins, 'Tug\'ilgan yili': p.tugilgan_yil
-    })), 'bemorlar.csv');
-    showToast('✅ Eksport boshlandi', 'success');
+    })), 'bemorlar_royxati.csv');
+    showToast('Eksport boshlandi', 'success');
   }
 };

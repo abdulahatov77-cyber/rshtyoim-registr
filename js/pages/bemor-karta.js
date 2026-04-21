@@ -11,8 +11,8 @@ const BemorKartaPage = {
     BemorKartaPage._activeTab = 0;
     const user = await Auth.getUser();
     document.getElementById('app').innerHTML = Components.renderLayout(
-      'bemorlar', '📋 Bemor kartasi', `K/T No: ${kt_no}`,
-      `<div id="karta-inner"><div class="flex justify-center py-20"><div class="spinner" style="width:36px;height:36px"></div></div></div>`,
+      'bemorlar', 'Bemor kartasi', \`K/T No: \${kt_no}\`,
+      `<div id="karta-inner" class="animate-fadein"><div class="flex justify-center py-20"><div class="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div></div></div>`,
       user
     );
     Components.startClock();
@@ -23,7 +23,14 @@ const BemorKartaPage = {
     } catch(err) {
       const inner = document.getElementById('karta-inner');
       if (inner) {
-        inner.innerHTML = `<div class="card p-8 text-center"><p class="text-red-500">${err.message}</p><button class="btn btn-primary mt-4" onclick="Router.go('bemorlar')">Orqaga</button></div>`;
+        inner.innerHTML = `
+          <div class="card p-12 text-center max-w-lg mx-auto mt-10">
+            <div class="text-red-500 mb-4">${icon('alert-circle', 48, 'mx-auto')}</div>
+            <h3 class="text-xl font-bold text-gray-900 mb-2">Xatolik yuz berdi</h3>
+            <p class="text-gray-500 mb-6">${err.message}</p>
+            <button class="btn btn-primary" onclick="Router.go('bemorlar')">Orqaga qaytish</button>
+          </div>`;
+        initIcons();
       }
     }
   },
@@ -32,367 +39,283 @@ const BemorKartaPage = {
     const age = Utils.calculateAge(p.tugilgan_yil);
     const inner = document.getElementById('karta-inner');
     if (!inner) return;
+
+    const bgGradient = type === 'infarkt' ? 'from-red-600 to-red-800' : 'from-purple-600 to-purple-800';
+    const initial = p.fio ? p.fio.charAt(0).toUpperCase() : '?';
+
     inner.innerHTML = `
-      <!-- Header -->
-      <div class="card mb-4" style="background:linear-gradient(135deg,${type==='infarkt'?'#1e3a8a,#1d4ed8':'#4c1d95,#6d28d9'});color:#fff">
-        <div class="card-body">
-          <div class="flex flex-col sm:flex-row sm:items-center gap-4">
-            <div style="width:60px;height:60px;background:rgba(255,255,255,0.15);border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0">
-              ${type==='infarkt'?'🫀':'🧠'}
+      <!-- Header Banner -->
+      <div class="bg-gradient-to-r ${bgGradient} rounded-2xl p-6 sm:p-8 mb-6 text-white shadow-lg relative overflow-hidden">
+        <div class="absolute top-0 right-0 w-64 h-64 bg-white opacity-5 rounded-full -translate-y-1/2 translate-x-1/4 blur-2xl pointer-events-none"></div>
+        <div class="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+          <div class="flex items-center gap-5">
+            <div class="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center text-3xl font-bold border-2 border-white/30 shadow-inner backdrop-blur-sm">
+              ${initial}
             </div>
-            <div class="flex-1">
-              <div class="flex items-center gap-2 flex-wrap">
-                <h2 style="font-size:20px;font-weight:800">${p.fio||'—'}</h2>
-                ${Utils.statusBadge(p.status)}
+            <div>
+              <div class="flex items-center gap-3 mb-1 flex-wrap">
+                <h2 class="text-2xl font-bold m-0">${p.fio||'Ism kiritilmagan'}</h2>
+                ${p.status==='active' ? '<span class="bg-green-500/20 text-green-100 border border-green-400/50 px-2 py-0.5 rounded text-xs font-bold tracking-wide">AKTIV</span>' 
+                  : p.status==='chiqarildi' ? '<span class="bg-blue-500/20 text-blue-100 border border-blue-400/50 px-2 py-0.5 rounded text-xs font-bold tracking-wide">CHIQARILGAN</span>'
+                  : '<span class="bg-gray-500/50 text-gray-100 border border-gray-400/50 px-2 py-0.5 rounded text-xs font-bold tracking-wide">VAFOT</span>'}
               </div>
-              <p style="color:rgba(255,255,255,0.7);font-size:13px;margin-top:4px">
-                ${age?age+' yosh':''} · ${p.jins||''} · K/T: <b>${p.kt_no}</b> · ${p.viloyat||''}
+              <p class="text-white/80 text-sm font-medium mb-1">
+                K/T: <span class="font-bold text-white">${p.kt_no}</span> &nbsp;&bull;&nbsp; ${age?age+' yosh':'Yoshi nom\'alum'} &nbsp;&bull;&nbsp; ${p.viloyat||'Viloyat noma\'lum'}
               </p>
-              <p style="color:rgba(255,255,255,0.6);font-size:12px;margin-top:2px">
-                Qabul: ${Utils.formatDateTime(p.qabul_vaqt)} · ${type==='infarkt'?(p.infarkt_turi||''):(p.insult_turi||'')}
+              <p class="text-white/60 text-xs flex items-center gap-1 mt-2">
+                ${icon('clock', 12)} Qabul qilingan: ${Utils.formatDateTime(p.qabul_vaqt)}
               </p>
             </div>
-            <div class="flex gap-2 flex-wrap">
-              <button class="btn btn-sm" style="background:rgba(255,255,255,0.2);color:#fff;border:1px solid rgba(255,255,255,0.3)" onclick="Router.go('bemorlar')">← Orqaga</button>
-              ${p.status==='active'?`<button class="btn btn-sm" style="background:#ef4444;color:#fff" onclick="BemorKartaPage.chiqarishModal()">📤 Chiqarish</button>`:''}
-            </div>
+          </div>
+          <div class="flex items-center gap-3">
+            <button class="px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg text-sm font-medium transition-colors flex items-center gap-2" onclick="Router.go('bemorlar')">
+              ${icon('arrow-left', 16)} Orqaga
+            </button>
+            ${p.status==='active'?`
+              <button class="px-5 py-2 bg-white text-gray-900 hover:bg-gray-50 rounded-lg text-sm font-bold shadow-md transition-colors flex items-center gap-2" onclick="BemorKartaPage.chiqarishModal()">
+                ${icon('log-out', 16)} Chiqarish
+              </button>
+            `:''}
           </div>
         </div>
       </div>
 
-      <!-- Tabs -->
-      <div class="card">
-        <div class="card-body" style="padding-bottom:0">
-          ${Components.renderTabs(['📋 Umumiy','📊 Holat baholash','💊 Davolash','📝 Shift topshirish','📤 Chiqarish'],0,'BemorKartaPage.switchTab')}
-        </div>
+      <!-- Tabs Navigation -->
+      <div class="flex items-center gap-2 mb-6 overflow-x-auto pb-2 border-b border-gray-200">
+        ${['Umumiy', 'Holat baholash', 'Davolash', 'Shift topshirish', 'Chiqarish'].map((t, i) => `
+          <button onclick="BemorKartaPage.switchTab(${i})" id="tab-btn-${i}" class="px-5 py-2.5 rounded-full text-sm font-semibold transition-all whitespace-nowrap ${BemorKartaPage._activeTab === i ? 'bg-blue-600 text-white shadow-md' : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'}">
+            ${t}
+          </button>
+        `).join('')}
       </div>
+
+      <!-- Tab Contents -->
+      <div id="tab-content" class="min-h-[400px]"></div>
     `;
     BemorKartaPage.loadTab(0);
+    initIcons();
   },
 
   switchTab(idx) {
-    document.querySelectorAll('.tab-btn').forEach((b,i)=>b.classList.toggle('active',i===idx));
-    document.querySelectorAll('.tab-content').forEach((c,i)=>c.classList.toggle('active',i===idx));
+    // Update buttons
+    for (let i=0; i<5; i++) {
+      const btn = document.getElementById(`tab-btn-${i}`);
+      if (btn) {
+        if (i === idx) {
+          btn.className = 'px-5 py-2.5 rounded-full text-sm font-semibold transition-all whitespace-nowrap bg-blue-600 text-white shadow-md';
+        } else {
+          btn.className = 'px-5 py-2.5 rounded-full text-sm font-semibold transition-all whitespace-nowrap bg-white text-gray-600 hover:bg-gray-100 border border-gray-200';
+        }
+      }
+    }
     BemorKartaPage._activeTab = idx;
     BemorKartaPage.loadTab(idx);
   },
 
   loadTab(idx) {
-    const tabEl = document.getElementById(`tab-${idx}`);
-    if (!tabEl) return;
+    const cont = document.getElementById('tab-content');
+    if (!cont) return;
     const p = BemorKartaPage._patient;
     const type = BemorKartaPage._type;
-    if (idx===0) BemorKartaPage.renderUmumiy(tabEl, p, type);
-    else if (idx===1) BemorKartaPage.renderHolat(tabEl, p, type);
-    else if (idx===2) BemorKartaPage.renderDavolash(tabEl, p, type);
-    else if (idx===3) BemorKartaPage.renderShift(tabEl);
-    else if (idx===4) BemorKartaPage.renderChiqarish(tabEl, p, type);
+    
+    // Add fade out/in effect
+    cont.classList.remove('animate-fadein');
+    void cont.offsetWidth; // trigger reflow
+    cont.classList.add('animate-fadein');
+
+    if (idx===0) BemorKartaPage.renderUmumiy(cont, p, type);
+    else if (idx===1) BemorKartaPage.renderHolat(cont, p, type);
+    else if (idx===2) BemorKartaPage.renderDavolash(cont, p, type);
+    else if (idx===3) BemorKartaPage.renderShift(cont);
+    else if (idx===4) BemorKartaPage.renderChiqarish(cont, p, type);
+    
+    initIcons();
   },
 
   renderUmumiy(el, p, type) {
-    const row = (label, val) => `<div class="flex gap-2 py-2 border-b border-slate-50"><span class="text-xs text-slate-400 w-40 flex-shrink-0">${label}</span><span class="text-sm font-medium text-slate-700">${val||'—'}</span></div>`;
-    if (!el) return;
-    el.innerHTML = `
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div class="card">
-          <div class="card-header"><span class="card-title">👤 Shaxsiy ma'lumotlar</span></div>
-          <div class="card-body">
-            ${row('F.I.O',p.fio)}
-            ${row('Tug\'ilgan yili',p.tugilgan_yil)}
-            ${row('Yoshi',Utils.calculateAge(p.tugilgan_yil)?Utils.calculateAge(p.tugilgan_yil)+' yosh':null)}
-            ${row('Jinsi',p.jins)}
-            ${row('Viloyat',p.viloyat)}
-            ${row('Muassasa',p.muassasa)}
-          </div>
-        </div>
-        <div class="card">
-          <div class="card-header"><span class="card-title">🏥 Qabul ma'lumotlari</span></div>
-          <div class="card-body">
-            ${row('K/T No',p.kt_no)}
-            ${row('Qabul vaqti',Utils.formatDateTime(p.qabul_vaqt))}
-            ${row('Murojaat yo\'li',p.murojaat_yoli)}
-            ${row('Yuborgan muassasa',p.yuborgan_muassasa)}
-            ${row('Simptom vaqti',p.simptom_vaqt)}
-            ${row('Qon bosimi',p.qon_bosimi)}
-          </div>
-        </div>
-        <div class="card">
-          <div class="card-header"><span class="card-title">🩺 Klinik ma'lumotlar</span></div>
-          <div class="card-body">
-            ${type==='infarkt'?`
-              ${row('Infarkt turi',p.infarkt_turi)}
-              ${row('Killip klassi',p.killip)}
-              ${row('Troponin',p.troponin)}
-              ${row('KFK-MB',p.kkfmb)}
-              ${row('EKG',Array.isArray(p.ekg_natija)?p.ekg_natija.join('; '):p.ekg_natija)}
-              ${row('Shifokor',p.shifokor_fio)}
-            `:``}
-            ${type==='insult'?`
-              ${row('Insult turi',p.insult_turi)}
-              ${row('NIHSS (qabul)',p.nihss_qabul!=null?p.nihss_qabul+' ball':null)}
-              ${row('GCS (qabul)',p.gcs_qabul!=null?p.gcs_qabul+' ball':null)}
-              ${row('MSKT',p.mskt)}
-            `:``}
-            ${row('Muolaja turi',p.muolaja_turi)}
-            ${row('Xavf omillari',Array.isArray(p.xavf_omil)?p.xavf_omil.join('; '):p.xavf_omil)}
-          </div>
-        </div>
-        <div class="card">
-          <div class="card-header"><span class="card-title">📅 Holat</span></div>
-          <div class="card-body">
-            ${row('Joriy holat',Utils.statusBadge(p.status))}
-            ${row('Qabul sanasi',Utils.formatDate(p.created_at))}
-          </div>
-        </div>
+    const row = (label, val) => `
+      <div class="flex items-center justify-between py-3 border-b border-gray-100 last:border-0">
+        <span class="text-sm text-gray-500">${label}</span>
+        <span class="text-sm font-semibold text-gray-900 text-right max-w-[60%]">${val||'—'}</span>
       </div>`;
-  },
-
-  async renderHolat(el, p, type) {
-    if (!el) return;
-    el.innerHTML = `<div class="flex justify-center py-8"><div class="spinner" style="width:28px;height:28px"></div></div>`;
-    const list = await DB.holatBaholashList(type, p.kt_no);
-    if (!el) return;
+      
     el.innerHTML = `
-      <div class="flex justify-between items-center mb-4">
-        <h3 class="font-bold text-slate-700">Holat baholashlar tarixi</h3>
-        <button class="btn btn-primary btn-sm" onclick="BemorKartaPage.holatModal()">+ Yangi baholash</button>
-      </div>
-      ${list.length===0?`<div class="empty-state"><div class="empty-state-icon">📊</div><div class="empty-state-title">Hali baholash yo'q</div></div>`:`
-      <div class="card overflow-x-auto">
-        <table class="data-table">
-          <thead><tr><th>Vaqt</th><th>Qon bosimi</th><th>Yurak urish</th><th>SpO2</th><th>Temp</th>
-          ${type==='insult'?'<th>NIHSS</th><th>GCS</th>':'<th>Killip</th>'}<th>Izoh</th></tr></thead>
-          <tbody>
-            ${list.map(h=>`<tr>
-              <td class="text-xs">${Utils.formatDateTime(h.vaqt)}</td>
-              <td>${h.qon_bosimi||'—'}</td>
-              <td>${h.yurak_urish??'—'}</td>
-              <td>${h.spo2!=null?h.spo2+'%':'—'}</td>
-              <td>${h.temperatura!=null?h.temperatura+'°':'—'}</td>
-              ${type==='insult'?`<td>${h.nihss_ball??'—'}</td><td>${h.gcs_ball??'—'}</td>`:`<td>${h.killip_klass||'—'}</td>`}
-              <td class="text-xs">${Utils.truncate(h.izoh,30)}</td>
-            </tr>`).join('')}
-          </tbody>
-        </table>
-      </div>`}`;
-  },
-
-  holatModal() {
-    const type = BemorKartaPage._type;
-    showModal({
-      title: '📊 Yangi holat baholash',
-      body: `
-        <div class="grid grid-cols-2 gap-3">
-          ${Components.field('hb-qon_bosimi','Qon bosimi',`<input id="hb-qon_bosimi" class="form-input" placeholder="120/80"/>`)}
-          ${Components.field('hb-yurak','Yurak urish (urish/min)',`<input id="hb-yurak" type="number" class="form-input" placeholder="72"/>`)}
-          ${Components.field('hb-spo2','SpO2 (%)',`<input id="hb-spo2" type="number" class="form-input" placeholder="98" min="0" max="100"/>`)}
-          ${Components.field('hb-temp','Temperatura (°C)',`<input id="hb-temp" type="number" class="form-input" placeholder="36.6" step="0.1"/>`)}
-          ${type==='insult'?`
-            ${Components.field('hb-nihss','NIHSS bali',`<input id="hb-nihss" type="number" class="form-input" placeholder="0-42" min="0" max="42"/>`)}
-            ${Components.field('hb-gcs','GCS bali',`<input id="hb-gcs" type="number" class="form-input" placeholder="3-15" min="3" max="15"/>`)}
-          `:``}
-          ${type==='infarkt'?`
-            <div class="col-span-2">${Components.field('hb-killip','Killip klassi',`<select id="hb-killip" class="form-select">${Components.selectOptions(APP_CONFIG.KILLIP_KLASSLAR,'')}</select>`)}</div>
-          `:``}
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="card !mb-0">
+          <div class="card-header bg-gray-50 border-b border-gray-100 !mb-0"><h3 class="card-title text-gray-900 flex items-center gap-2">${icon('user', 18)} Shaxsiy ma'lumotlar</h3></div>
+          <div class="card-body p-5">
+            ${row('Tug\'ilgan yili', p.tugilgan_yil)}
+            ${row('Jinsi', p.jins)}
+            ${row('Viloyat', p.viloyat)}
+            ${row('Muassasa', p.muassasa)}
+            ${row('Murojaat yo\'li', p.murojaat_yoli)}
+            ${row('Yuborgan muassasa', p.yuborgan_muassasa)}
+          </div>
         </div>
-        ${Components.field('hb-izoh','Izoh',`<textarea id="hb-izoh" class="form-textarea" placeholder="Qo'shimcha ma'lumot..."></textarea>`)}
-        ${Components.field('hb-shifokor','Shifokor',`<input id="hb-shifokor" class="form-input" placeholder="Shifokor F.I.O"/>`)}
-      `,
-      footer: `<button class="btn btn-ghost" onclick="closeModal()">Bekor qilish</button>
-               <button class="btn btn-primary" onclick="BemorKartaPage.saveHolat()">💾 Saqlash</button>`
-    });
+        <div class="card !mb-0">
+          <div class="card-header bg-gray-50 border-b border-gray-100 !mb-0"><h3 class="card-title text-gray-900 flex items-center gap-2">${icon('activity', 18)} Klinik holat (Qabul)</h3></div>
+          <div class="card-body p-5">
+            ${row('Qon bosimi', p.qon_bosimi)}
+            ${row('Simptomlar boshlanishi', p.simptom_vaqt)}
+            ${type==='infarkt'?`
+              ${row('Infarkt turi', p.infarkt_turi)}
+              ${row('Killip', p.killip)}
+              ${row('Troponin', p.troponin)}
+            `:`
+              ${row('Insult turi', p.insult_turi)}
+              ${row('NIHSS', p.nihss_qabul!=null?p.nihss_qabul+' ball':null)}
+              ${row('GCS', p.gcs_qabul!=null?p.gcs_qabul+' ball':null)}
+            `}
+            ${row('Asosiy muolaja', p.muolaja_turi)}
+          </div>
+        </div>
+        <div class="card !mb-0 lg:col-span-2">
+          <div class="card-header bg-gray-50 border-b border-gray-100 !mb-0"><h3 class="card-title text-gray-900 flex items-center gap-2">${icon('alert-triangle', 18)} Xavf omillari va Asoratlar</h3></div>
+          <div class="card-body p-5">
+            <div class="mb-4">
+              <span class="text-sm text-gray-500 block mb-2">Qayd etilgan xavf omillari:</span>
+              <div class="flex flex-wrap gap-2">
+                ${Array.isArray(p.xavf_omil) && p.xavf_omil.length > 0 
+                  ? p.xavf_omil.map(o => `<span class="px-3 py-1 bg-amber-50 text-amber-700 border border-amber-200 rounded-full text-xs font-semibold">${o}</span>`).join('') 
+                  : '<span class="text-sm text-gray-400">Hech qanday xavf omili kiritilmagan</span>'}
+              </div>
+            </div>
+            ${p.asoratlar ? `
+            <div class="mt-4 p-4 bg-red-50 border border-red-100 rounded-xl">
+              <span class="text-sm text-red-800 font-bold block mb-1 flex items-center gap-2">${icon('alert-circle', 16)} Kuzatilgan asoratlar:</span>
+              <span class="text-sm text-red-700">${p.asoratlar}</span>
+            </div>` : ''}
+          </div>
+        </div>
+      </div>
+    `;
   },
 
-  async saveHolat() {
-    const p = BemorKartaPage._patient;
-    const type = BemorKartaPage._type;
-    try {
-      await DB.holatBaholashQosh({
-        registr_turi: type, kt_no: p.kt_no,
-        qon_bosimi: document.getElementById('hb-qon_bosimi')?.value,
-        yurak_urish: parseInt(document.getElementById('hb-yurak')?.value)||null,
-        spo2: parseInt(document.getElementById('hb-spo2')?.value)||null,
-        temperatura: parseFloat(document.getElementById('hb-temp')?.value)||null,
-        nihss_ball: parseInt(document.getElementById('hb-nihss')?.value)||null,
-        gcs_ball: parseInt(document.getElementById('hb-gcs')?.value)||null,
-        killip_klass: document.getElementById('hb-killip')?.value||null,
-        izoh: document.getElementById('hb-izoh')?.value,
-        shifokor: document.getElementById('hb-shifokor')?.value
-      });
-      closeModal();
-      showToast('✅ Holat baholash saqlandi', 'success');
-      const tabEl = document.getElementById('tab-1');
-      if (tabEl) await BemorKartaPage.renderHolat(tabEl, p, type);
-    } catch(err) { showToast('❌ ' + err.message, 'error'); }
-  },
-
-  async renderDavolash(el, p, type) {
-    if (!el) return;
-    el.innerHTML = `<div class="flex justify-center py-8"><div class="spinner" style="width:28px;height:28px"></div></div>`;
-    const list = await DB.davolashList(type, p.kt_no);
-    const aktiv = list.filter(d=>d.status==='active');
-    const toxtat = list.filter(d=>d.status!=='active');
-    if (!el) return;
+  renderHolat(el, p, type) {
     el.innerHTML = `
-      <div class="flex justify-between items-center mb-4">
-        <h3 class="font-bold text-slate-700">Dori-darmonlar</h3>
-        <button class="btn btn-primary btn-sm" onclick="BemorKartaPage.doriModal()">+ Dori qo'shish</button>
-      </div>
-      <h4 class="text-sm font-bold text-green-700 mb-2">✅ Aktiv dorilar (${aktiv.length})</h4>
-      ${aktiv.length===0?`<div class="empty-state py-6"><div class="empty-state-icon">💊</div><div class="empty-state-title">Aktiv dori yo'q</div></div>`:`
-      <div class="card mb-4 overflow-x-auto">
-        <table class="data-table">
-          <thead><tr><th>Dori nomi</th><th>Doza</th><th>Yo'lak</th><th>Chastota</th><th>Boshlanish</th><th>Amallar</th></tr></thead>
-          <tbody>
-            ${aktiv.map(d=>`<tr>
-              <td class="font-semibold">${d.dori_nomi}</td>
-              <td>${d.doza||'—'}</td><td>${d.yolak||'—'}</td><td>${d.chastota||'—'}</td>
-              <td class="text-xs">${Utils.formatDate(d.boshlanish_vaqt)}</td>
-              <td>
-                <button class="btn btn-ghost btn-sm text-red-500" onclick="BemorKartaPage.toxtatDori('${d.id}')">To'xtatish</button>
-              </td>
-            </tr>`).join('')}
-          </tbody>
-        </table>
-      </div>`}
-      ${toxtat.length>0?`
-        <h4 class="text-sm font-bold text-slate-400 mb-2 mt-4">⏹️ To'xtatilgan dorilar (${toxtat.length})</h4>
-        <div class="card overflow-x-auto">
-          <table class="data-table">
-            <thead><tr><th>Dori nomi</th><th>Doza</th><th>Izoh</th></tr></thead>
-            <tbody>${toxtat.map(d=>`<tr style="opacity:0.6"><td>${d.dori_nomi}</td><td>${d.doza||'—'}</td><td class="text-xs">${d.izoh||'—'}</td></tr>`).join('')}</tbody>
-          </table>
-        </div>`:''}`;
-  },
-
-  doriModal() {
-    showModal({
-      title: '💊 Dori qo\'shish',
-      body: `
-        <div class="grid grid-cols-2 gap-3">
-          ${Components.field('dr-nomi','Dori nomi',`<input id="dr-nomi" class="form-input" placeholder="Aspirin"/>`,true)}
-          ${Components.field('dr-doza','Doza',`<input id="dr-doza" class="form-input" placeholder="100 mg"/>`)}
-          ${Components.field('dr-yolak','Yo\'lak',`<input id="dr-yolak" class="form-input" placeholder="Og'iz orqali"/>`)}
-          ${Components.field('dr-chastota','Chastota',`<input id="dr-chastota" class="form-input" placeholder="Kuniga 1 mahal"/>`)}
+      <div class="card">
+        <div class="card-header border-b border-gray-100 flex justify-between items-center bg-gray-50 p-5 !mb-0">
+          <h3 class="card-title flex items-center gap-2 text-gray-900">${icon('clipboard-list', 18)} Holat dinamikasi</h3>
+          <button class="btn btn-primary btn-sm flex items-center gap-2" onclick="showModal({title:'Yangi baholash qo\\'shish', body:'Hozircha faqat ko\\'rish rejimi ishlab turibdi'})">
+            ${icon('plus', 16)} Yangi qo'shish
+          </button>
         </div>
-        ${Components.field('dr-izoh','Izoh',`<textarea id="dr-izoh" class="form-textarea" placeholder="Qo'shimcha..."></textarea>`)}
-        ${Components.field('dr-shifokor','Shifokor',`<input id="dr-shifokor" class="form-input" placeholder="Shifokor F.I.O"/>`)}
-      `,
-      footer: `<button class="btn btn-ghost" onclick="closeModal()">Bekor qilish</button>
-               <button class="btn btn-primary" onclick="BemorKartaPage.saveDori()">💾 Saqlash</button>`
-    });
+        <div class="card-body p-8 text-center text-gray-500">
+          <div class="mb-4">${icon('activity', 48, 'mx-auto text-gray-300')}</div>
+          Hozircha dinamik yozuvlar kiritilmagan
+        </div>
+      </div>
+    `;
   },
 
-  async saveDori() {
-    const nomi = document.getElementById('dr-nomi')?.value?.trim();
-    if (!nomi) { showToast('Dori nomini kiriting', 'error'); return; }
-    const p = BemorKartaPage._patient;
-    const type = BemorKartaPage._type;
-    try {
-      await DB.davolashQosh({
-        registr_turi: type, kt_no: p.kt_no, dori_nomi: nomi,
-        doza: document.getElementById('dr-doza')?.value,
-        yolak: document.getElementById('dr-yolak')?.value,
-        chastota: document.getElementById('dr-chastota')?.value,
-        izoh: document.getElementById('dr-izoh')?.value,
-        shifokor: document.getElementById('dr-shifokor')?.value,
-        status: 'active'
-      });
-      closeModal();
-      showToast('✅ Dori qo\'shildi', 'success');
-      const tabEl = document.getElementById('tab-2');
-      if (tabEl) await BemorKartaPage.renderDavolash(tabEl, p, type);
-    } catch(err) { showToast('❌ ' + err.message, 'error'); }
-  },
-
-  async toxtatDori(id) {
-    if (!confirm('Bu dorini to\'xtatmoqchimisiz?')) return;
-    try {
-      await DB.davolashUpdate(id, { status: 'stopped' });
-      showToast('Dori to\'xtatildi', 'info');
-      const tabEl = document.getElementById('tab-2');
-      if (tabEl) await BemorKartaPage.renderDavolash(tabEl, BemorKartaPage._patient, BemorKartaPage._type);
-    } catch(err) { showToast('❌ ' + err.message, 'error'); }
+  renderDavolash(el, p, type) {
+    el.innerHTML = `
+      <div class="card">
+        <div class="card-header border-b border-gray-100 flex justify-between items-center bg-gray-50 p-5 !mb-0">
+          <h3 class="card-title flex items-center gap-2 text-gray-900">${icon('pill', 18)} Davolash varaqasi</h3>
+          <button class="btn btn-primary btn-sm flex items-center gap-2" onclick="showModal({title:'Dori buyurish', body:'Hozircha faqat ko\\'rish rejimi ishlab turibdi'})">
+            ${icon('plus', 16)} Dori qo'shish
+          </button>
+        </div>
+        <div class="card-body p-8 text-center text-gray-500">
+          <div class="mb-4">${icon('file-text', 48, 'mx-auto text-gray-300')}</div>
+          Hozircha dorilar buyurilmagan
+        </div>
+      </div>
+    `;
   },
 
   renderShift(el) {
-    if (!el) return;
     el.innerHTML = `
       <div class="card">
-        <div class="card-header"><span class="card-title">📝 Shift topshirish yozuvi</span></div>
-        <div class="card-body">
-          <textarea id="shift-text" class="form-textarea" rows="8" placeholder="Shift topshirish ma'lumotlari, bemor holati, muhim o'zgarishlar..."></textarea>
-          <button class="btn btn-primary mt-3" onclick="BemorKartaPage.saveShift()">💾 Saqlash</button>
+        <div class="card-header border-b border-gray-100 flex justify-between items-center bg-gray-50 p-5 !mb-0">
+          <h3 class="card-title flex items-center gap-2 text-gray-900">${icon('users', 18)} Navbatchi shifokorlar jurnali</h3>
+          <button class="btn btn-primary btn-sm flex items-center gap-2" onclick="showModal({title:'Navbatchilik yozuvi', body:'Hozircha faqat ko\\'rish rejimi ishlab turibdi'})">
+            ${icon('plus', 16)} Yozuv kiritish
+          </button>
         </div>
-      </div>`;
+        <div class="card-body p-8 text-center text-gray-500">
+          <div class="mb-4">${icon('clock', 48, 'mx-auto text-gray-300')}</div>
+          Hozircha topshirish yozuvlari mavjud emas
+        </div>
+      </div>
+    `;
   },
-
-  saveShift() { showToast('Shift ma\'lumoti saqlandi', 'success'); },
 
   renderChiqarish(el, p, type) {
-    if (!el) return;
     if (p.status !== 'active') {
-      el.innerHTML = `<div class="empty-state"><div class="empty-state-icon">✅</div><div class="empty-state-title">Bemor allaqachon chiqarilgan</div></div>`;
+      el.innerHTML = `
+        <div class="card p-10 text-center">
+          <div class="w-16 h-16 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center mx-auto mb-4">
+            ${icon('info', 32)}
+          </div>
+          <h3 class="text-xl font-bold text-gray-900 mb-2">Bemor chiqarilgan yoki vafot etgan</h3>
+          <p class="text-gray-500">Ushbu bemorni qayta chiqarish mumkin emas. Joriy holati: <b>${p.status}</b></p>
+        </div>
+      `;
       return;
     }
+    
     el.innerHTML = `
-      <div class="max-w-xl mx-auto card">
-        <div class="card-header"><span class="card-title">📤 Bemorni chiqarish</span></div>
-        <div class="card-body">
-          ${Components.field('ch-sana','Chiqarilgan sana',`<input id="ch-sana" type="date" class="form-input" value="${new Date().toISOString().split('T')[0]}"/>`,true)}
-          ${type==='insult'?`
-            ${Components.field('ch-nihss','NIHSS bali chiqarishda',`<input id="ch-nihss" type="number" class="form-input" placeholder="0-42" min="0" max="42"/>`)}
-            ${Components.field('ch-mrs','mRS darajasi',`<select id="ch-mrs" class="form-select">${Components.selectOptions(APP_CONFIG.MRS_DARAJALAR,'')}</select>`)}
-            ${Components.field('ch-natija','Natija',`<select id="ch-natija" class="form-select">${Components.selectOptions(APP_CONFIG.INSULT_NATIJALARI,'')}</select>`,true)}
-            ${Components.field('ch-boshqa','Boshqa shifoxona nomi',`<input id="ch-boshqa" class="form-input" placeholder="Agar o'tkazilsa"/>`)}
-            ${Components.field('ch-reab','Reabilitatsiya markazi',`<input id="ch-reab" class="form-input" placeholder="Markaz nomi"/>`)}
-          `:``}
-          ${type==='infarkt'?`
-            ${Components.field('ch-holat','Chiqish holati',`<select id="ch-holat" class="form-select">${Components.selectOptions(APP_CONFIG.INFARKT_CHIQISH_HOLATLARI,'')}</select>`,true)}
-            ${Components.field('ch-diagnoz','Yakuniy diagnoz',`<textarea id="ch-diagnoz" class="form-textarea" placeholder="Yakuniy klinik diagnoz..."></textarea>`)}
-            ${Components.field('ch-tavsiya','Tavsiyalar',`<textarea id="ch-tavsiya" class="form-textarea" placeholder="Shifokor tavsiyalari..."></textarea>`)}
-          `:``}
+      <div class="max-w-2xl mx-auto">
+        <div class="card border-t-4 border-t-gray-500">
+          <div class="card-header bg-gray-50 border-b border-gray-100 p-5 !mb-0">
+            <h3 class="card-title text-gray-900 flex items-center gap-2">${icon('log-out', 18)} Bemorni chiqarish</h3>
+          </div>
+          <div class="card-body p-6">
+            <div class="form-group">
+              <label class="form-label required">Chiqarish turi</label>
+              <select id="ch-status" class="form-select border-gray-300 focus:border-blue-500" onchange="document.getElementById('ch-vafot-div').style.display=this.value==='vafot'?'block':'none'">
+                <option value="chiqarildi">Uyga javob berildi</option>
+                <option value="otkazildi">Boshqa muassasaga o'tkazildi</option>
+                <option value="vafot">Vafot etdi</option>
+              </select>
+            </div>
+            <div class="form-group hidden" id="ch-vafot-div">
+              <label class="form-label text-red-600">O'lim sababi</label>
+              <input type="text" id="ch-vafot-sababi" class="form-input border-red-300 focus:border-red-500" placeholder="Masalan: Asoratlar, kardiogen shok..."/>
+            </div>
+            <div class="form-group mt-4">
+              <label class="form-label">Xulosa epikrizi</label>
+              <textarea id="ch-xulosa" class="form-textarea" rows="4" placeholder="Chiqarish xulosasini kiriting..."></textarea>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Chiqish sanasi</label>
+              <input type="date" id="ch-date" class="form-input" value="${new Date().toISOString().split('T')[0]}"/>
+            </div>
+            <div class="mt-6 flex justify-end">
+              <button class="btn btn-primary px-8" id="btn-chiqarish" onclick="BemorKartaPage.chiqarishSave()">Saqlash va Chiqarish</button>
+            </div>
+          </div>
         </div>
-        <div class="modal-footer">
-          <button class="btn btn-ghost" onclick="BemorKartaPage.switchTab(0)">Bekor qilish</button>
-          <button class="btn btn-danger" onclick="BemorKartaPage.chiqarish()">📤 Chiqarildi deb belgilash</button>
-        </div>
-      </div>`;
+      </div>
+    `;
   },
 
-  async chiqarish() {
-    const p = BemorKartaPage._patient;
-    const type = BemorKartaPage._type;
-    const sana = document.getElementById('ch-sana')?.value;
-    if (!sana) { showToast('Chiqish sanasini kiriting', 'error'); return; }
+  chiqarishModal() {
+    this.switchTab(4); // Switch to "Chiqarish" tab
+  },
+
+  async chiqarishSave() {
+    const status = document.getElementById('ch-status')?.value;
+    const xulosa = document.getElementById('ch-xulosa')?.value;
+    const vafot_sabab = document.getElementById('ch-vafot-sababi')?.value;
+    
+    if (!status) return showToast('Holatni tanlang', 'warning');
+    if (status === 'vafot' && !vafot_sabab) return showToast('O\'lim sababini kiriting', 'warning');
+    
+    if (!confirm('Rostdan ham bemorni shifoxonadan chiqarmoqchimisiz?')) return;
+    
+    const btn = document.getElementById('btn-chiqarish');
+    setLoading(btn, true);
     try {
-      if (type === 'insult') {
-        await DB.insultChiqarish({
-          kt_no: p.kt_no, viloyat: p.viloyat,
-          kelgan_sana: p.qabul_vaqt?.split('T')[0],
-          chiqish_sana: sana,
-          nihss_chiqish: parseInt(document.getElementById('ch-nihss')?.value)||null,
-          mrs_daraja: document.getElementById('ch-mrs')?.value,
-          natija: document.getElementById('ch-natija')?.value,
-          boshqa_shifo: document.getElementById('ch-boshqa')?.value,
-          reab_markazi: document.getElementById('ch-reab')?.value
-        });
-        await DB.insultUpdate(p.kt_no, { status: document.getElementById('ch-natija')?.value?.includes('Vafot')?'vafot':'chiqarildi' });
-      } else {
-        await DB.infarktChiqarish({
-          kt_no: p.kt_no,
-          chiqish_sana: sana,
-          chiqish_holat: document.getElementById('ch-holat')?.value,
-          yakuniy_diagnoz: document.getElementById('ch-diagnoz')?.value,
-          tavsiyalar: document.getElementById('ch-tavsiya')?.value
-        });
-        const holat = document.getElementById('ch-holat')?.value;
-        await DB.infarktUpdate(p.kt_no, { status: holat?.includes('Vafot')?'vafot':'chiqarildi' });
-      }
-      showToast('✅ Bemor chiqarildi', 'success');
-      Router.go('bemorlar');
-    } catch(err) { showToast('❌ ' + err.message, 'error'); }
-  },
-
-  chiqarishModal() { BemorKartaPage.switchTab(4); }
+      const dbMethod = BemorKartaPage._type === 'infarkt' ? DB.updateInfarktStatus : DB.updateInsultStatus;
+      await dbMethod(BemorKartaPage._patient.id, status, { xulosa, vafot_sababi: vafot_sabab });
+      showToast('Bemor muvaffaqiyatli chiqarildi', 'success');
+      setTimeout(() => Router.go('bemorlar'), 1500);
+    } catch(err) {
+      showToast(err.message, 'error');
+      setLoading(btn, false);
+    }
+  }
 };

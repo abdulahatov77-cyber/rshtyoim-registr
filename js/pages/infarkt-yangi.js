@@ -16,7 +16,7 @@ const InfarktYangiPage = {
     };
 
     document.getElementById('app').innerHTML = Components.renderLayout(
-      'infarkt-yangi', '🫀 Yangi Infarkt Bemori', 'Bemor qabul qilish formasi',
+      'infarkt-yangi', 'Yangi Infarkt Bemori', 'Bemor qabul qilish formasi',
       `<div id="infarkt-form-wrap"></div>`, user
     );
     Components.startClock();
@@ -26,58 +26,135 @@ const InfarktYangiPage = {
   renderStep() {
     const step = InfarktYangiPage._step;
     const wrap = document.getElementById('infarkt-form-wrap');
-    wrap.innerHTML = `
-      <div class="max-w-3xl mx-auto animate-fadein">
-        <!-- Progress -->
-        ${Components.stepProgress(InfarktYangiPage.STEPS, step)}
+    
+    const sectionIcons = ['building-2', 'activity', 'alert-triangle', 'pill', 'file-text'];
+    const sectionTitles = [
+      'Muassasa va bemor ma\'lumotlari',
+      'Klinik holat',
+      'Xavf omillari',
+      'Diagnoz va davolash',
+      'Qo\'shimcha ma\'lumotlar'
+    ];
 
-        <div class="card">
-          <div class="card-header">
-            <div>
-              <div class="card-title">${['🏥 Bo\'lim 1: Muassasa va bemor ma\'lumotlari',
-                '🩺 Bo\'lim 2: Klinik holat',
-                '⚠️ Bo\'lim 3: Xavf omillari',
-                '💊 Bo\'lim 4: Diagnoz va davolash',
-                '📝 Bo\'lim 5: Qo\'shimcha ma\'lumotlar'][step]}</div>
-              <div class="text-xs text-slate-400 mt-1">${step+1} / ${InfarktYangiPage.STEPS.length} bo'lim</div>
+    wrap.innerHTML = `
+      <div class="max-w-4xl mx-auto animate-fadein">
+        <!-- Progress -->
+        ${Components.renderSteps(InfarktYangiPage.STEPS, step)}
+
+        <div class="card border-t-4 border-t-[#EF4444] shadow-lg">
+          <div class="card-header bg-gray-50 border-b border-gray-100 flex items-center justify-between !mb-0 p-5">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 bg-red-100 text-[#EF4444] rounded-xl flex items-center justify-center">
+                ${icon(sectionIcons[step], 24)}
+              </div>
+              <div>
+                <h3 class="card-title !mb-0 text-gray-900">${sectionTitles[step]}</h3>
+                <div class="text-xs text-gray-500 font-medium mt-1">Qadam ${step+1} / ${InfarktYangiPage.STEPS.length}</div>
+              </div>
             </div>
           </div>
-          <div class="card-body" id="step-body">
+          
+          <div class="card-body p-6" id="step-body">
             ${InfarktYangiPage['renderStep' + step]()}
           </div>
-          <div class="modal-footer justify-between">
-            <button class="btn btn-ghost" onclick="InfarktYangiPage.prevStep()" ${step===0?'disabled':''}>← Orqaga</button>
-            <div class="flex gap-2">
-              <button class="btn btn-ghost btn-sm" onclick="Router.go('dashboard')">Bekor qilish</button>
+          
+          <div class="p-5 border-t border-gray-100 bg-gray-50 rounded-b-xl flex justify-between items-center">
+            <button class="btn btn-secondary flex items-center gap-2" onclick="InfarktYangiPage.prevStep()" ${step===0?'disabled':''}>
+              ${icon('arrow-left', 16)} Orqaga
+            </button>
+            <div class="flex gap-3">
+              <button class="btn btn-secondary hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-colors" onclick="Router.go('dashboard')">Bekor qilish</button>
               ${step < InfarktYangiPage.STEPS.length-1
-                ? `<button class="btn btn-primary" onclick="InfarktYangiPage.nextStep()">Keyingi →</button>`
-                : `<button class="btn btn-success btn-lg" id="save-btn" onclick="InfarktYangiPage.save()">💾 Saqlash</button>`
+                ? `<button class="btn btn-infarkt flex items-center gap-2 px-6" onclick="InfarktYangiPage.nextStep()">Keyingi ${icon('arrow-right', 16)}</button>`
+                : `<button class="btn btn-success flex items-center gap-2 px-6 shadow-md" id="save-btn" onclick="InfarktYangiPage.save()">${icon('save', 16)} Saqlash</button>`
               }
             </div>
           </div>
         </div>
       </div>
     `;
+    initIcons();
+  },
+
+  field(id, label, inputHtml, required = false, hint = '') {
+    return `
+      <div class="form-group">
+        <label class="form-label ${required ? 'required' : ''}" for="${id}">${label}</label>
+        ${inputHtml}
+        ${hint ? `<div class="text-xs text-gray-400 mt-1">${hint}</div>` : ''}
+        <div class="form-error-msg hidden" id="err-${id}"></div>
+      </div>
+    `;
+  },
+
+  selectOptions(arr, selected) {
+    return `<option value="">Tanlang...</option>` + arr.map(a => `<option value="${a}" ${selected===a?'selected':''}>${a}</option>`).join('');
+  },
+
+  checkboxGroup(name, arr, selectedArr = []) {
+    return `
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
+        ${arr.map(item => {
+          const isSel = selectedArr.includes(item);
+          return `
+            <label class="flex items-center gap-3 p-3 border rounded-xl cursor-pointer transition-all ${isSel ? 'border-red-500 bg-red-50 text-red-700 font-medium shadow-sm' : 'border-gray-200 hover:border-red-300 hover:bg-gray-50 text-gray-600'}">
+              <input type="checkbox" name="${name}" value="${item}" class="hidden" ${isSel?'checked':''} onchange="InfarktYangiPage.toggleCheckbox(this)">
+              <div class="w-5 h-5 rounded border flex items-center justify-center flex-shrink-0 transition-colors ${isSel ? 'bg-red-500 border-red-500 text-white' : 'border-gray-300 bg-white'}">
+                ${isSel ? icon('check', 14) : ''}
+              </div>
+              <span class="text-sm">${item}</span>
+            </label>
+          `;
+        }).join('')}
+      </div>
+    `;
+  },
+
+  toggleCheckbox(el) {
+    const parent = el.closest('label');
+    const isSel = el.checked;
+    parent.className = \`flex items-center gap-3 p-3 border rounded-xl cursor-pointer transition-all \${isSel ? 'border-red-500 bg-red-50 text-red-700 font-medium shadow-sm' : 'border-gray-200 hover:border-red-300 hover:bg-gray-50 text-gray-600'}\`;
+    const box = parent.querySelector('div');
+    box.className = \`w-5 h-5 rounded border flex items-center justify-center flex-shrink-0 transition-colors \${isSel ? 'bg-red-500 border-red-500 text-white' : 'border-gray-300 bg-white'}\`;
+    box.innerHTML = isSel ? icon('check', 14) : '';
   },
 
   renderStep0() {
     const d = InfarktYangiPage._data;
     return `
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6">
-        ${Components.field('viloyat','Viloyat',`<select id="viloyat" class="form-select" ${InfarktYangiPage._profile?.role !== 'admin' ? 'disabled' : ''}><option value="">Tanlang...</option>
+        ${this.field('viloyat','Viloyat',`<select id="viloyat" class="form-select" ${InfarktYangiPage._profile?.role !== 'admin' ? 'disabled' : ''}><option value="">Tanlang...</option>
           ${APP_CONFIG.VILOYATLAR.map(v=>`<option value="${v}" ${d.viloyat===v?'selected':''}>${v}</option>`).join('')}</select>`,true)}
-        ${Components.field('muassasa','Muassasa to\'liq nomi',`<input id="muassasa" class="form-input" value="${d.muassasa||''}" placeholder="Muassasa nomini kiriting"/>`,true)}
-        ${Components.field('kt_no','Kasallik tarixi №',`<input id="kt_no" class="form-input" value="${d.kt_no||''}" placeholder="KT-YYYYMMDD-0000"/>`,true,'Avtomatik yaratiladi, o\'zgartirishingiz mumkin')}
-        ${Components.field('qabul_vaqt','Qabul qilgan sana va vaqt',`<input id="qabul_vaqt" type="datetime-local" class="form-input" value="${d.qabul_vaqt||''}"/>`,true)}
-        ${Components.field('murojaat_yoli','Murojaat yo\'li',`<select id="murojaat_yoli" class="form-select">
-          ${Components.selectOptions(APP_CONFIG.MUROJAAT_YOLLARI, d.murojaat_yoli||'')}</select>`,true)}
-        ${Components.field('yuborgan_muassasa','Yuborgan muassasa nomi',`<input id="yuborgan_muassasa" class="form-input" value="${d.yuborgan_muassasa||''}" placeholder="Agar boshqa muassasadan bo'lsa"/>`)}
-        ${Components.field('fio','Bemor F.I.O',`<input id="fio" class="form-input" value="${d.fio||''}" placeholder="Familiya Ism Otasining ismi"/>`,true)}
-        ${Components.field('tugilgan_yil','Tug\'ilgan yili',`<input id="tugilgan_yil" class="form-input" value="${d.tugilgan_yil||''}" placeholder="1975" type="text" maxlength="4"/>`,true)}
-        ${Components.field('jins','Jinsi',`<div class="radio-group mt-1">
-          <label class="radio-item ${d.jins==='Erkak'?'selected':''}"><input type="radio" name="jins" value="Erkak" ${d.jins==='Erkak'?'checked':''} onchange="Components.toggleRadio(this)"> 👨 Erkak</label>
-          <label class="radio-item ${d.jins==='Ayol'?'selected':''}"><input type="radio" name="jins" value="Ayol" ${d.jins==='Ayol'?'checked':''} onchange="Components.toggleRadio(this)"> 👩 Ayol</label>
-        </div>`,true)}
+        ${this.field('muassasa','Muassasa to\'liq nomi',`<input id="muassasa" class="form-input" value="${d.muassasa||''}" placeholder="Muassasa nomini kiriting"/>`,true)}
+        
+        <div class="col-span-1 sm:col-span-2 my-2 border-t border-dashed border-gray-200"></div>
+
+        ${this.field('kt_no','Kasallik tarixi №',`<input id="kt_no" class="form-input font-mono bg-gray-50" value="${d.kt_no||''}" placeholder="KT-YYYYMMDD-0000"/>`,true,'Avtomatik yaratiladi, o\'zgartirishingiz mumkin')}
+        ${this.field('qabul_vaqt','Qabul qilgan sana va vaqt',`<input id="qabul_vaqt" type="datetime-local" class="form-input" value="${d.qabul_vaqt||''}"/>`,true)}
+        
+        <div class="col-span-1 sm:col-span-2 my-2 border-t border-dashed border-gray-200"></div>
+
+        ${this.field('murojaat_yoli','Murojaat yo\'li',`<select id="murojaat_yoli" class="form-select">
+          ${this.selectOptions(APP_CONFIG.MUROJAAT_YOLLARI, d.murojaat_yoli||'')}</select>`,true)}
+        ${this.field('yuborgan_muassasa','Yuborgan muassasa nomi',`<input id="yuborgan_muassasa" class="form-input" value="${d.yuborgan_muassasa||''}" placeholder="Boshqa muassasadan bo'lsa kiriting"/>`)}
+        
+        <div class="col-span-1 sm:col-span-2 my-2 border-t border-dashed border-gray-200"></div>
+
+        ${this.field('fio','Bemor F.I.O',`<input id="fio" class="form-input" value="${d.fio||''}" placeholder="Familiya Ism Otasining ismi"/>`,true)}
+        ${this.field('tugilgan_yil','Tug\'ilgan yili',`<input id="tugilgan_yil" class="form-input" value="${d.tugilgan_yil||''}" placeholder="Masalan: 1975" type="number" maxlength="4"/>`,true)}
+        
+        ${this.field('jins','Jinsi',`
+          <div class="flex gap-4 mt-1">
+            <label class="flex-1 flex items-center gap-3 p-3 border rounded-xl cursor-pointer transition-colors ${d.jins==='Erkak'?'border-blue-500 bg-blue-50 text-blue-700':'border-gray-200 hover:bg-gray-50'}">
+              <input type="radio" name="jins" value="Erkak" class="w-4 h-4 text-blue-600" ${d.jins==='Erkak'?'checked':''} onchange="InfarktYangiPage.saveCurrentStep()"> 
+              <span class="font-medium">Erkak</span>
+            </label>
+            <label class="flex-1 flex items-center gap-3 p-3 border rounded-xl cursor-pointer transition-colors ${d.jins==='Ayol'?'border-pink-500 bg-pink-50 text-pink-700':'border-gray-200 hover:bg-gray-50'}">
+              <input type="radio" name="jins" value="Ayol" class="w-4 h-4 text-pink-600" ${d.jins==='Ayol'?'checked':''} onchange="InfarktYangiPage.saveCurrentStep()"> 
+              <span class="font-medium">Ayol</span>
+            </label>
+          </div>
+        `,true)}
       </div>
     `;
   },
@@ -86,18 +163,22 @@ const InfarktYangiPage = {
     const d = InfarktYangiPage._data;
     return `
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6">
-        ${Components.field('simptom_vaqt','Simptomlar qachon boshlangan?',`<select id="simptom_vaqt" class="form-select">
-          ${Components.selectOptions(APP_CONFIG.SIMPTOM_VAQTLAR, d.simptom_vaqt||'')}</select>`,true)}
-        ${Components.field('asosiy_simptom','Asosiy simptom',`<input id="asosiy_simptom" class="form-input" value="${d.asosiy_simptom||''}" placeholder="Ko'krak og'rig'i, nafas qisilishi..."/>`)}
-        ${Components.field('qon_bosimi','Qon bosimi (qabul paytida)',`<input id="qon_bosimi" class="form-input" value="${d.qon_bosimi||''}" placeholder="140/90 mmHg"/>`,true)}
+        ${this.field('simptom_vaqt','Simptomlar qachon boshlangan?',`<select id="simptom_vaqt" class="form-select">
+          ${this.selectOptions(APP_CONFIG.SIMPTOM_VAQTLAR, d.simptom_vaqt||'')}</select>`,true)}
+        ${this.field('asosiy_simptom','Asosiy simptom',`<input id="asosiy_simptom" class="form-input" value="${d.asosiy_simptom||''}" placeholder="Masalan: Ko'krak og'rig'i, nafas qisilishi..."/>`)}
+        ${this.field('qon_bosimi','Qon bosimi (qabul paytida)',`<input id="qon_bosimi" class="form-input font-mono" value="${d.qon_bosimi||''}" placeholder="140/90"/>`,true)}
       </div>
-      ${Components.field('ekg_natija','EKG natijasi (bir nechta tanlov mumkin)',
-        Components.checkboxGroup('ekg_natija', APP_CONFIG.EKG_NATIJALARI, d.ekg_natija||[]))}
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 mt-2">
-        ${Components.field('troponin','Troponin natijasi',`<select id="troponin" class="form-select">
-          ${Components.selectOptions(['Yuqori','Normal','O\'lchilmagan'], d.troponin||'')}</select>`)}
-        ${Components.field('kkfmb','KFK-MB natijasi',`<select id="kkfmb" class="form-select">
-          ${Components.selectOptions(['Yuqori','Normal','O\'lchilmagan'], d.kkfmb||'')}</select>`)}
+      
+      <div class="mt-4 border-t border-dashed border-gray-200 pt-4">
+        ${this.field('ekg_natija','EKG natijasi (bir nechta tanlash mumkin)',
+          this.checkboxGroup('ekg_natija', APP_CONFIG.EKG_NATIJALARI, d.ekg_natija||[]))}
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 mt-6 border-t border-dashed border-gray-200 pt-4">
+        ${this.field('troponin','Troponin natijasi',`<select id="troponin" class="form-select">
+          ${this.selectOptions(['Yuqori','Normal','O\'lchilmagan'], d.troponin||'')}</select>`)}
+        ${this.field('kkfmb','KFK-MB natijasi',`<select id="kkfmb" class="form-select">
+          ${this.selectOptions(['Yuqori','Normal','O\'lchilmagan'], d.kkfmb||'')}</select>`)}
       </div>
     `;
   },
@@ -105,22 +186,33 @@ const InfarktYangiPage = {
   renderStep2() {
     const d = InfarktYangiPage._data;
     return `
-      ${Components.field('xavf_omil','Xavf omillari (bir nechta tanlash mumkin)',
-        Components.checkboxGroup('xavf_omil', APP_CONFIG.XAVF_OMILLAR_INFARKT, d.xavf_omil||[]),true)}
+      <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6 flex gap-3 text-amber-800">
+        ${icon('info', 24)}
+        <div>Bemor anamnezida mavjud bo'lgan barcha xavf omillarini belgilang. Bir nechta tanlash mumkin.</div>
+      </div>
+      ${this.checkboxGroup('xavf_omillari', APP_CONFIG.XAVF_OMILLARI, d.xavf_omillari||[])}
     `;
   },
 
   renderStep3() {
     const d = InfarktYangiPage._data;
     return `
-      ${Components.field('infarkt_turi','Infarkt turi',`<select id="infarkt_turi" class="form-select">
-        ${Components.selectOptions(APP_CONFIG.INFARKT_TURLARI, d.infarkt_turi||'')}</select>`,true)}
-      ${Components.field('killip','Killip klassifikatsiyasi',`<select id="killip" class="form-select">
-        ${Components.selectOptions(APP_CONFIG.KILLIP_KLASSLAR, d.killip||'')}</select>`,true)}
-      ${Components.field('muolaja_turi','Bajarilgan muolaja turi',`<select id="muolaja_turi" class="form-select">
-        ${Components.selectOptions(APP_CONFIG.INFARKT_MUOLAJALARI, d.muolaja_turi||'')}</select>`,true)}
-      ${Components.field('angio_natija','Diagnostik KAG natijasi',`<textarea id="angio_natija" class="form-textarea" placeholder="Angiografiya natijasi...">${d.angio_natija||''}</textarea>`)}
-      ${Components.field('otkazilgan_muassasa','O\'tkazilgan muassasa nomi',`<input id="otkazilgan_muassasa" class="form-input" value="${d.otkazilgan_muassasa||''}" placeholder="Agar o'tkazilgan bo'lsa"/>`)}
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6">
+        ${this.field('infarkt_turi','Infarkt turi',`<select id="infarkt_turi" class="form-select border-red-300 focus:border-red-500">
+          ${this.selectOptions(APP_CONFIG.INFARKT_TURLARI, d.infarkt_turi||'')}</select>`,true)}
+        ${this.field('killip','Killip klassifikatsiyasi',`<select id="killip" class="form-select">
+          ${this.selectOptions(APP_CONFIG.KILLIP, d.killip||'')}</select>`,true)}
+      </div>
+      
+      <div class="mt-4 border-t border-dashed border-gray-200 pt-4">
+        ${this.field('muolaja_turi','Bajarilgan muolaja turi',`<select id="muolaja_turi" class="form-select border-blue-300 focus:border-blue-500">
+          ${this.selectOptions(APP_CONFIG.INFARKT_MUOLAJALARI, d.muolaja_turi||'')}</select>`,true)}
+      </div>
+      
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 mt-4">
+        ${this.field('tlt_vaqt','TLT qilingan bo\'lsa (vaqti)',`<input id="tlt_vaqt" type="datetime-local" class="form-input" value="${d.tlt_vaqt||''}"/>`)}
+        ${this.field('pci_vaqt','PCI (Stentlash) qilingan bo\'lsa (vaqti)',`<input id="pci_vaqt" type="datetime-local" class="form-input" value="${d.pci_vaqt||''}"/>`)}
+      </div>
     `;
   },
 
@@ -128,124 +220,91 @@ const InfarktYangiPage = {
     const d = InfarktYangiPage._data;
     return `
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6">
-        ${Components.field('shifokor_fio','Formani to\'ldirgan shifokor F.I.O',`<input id="shifokor_fio" class="form-input" value="${d.shifokor_fio||''}" placeholder="F.I.O"/>`)}
-        ${Components.field('aha_bali','AHA savolnomasi bali',`<input id="aha_bali" type="number" class="form-input" value="${d.aha_bali||''}" min="0" max="100" placeholder="0"/>`)}
+        ${this.field('asoratlar','Kuzatilgan asoratlar',`<input id="asoratlar" class="form-input" value="${d.asoratlar||''}" placeholder="Kardiogen shok, aritmiya..."/>`)}
+        ${this.field('status','Bemorni joriy holati',`<select id="status" class="form-select font-bold">
+          ${this.selectOptions(['active','chiqarildi','vafot','otkazildi'], d.status||'active')}</select>`,true)}
       </div>
-      <!-- Preview -->
-      <div class="mt-4 p-4 bg-blue-50 border border-blue-100 rounded-xl">
-        <p class="text-xs font-bold text-blue-700 mb-2">📋 QABUL MA'LUMOTLARI XULOSASI</p>
-        <div class="grid grid-cols-2 gap-2 text-xs text-slate-600" id="preview-area">
-          <div><b>Viloyat:</b> ${InfarktYangiPage._data.viloyat||'—'}</div>
-          <div><b>K/T No:</b> ${InfarktYangiPage._data.kt_no||'—'}</div>
-          <div><b>Bemor:</b> ${InfarktYangiPage._data.fio||'—'}</div>
-          <div><b>Turi:</b> ${InfarktYangiPage._data.infarkt_turi||'—'}</div>
-          <div><b>Killip:</b> ${InfarktYangiPage._data.killip||'—'}</div>
-          <div><b>Muolaja:</b> ${InfarktYangiPage._data.muolaja_turi||'—'}</div>
-        </div>
+      <div class="mt-4">
+        ${this.field('qoshimcha','Qo\'shimcha izoh yoki eslatma',`<textarea id="qoshimcha" class="form-textarea" placeholder="Boshqa muhim ma'lumotlar...">${d.qoshimcha||''}</textarea>`)}
       </div>
     `;
   },
 
-  collectStep(step) {
-    const d = InfarktYangiPage._data;
-    if (step === 0) {
-      if (InfarktYangiPage._profile?.role === 'admin') {
-        d.viloyat = document.getElementById('viloyat')?.value;
+  saveCurrentStep() {
+    const wrap = document.getElementById('step-body');
+    if (!wrap) return;
+    
+    ['viloyat','muassasa','kt_no','qabul_vaqt','murojaat_yoli','yuborgan_muassasa','fio','tugilgan_yil','simptom_vaqt','asosiy_simptom','qon_bosimi','troponin','kkfmb','infarkt_turi','killip','muolaja_turi','tlt_vaqt','pci_vaqt','asoratlar','status','qoshimcha']
+    .forEach(id => {
+      const el = document.getElementById(id);
+      if (el) InfarktYangiPage._data[id] = el.value;
+    });
+
+    const jinsEl = document.querySelector('input[name="jins"]:checked');
+    if (jinsEl) InfarktYangiPage._data.jins = jinsEl.value;
+
+    ['ekg_natija', 'xavf_omillari'].forEach(name => {
+      const els = document.querySelectorAll(\`input[name="\${name}"]:checked\`);
+      if (els.length > 0) InfarktYangiPage._data[name] = Array.from(els).map(e=>e.value);
+    });
+  },
+
+  validateStep() {
+    this.saveCurrentStep();
+    document.querySelectorAll('.form-input, .form-select, .form-textarea').forEach(el => el.classList.remove('border-red-500'));
+    document.querySelectorAll('.form-error-msg').forEach(el => { el.textContent=''; el.classList.add('hidden'); });
+
+    let required = [];
+    if (this._step === 0) required = ['viloyat','muassasa','kt_no','qabul_vaqt','murojaat_yoli','fio','tugilgan_yil','jins'];
+    if (this._step === 1) required = ['simptom_vaqt','qon_bosimi'];
+    if (this._step === 3) required = ['infarkt_turi','killip','muolaja_turi'];
+    if (this._step === 4) required = ['status'];
+
+    const errs = Utils.validate(this._data, required);
+    let valid = true;
+    for (const [key, msg] of Object.entries(errs)) {
+      valid = false;
+      const el = document.getElementById(key);
+      if (el) {
+        el.classList.add('border-red-500');
+        el.focus();
+      } else if (key === 'jins') {
+        showToast('Jinsini tanlang', 'warning');
       }
-      d.muassasa = document.getElementById('muassasa')?.value;
-      d.kt_no = document.getElementById('kt_no')?.value;
-      d.qabul_vaqt = document.getElementById('qabul_vaqt')?.value;
-      d.murojaat_yoli = document.getElementById('murojaat_yoli')?.value;
-      d.yuborgan_muassasa = document.getElementById('yuborgan_muassasa')?.value;
-      d.fio = document.getElementById('fio')?.value;
-      d.tugilgan_yil = document.getElementById('tugilgan_yil')?.value;
-      d.jins = Components.getRadio('jins');
-    } else if (step === 1) {
-      d.simptom_vaqt = document.getElementById('simptom_vaqt')?.value;
-      d.asosiy_simptom = document.getElementById('asosiy_simptom')?.value;
-      d.qon_bosimi = document.getElementById('qon_bosimi')?.value;
-      d.ekg_natija = Components.getChecked('ekg_natija');
-      d.troponin = document.getElementById('troponin')?.value;
-      d.kkfmb = document.getElementById('kkfmb')?.value;
-    } else if (step === 2) {
-      d.xavf_omil = Components.getChecked('xavf_omil');
-    } else if (step === 3) {
-      d.infarkt_turi = document.getElementById('infarkt_turi')?.value;
-      d.killip = document.getElementById('killip')?.value;
-      d.muolaja_turi = document.getElementById('muolaja_turi')?.value;
-      d.angio_natija = document.getElementById('angio_natija')?.value;
-      d.otkazilgan_muassasa = document.getElementById('otkazilgan_muassasa')?.value;
-    } else if (step === 4) {
-      d.shifokor_fio = document.getElementById('shifokor_fio')?.value;
-      d.aha_bali = parseInt(document.getElementById('aha_bali')?.value) || null;
+      const errEl = document.getElementById('err-'+key);
+      if (errEl) {
+        errEl.textContent = msg;
+        errEl.classList.remove('hidden');
+      }
     }
-  },
-
-  validateStep(step) {
-    const d = InfarktYangiPage._data;
-    Components.clearErrors();
-    const errs = {};
-    if (step === 0) {
-      if (!d.viloyat) errs.viloyat = 'Viloyatni tanlang';
-      if (!d.muassasa) errs.muassasa = 'Muassasa nomini kiriting';
-      if (!d.kt_no) errs.kt_no = 'K/T raqamini kiriting';
-      if (!d.qabul_vaqt) errs.qabul_vaqt = 'Qabul vaqtini kiriting';
-      if (!d.fio) errs.fio = 'Bemor F.I.O ni kiriting';
-      if (!d.tugilgan_yil) errs.tugilgan_yil = 'Tug\'ilgan yilni kiriting';
-      if (!d.jins) errs.jins = 'Jinsni tanlang';
-      if (!d.murojaat_yoli) errs.murojaat_yoli = 'Murojaat yo\'lini tanlang';
-    } else if (step === 1) {
-      if (!d.simptom_vaqt) errs.simptom_vaqt = 'Simptom vaqtini tanlang';
-      if (!d.qon_bosimi) errs.qon_bosimi = 'Qon bosimini kiriting';
-    } else if (step === 3) {
-      if (!d.infarkt_turi) errs.infarkt_turi = 'Infarkt turini tanlang';
-      if (!d.killip) errs.killip = 'Killip klassini tanlang';
-      if (!d.muolaja_turi) errs.muolaja_turi = 'Muolaja turini tanlang';
-    }
-    Object.entries(errs).forEach(([k, v]) => Components.setError(k, v));
-    return Object.keys(errs).length === 0;
-  },
-
-  nextStep() {
-    InfarktYangiPage.collectStep(InfarktYangiPage._step);
-    if (!InfarktYangiPage.validateStep(InfarktYangiPage._step)) {
-      showToast('Majburiy maydonlarni to\'ldiring', 'error'); return;
-    }
-    InfarktYangiPage._step++;
-    InfarktYangiPage.renderStep();
-    window.scrollTo(0, 0);
+    return valid;
   },
 
   prevStep() {
-    InfarktYangiPage.collectStep(InfarktYangiPage._step);
-    if (InfarktYangiPage._step > 0) { InfarktYangiPage._step--; InfarktYangiPage.renderStep(); window.scrollTo(0,0); }
+    if (this._step > 0) {
+      this.saveCurrentStep();
+      this._step--;
+      this.renderStep();
+    }
+  },
+
+  nextStep() {
+    if (this.validateStep()) {
+      this._step++;
+      this.renderStep();
+    }
   },
 
   async save() {
-    InfarktYangiPage.collectStep(4);
-    const d = InfarktYangiPage._data;
+    if (!this.validateStep()) return;
     const btn = document.getElementById('save-btn');
-    setLoading(btn, true, 'Saqlanmoqda...');
+    setLoading(btn, true);
     try {
-      const result = await DB.infarktQabul({
-        viloyat: d.viloyat, muassasa: d.muassasa, kt_no: d.kt_no,
-        qabul_vaqt: d.qabul_vaqt, murojaat_yoli: d.murojaat_yoli,
-        yuborgan_muassasa: d.yuborgan_muassasa, fio: d.fio,
-        tugilgan_yil: d.tugilgan_yil, jins: d.jins,
-        simptom_vaqt: d.simptom_vaqt, asosiy_simptom: d.asosiy_simptom,
-        qon_bosimi: d.qon_bosimi, ekg_natija: d.ekg_natija,
-        troponin: d.troponin, kkfmb: d.kkfmb, xavf_omil: d.xavf_omil,
-        infarkt_turi: d.infarkt_turi, killip: d.killip,
-        muolaja_turi: d.muolaja_turi, angio_natija: d.angio_natija,
-        otkazilgan_muassasa: d.otkazilgan_muassasa,
-        shifokor_fio: d.shifokor_fio, aha_bali: d.aha_bali,
-        status: 'active'
-      });
-      await Telegram.notify(result, 'infarkt');
-      showToast('✅ Bemor muvaffaqiyatli saqlandi!', 'success');
-      Router.go('bemor-karta', { kt_no: result.kt_no, type: 'infarkt' });
-    } catch (err) {
-      showToast('❌ Xato: ' + err.message, 'error');
+      await DB.addInfarkt(this._data);
+      showToast('🎉 Bemor muvaffaqiyatli saqlandi!', 'success');
+      setTimeout(() => Router.go('dashboard'), 1500);
+    } catch(err) {
+      showToast(err.message, 'error');
       setLoading(btn, false);
     }
   }
