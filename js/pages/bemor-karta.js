@@ -11,7 +11,7 @@ const BemorKartaPage = {
     BemorKartaPage._activeTab = 0;
     const user = await Auth.getUser();
     document.getElementById('app').innerHTML = Components.renderLayout(
-      'bemorlar', 'Bemor kartasi', \`K/T No: \${kt_no}\`,
+      'bemorlar', 'Bemor kartasi', `K/T No: ${kt_no}`,
       `<div id="karta-inner" class="animate-fadein"><div class="flex justify-center py-20"><div class="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div></div></div>`,
       user
     );
