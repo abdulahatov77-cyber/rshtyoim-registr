@@ -54,7 +54,7 @@ const Components = {
   _clockInterval: null,
 
   // ── Sidebar ──
-  renderSidebar(activePage, user) {
+  renderSidebar(activePage, user, isAdmin = false) {
     const email = user?.email || '';
     const initials = email.slice(0, 2).toUpperCase();
     const navItems = [
@@ -92,6 +92,13 @@ const Components = {
           <a class="nav-item ${activePage==='hisobot'?'active':''}" onclick="Router.go('hisobot'); closeSidebar()">
             ${icon('bar-chart-2', 17, 'nav-icon')} Hisobotlar
           </a>
+
+          ${isAdmin ? `
+          <div class="sidebar-section" style="margin-top:8px">Boshqaruv</div>
+          <a class="nav-item ${activePage==='admin'?'active':''}" onclick="Router.go('admin'); closeSidebar()"
+            style="${activePage==='admin'?'':''}background:${activePage==='admin'?'':'rgba(139,92,246,0.1)'};border-color:${activePage==='admin'?'':'rgba(139,92,246,0.2)'};color:${activePage==='admin'?'':'#c4b5fd'}">
+            ${icon('shield', 17, 'nav-icon')} Admin Panel
+          </a>` : ''}
         </nav>
 
         <div class="sidebar-footer">
@@ -99,7 +106,7 @@ const Components = {
             <div class="sidebar-avatar">${initials}</div>
             <div style="flex:1;overflow:hidden">
               <div class="sidebar-user-name truncate">${email}</div>
-              <div class="sidebar-user-role">Shifokor</div>
+              <div class="sidebar-user-role">${isAdmin ? '👑 Admin' : 'Shifokor'}</div>
             </div>
             <button class="topbar-btn" onclick="App.logout()" title="Chiqish" style="width:30px;height:30px;border-radius:8px">
               ${icon('log-out', 15)}
@@ -133,10 +140,11 @@ const Components = {
   },
 
   // ── Full layout ──
-  renderLayout(activePage, title, subtitle, content, user) {
+  async renderLayout(activePage, title, subtitle, content, user) {
+    const isAdmin = await Profile.isAdmin();
     return `
       <div class="app-layout">
-        ${Components.renderSidebar(activePage, user)}
+        ${Components.renderSidebar(activePage, user, isAdmin)}
         <div class="main-content">
           ${Components.renderTopbar(title, subtitle)}
           <div class="page-body">${content}</div>

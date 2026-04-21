@@ -61,6 +61,73 @@ const Auth = {
   }
 };
 
+// ==================== PROFILE ====================
+const Profile = {
+  _cache: null,
+
+  async get() {
+    if (this._cache) return this._cache;
+    const user = await Auth.getUser();
+    if (!user) return null;
+    const { data, error } = await getSupabase()
+      .from('profiles').select('*').eq('id', user.id).single();
+    if (error) {
+      console.warn('Profile yuklashda xato:', error.message);
+      return null;
+    }
+    this._cache = data;
+    return data;
+  },
+
+  clearCache() { this._cache = null; },
+
+  async isAdmin() {
+    const p = await this.get();
+    return p?.role === 'admin';
+  },
+
+  async getViloyat() {
+    const p = await this.get();
+    return p?.viloyat || null;
+  },
+
+  async update(updates) {
+    const user = await Auth.getUser();
+    const { data, error } = await getSupabase()
+      .from('profiles').update({ ...updates, updated_at: new Date().toISOString() })
+      .eq('id', user.id).select().single();
+    if (error) throw error;
+    this._cache = data;
+    return data;
+  },
+
+  // Admin: barcha profillarni olish
+  async listAll() {
+    const { data, error } = await getSupabase()
+      .from('profiles').select('*').order('created_at', { ascending: false });
+    if (error) throw error;
+    return data || [];
+  },
+
+  // Admin: rol berish
+  async setRole(userId, role) {
+    const { data, error } = await getSupabase()
+      .from('profiles').update({ role, updated_at: new Date().toISOString() })
+      .eq('id', userId).select().single();
+    if (error) throw error;
+    return data;
+  },
+
+  // Admin: viloyat berish
+  async setViloyat(userId, viloyat) {
+    const { data, error } = await getSupabase()
+      .from('profiles').update({ viloyat, updated_at: new Date().toISOString() })
+      .eq('id', userId).select().single();
+    if (error) throw error;
+    return data;
+  }
+};
+
 // ==================== DATABASE ====================
 const DB = {
   // Infarkt CRUD

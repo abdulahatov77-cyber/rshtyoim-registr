@@ -31,6 +31,7 @@ const App = {
   async logout() {
     if (!confirm('Tizimdan chiqmoqchimisiz?')) return;
     try {
+      Profile.clearCache();
       await Auth.signOut();
       showToast('Tizimdan chiqdingiz', 'info');
       Router.go('login');
