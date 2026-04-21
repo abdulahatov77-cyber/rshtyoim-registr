@@ -15,7 +15,9 @@ const HisobotPage = {
   renderUI() {
     const today = new Date().toISOString().split('T')[0];
     const monthAgo = new Date(Date.now()-30*864e5).toISOString().split('T')[0];
-    document.getElementById('hisobot-inner').innerHTML = `
+    const inner = document.getElementById('hisobot-inner');
+    if (!inner) return;
+    inner.innerHTML = `
       <!-- Filter -->
       <div class="card mb-4">
         <div class="card-body">
@@ -73,6 +75,7 @@ const HisobotPage = {
     const to = document.getElementById('h-to')?.value;
     if (!from||!to) { showToast('Sana oralig\'ini tanlang','warning'); return; }
     const el = document.getElementById('h-results');
+    if (!el) return;
     el.innerHTML = `<div class="flex justify-center py-12"><div class="spinner" style="width:32px;height:32px"></div></div>`;
     try {
       const filters = { from: from+'T00:00:00', to: to+'T23:59:59' };
@@ -83,7 +86,7 @@ const HisobotPage = {
       HisobotPage._lastData = { infs, ins, from, to };
       HisobotPage.renderReport(infs, ins, from, to);
     } catch(err) {
-      el.innerHTML = `<div class="card p-8 text-center text-red-500">${err.message}</div>`;
+      if (el) el.innerHTML = `<div class="card p-8 text-center text-red-500">${err.message}</div>`;
     }
   },
 
@@ -108,6 +111,7 @@ const HisobotPage = {
         <span class="badge ${cls} font-bold">${val}</span>
       </div>`;
 
+    if (!el) return;
     el.innerHTML = `
       <!-- Summary -->
       <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">

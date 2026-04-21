@@ -27,18 +27,22 @@ const DashboardPage = {
       ]);
       DashboardPage.renderContent(stats, trend, recent, viloyat);
     } catch (err) {
-      document.getElementById('dashboard-inner').innerHTML = `
-        <div class="card p-8 text-center">
-          <div class="text-4xl mb-3">⚠️</div>
-          <p class="text-slate-600 font-semibold">Ma'lumotlarni yuklashda xato</p>
-          <p class="text-slate-400 text-sm mt-1">${err.message}</p>
-          <button class="btn btn-primary mt-4" onclick="DashboardPage.loadData()">Qayta urinish</button>
-        </div>`;
+      const inner = document.getElementById('dashboard-inner');
+      if (inner) {
+        inner.innerHTML = `
+          <div class="card p-8 text-center">
+            <div class="text-4xl mb-3">⚠️</div>
+            <p class="text-slate-600 font-semibold">Ma'lumotlarni yuklashda xato</p>
+            <p class="text-slate-400 text-sm mt-1">${err.message}</p>
+            <button class="btn btn-primary mt-4" onclick="DashboardPage.loadData()">Qayta urinish</button>
+          </div>`;
+      }
     }
   },
 
   renderContent(stats, trend, recent, viloyat) {
     const inner = document.getElementById('dashboard-inner');
+    if (!inner) return;
     inner.innerHTML = `
       <!-- Header Banner -->
       <div class="dashboard-header mb-6">

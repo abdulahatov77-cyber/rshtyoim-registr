@@ -15,7 +15,9 @@ const BemorlarPage = {
 
   renderFilters() {
     const f = BemorlarPage._filters;
-    document.getElementById('bemorlar-inner').innerHTML = `
+    const inner = document.getElementById('bemorlar-inner');
+    if (!inner) return;
+    inner.innerHTML = `
       <!-- Filter Card -->
       <div class="card mb-4">
         <div class="card-body">
@@ -104,7 +106,10 @@ const BemorlarPage = {
       BemorlarPage._allData = combined;
       BemorlarPage.renderTable(combined);
     } catch(err) {
-      document.getElementById('bl-table-wrap').innerHTML = `<div class="p-8 text-center text-red-500">${err.message}</div>`;
+      const wrap = document.getElementById('bl-table-wrap');
+      if (wrap) {
+        wrap.innerHTML = `<div class="p-8 text-center text-red-500">${err.message}</div>`;
+      }
     }
   },
 

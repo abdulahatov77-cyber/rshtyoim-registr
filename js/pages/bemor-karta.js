@@ -21,13 +21,17 @@ const BemorKartaPage = {
       BemorKartaPage._patient = patient;
       BemorKartaPage.renderContent(patient, type);
     } catch(err) {
-      document.getElementById('karta-inner').innerHTML = `<div class="card p-8 text-center"><p class="text-red-500">${err.message}</p><button class="btn btn-primary mt-4" onclick="Router.go('bemorlar')">Orqaga</button></div>`;
+      const inner = document.getElementById('karta-inner');
+      if (inner) {
+        inner.innerHTML = `<div class="card p-8 text-center"><p class="text-red-500">${err.message}</p><button class="btn btn-primary mt-4" onclick="Router.go('bemorlar')">Orqaga</button></div>`;
+      }
     }
   },
 
   renderContent(p, type) {
     const age = Utils.calculateAge(p.tugilgan_yil);
     const inner = document.getElementById('karta-inner');
+    if (!inner) return;
     inner.innerHTML = `
       <!-- Header -->
       <div class="card mb-4" style="background:linear-gradient(135deg,${type==='infarkt'?'#1e3a8a,#1d4ed8':'#4c1d95,#6d28d9'});color:#fff">
@@ -87,6 +91,7 @@ const BemorKartaPage = {
 
   renderUmumiy(el, p, type) {
     const row = (label, val) => `<div class="flex gap-2 py-2 border-b border-slate-50"><span class="text-xs text-slate-400 w-40 flex-shrink-0">${label}</span><span class="text-sm font-medium text-slate-700">${val||'—'}</span></div>`;
+    if (!el) return;
     el.innerHTML = `
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div class="card">
@@ -143,8 +148,10 @@ const BemorKartaPage = {
   },
 
   async renderHolat(el, p, type) {
+    if (!el) return;
     el.innerHTML = `<div class="flex justify-center py-8"><div class="spinner" style="width:28px;height:28px"></div></div>`;
     const list = await DB.holatBaholashList(type, p.kt_no);
+    if (!el) return;
     el.innerHTML = `
       <div class="flex justify-between items-center mb-4">
         <h3 class="font-bold text-slate-700">Holat baholashlar tarixi</h3>
@@ -220,10 +227,12 @@ const BemorKartaPage = {
   },
 
   async renderDavolash(el, p, type) {
+    if (!el) return;
     el.innerHTML = `<div class="flex justify-center py-8"><div class="spinner" style="width:28px;height:28px"></div></div>`;
     const list = await DB.davolashList(type, p.kt_no);
     const aktiv = list.filter(d=>d.status==='active');
     const toxtat = list.filter(d=>d.status!=='active');
+    if (!el) return;
     el.innerHTML = `
       <div class="flex justify-between items-center mb-4">
         <h3 class="font-bold text-slate-700">Dori-darmonlar</h3>
@@ -307,6 +316,7 @@ const BemorKartaPage = {
   },
 
   renderShift(el) {
+    if (!el) return;
     el.innerHTML = `
       <div class="card">
         <div class="card-header"><span class="card-title">📝 Shift topshirish yozuvi</span></div>
@@ -320,6 +330,7 @@ const BemorKartaPage = {
   saveShift() { showToast('Shift ma\'lumoti saqlandi', 'success'); },
 
   renderChiqarish(el, p, type) {
+    if (!el) return;
     if (p.status !== 'active') {
       el.innerHTML = `<div class="empty-state"><div class="empty-state-icon">✅</div><div class="empty-state-title">Bemor allaqachon chiqarilgan</div></div>`;
       return;

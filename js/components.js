@@ -92,7 +92,24 @@ const Components = {
           <a class="nav-item ${activePage==='hisobot'?'active':''}" onclick="Router.go('hisobot'); closeSidebar()">
             ${icon('bar-chart-2', 17, 'nav-icon')} Hisobotlar
           </a>
+
+          <div class="sidebar-section" style="margin-top:8px" id="admin-nav-section" style="display:none">Admin</div>
+          <a class="nav-item ${activePage==='admin'?'active':''}" id="admin-nav-item" style="display:none" onclick="Router.go('admin'); closeSidebar()">
+            ${icon('shield', 17, 'nav-icon')} Admin Panel
+          </a>
         </nav>
+
+        <script>
+          // Admin panelni faqat adminlar ko'radi
+          Profile.isAdmin().then(isAdmin => {
+            if (isAdmin) {
+              const sec = document.getElementById('admin-nav-section');
+              const item = document.getElementById('admin-nav-item');
+              if (sec) sec.style.display = 'block';
+              if (item) item.style.display = 'flex';
+            }
+          });
+        </script>
 
         <div class="sidebar-footer">
           <div class="sidebar-user">
