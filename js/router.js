@@ -11,7 +11,6 @@ const Router = {
     'bemor-karta':   () => BemorKartaPage.render(Router._params),
     'bemorlar':      () => BemorlarPage.render(),
     'hisobot':       () => HisobotPage.render(),
-    'admin':         () => AdminPage.render(),
   },
 
   async go(route, params = {}) {
@@ -24,10 +23,10 @@ const Router = {
     Router._params = params;
 
     const app = document.getElementById('app');
-    app.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;min-height:100vh;background:#0f172a">
-      <div style="text-align:center">
-        <div style="width:36px;height:36px;border:3px solid #1e293b;border-top-color:#3b82f6;border-radius:50%;animation:spin 0.7s linear infinite;margin:0 auto 12px"></div>
-        <p style="color:#64748b;font-size:13px">Yuklanmoqda...</p>
+    app.innerHTML = `<div class="flex items-center justify-center min-h-screen">
+      <div class="text-center">
+        <div class="w-10 h-10 border-4 border-primary-600 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
+        <p class="text-slate-400 text-sm">Yuklanmoqda...</p>
       </div>
     </div>`;
 
@@ -40,11 +39,11 @@ const Router = {
       }
     } catch (err) {
       console.error('Router error:', err);
-      app.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;min-height:100vh;background:#0f172a">
-        <div style="text-align:center;padding:32px">
-          <div style="font-size:48px;margin-bottom:16px">⚠️</div>
-          <h2 style="font-size:18px;font-weight:700;color:#f87171;margin-bottom:8px">Sahifani yuklashda xato</h2>
-          <p style="color:#64748b;font-size:13px;margin-bottom:20px">${err.message}</p>
+      app.innerHTML = `<div class="flex items-center justify-center min-h-screen">
+        <div class="text-center p-8">
+          <div class="text-5xl mb-4">⚠️</div>
+          <h2 class="text-lg font-bold text-slate-700 mb-2">Sahifani yuklashda xato</h2>
+          <p class="text-slate-400 text-sm mb-4">${err.message}</p>
           <button class="btn btn-primary" onclick="Router.go('dashboard')">Dashboard ga qaytish</button>
         </div>
       </div>`;
