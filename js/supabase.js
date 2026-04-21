@@ -97,7 +97,7 @@ const DB = {
 
   async infarktUpdate(kt_no, updates) {
     const { data, error } = await getSupabase()
-      .from('infarkt_qabul').update(updates).eq('kt_no', kt_no).select().single();
+      .from('infarkt_qabul').update(updates).eq('kt_no', kt_no);
     if (error) throw error;
     return data;
   },
@@ -136,7 +136,7 @@ const DB = {
 
   async insultUpdate(kt_no, updates) {
     const { data, error } = await getSupabase()
-      .from('insult_qabul').update(updates).eq('kt_no', kt_no).select().single();
+      .from('insult_qabul').update(updates).eq('kt_no', kt_no);
     if (error) throw error;
     return data;
   },
@@ -144,14 +144,14 @@ const DB = {
   // Chiqarish
   async insultChiqarish(data) {
     const { data: result, error } = await getSupabase()
-      .from('insult_chiqarish').insert(data).select().single();
+      .from('insult_chiqarish').insert(data);
     if (error) throw error;
     return result;
   },
 
   async infarktChiqarish(data) {
     const { data: result, error } = await getSupabase()
-      .from('infarkt_chiqarish').insert(data).select().single();
+      .from('infarkt_chiqarish').insert(data);
     if (error) throw error;
     return result;
   },
