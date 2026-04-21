@@ -300,7 +300,7 @@ const InfarktYangiPage = {
     const btn = document.getElementById('save-btn');
     setLoading(btn, true);
     try {
-      await DB.addInfarkt(this._data);
+      await DB.infarktQabul(this._data);
       showToast('🎉 Bemor muvaffaqiyatli saqlandi!', 'success');
       setTimeout(() => Router.go('dashboard'), 1500);
     } catch(err) {

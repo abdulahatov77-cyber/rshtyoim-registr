@@ -309,8 +309,27 @@ const BemorKartaPage = {
     const btn = document.getElementById('btn-chiqarish');
     setLoading(btn, true);
     try {
-      const dbMethod = BemorKartaPage._type === 'infarkt' ? DB.updateInfarktStatus : DB.updateInsultStatus;
-      await dbMethod(BemorKartaPage._patient.id, status, { xulosa, vafot_sababi: vafot_sabab });
+      const kt_no = BemorKartaPage._patient.kt_no;
+      const type = BemorKartaPage._type;
+      
+      if (type === 'infarkt') {
+        await DB.infarktUpdate(kt_no, { status: status, qoshimcha: xulosa });
+        await DB.infarktChiqarish({
+          kt_no: kt_no,
+          chiqish_sanasi: document.getElementById('ch-date')?.value || new Date().toISOString(),
+          xulosa_epikriz: xulosa,
+          vafot_sababi: vafot_sabab || null
+        });
+      } else {
+        await DB.insultUpdate(kt_no, { status: status, qoshimcha: xulosa });
+        await DB.insultChiqarish({
+          kt_no: kt_no,
+          chiqish_sanasi: document.getElementById('ch-date')?.value || new Date().toISOString(),
+          xulosa_epikriz: xulosa,
+          vafot_sababi: vafot_sabab || null
+        });
+      }
+      
       showToast('Bemor muvaffaqiyatli chiqarildi', 'success');
       setTimeout(() => Router.go('bemorlar'), 1500);
     } catch(err) {

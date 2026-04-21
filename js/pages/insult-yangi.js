@@ -297,7 +297,7 @@ const InsultYangiPage = {
     const btn = document.getElementById('save-insult-btn');
     setLoading(btn, true);
     try {
-      await DB.addInsult(this._data);
+      await DB.insultQabul(this._data);
       showToast('🎉 Bemor muvaffaqiyatli saqlandi!', 'success');
       setTimeout(() => Router.go('dashboard'), 1500);
     } catch(err) {
