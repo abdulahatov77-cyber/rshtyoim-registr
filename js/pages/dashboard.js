@@ -6,7 +6,7 @@ const DashboardPage = {
   async render() {
     const user = await Auth.getUser();
     document.getElementById('app').innerHTML = Components.renderLayout(
-      'dashboard', 'Dashboard', 'Real-time statistika va monitoring',
+      'dashboard', 'Bosh sahifa', 'Real-time statistika va monitoring',
       `<div id="dashboard-inner" class="animate-fadein">
         <div class="flex items-center justify-center py-32">
           <div class="text-center">
