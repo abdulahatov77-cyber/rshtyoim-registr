@@ -6,7 +6,7 @@ const DashboardPage = {
   async render() {
     const user = await Auth.getUser();
     document.getElementById('app').innerHTML = Components.renderLayout(
-      'dashboard', 'Dashboard', 'Real-time statistika va monitoring',
+      'dashboard', 'Bosh sahifa', 'Real-time statistika va monitoring',
       `<div id="dashboard-inner" class="animate-fadein">
         <div class="flex items-center justify-center py-32">
           <div class="text-center">
@@ -65,107 +65,105 @@ const DashboardPage = {
 
     inner.innerHTML = `
       <style>
-        .stat-card {
-          background: #fff;
-          border: 1px solid #E2E8F0;
+        .stat-box {
           border-radius: 16px;
           padding: 24px;
-          box-shadow: 0 1px 3px rgba(0,0,0,0.06);
-          transition: all 0.25s ease;
+          color: white;
+          box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+          position: relative;
+          overflow: hidden;
+        }
+        .stat-box::after {
+          content: ''; position: absolute; right: -20px; top: -20px;
+          width: 120px; height: 120px; background: rgba(255,255,255,0.1);
+          border-radius: 50%;
+        }
+        .stat-box-white {
+          background: #ffffff;
+          border-radius: 16px;
+          padding: 24px;
+          box-shadow: 0 4px 15px rgba(0,0,0,0.05);
           position: relative;
         }
-        .stat-card:hover { box-shadow: 0 8px 20px rgba(0,0,0,0.08); transform: translateY(-2px); }
-        .stat-icon {
-          width: 48px; height: 48px;
-          border-radius: 14px;
-          display: flex; align-items: center; justify-content: center;
-        }
-        .stat-value { font-size: 36px; font-weight: 800; color: #0F172A; line-height: 1; letter-spacing: -1px; margin: 16px 0 6px; }
-        .stat-label { font-size: 14px; font-weight: 600; color: #334155; }
-        .stat-sub { font-size: 13px; color: #94A3B8; margin-top: 2px; }
         .chart-box {
-          background: #fff;
-          border: 1px solid #E2E8F0;
+          background: #ffffff;
           border-radius: 16px;
           padding: 24px;
-          box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+          box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+          border: 1px solid #E5E7EB;
           height: 100%;
         }
-        .chart-title { font-size: 16px; font-weight: 700; color: #0F172A; margin-bottom: 16px; }
+        .chart-title { font-size: 16px; font-weight: 700; color: #111827; margin-bottom: 16px; }
       </style>
 
-      <!-- ROW 1: STAT CARDS — Lovable style -->
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-6">
+      <!-- ROW 1: 6 STAT CARDS -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
         
-        <!-- Insult bemorlar -->
-        <div class="stat-card">
-          <div class="flex justify-between items-start">
-            <div>
-              <div class="stat-icon" style="background:#F5F3FF;color:#8B5CF6">${icon('brain', 24)}</div>
-              <div class="stat-value">${jamiInsult}</div>
-              <div class="stat-label">Insult bemorlari</div>
-              <div class="stat-sub">Joriy yil</div>
-            </div>
+        <!-- Jami Bemorlar -->
+        <div class="stat-box" style="background: linear-gradient(135deg, #2C74B3, #1E40AF)">
+          <div class="flex justify-between items-start mb-2">
+            <span class="text-white/80 font-medium uppercase tracking-wide text-xs">Jami registr bemorlari</span>
+            <span class="bg-white/20 p-2 rounded-lg backdrop-blur-sm">${icon('users', 20)}</span>
+          </div>
+          <div class="text-[36px] font-bold leading-none mb-3">${jami}</div>
+          <div class="inline-flex items-center gap-1 bg-green-400/20 text-green-100 px-2 py-1 rounded text-xs font-semibold backdrop-blur-sm">
+            ${icon('trending-up', 14)} +${infBugun+insBugun} bugun
           </div>
         </div>
 
-        <!-- Infarkt bemorlar -->
-        <div class="stat-card">
-          <div class="flex justify-between items-start">
-            <div>
-              <div class="stat-icon" style="background:#FEF2F2;color:#EF4444">${icon('heart-pulse', 24)}</div>
-              <div class="stat-value">${jamiInfarkt}</div>
-              <div class="stat-label">Infarkt bemorlari</div>
-              <div class="stat-sub">Joriy yil</div>
-            </div>
+        <!-- Jami Infarkt -->
+        <div class="stat-box" style="background: linear-gradient(135deg, #EF4444, #DC2626)">
+          <div class="flex justify-between items-start mb-2">
+            <span class="text-white/80 font-medium uppercase tracking-wide text-xs">Jami infarkt bemorlari</span>
+            <span class="bg-white/20 p-2 rounded-lg backdrop-blur-sm">${icon('heart-pulse', 20)}</span>
+          </div>
+          <div class="text-[36px] font-bold leading-none mb-3">${jamiInfarkt}</div>
+          <div class="text-sm font-medium text-white/90">${infPercent}% jami bemorlardan</div>
+        </div>
+
+        <!-- Jami Insult -->
+        <div class="stat-box" style="background: linear-gradient(135deg, #8B5CF6, #7C3AED)">
+          <div class="flex justify-between items-start mb-2">
+            <span class="text-white/80 font-medium uppercase tracking-wide text-xs">Jami insult bemorlari</span>
+            <span class="bg-white/20 p-2 rounded-lg backdrop-blur-sm">${icon('brain', 20)}</span>
+          </div>
+          <div class="text-[36px] font-bold leading-none mb-3">${jamiInsult}</div>
+          <div class="text-sm font-medium text-white/90">${insPercent}% jami bemorlardan</div>
+        </div>
+
+        <!-- Bugun Infarkt -->
+        <div class="stat-box-white border-l-4 border-l-[#EF4444]">
+          <div class="flex justify-between items-start mb-2">
+            <span class="text-gray-500 font-medium uppercase tracking-wide text-xs">Bugun qabul — infarkt</span>
+            <span class="bg-red-50 text-red-500 p-2 rounded-lg">${icon('activity', 20)}</span>
+          </div>
+          <div class="text-[36px] font-bold leading-none mb-3 text-[#EF4444]">${infBugun}</div>
+          <div class="text-xs text-gray-400 font-medium flex items-center gap-1">
+            ${icon('clock', 12)} Yangilandi: <span id="time-inf">--:--</span>
           </div>
         </div>
 
-        <!-- Bugungi qabul -->
-        <div class="stat-card">
-          <div class="flex justify-between items-start">
-            <div>
-              <div class="stat-icon" style="background:#EFF6FF;color:#2563EB">${icon('user-plus', 24)}</div>
-              <div class="stat-value">${infBugun + insBugun}</div>
-              <div class="stat-label">Bugungi qabul</div>
-              <div class="stat-sub">Kechagi ${stats.kechagi || 0} ta</div>
-            </div>
+        <!-- Bugun Insult -->
+        <div class="stat-box-white border-l-4 border-l-[#8B5CF6]">
+          <div class="flex justify-between items-start mb-2">
+            <span class="text-gray-500 font-medium uppercase tracking-wide text-xs">Bugun qabul — insult</span>
+            <span class="bg-purple-50 text-purple-600 p-2 rounded-lg">${icon('brain', 20)}</span>
+          </div>
+          <div class="text-[36px] font-bold leading-none mb-3 text-[#8B5CF6]">${insBugun}</div>
+          <div class="text-xs text-gray-400 font-medium flex items-center gap-1">
+            ${icon('clock', 12)} Yangilandi: <span id="time-ins">--:--</span>
           </div>
         </div>
 
-        <!-- Faol statsionar -->
-        <div class="stat-card">
-          <div class="flex justify-between items-start">
-            <div>
-              <div class="stat-icon" style="background:#ECFDF5;color:#10B981">${icon('activity', 24)}</div>
-              <div class="stat-value">${aktiv}</div>
-              <div class="stat-label">Faol statsionar</div>
-              <div class="stat-sub">Hozir davolanmoqda</div>
-            </div>
+        <!-- Hozir Statsionarda -->
+        <div class="stat-box" style="background: linear-gradient(135deg, #10B981, #059669)">
+          <div class="flex justify-between items-start mb-2">
+            <span class="text-white/80 font-medium uppercase tracking-wide text-xs">Hozir statsionarda</span>
+            <span class="bg-white/20 p-2 rounded-lg backdrop-blur-sm">${icon('bed', 20)}</span>
           </div>
-        </div>
-
-        <!-- Chiqarilgan -->
-        <div class="stat-card">
-          <div class="flex justify-between items-start">
-            <div>
-              <div class="stat-icon" style="background:#EFF6FF;color:#3B82F6">${icon('log-out', 24)}</div>
-              <div class="stat-value">${chiqarilgan}</div>
-              <div class="stat-label">Chiqarilgan</div>
-              <div class="stat-sub">${chiqarilgan > 0 ? Math.round((chiqarilgan/jami)*100) : 0}% jami bemorlardan</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Vafot -->
-        <div class="stat-card">
-          <div class="flex justify-between items-start">
-            <div>
-              <div class="stat-icon" style="background:#FEF2F2;color:#DC2626">${icon('heart-crack', 24)}</div>
-              <div class="stat-value">${vafot}</div>
-              <div class="stat-label">Vafot etgan</div>
-              <div class="stat-sub">${vafot > 0 ? Math.round((vafot/jami)*100) : 0}% letallik</div>
-            </div>
+          <div class="text-[36px] font-bold leading-none mb-3">${aktiv}</div>
+          <div class="text-sm font-medium text-white/90 flex items-center gap-1">
+            ${icon('log-out', 16)} Discharged bugun: ${stats.chiqarilganBugun || 0} ta
           </div>
         </div>
 
@@ -330,12 +328,12 @@ const DashboardPage = {
         responsive: true, maintainAspectRatio: false,
         interaction: { mode: 'index', intersect: false },
         plugins: { 
-          legend: { position: 'top', align: 'end', labels: { boxWidth: 12, font: { family: 'Plus Jakarta Sans', size: 12 } } },
-          tooltip: { backgroundColor: '#111827', titleFont: { family: 'Plus Jakarta Sans' }, bodyFont: { family: 'Plus Jakarta Sans' }, padding: 12, cornerRadius: 8 }
+          legend: { position: 'top', align: 'end', labels: { boxWidth: 12, font: { family: 'Inter', size: 12 } } },
+          tooltip: { backgroundColor: '#111827', titleFont: { family: 'Inter' }, bodyFont: { family: 'Inter' }, padding: 12, cornerRadius: 8 }
         },
         scales: {
-          x: { grid: { display: false }, ticks: { font: { family: 'Plus Jakarta Sans', size: 11 }, color: '#6B7280' } },
-          y: { border: { display: false }, grid: { color: '#F3F4F6' }, beginAtZero: true, ticks: { font: { family: 'Plus Jakarta Sans', size: 11 }, color: '#6B7280', stepSize: 1 } }
+          x: { grid: { display: false }, ticks: { font: { family: 'Inter', size: 11 }, color: '#6B7280' } },
+          y: { border: { display: false }, grid: { color: '#F3F4F6' }, beginAtZero: true, ticks: { font: { family: 'Inter', size: 11 }, color: '#6B7280', stepSize: 1 } }
         }
       }
     });
@@ -361,7 +359,7 @@ const DashboardPage = {
       options: {
         responsive: true, maintainAspectRatio: false, cutout: '75%',
         plugins: { 
-          legend: { position: 'bottom', labels: { padding: 20, usePointStyle: true, font: { family: 'Plus Jakarta Sans', size: 12 } } },
+          legend: { position: 'bottom', labels: { padding: 20, usePointStyle: true, font: { family: 'Inter', size: 12 } } },
           tooltip: { callbacks: { label: function(context) {
             const total = context.dataset.data.reduce((a,b)=>a+b, 0);
             const p = Math.round((context.raw / total)*100) || 0;
@@ -395,12 +393,12 @@ const DashboardPage = {
       options: {
         responsive: true, maintainAspectRatio: false,
         plugins: { 
-          legend: { position: 'top', align: 'end', labels: { boxWidth: 12, font: { family: 'Plus Jakarta Sans' } } },
-          tooltip: { mode: 'index', intersect: false, backgroundColor: '#111827', titleFont: { family: 'Plus Jakarta Sans' }, bodyFont: { family: 'Plus Jakarta Sans' } }
+          legend: { position: 'top', align: 'end', labels: { boxWidth: 12, font: { family: 'Inter' } } },
+          tooltip: { mode: 'index', intersect: false, backgroundColor: '#111827', titleFont: { family: 'Inter' }, bodyFont: { family: 'Inter' } }
         },
         scales: {
-          x: { grid: { display: false }, ticks: { font: { family: 'Plus Jakarta Sans', size: 11 }, color: '#4B5563' } },
-          y: { border: { display: false }, grid: { color: '#F3F4F6' }, beginAtZero: true, stacked: false, ticks: { font: { family: 'Plus Jakarta Sans', size: 11 }, stepSize: 1 } }
+          x: { grid: { display: false }, ticks: { font: { family: 'Inter', size: 11 }, color: '#4B5563' } },
+          y: { border: { display: false }, grid: { color: '#F3F4F6' }, beginAtZero: true, stacked: false, ticks: { font: { family: 'Inter', size: 11 }, stepSize: 1 } }
         }
       }
     });

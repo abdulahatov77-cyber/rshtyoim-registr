@@ -67,14 +67,7 @@ const Components = {
   // ── Sidebar ──
   renderSidebar(activePage, user) {
     const email = user?.email || '';
-    const initials = email.slice(0, 2).toUpperCase();
-    const navItems = [
-      { page: 'dashboard',    icon: 'layout-dashboard', label: 'Dashboard' },
-      { page: 'bemorlar',     icon: 'users',            label: 'Bemorlar ro\'yxati' },
-      { page: 'infarkt-yangi',icon: 'heart',            label: 'Yangi infarkt' },
-      { page: 'insult-yangi', icon: 'brain',            label: 'Yangi insult' },
-      { page: 'hisobot',      icon: 'bar-chart-3',      label: 'Hisobotlar' },
-    ];
+    const initials = email.slice(0, 1).toUpperCase();
 
     return `
       <aside class="sidebar" id="sidebar">
@@ -84,44 +77,48 @@ const Components = {
           </div>
           <div>
             <div style="font-size:16px;font-weight:800;color:#fff;letter-spacing:0.3px">RSHTYOIM</div>
-            <div style="font-size:10px;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:1.2px;font-weight:600">Tibbiy registr</div>
+            <div style="font-size:11px;color:rgba(255,255,255,0.5);font-weight:500">Infarkt & Insult Registr</div>
           </div>
         </div>
 
         <nav class="sidebar-nav">
           <div class="sidebar-section">Asosiy</div>
-          ${navItems.slice(0,2).map(n => `
-            <a class="nav-item ${activePage===n.page?'active':''}" onclick="Router.go('${n.page}'); closeSidebar()">
-              <span class="nav-icon">${icon(n.icon, 20)}</span> ${n.label}
-            </a>`).join('')}
-
-          <div class="sidebar-section mt-4">Qabul qilish</div>
-          ${navItems.slice(2,4).map(n => `
-            <a class="nav-item ${activePage===n.page?'active':''}" onclick="Router.go('${n.page}'); closeSidebar()">
-              <span class="nav-icon">${icon(n.icon, 20)}</span> ${n.label}
-            </a>`).join('')}
-
-          <div class="sidebar-section mt-4">Tahlil</div>
+          <a class="nav-item ${activePage==='dashboard'?'active':''}" onclick="Router.go('dashboard'); closeSidebar()">
+            <span class="nav-icon">${icon('layout-dashboard', 20)}</span> Bosh sahifa
+          </a>
+          <a class="nav-item ${activePage==='bemorlar'?'active':''}" onclick="Router.go('bemorlar'); closeSidebar()">
+            <span class="nav-icon">${icon('users', 20)}</span> Bemorlar
+          </a>
+          <a class="nav-item ${activePage==='infarkt-yangi'?'active':''}" onclick="Router.go('infarkt-yangi'); closeSidebar()">
+            <span class="nav-icon">${icon('heart', 20)}</span> Yangi Infarkt
+          </a>
+          <a class="nav-item ${activePage==='insult-yangi'?'active':''}" onclick="Router.go('insult-yangi'); closeSidebar()">
+            <span class="nav-icon">${icon('brain', 20)}</span> Yangi Insult
+          </a>
           <a class="nav-item ${activePage==='hisobot'?'active':''}" onclick="Router.go('hisobot'); closeSidebar()">
             <span class="nav-icon">${icon('bar-chart-3', 20)}</span> Hisobotlar
           </a>
 
-          <div class="sidebar-section mt-4" id="admin-nav-section" style="display:none">Admin</div>
+          <div class="sidebar-section mt-4" id="admin-nav-section" style="display:none">Boshqaruv</div>
           <a class="nav-item ${activePage==='admin'?'active':''}" id="admin-nav-item" style="display:none" onclick="Router.go('admin'); closeSidebar()">
             <span class="nav-icon">${icon('shield', 20)}</span> Admin Panel
           </a>
         </nav>
 
         <script>
-          // Admin panelni faqat adminlar ko'radi
-          Profile.isAdmin().then(isAdmin => {
-            if (isAdmin) {
-              const sec = document.getElementById('admin-nav-section');
-              const item = document.getElementById('admin-nav-item');
-              if (sec) sec.style.display = 'block';
-              if (item) item.style.display = 'flex';
-            }
-          });
+          (async function() {
+            try {
+              const isAdmin = await Profile.isAdmin();
+              if (isAdmin) {
+                const sec = document.getElementById('admin-nav-section');
+                const item = document.getElementById('admin-nav-item');
+                const roleEl = document.getElementById('sidebar-role');
+                if (sec) sec.style.display = 'block';
+                if (item) item.style.display = 'flex';
+                if (roleEl) roleEl.textContent = 'Administrator';
+              }
+            } catch(e) {}
+          })();
         </script>
 
         <div class="sidebar-footer">
@@ -129,7 +126,7 @@ const Components = {
             <div class="sidebar-avatar">${initials}</div>
             <div style="flex:1;overflow:hidden">
               <div class="sidebar-user-name truncate">${email}</div>
-              <div class="sidebar-user-role">Shifokor</div>
+              <div class="sidebar-user-role" id="sidebar-role">Shifokor</div>
             </div>
             <button class="logout-btn" onclick="App.logout()" title="Chiqish">
               ${icon('log-out', 18)}
