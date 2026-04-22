@@ -78,9 +78,9 @@ const Components = {
 
     return `
       <aside class="sidebar" id="sidebar">
-        <div class="sidebar-logo bg-white flex flex-col justify-center items-center" style="height: 90px; padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.05);">
-          <img src="img/logo.png" alt="RShTYoIM" style="max-height: 50px; width: auto; object-fit: contain;" onerror="this.outerHTML='<div class=\\'text-red-600 font-bold text-xl\\'>RShTYoIM</div>'">
-          <span class="text-[10px] text-gray-500 uppercase tracking-widest font-semibold mt-1">Tibbiy registr</span>
+        <div class="sidebar-logo" style="height:80px;padding:12px 20px;border-bottom:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.03)">
+          <img src="img/logo.png" alt="RShTYoIM" style="max-height:44px;width:auto;object-fit:contain;filter:brightness(0) invert(1)" onerror="this.outerHTML='<div style=\\'display:flex;align-items:center;gap:10px\\'><div style=\\'width:40px;height:40px;background:linear-gradient(135deg,#2563EB,#6366F1);border-radius:12px;display:flex;align-items:center;justify-content:center\\'><svg width=\\'22\\' height=\\'22\\' viewBox=\\'0 0 24 24\\' fill=\\'none\\' stroke=\\'#fff\\' stroke-width=\\'2\\'><path d=\\'M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z\\'/></svg></div><div><div style=\\'font-size:16px;font-weight:800;color:#fff;letter-spacing:0.5px\\'>RSHTYOIM</div><div style=\\'font-size:10px;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:1px\\'>Tibbiy registr</div></div></div>'">
+          <span style="font-size:10px;color:rgba(255,255,255,0.35);text-transform:uppercase;letter-spacing:1.5px;font-weight:600;margin-top:4px">Tibbiy registr</span>
         </div>
 
         <nav class="sidebar-nav">
