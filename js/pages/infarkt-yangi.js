@@ -228,6 +228,25 @@ const InfarktYangiPage = {
           ${this.field('status','Bemorni joriy holati',`<select id="status" class="form-select font-bold">
             ${this.selectOptions(['active','chiqarildi','vafot','otkazildi'], d.status||'active')}</select>`,true)}
         </div>
+        <div class="mt-4 border-t border-dashed border-gray-200 pt-4">
+          <div class="form-group">
+            <label class="form-label">Dinamikada bajarilgan muolaja turi</label>
+            <div class="grid grid-cols-1 gap-2 mt-2">
+              ${APP_CONFIG.DINAMIKA_MUOLAJALAR.map(item => {
+                const isSel = (d.dinamika_muolaja_turi || '') === item;
+                return `
+                  <label class="flex items-center gap-3 p-3 border rounded-xl cursor-pointer transition-all ${isSel ? 'border-blue-500 bg-blue-50 text-blue-700 font-medium' : 'border-gray-200 hover:border-blue-300 hover:bg-gray-50 text-gray-600'}">
+                    <input type="radio" name="dinamika_muolaja_turi" value="${item}" class="w-4 h-4 text-blue-600" ${isSel?'checked':''} onchange="InfarktYangiPage.saveCurrentStep()">
+                    <span class="text-sm">${item}</span>
+                  </label>
+                `;
+              }).join('')}
+            </div>
+          </div>
+        </div>
+        <div class="mt-4">
+          ${this.field('dinamika_izoh','Izoh — Dinamikada muolaja o\'zgarishi sababi',`<textarea id="dinamika_izoh" class="form-textarea" rows="3" placeholder="Dinamikada muolaja o'zgarishi sababi...">${d.dinamika_izoh||''}</textarea>`)}
+        </div>
         <div class="mt-2">
           ${this.field('qoshimcha','Qo\'shimcha izoh yoki eslatma',`<textarea id="qoshimcha" class="form-textarea" placeholder="Boshqa muhim ma'lumotlar...">${d.qoshimcha||''}</textarea>`)}
         </div>
@@ -268,7 +287,7 @@ const InfarktYangiPage = {
      'fio','tugilgan_sana','aha_bali','simptom_vaqt','birlamchi_yoki_takroriy',
      'infarkt_turi','killip','qon_bosimi','puls','ekg_vaqti','troponin','kkfmb',
      'ejeksiya_fraksiyasi','muolaja_turi','angio_natija','otkazilgan_muassasa',
-     'status','qoshimcha','shifokor_fio']
+     'dinamika_izoh','status','qoshimcha','shifokor_fio']
     .forEach(id => {
       const el = document.getElementById(id);
       if (el) InfarktYangiPage._data[id] = el.value;
@@ -276,6 +295,9 @@ const InfarktYangiPage = {
 
     const jinsEl = document.querySelector('input[name="jins"]:checked');
     if (jinsEl) InfarktYangiPage._data.jins = jinsEl.value;
+
+    const dinamikaEl = document.querySelector('input[name="dinamika_muolaja_turi"]:checked');
+    if (dinamikaEl) InfarktYangiPage._data.dinamika_muolaja_turi = dinamikaEl.value;
 
     ['ekg_natija', 'xavf_omillari', 'asoratlar'].forEach(name => {
       const els = document.querySelectorAll(`input[name="${name}"]:checked`);

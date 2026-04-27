@@ -142,6 +142,17 @@ const APP_CONFIG = {
     "Boshqa muassasaga o'tkazildi"
   ],
 
+  DINAMIKA_MUOLAJALAR: [
+    "Faqat KAG (diagnostik koronar angiografiya)",
+    "KAG + stentlash (PCI)",
+    "KAG + ballon angioplastika (TLBAP)",
+    "KAG + trombolitik terapiya (TLT)",
+    "Faqat trombolitik terapiya (TLT)",
+    "TLT + KAG + stentlash (Rescue PCI)",
+    "TLT + KAG + ballon angioplastika (Rescue TLBAP)",
+    "Boshqa muassasaga o'tkazildi — angiografiya va endovaskulyar muolaja uchun"
+  ],
+
   INSULT_TURLARI: [
     "Ishemik insult",
     "Gemorragik insult (intraserebral qon quyilish)",
