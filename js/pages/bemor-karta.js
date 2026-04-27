@@ -195,6 +195,25 @@ const BemorKartaPage = {
                   : '<span class="text-sm text-gray-400">Hech qanday xavf omili kiritilmagan</span>'}
               </div>
             </div>
+            
+            ${p.otkazilgan_muassasa ? `
+            <div class="mt-4 p-5 bg-blue-50 border border-blue-200 rounded-2xl">
+              <h4 class="text-sm font-bold text-blue-800 mb-4 flex items-center gap-2">${icon('git-branch', 18)} Bemor xarakati (Flow)</h4>
+              <div class="relative pl-6 border-l-2 border-blue-200 space-y-6">
+                <div class="relative">
+                  <div class="absolute -left-[31px] top-1 w-4 h-4 bg-blue-500 rounded-full border-2 border-white shadow-sm"></div>
+                  <div class="font-bold text-gray-900 text-sm">Qabul qilindi</div>
+                  <div class="text-xs text-gray-500">${p.muassasa} (${Utils.formatDateTime(p.qabul_vaqt)})</div>
+                </div>
+                <div class="relative">
+                  <div class="absolute -left-[31px] top-1 w-4 h-4 bg-orange-500 rounded-full border-2 border-white shadow-sm"></div>
+                  <div class="font-bold text-gray-900 text-sm">Yo'naltirildi</div>
+                  <div class="text-xs text-gray-500">${p.otkazilgan_muassasa} muassasasiga angiografiya / endovaskulyar muolaja uchun</div>
+                </div>
+              </div>
+            </div>
+            ` : ''}
+
             ${p.asoratlar ? `
             <div class="mt-4 p-4 bg-red-50 border border-red-100 rounded-xl">
               <span class="text-sm text-red-800 font-bold block mb-1 flex items-center gap-2">${icon('alert-circle', 16)} Kuzatilgan asoratlar:</span>

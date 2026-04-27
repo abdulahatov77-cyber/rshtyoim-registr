@@ -238,7 +238,9 @@ const DB = {
       { count: infarktBugun },
       { count: insultBugun },
       { count: kritikInfarkt },
-      { count: kritikInsult }
+      { count: kritikInsult },
+      { count: infOtkaz },
+      { count: insOtkaz }
     ] = await Promise.all([
       eqViloyat(getSupabase().from('infarkt_qabul').select('id', { count: 'exact', head: true })),
       eqViloyat(getSupabase().from('insult_qabul').select('id', { count: 'exact', head: true })),
@@ -249,7 +251,9 @@ const DB = {
       eqViloyat(getSupabase().from('infarkt_qabul').select('id', { count: 'exact', head: true }).gte('qabul_vaqt', todayISO)),
       eqViloyat(getSupabase().from('insult_qabul').select('id', { count: 'exact', head: true }).gte('qabul_vaqt', todayISO)),
       eqViloyat(getSupabase().from('infarkt_qabul').select('id', { count: 'exact', head: true }).eq('status', 'active')).in('killip', ['Killip III — o\'pka shishi', 'Killip IV — kardiogen shok']),
-      eqViloyat(getSupabase().from('insult_qabul').select('id', { count: 'exact', head: true }).eq('status', 'active')).gte('nihss_qabul', 15)
+      eqViloyat(getSupabase().from('insult_qabul').select('id', { count: 'exact', head: true }).eq('status', 'active')).gte('nihss_qabul', 15),
+      eqViloyat(getSupabase().from('infarkt_qabul').select('id', { count: 'exact', head: true }).not('otkazilgan_muassasa', 'is', null)),
+      eqViloyat(getSupabase().from('insult_qabul').select('id', { count: 'exact', head: true }).not('otkazilgan_muassasa', 'is', null))
     ]);
 
     return {
@@ -262,7 +266,8 @@ const DB = {
       infarktBugun: infarktBugun || 0,
       insultBugun: insultBugun || 0,
       kritikInfarkt: kritikInfarkt || 0,
-      kritikInsult: kritikInsult || 0
+      kritikInsult: kritikInsult || 0,
+      otkazildi: (infOtkaz || 0) + (insOtkaz || 0)
     };
   },
 

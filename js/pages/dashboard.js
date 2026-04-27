@@ -228,6 +228,17 @@ const DashboardPage = {
               </div>
               <div class="text-2xl font-black text-gray-900">${vafot}</div>
             </div>
+
+            <div class="flex items-center justify-between p-4 bg-orange-50 rounded-2xl border border-orange-100 shadow-sm">
+              <div class="flex items-center gap-3">
+                <div class="w-11 h-11 bg-orange-500 text-white rounded-xl flex items-center justify-center shadow-lg shadow-orange-200">${icon('share-2', 20)}</div>
+                <div>
+                  <div class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Yo'naltirilgan</div>
+                  <div class="text-xs text-orange-600 font-bold">${stats.otkazildi || 0} ta bemor</div>
+                </div>
+              </div>
+              <div class="text-2xl font-black text-gray-900">${stats.otkazildi || 0}</div>
+            </div>
           </div>
         </div>
 
