@@ -2,7 +2,7 @@
 const InfarktYangiPage = {
   _step: 0,
   _data: {},
-  STEPS: ['Muassasa', 'Bemor', 'Klinik', 'Muolaja', 'Shifokor'],
+  STEPS: ['Muassasa', 'Bemor', 'Klinik', 'Muolaja'],
 
   async render() {
     const user = await Auth.getUser();
@@ -26,13 +26,12 @@ const InfarktYangiPage = {
   renderStep() {
     const step = InfarktYangiPage._step;
     const wrap = document.getElementById('infarkt-form-wrap');
-    const sectionIcons = ['building-2', 'user', 'activity', 'pill', 'stethoscope'];
+    const sectionIcons = ['building-2', 'user', 'activity', 'pill'];
     const sectionTitles = [
       '1-BO\'LIM: Muassasa ma\'lumotlari',
       '2-BO\'LIM: Bemor ma\'lumotlari',
       '3-BO\'LIM: Klinik ma\'lumotlar',
-      '4-BO\'LIM: Muolaja',
-      '5-BO\'LIM: Shifokor ma\'lumotlari'
+      '4-BO\'LIM: Muolaja va Shifokor'
     ];
 
     wrap.innerHTML = `
@@ -103,6 +102,46 @@ const InfarktYangiPage = {
         }).join('')}
       </div>
     `;
+  },
+
+  radioGroup(name, arr, selected) {
+    return `
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
+        ${arr.map(item => {
+          const isSel = selected === item;
+          return `
+            <label class="flex items-center gap-3 p-3 border rounded-xl cursor-pointer transition-all ${isSel ? 'border-red-500 bg-red-50 text-red-700 font-medium shadow-sm' : 'border-gray-200 hover:border-red-300 hover:bg-gray-50 text-gray-600'}">
+              <input type="radio" name="${name}" value="${item}" class="hidden" ${isSel?'checked':''} onchange="InfarktYangiPage.onRadioChange(this)">
+              <div class="w-5 h-5 rounded-full border flex items-center justify-center flex-shrink-0 transition-colors ${isSel ? 'bg-red-500 border-red-500 text-white' : 'border-gray-300 bg-white'}">
+                ${isSel ? '<div class="w-2 h-2 bg-white rounded-full"></div>' : ''}
+              </div>
+              <span class="text-sm">${item}</span>
+            </label>
+          `;
+        }).join('')}
+      </div>
+    `;
+  },
+
+  onRadioChange(el) {
+    const name = el.name;
+    document.querySelectorAll(`input[name="${name}"]`).forEach(input => {
+      const parent = input.closest('label');
+      const box = parent.querySelector('div');
+      parent.className = `flex items-center gap-3 p-3 border rounded-xl cursor-pointer transition-all border-gray-200 hover:border-red-300 hover:bg-gray-50 text-gray-600`;
+      box.className = `w-5 h-5 rounded-full border flex items-center justify-center flex-shrink-0 transition-colors border-gray-300 bg-white`;
+      box.innerHTML = '';
+    });
+    const parent = el.closest('label');
+    const box = parent.querySelector('div');
+    parent.className = `flex items-center gap-3 p-3 border rounded-xl cursor-pointer transition-all border-red-500 bg-red-50 text-red-700 font-medium shadow-sm`;
+    box.className = `w-5 h-5 rounded-full border flex items-center justify-center flex-shrink-0 transition-colors bg-red-500 border-red-500 text-white`;
+    box.innerHTML = '<div class="w-2 h-2 bg-white rounded-full"></div>';
+    this.saveCurrentStep();
+  },
+
+  getAllMuassasalar() {
+    return Object.values(APP_CONFIG.MUASSASALAR).flat().sort();
   },
 
   toggleCheckbox(el) {
@@ -197,11 +236,10 @@ const InfarktYangiPage = {
           ${this.selectOptions(['Normal','Yuqori','O\'lchanmagan'], d.troponin||'')}</select>`,true)}
         ${this.field('kkfmb','KFK-MB natijasi',`<select id="kkfmb" class="form-select">
           ${this.selectOptions(['Normal','Yuqori','O\'lchanmagan'], d.kkfmb||'')}</select>`,true)}
-        ${this.field('ejeksiya_fraksiyasi','Exokardiografiya (EF - Ejeksiya fraksiyasi %)',`<input id="ejeksiya_fraksiyasi" type="number" class="form-input" value="${d.ejeksiya_fraksiyasi||''}" placeholder="Masalan: 55"/>`)}
       </div>
       <div class="mt-4 border-t border-dashed border-gray-200 pt-4">
-        ${this.field('ekg_natija','EKG natijasi',
-          this.checkboxGroup('ekg_natija', APP_CONFIG.EKG_NATIJALARI, d.ekg_natija||[]))}
+        ${this.field('ekg_natija','EKG natijasi (faqat bittasini tanlang)',
+          this.radioGroup('ekg_natija', APP_CONFIG.EKG_NATIJALARI, d.ekg_natija||''))}
       </div>
       <div class="mt-4 border-t border-dashed border-gray-200 pt-4">
         ${this.field('xavf_omillari','Xavf omillari (bir nechta tanlash mumkin)',
@@ -223,42 +261,29 @@ const InfarktYangiPage = {
           ${this.selectOptions(APP_CONFIG.INFARKT_MUOLAJALARI, muolaja)}</select>`,true)}
         
         <div id="angio-div" style="display:${showAngio?'block':'none'}">
-          ${this.field('angio_natija','Diagnostik koronar angiografiya natijasi',`<select id="angio_natija" class="form-select">
+          ${this.field('angio_natija','Diagnostik koronar angiografiya natijasi',`<select id="angio_natija" class="form-select" onchange="InfarktYangiPage.onAngioChange(this.value)">
             ${this.selectOptions(APP_CONFIG.ANGIO_NATIJALARI, d.angio_natija||'')}</select>`)}
+          <div id="aksh-hint" class="mt-2 p-3 bg-amber-50 border border-amber-200 rounded-lg text-amber-800 text-sm hidden">
+            <strong>Tavsiya:</strong> To'liq okklyuziya yoki ko'p tomirli zararlanish holatida operativ davo (AKSH) tavsiya etiladi.
+          </div>
         </div>
 
         <div id="otkazilgan-div" style="display:${showOtkazilgan?'block':'none'}">
-          ${this.field('otkazilgan_muassasa','O\'tkazilgan muassasa nomi',`<input id="otkazilgan_muassasa" class="form-input" value="${d.otkazilgan_muassasa||''}" placeholder="Muassasa nomini kiriting"/>`)}
-        </div>
-
-        <div class="mt-2 border-t border-dashed border-gray-200 pt-4">
-          ${this.field('asoratlar','Kuzatilgan asoratlar', this.checkboxGroup('asoratlar', APP_CONFIG.ASORATLAR_INFARKT, d.asoratlar||[]))}
-        </div>
-        <div class="mt-4">
-          ${this.field('status','Bemorni joriy holati',`<select id="status" class="form-select font-bold">
-            ${this.selectOptions(['active','chiqarildi','vafot','otkazildi'], d.status||'active')}</select>`,true)}
+          ${this.field('otkazilgan_muassasa','O\'tkazilgan muassasa nomi',`<select id="otkazilgan_muassasa" class="form-select">
+            <option value="">Muassasani tanlang...</option>
+            ${this.getAllMuassasalar().map(m => `<option value="${m}" ${d.otkazilgan_muassasa===m?'selected':''}>${m}</option>`).join('')}
+          </select>`)}
         </div>
         <div class="mt-4 border-t border-dashed border-gray-200 pt-4">
-          <div class="form-group">
-            <label class="form-label">Dinamikada bajarilgan muolaja turi</label>
-            <div class="grid grid-cols-1 gap-2 mt-2">
-              ${APP_CONFIG.DINAMIKA_MUOLAJALAR.map(item => {
-                const isSel = (d.dinamika_muolaja_turi || '') === item;
-                return `
-                  <label class="flex items-center gap-3 p-3 border rounded-xl cursor-pointer transition-all ${isSel ? 'border-blue-500 bg-blue-50 text-blue-700 font-medium' : 'border-gray-200 hover:border-blue-300 hover:bg-gray-50 text-gray-600'}">
-                    <input type="radio" name="dinamika_muolaja_turi" value="${item}" class="w-4 h-4 text-blue-600" ${isSel?'checked':''} onchange="InfarktYangiPage.saveCurrentStep()">
-                    <span class="text-sm">${item}</span>
-                  </label>
-                `;
-              }).join('')}
-            </div>
+          ${this.field('shifokor_fio','Ushbu formani to\'ldiruvchi shifokor F.I.O',`<input id="shifokor_fio" class="form-input" value="${d.shifokor_fio||''}" placeholder="Familiya Ism Otasining ismi"/>`,true)}
+        </div>
+
+        <div class="mt-6 p-4 bg-green-50 border border-green-200 rounded-xl flex items-start gap-3">
+          ${icon('check-circle', 24, 'text-green-500 flex-shrink-0 mt-0.5')}
+          <div>
+            <div class="font-semibold text-green-800">Saqlashga tayyor</div>
+            <div class="text-sm text-green-700 mt-1">Barcha ma'lumotlarni tekshirib chiqing va "Saqlash" tugmasini bosing.</div>
           </div>
-        </div>
-        <div class="mt-4">
-          ${this.field('dinamika_izoh','Izoh — Dinamikada muolaja o\'zgarishi sababi',`<textarea id="dinamika_izoh" class="form-textarea" rows="3" placeholder="Dinamikada muolaja o'zgarishi sababi...">${d.dinamika_izoh||''}</textarea>`)}
-        </div>
-        <div class="mt-2">
-          ${this.field('qoshimcha','Qo\'shimcha izoh yoki eslatma',`<textarea id="qoshimcha" class="form-textarea" placeholder="Boshqa muhim ma'lumotlar...">${d.qoshimcha||''}</textarea>`)}
         </div>
       </div>
     `;
@@ -268,26 +293,27 @@ const InfarktYangiPage = {
     InfarktYangiPage._data.muolaja_turi = val;
     const angioDiv = document.getElementById('angio-div');
     const otkazDiv = document.getElementById('otkazilgan-div');
-    if (angioDiv) angioDiv.style.display = val === 'Faqat KAG (diagnostik koronar angiografiya)' ? 'block' : 'none';
+    if (angioDiv) {
+      const isAngio = val === 'Faqat KAG (diagnostik koronar angiografiya)';
+      angioDiv.style.display = isAngio ? 'block' : 'none';
+      if (isAngio) {
+        const angioVal = document.getElementById('angio_natija')?.value;
+        if (angioVal) InfarktYangiPage.onAngioChange(angioVal);
+      }
+    }
     if (otkazDiv) otkazDiv.style.display = val === "Boshqa muassasaga o'tkazildi" ? 'block' : 'none';
   },
 
-  // ============ 5-BO'LIM: Shifokor ============
-  renderStep4() {
-    const d = InfarktYangiPage._data;
-    return `
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6">
-        ${this.field('shifokor_fio','Ushbu formani to\'ldiruvchi shifokor F.I.O',`<input id="shifokor_fio" class="form-input" value="${d.shifokor_fio||''}" placeholder="Familiya Ism Otasining ismi"/>`,true)}
-      </div>
-      <div class="mt-6 p-4 bg-green-50 border border-green-200 rounded-xl flex items-start gap-3">
-        ${icon('check-circle', 24, 'text-green-500 flex-shrink-0 mt-0.5')}
-        <div>
-          <div class="font-semibold text-green-800">Saqlashga tayyor</div>
-          <div class="text-sm text-green-700 mt-1">Barcha ma'lumotlarni tekshirib chiqing va "Saqlash" tugmasini bosing.</div>
-        </div>
-      </div>
-    `;
+  onAngioChange(val) {
+    InfarktYangiPage._data.angio_natija = val;
+    const hint = document.getElementById('aksh-hint');
+    if (hint) {
+      const show = val === 'To\'liq okklyuziya' || val === 'Ko\'p tomirli diffuz zararlanishi';
+      hint.classList.toggle('hidden', !show);
+    }
   },
+
+  // renderStep4 removed as it is now part of renderStep3
 
   saveCurrentStep() {
     const wrap = document.getElementById('step-body');
@@ -296,8 +322,7 @@ const InfarktYangiPage = {
     ['viloyat','muassasa','kt_no','qabul_vaqt','murojaat_yoli','yuborgan_muassasa',
      'fio','tugilgan_sana','aha_bali','simptom_vaqt','birlamchi_yoki_takroriy',
      'infarkt_turi','killip','qon_bosimi','puls','ekg_vaqti','troponin','kkfmb',
-     'ejeksiya_fraksiyasi','muolaja_turi','angio_natija','otkazilgan_muassasa',
-     'dinamika_izoh','status','qoshimcha','shifokor_fio']
+     'muolaja_turi','angio_natija','otkazilgan_muassasa','shifokor_fio']
     .forEach(id => {
       const el = document.getElementById(id);
       if (el) InfarktYangiPage._data[id] = el.value;
@@ -306,10 +331,10 @@ const InfarktYangiPage = {
     const jinsEl = document.querySelector('input[name="jins"]:checked');
     if (jinsEl) InfarktYangiPage._data.jins = jinsEl.value;
 
-    const dinamikaEl = document.querySelector('input[name="dinamika_muolaja_turi"]:checked');
-    if (dinamikaEl) InfarktYangiPage._data.dinamika_muolaja_turi = dinamikaEl.value;
+    const ekgEl = document.querySelector('input[name="ekg_natija"]:checked');
+    if (ekgEl) InfarktYangiPage._data.ekg_natija = ekgEl.value;
 
-    ['ekg_natija', 'xavf_omillari', 'asoratlar'].forEach(name => {
+    ['xavf_omillari'].forEach(name => {
       const els = document.querySelectorAll(`input[name="${name}"]:checked`);
       InfarktYangiPage._data[name] = Array.from(els).map(e=>e.value);
     });
@@ -323,9 +348,8 @@ const InfarktYangiPage = {
     let required = [];
     if (this._step === 0) required = ['viloyat','muassasa','kt_no','qabul_vaqt','murojaat_yoli'];
     if (this._step === 1) required = ['fio','tugilgan_sana','jins'];
-    if (this._step === 2) required = ['simptom_vaqt','birlamchi_yoki_takroriy','infarkt_turi','killip','qon_bosimi','puls','ekg_vaqti','troponin','kkfmb'];
-    if (this._step === 3) required = ['muolaja_turi','status'];
-    if (this._step === 4) required = ['shifokor_fio'];
+    if (this._step === 2) required = ['simptom_vaqt','birlamchi_yoki_takroriy','infarkt_turi','killip','qon_bosimi','puls','ekg_vaqti','troponin','kkfmb','ekg_natija'];
+    if (this._step === 3) required = ['muolaja_turi','shifokor_fio'];
 
     const errs = Utils.validate(this._data, required);
     let valid = true;

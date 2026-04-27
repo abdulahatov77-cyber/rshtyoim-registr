@@ -231,10 +231,9 @@ const APP_CONFIG = {
   ],
 
   INFARKT_TURLARI: [
-    "O'KS ST elevatsiya bilan (STEMI)",
-    "O'KS ST elevatsiyasiz (NSTEMI)",
-    "O'tkir miokard infarkti (AMI)",
-    "Stabil bo'lmagan stenokardiya"
+    "O'KS ST elevatsiya bilan (STEMI — ST-elevation myocardial infarction)",
+    "O'KS ST elevatsiyasiz (NSTEMI — Non-ST-elevation myocardial infarction)",
+    "O'tkir miokard infarkti (AMI - Acute Myocardial Infarction)"
   ],
 
   KILLIP_KLASSLAR: [
@@ -248,7 +247,8 @@ const APP_CONFIG = {
     "Gemodinamik ahamiyatli stenoz yo'q",
     "Chap asosiy magistral (LM) zararlanishi",
     "Ko'p tomirli diffuz zararlanishi",
-    "To'liq okklyuziya"
+    "To'liq okklyuziya",
+    "Operativ davo (AKSH) tavsiya etildi"
   ],
 
   INFARKT_MUOLAJALARI: [

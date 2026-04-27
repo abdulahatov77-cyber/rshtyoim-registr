@@ -190,14 +190,14 @@ const InsultYangiPage = {
         ${this.field('gcs_bali','Glazgo shkalasi (GCS), (3-15 ball)',`<input id="gcs_bali" type="number" min="3" max="15" class="form-input" value="${d.gcs_bali||''}" placeholder="3 dan 15 gacha"/>`,true)}
         ${this.field('insult_turi','Insult turi',`<select id="insult_turi" class="form-select border-purple-300 focus:border-purple-500">
           ${this.selectOptions(APP_CONFIG.INSULT_TURLARI, d.insult_turi||'')}</select>`,true)}
-        ${this.field('qon_bosimi','Qon bosimi (qabul paytida)',`<input id="qon_bosimi" class="form-input font-mono" value="${d.qon_bosimi||\'\'}" placeholder="140/90"/>`,true)}
+        ${this.field('qon_bosimi','Qon bosimi (qabul paytida)',`<input id="qon_bosimi" class="form-input font-mono" value="${d.qon_bosimi||''}" placeholder="140/90"/>`,true)}
       </div>
       <div class="mt-4 border-t border-dashed border-gray-200 pt-4">
         ${this.field('xavf_omillari','Xavf omillari',
           this.checkboxGroup('xavf_omillari', APP_CONFIG.XAVF_OMILLAR_INSULT, d.xavf_omillari||[]), true)}
       </div>
       <div class="mt-4 border-t border-dashed border-gray-200 pt-4">
-        ${this.field('aha_bali','AHA (American Heart Association) savolnomasi bali',`<input id="aha_bali" type="number" class="form-input" value="${d.aha_bali||\'\'}" placeholder="Ballarni kiriting"/>`,true)}
+        ${this.field('aha_bali','AHA (American Heart Association) savolnomasi bali',`<input id="aha_bali" type="number" class="form-input" value="${d.aha_bali||''}" placeholder="Ballarni kiriting"/>`,true)}
       </div>
     `;
   },
