@@ -105,27 +105,11 @@ const Components = {
           </a>
         </nav>
 
-        <script>
-          (async function() {
-            try {
-              const isAdmin = await Profile.isAdmin();
-              if (isAdmin) {
-                const sec = document.getElementById('admin-nav-section');
-                const item = document.getElementById('admin-nav-item');
-                const roleEl = document.getElementById('sidebar-role');
-                if (sec) sec.style.display = 'block';
-                if (item) item.style.display = 'flex';
-                if (roleEl) roleEl.textContent = 'Administrator';
-              }
-            } catch(e) {}
-          })();
-        </script>
-
         <div class="sidebar-footer">
           <div class="sidebar-user">
-            <div class="sidebar-avatar">${initials}</div>
+            <div class="sidebar-avatar" id="sidebar-avatar-char">${initials}</div>
             <div style="flex:1;overflow:hidden">
-              <div class="sidebar-user-name truncate">${email}</div>
+              <div class="sidebar-user-name truncate" id="sidebar-user-name">${email}</div>
               <div class="sidebar-user-role" id="sidebar-role">Shifokor</div>
             </div>
             <button class="logout-btn" onclick="App.logout()" title="Chiqish">
@@ -133,6 +117,31 @@ const Components = {
             </button>
           </div>
         </div>
+        
+        <script>
+          (async function() {
+            try {
+              const p = await Profile.getCurrent();
+              if (p) {
+                if (p.fio) {
+                  const nameEl = document.getElementById('sidebar-user-name');
+                  if (nameEl) nameEl.textContent = p.fio;
+                  const avEl = document.getElementById('sidebar-avatar-char');
+                  if (avEl) avEl.textContent = p.fio.charAt(0).toUpperCase();
+                }
+                
+                if (p.role === 'admin') {
+                  const sec = document.getElementById('admin-nav-section');
+                  const item = document.getElementById('admin-nav-item');
+                  const roleEl = document.getElementById('sidebar-role');
+                  if (sec) sec.style.display = 'block';
+                  if (item) item.style.display = 'flex';
+                  if (roleEl) roleEl.textContent = 'Administrator';
+                }
+              }
+            } catch(e) { console.error('Sidebar profile error:', e); }
+          })();
+        </script>
       </aside>
       <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>`;
   },

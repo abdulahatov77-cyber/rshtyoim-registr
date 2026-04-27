@@ -128,6 +128,15 @@ const InsultYangiPage = {
         ${this.field('i-murojaat_yoli','Murojaat yo\'li',`<select id="i-murojaat_yoli" class="form-select">
           ${this.selectOptions(APP_CONFIG.MUROJAAT_YOLLARI, d.murojaat_yoli||'')}</select>`,true)}
         ${this.field('i-yuborgan_muassasa','Yuborgan muassasa nomi',`<input id="i-yuborgan_muassasa" class="form-input" value="${d.yuborgan_muassasa||''}" placeholder="Boshqa muassasadan bo'lsa kiriting"/>`)}
+
+        <div class="col-span-1 sm:col-span-2 my-2 border-t border-dashed border-gray-200"></div>
+
+        ${this.field('i-birlamchi_yoki_takroriy','Kasallik turi',`<select id="i-birlamchi_yoki_takroriy" class="form-select">
+          ${this.selectOptions(APP_CONFIG.BIRLAMCHI_TAKROIRIY, d.birlamchi_yoki_takroriy||'')}</select>`,true)}
+        ${this.field('i-birinchi_murojaat_vaqti','Birinchi murojaat vaqti',`<input id="i-birinchi_murojaat_vaqti" type="datetime-local" class="form-input" value="${d.birinchi_murojaat_vaqti||''}"/>`)}
+        ${this.field('i-tez_yordam_kelgan_vaqt','Tez yordam yetib kelgan vaqt',`<input id="i-tez_yordam_kelgan_vaqt" type="datetime-local" class="form-input" value="${d.tez_yordam_kelgan_vaqt||''}"/>`)}
+        
+        <div class="col-span-1 sm:col-span-2 my-2 border-t border-dashed border-gray-200"></div>
         
         <div class="col-span-1 sm:col-span-2 my-2 border-t border-dashed border-gray-200"></div>
 
@@ -187,7 +196,7 @@ const InsultYangiPage = {
         ${icon('info', 24)}
         <div>Bemor anamnezida mavjud bo'lgan barcha xavf omillarini belgilang. Bir nechta tanlash mumkin.</div>
       </div>
-      ${this.checkboxGroup('i-xavf_omillari', APP_CONFIG.INSULT_XAVF_OMILLARI, d.xavf_omillari||[])}
+      ${this.checkboxGroup('i-xavf_omillari', APP_CONFIG.XAVF_OMILLAR_INSULT, d.xavf_omillari||[])}
     `;
   },
 
@@ -196,8 +205,14 @@ const InsultYangiPage = {
     return `
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 border-b border-dashed border-gray-200 pb-4 mb-4">
         ${this.field('mskt','Bosh miya MSKT qilinganmi?',`<select id="mskt" class="form-select">
-          ${this.selectOptions(['Ha','Yo\'q'], d.mskt||'')}</select>`)}
-        ${this.field('i-tlt_vaqt','TLT (Trombolizis) qilingan vaqt',`<input id="i-tlt_vaqt" type="datetime-local" class="form-input" value="${d.tlt_vaqt||''}"/>`)}
+          ${this.selectOptions(APP_CONFIG.MSKT_TANLOVLAR, d.mskt||'')}</select>`)}
+        ${this.field('i-yutish_testi','Yutish testi (Swallow test)',`<select id="i-yutish_testi" class="form-select">
+          ${this.selectOptions(APP_CONFIG.YUTISH_TESTI_OPTIONS, d.yutish_testi||'')}</select>`)}
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 border-b border-dashed border-gray-200 pb-4 mb-4">
+        ${this.field('i-trombolizis_vaqti','TLT (Trombolizis) vaqti',`<input id="i-trombolizis_vaqti" type="datetime-local" class="form-input" value="${d.trombolizis_vaqti||''}"/>`)}
+        ${this.field('i-trombektomiya_vaqti','Trombektomiya vaqti',`<input id="i-trombektomiya_vaqti" type="datetime-local" class="form-input" value="${d.trombektomiya_vaqti||''}"/>`)}
+        ${this.field('i-reabilitatsiya_boshlangan_vaqt','Reabilitatsiya boshlangan vaqt',`<input id="i-reabilitatsiya_boshlangan_vaqt" type="datetime-local" class="form-input" value="${d.reabilitatsiya_boshlangan_vaqt||''}"/>`)}
       </div>
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6">
         ${this.field('i-status','Bemorni joriy holati',`<select id="i-status" class="form-select font-bold">
@@ -211,7 +226,7 @@ const InsultYangiPage = {
     const wrap = document.getElementById('step-body');
     if (!wrap) return;
 
-    ['i-viloyat','i-muassasa','i-kt_no','i-qabul_vaqt','i-murojaat_yoli','i-yuborgan_muassasa','i-fio','i-tugilgan_yil','i-simptom_vaqt','nihss_qabul','gcs_qabul','i-qon_bosimi','insult_turi','mskt','i-tlt_vaqt','i-status','i-qoshimcha']
+    ['i-viloyat','i-muassasa','i-kt_no','i-qabul_vaqt','i-murojaat_yoli','i-yuborgan_muassasa','i-birlamchi_yoki_takroriy','i-birinchi_murojaat_vaqti','i-tez_yordam_kelgan_vaqt','i-fio','i-tugilgan_yil','i-simptom_vaqt','nihss_qabul','gcs_qabul','i-qon_bosimi','insult_turi','mskt','i-yutish_testi','i-trombolizis_vaqti','i-trombektomiya_vaqti','i-reabilitatsiya_boshlangan_vaqt','i-status','i-qoshimcha']
     .forEach(id => {
       const el = document.getElementById(id);
       if (el) {
@@ -260,7 +275,7 @@ const InsultYangiPage = {
     let valid = true;
     for (const [key, msg] of Object.entries(errs)) {
       valid = false;
-      const elId = ['viloyat','muassasa','kt_no','qabul_vaqt','murojaat_yoli','yuborgan_muassasa','fio','tugilgan_yil','simptom_vaqt','qon_bosimi','tlt_vaqt','status','qoshimcha','jins','xavf_omillari'].includes(key) ? 'i-'+key : key;
+      const elId = ['viloyat','muassasa','kt_no','qabul_vaqt','murojaat_yoli','yuborgan_muassasa','birlamchi_yoki_takroriy','birinchi_murojaat_vaqti','tez_yordam_kelgan_vaqt','fio','tugilgan_yil','simptom_vaqt','qon_bosimi','yutish_testi','trombolizis_vaqti','trombektomiya_vaqti','reabilitatsiya_boshlangan_vaqt','status','qoshimcha','jins','xavf_omillari'].includes(key) ? 'i-'+key : key;
       const el = document.getElementById(elId);
       if (el) {
         el.classList.add('border-red-500');

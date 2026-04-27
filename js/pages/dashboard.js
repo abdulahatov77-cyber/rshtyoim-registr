@@ -163,7 +163,7 @@ const DashboardPage = {
           </div>
           <div class="text-[36px] font-bold leading-none mb-3">${aktiv}</div>
           <div class="text-sm font-medium text-white/90 flex items-center gap-1">
-            ${icon('log-out', 16)} Discharged bugun: ${stats.chiqarilganBugun || 0} ta
+            ${icon('log-out', 16)} Bugun chiqarildi: ${stats.chiqarilganBugun || 0} ta
           </div>
         </div>
 
@@ -196,37 +196,37 @@ const DashboardPage = {
         <div class="chart-box lg:col-span-1">
           <h3 class="chart-title">Umumiy holat</h3>
           <div class="flex flex-col gap-4 mt-4">
-            <div class="flex items-center justify-between p-3 bg-green-50 rounded-xl border border-green-100">
+            <div class="flex items-center justify-between p-4 bg-green-50 rounded-2xl border border-green-100 shadow-sm">
               <div class="flex items-center gap-3">
-                <div class="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center text-white">${icon('activity', 18)}</div>
+                <div class="w-11 h-11 bg-green-500 text-white rounded-xl flex items-center justify-center shadow-lg shadow-green-200">${icon('activity', 20)}</div>
                 <div>
-                  <div class="text-sm font-bold text-gray-900">Aktiv</div>
-                  <div class="text-xs text-gray-500">${aktiv > 0 ? Math.round((aktiv/jami)*100) : 0}% jami</div>
+                  <div class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Aktiv</div>
+                  <div class="text-xs text-green-600 font-bold">${aktiv > 0 ? Math.round((aktiv/jami)*100) : 0}% ulush</div>
                 </div>
               </div>
-              <div class="text-xl font-bold text-green-700">${aktiv}</div>
+              <div class="text-2xl font-black text-gray-900">${aktiv}</div>
             </div>
             
-            <div class="flex items-center justify-between p-3 bg-blue-50 rounded-xl border border-blue-100">
+            <div class="flex items-center justify-between p-4 bg-blue-50 rounded-2xl border border-blue-100 shadow-sm">
               <div class="flex items-center gap-3">
-                <div class="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white">${icon('log-out', 18)}</div>
+                <div class="w-11 h-11 bg-blue-500 text-white rounded-xl flex items-center justify-center shadow-lg shadow-blue-200">${icon('log-out', 20)}</div>
                 <div>
-                  <div class="text-sm font-bold text-gray-900">Chiqarilgan</div>
-                  <div class="text-xs text-gray-500">${chiqarilgan > 0 ? Math.round((chiqarilgan/jami)*100) : 0}% jami</div>
+                  <div class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Chiqarilgan</div>
+                  <div class="text-xs text-blue-600 font-bold">${chiqarilgan > 0 ? Math.round((chiqarilgan/jami)*100) : 0}% ulush</div>
                 </div>
               </div>
-              <div class="text-xl font-bold text-blue-700">${chiqarilgan}</div>
+              <div class="text-2xl font-black text-gray-900">${chiqarilgan}</div>
             </div>
             
-            <div class="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-200">
+            <div class="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-gray-200 shadow-sm">
               <div class="flex items-center gap-3">
-                <div class="w-10 h-10 bg-gray-400 rounded-full flex items-center justify-center text-white">${icon('heart-crack', 18)}</div>
+                <div class="w-11 h-11 bg-gray-400 text-white rounded-xl flex items-center justify-center shadow-lg shadow-gray-200">${icon('heart-crack', 20)}</div>
                 <div>
-                  <div class="text-sm font-bold text-gray-900">Vafot etgan</div>
-                  <div class="text-xs text-gray-500">${vafot > 0 ? Math.round((vafot/jami)*100) : 0}% jami</div>
+                  <div class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Vafot etgan</div>
+                  <div class="text-xs text-gray-400 font-bold">${vafot > 0 ? Math.round((vafot/jami)*100) : 0}% ulush</div>
                 </div>
               </div>
-              <div class="text-xl font-bold text-gray-600">${vafot}</div>
+              <div class="text-2xl font-black text-gray-900">${vafot}</div>
             </div>
           </div>
         </div>

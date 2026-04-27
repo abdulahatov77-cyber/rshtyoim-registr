@@ -201,6 +201,24 @@ const DB = {
     return data || [];
   },
 
+  // Kuzatuv (Follow-up)
+  async addKuzatuv(data) {
+    const { data: result, error } = await getSupabase()
+      .from('kuzatuv').insert(data).select().single();
+    if (error) throw error;
+    return result;
+  },
+
+  async getKuzatuv(kt_no) {
+    const { data, error } = await getSupabase()
+      .from('kuzatuv')
+      .select('*')
+      .eq('kt_no', kt_no)
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+    return data || [];
+  },
+
   // Dashboard stats
   async getDashboardStats() {
     const p = await Profile.getCurrent();

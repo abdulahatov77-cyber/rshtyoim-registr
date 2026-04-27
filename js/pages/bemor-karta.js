@@ -82,7 +82,7 @@ const BemorKartaPage = {
 
       <!-- Tabs Navigation -->
       <div class="flex items-center gap-2 mb-6 overflow-x-auto pb-2 border-b border-gray-200">
-        ${['Umumiy', 'Holat baholash', 'Davolash', 'Shift topshirish', 'Chiqarish'].map((t, i) => `
+        ${['Umumiy', 'Holat baholash', 'Davolash', 'Kuzatuv', 'Shift topshirish', 'Chiqarish'].map((t, i) => `
           <button onclick="BemorKartaPage.switchTab(${i})" id="tab-btn-${i}" class="px-5 py-2.5 rounded-full text-sm font-semibold transition-all whitespace-nowrap ${BemorKartaPage._activeTab === i ? 'bg-blue-600 text-white shadow-md' : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'}">
             ${t}
           </button>
@@ -98,7 +98,7 @@ const BemorKartaPage = {
 
   switchTab(idx) {
     // Update buttons
-    for (let i=0; i<5; i++) {
+    for (let i=0; i<6; i++) {
       const btn = document.getElementById(`tab-btn-${i}`);
       if (btn) {
         if (i === idx) {
@@ -126,8 +126,9 @@ const BemorKartaPage = {
     if (idx===0) BemorKartaPage.renderUmumiy(cont, p, type);
     else if (idx===1) BemorKartaPage.renderHolat(cont, p, type);
     else if (idx===2) BemorKartaPage.renderDavolash(cont, p, type);
-    else if (idx===3) BemorKartaPage.renderShift(cont);
-    else if (idx===4) BemorKartaPage.renderChiqarish(cont, p, type);
+    else if (idx===3) BemorKartaPage.renderKuzatuv(cont, p, type);
+    else if (idx===4) BemorKartaPage.renderShift(cont);
+    else if (idx===5) BemorKartaPage.renderChiqarish(cont, p, type);
     
     initIcons();
   },
@@ -156,17 +157,32 @@ const BemorKartaPage = {
           <div class="card-header bg-gray-50 border-b border-gray-100 !mb-0"><h3 class="card-title text-gray-900 flex items-center gap-2">${icon('activity', 18)} Klinik holat (Qabul)</h3></div>
           <div class="card-body p-5">
             ${row('Qon bosimi', p.qon_bosimi)}
-            ${row('Simptomlar boshlanishi', p.simptom_vaqt)}
             ${type==='infarkt'?`
               ${row('Infarkt turi', p.infarkt_turi)}
               ${row('Killip', p.killip)}
               ${row('Troponin', p.troponin)}
+              ${row('EF (%)', p.ejeksiya_fraksiyasi)}
+              ${row('EKG vaqti', Utils.formatDateTime(p.ekg_vaqti))}
             `:`
               ${row('Insult turi', p.insult_turi)}
               ${row('NIHSS', p.nihss_qabul!=null?p.nihss_qabul+' ball':null)}
               ${row('GCS', p.gcs_qabul!=null?p.gcs_qabul+' ball':null)}
+              ${row('Yutish testi', p.yutish_testi)}
+              ${row('TLT vaqti', Utils.formatDateTime(p.trombolizis_vaqti))}
+              ${row('Trombektomiya', Utils.formatDateTime(p.trombektomiya_vaqti))}
             `}
             ${row('Asosiy muolaja', p.muolaja_turi)}
+          </div>
+        </div>
+        <div class="card !mb-0">
+          <div class="card-header bg-gray-50 border-b border-gray-100 !mb-0"><h3 class="card-title text-gray-900 flex items-center gap-2">${icon('clock', 18)} Vaqt ko'rsatkichlari</h3></div>
+          <div class="card-body p-5">
+            ${row('Kasallik turi', p.birlamchi_yoki_takroriy)}
+            ${row('Simptomlar boshlanishi', p.simptom_vaqt)}
+            ${row('Birinchi murojaat', Utils.formatDateTime(p.birinchi_murojaat_vaqti))}
+            ${row('Tez yordam yetib keldi', Utils.formatDateTime(p.tez_yordam_kelgan_vaqt))}
+            ${row('Shifoxonaga keldi', Utils.formatDateTime(p.qabul_vaqt))}
+            ${p.reabilitatsiya_boshlangan_vaqt ? row('Reabilitatsiya boshlandi', Utils.formatDateTime(p.reabilitatsiya_boshlangan_vaqt)) : ''}
           </div>
         </div>
         <div class="card !mb-0 lg:col-span-2">
@@ -223,6 +239,116 @@ const BemorKartaPage = {
         </div>
       </div>
     `;
+  },
+
+  async renderKuzatuv(el, p, type) {
+    el.innerHTML = `<div class="flex justify-center p-10"><div class="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div></div>`;
+    
+    try {
+      const records = await DB.getKuzatuv(p.kt_no);
+      
+      let recordsHtml = records.length === 0 
+        ? `<div class="text-center py-10 text-gray-400">Kuzatuv yozuvlari mavjud emas</div>`
+        : records.map(r => `
+            <div class="p-4 border border-gray-100 rounded-xl mb-3 bg-white hover:shadow-sm transition-shadow">
+              <div class="flex justify-between items-start mb-2">
+                <span class="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-bold">${r.kuzatuv_davri}</span>
+                <span class="text-xs text-gray-400">${Utils.formatDateTime(r.created_at)}</span>
+              </div>
+              <div class="flex items-center gap-2 mb-2">
+                <div class="w-2 h-2 rounded-full ${r.holati==='Vafot etdi'?'bg-red-500':'bg-green-500'}"></div>
+                <span class="font-bold text-gray-800">${r.holati}</span>
+                ${r.qayta_xuruj ? '<span class="text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded font-bold">QAYTA XURUJ!</span>' : ''}
+              </div>
+              ${r.nogironlik_guruhi ? `<div class="text-xs text-gray-600 mb-1"><b>Nogironlik:</b> ${r.nogironlik_guruhi}</div>` : ''}
+              ${r.izoh ? `<p class="text-sm text-gray-600 mt-2 italic">"${r.izoh}"</p>` : ''}
+              <div class="text-xs text-gray-400 mt-2 text-right">— Dr. ${r.shifokor_fio||'Noma\\'lum'}</div>
+            </div>
+          `).join('');
+
+      el.innerHTML = `
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div class="lg:col-span-1">
+            <div class="card sticky top-6">
+              <div class="card-header bg-gray-50 border-b border-gray-100 p-5 !mb-0">
+                <h3 class="card-title text-gray-900 flex items-center gap-2">${icon('plus-circle', 18)} Yangi kuzatuv</h3>
+              </div>
+              <div class="card-body p-5">
+                <div class="form-group">
+                  <label class="form-label">Kuzatuv davri</label>
+                  <select id="k-davri" class="form-select">
+                    ${APP_CONFIG.KUZATUV_DAVRLARI.map(d=>`<option value="${d}">${d}</option>`).join('')}
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Bemor holati</label>
+                  <select id="k-holati" class="form-select">
+                    ${APP_CONFIG.KUZATUV_HOLATLARI.map(h=>`<option value="${h}">${h}</option>`).join('')}
+                  </select>
+                </div>
+                <div class="form-group flex items-center gap-2 py-2">
+                  <input type="checkbox" id="k-xuruj" class="w-4 h-4 text-red-600 border-gray-300 rounded focus:ring-red-500">
+                  <label for="k-xuruj" class="text-sm font-medium text-gray-700">Qayta xuruj (insult/infarkt)</label>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Nogironlik guruhi</label>
+                  <select id="k-nogironlik" class="form-select">
+                    <option value="">Yo'q / Ma'lum emas</option>
+                    <option value="1-guruh">1-guruh</option>
+                    <option value="2-guruh">2-guruh</option>
+                    <option value="3-guruh">3-guruh</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Qo'shimcha izoh</label>
+                  <textarea id="k-izoh" class="form-textarea" rows="3" placeholder="Batafsil..."></textarea>
+                </div>
+                <button class="btn btn-primary w-full mt-4 flex items-center justify-center gap-2" id="save-kuzatuv-btn" onclick="BemorKartaPage.saveKuzatuv()">
+                  ${icon('save', 18)} Saqlash
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="lg:col-span-2">
+            <div class="card">
+              <div class="card-header bg-gray-50 border-b border-gray-100 p-5 !mb-0">
+                <h3 class="card-title text-gray-900 flex items-center gap-2">${icon('history', 18)} Kuzatuvlar tarixi</h3>
+              </div>
+              <div class="card-body p-5 bg-gray-50/50 min-h-[300px]">
+                ${recordsHtml}
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+      initIcons();
+    } catch(err) {
+      el.innerHTML = `<div class="p-10 text-center text-red-500">Xatolik: ${err.message}</div>`;
+    }
+  },
+
+  async saveKuzatuv() {
+    const btn = document.getElementById('save-kuzatuv-btn');
+    const data = {
+      registr_turi: BemorKartaPage._type,
+      kt_no: BemorKartaPage._patient.kt_no,
+      kuzatuv_davri: document.getElementById('k-davri').value,
+      holati: document.getElementById('k-holati').value,
+      qayta_xuruj: document.getElementById('k-xuruj').checked,
+      nogironlik_guruhi: document.getElementById('k-nogironlik').value,
+      izoh: document.getElementById('k-izoh').value,
+      shifokor_fio: (await Profile.getCurrent())?.fio || 'Dr. Navbatchi'
+    };
+
+    setLoading(btn, true);
+    try {
+      await DB.addKuzatuv(data);
+      showToast('Kuzatuv ma\\'lumoti saqlandi', 'success');
+      BemorKartaPage.loadTab(3); // Reload tab
+    } catch(err) {
+      showToast(err.message, 'error');
+      setLoading(btn, false);
+    }
   },
 
   renderShift(el) {
@@ -293,7 +419,7 @@ const BemorKartaPage = {
   },
 
   chiqarishModal() {
-    this.switchTab(4); // Switch to "Chiqarish" tab
+    this.switchTab(5); // Switch to "Chiqarish" tab
   },
 
   async chiqarishSave() {

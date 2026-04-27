@@ -37,6 +37,12 @@ CREATE TABLE IF NOT EXISTS infarkt_qabul (
   otkazilgan_muassasa   TEXT,
   shifokor_fio          TEXT,
   aha_bali              INT,
+  birlamchi_yoki_takroriy TEXT,
+  birinchi_murojaat_vaqti TEXT,
+  tez_yordam_kelgan_vaqt TEXT,
+  ekg_vaqti             TEXT,
+  ejeksiya_fraksiyasi   TEXT,
+  asoratlar             TEXT[],
   status                TEXT DEFAULT 'active',
   user_id               UUID REFERENCES auth.users(id)
 );
@@ -64,6 +70,13 @@ CREATE TABLE IF NOT EXISTS insult_qabul (
   xavf_omil             TEXT[],
   mskt                  TEXT,
   muolaja_turi          TEXT,
+  birlamchi_yoki_takroriy TEXT,
+  birinchi_murojaat_vaqti TEXT,
+  tez_yordam_kelgan_vaqt TEXT,
+  yutish_testi          TEXT,
+  trombolizis_vaqti     TEXT,
+  trombektomiya_vaqti   TEXT,
+  reabilitatsiya_boshlangan_vaqt TEXT,
   status                TEXT DEFAULT 'active',
   user_id               UUID REFERENCES auth.users(id)
 );
@@ -98,6 +111,22 @@ CREATE TABLE IF NOT EXISTS infarkt_chiqarish (
   statsionarda_kun      INT,
   yakuniy_diagnoz       TEXT,
   tavsiyalar            TEXT
+);
+
+-- ============================================================
+-- 5. KUZATUV (Follow-up) - 30 kun, 3 oy, 6 oy, 1 yil
+-- ============================================================
+CREATE TABLE IF NOT EXISTS kuzatuv (
+  id                    UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  created_at            TIMESTAMPTZ DEFAULT now(),
+  registr_turi          TEXT NOT NULL,
+  kt_no                 TEXT NOT NULL,
+  kuzatuv_davri         TEXT NOT NULL, -- '30_kun', '3_oy', '6_oy', '1_yil'
+  holati                TEXT,          -- 'Yaxshi', 'Qayta yotqizildi', 'Olim'
+  qayta_xuruj           BOOLEAN DEFAULT false,
+  nogironlik_guruhi     TEXT,
+  shifokor_fio          TEXT,
+  izoh                  TEXT
 );
 
 -- ============================================================
@@ -147,6 +176,7 @@ ALTER TABLE insult_chiqarish  ENABLE ROW LEVEL SECURITY;
 ALTER TABLE infarkt_chiqarish ENABLE ROW LEVEL SECURITY;
 ALTER TABLE davolash          ENABLE ROW LEVEL SECURITY;
 ALTER TABLE holat_baxolash    ENABLE ROW LEVEL SECURITY;
+ALTER TABLE kuzatuv           ENABLE ROW LEVEL SECURITY;
 
 -- infarkt_qabul
 DROP POLICY IF EXISTS "infarkt_select" ON infarkt_qabul;
@@ -196,6 +226,14 @@ CREATE POLICY "holat_select" ON holat_baxolash FOR SELECT TO authenticated USING
 CREATE POLICY "holat_insert" ON holat_baxolash FOR INSERT TO authenticated WITH CHECK (true);
 CREATE POLICY "holat_update" ON holat_baxolash FOR UPDATE TO authenticated USING (true);
 
+-- kuzatuv
+DROP POLICY IF EXISTS "kuzatuv_select" ON kuzatuv;
+DROP POLICY IF EXISTS "kuzatuv_insert" ON kuzatuv;
+DROP POLICY IF EXISTS "kuzatuv_update" ON kuzatuv;
+CREATE POLICY "kuzatuv_select" ON kuzatuv FOR SELECT TO authenticated USING (true);
+CREATE POLICY "kuzatuv_insert" ON kuzatuv FOR INSERT TO authenticated WITH CHECK (true);
+CREATE POLICY "kuzatuv_update" ON kuzatuv FOR UPDATE TO authenticated USING (true);
+
 -- ============================================================
 -- INDEKSLAR
 -- ============================================================
@@ -213,3 +251,5 @@ CREATE INDEX IF NOT EXISTS idx_davolash_kt_no    ON davolash(kt_no);
 CREATE INDEX IF NOT EXISTS idx_davolash_status   ON davolash(status);
 
 CREATE INDEX IF NOT EXISTS idx_holat_kt_no       ON holat_baxolash(kt_no);
+
+CREATE INDEX IF NOT EXISTS idx_kuzatuv_kt_no     ON kuzatuv(kt_no);

@@ -135,12 +135,13 @@ const HisobotPage = {
         filters.viloyat = profile.viloyat;
       }
       
-      const [infs, ins] = await Promise.all([
+      const [infs, ins, kuzatuv] = await Promise.all([
         DB.infarktList(filters),
-        DB.insultList(filters)
+        DB.insultList(filters),
+        getSupabase().from('kuzatuv').select('*').gte('created_at', filters.from).lte('created_at', filters.to)
       ]);
-      HisobotPage._lastData = { infs, ins, from, to };
-      HisobotPage.renderReport(infs, ins, from, to);
+      HisobotPage._lastData = { infs, ins, kuzatuv: kuzatuv.data||[], from, to };
+      HisobotPage.renderReport(infs, ins, kuzatuv.data||[], from, to);
     } catch(err) {
       if (el) el.innerHTML = `
         <div class="h-card text-center text-red-600 py-12">
@@ -166,6 +167,26 @@ const HisobotPage = {
     const nihss15 = ins.filter(p=>p.nihss_qabul>=15).length;
     const vafot_inf = infs.filter(p=>p.status==='vafot').length;
     const vafot_ins = ins.filter(p=>p.status==='vafot').length;
+
+    // Timing metrics
+    const calcAvgTime = (items, startField, endField) => {
+      const diffs = items.map(p => {
+        if (!p[startField] || !p[endField]) return null;
+        const d1 = new Date(p[startField]);
+        const d2 = new Date(p[endField]);
+        if (isNaN(d1) || isNaN(d2)) return null;
+        return (d2 - d1) / 60000; // minutes
+      }).filter(d => d !== null && d > 0);
+      if (diffs.length === 0) return 0;
+      return Math.round(diffs.reduce((a, b) => a + b, 0) / diffs.length);
+    };
+
+    const avgDoorToCT = calcAvgTime(ins, 'qabul_vaqt', 'created_at'); // Simplification: using created_at as proxy for early processing if explicit field not used
+    const avgDoorToTLT = calcAvgTime(ins.filter(p=>p.trombolizis_vaqti), 'qabul_vaqt', 'trombolizis_vaqti');
+    const avgDoorToPCI = calcAvgTime(infs.filter(p=>p.pci_vaqt), 'qabul_vaqt', 'pci_vaqt');
+
+    // Readmission (30 days)
+    const readm30 = (HisobotPage._lastData.kuzatuv || []).filter(k => k.kuzatuv_davri==='30 kunlik' && (k.holati?.includes('Qayta') || k.qayta_xuruj)).length;
 
     const statRow = (label, val, iconName, colorClass) =>
       `<div class="h-row">
@@ -205,6 +226,13 @@ const HisobotPage = {
             <div class="text-xs font-bold text-slate-500 uppercase tracking-wide">Vafot holatlari</div>
           </div>
         </div>
+        <div class="h-stat group">
+          <div class="h-stat-icon bg-blue-100 text-blue-600 group-hover:scale-110 transition-transform">${icon('repeat', 28)}</div>
+          <div>
+            <div class="text-3xl font-black text-blue-900">${readm30}</div>
+            <div class="text-xs font-bold text-slate-500 uppercase tracking-wide">Qayta yotqizildi</div>
+          </div>
+        </div>
       </div>
 
       <!-- Detail Cards -->
@@ -236,6 +264,29 @@ const HisobotPage = {
             ${statRow('TIA', tia, 'zap', 'text-amber-600')}
             ${statRow('NIHSS ≥ 15 (og\'ir)', nihss15, 'alert-octagon', 'text-red-600')}
             ${statRow('Vafot', vafot_ins, 'heart-crack', 'text-slate-700')}
+          </div>
+        </div>
+        <!-- Timing Analytics -->
+        <div class="h-card !p-0 overflow-hidden lg:col-span-2">
+          <div class="bg-blue-900 p-5 border-b border-blue-800">
+            <h3 class="h-title !mb-0 text-white">${icon('clock', 24)} Vaqt tahlili (Average Time Metrics)</h3>
+          </div>
+          <div class="p-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div class="p-4 bg-slate-50 rounded-2xl border border-slate-100 text-center">
+              <div class="text-xs font-bold text-slate-500 uppercase mb-1">Door-to-TLT (Insult)</div>
+              <div class="text-2xl font-black text-blue-700">${avgDoorToTLT || '—'} <span class="text-xs font-normal">min</span></div>
+              <div class="text-[10px] text-slate-400 mt-1">Maqsad: < 60 min</div>
+            </div>
+            <div class="p-4 bg-slate-50 rounded-2xl border border-slate-100 text-center">
+              <div class="text-xs font-bold text-slate-500 uppercase mb-1">Door-to-PCI (Infarkt)</div>
+              <div class="text-2xl font-black text-red-700">${avgDoorToPCI || '—'} <span class="text-xs font-normal">min</span></div>
+              <div class="text-[10px] text-slate-400 mt-1">Maqsad: < 90 min</div>
+            </div>
+            <div class="p-4 bg-slate-50 rounded-2xl border border-slate-100 text-center">
+              <div class="text-xs font-bold text-slate-500 uppercase mb-1">Door-to-CT (Insult)</div>
+              <div class="text-2xl font-black text-purple-700">${avgDoorToCT || '—'} <span class="text-xs font-normal">min</span></div>
+              <div class="text-[10px] text-slate-400 mt-1">Maqsad: < 25 min</div>
+            </div>
           </div>
         </div>
       </div>

@@ -33,6 +33,11 @@ const APP_CONFIG = {
     "Qoraqalpog'iston Respublikasi"
   ],
 
+  BIRLAMCHI_TAKROIRIY: [
+    "Birlamchi (birinchi marta)",
+    "Takroriy (oldingi anamnez bor)"
+  ],
+
   MUROJAAT_YOLLARI: [
     "Tez tibbiy yordam bilan",
     "O'z-o'zidan",
@@ -70,7 +75,19 @@ const APP_CONFIG = {
     "Insult / TIA anamnezi",
     "Yurak yetishmovchiligi anamnezi",
     "Oilaviy YuIK (birinchi darajali)",
+    "Surunkali buyrak kasalligi",
+    "Semizlik (BMI ≥ 30)",
     "Xavf omili yo'q"
+  ],
+
+  ASORATLAR_INFARKT: [
+    "Yurak yetishmovchiligi",
+    "Aritmiya (AF, VF, VT)",
+    "Kardiogen shok",
+    "Yurak yorilishi",
+    "Dressler sindromi",
+    "Tromboemboliya",
+    "Asorat yo'q"
   ],
 
   XAVF_OMILLAR_INSULT: [
@@ -81,7 +98,15 @@ const APP_CONFIG = {
     "YuIK / PIKS",
     "Chekish",
     "Spirtli ichimlik",
+    "Semizlik",
+    "Surunkali buyrak kasalligi",
     "Xavf omili yo'q"
+  ],
+
+  YUTISH_TESTI_OPTIONS: [
+    "O'tdi (norma)",
+    "O'tmadi (disfagiya)",
+    "Bajarilmadi"
   ],
 
   INFARKT_TURLARI: [
@@ -157,5 +182,19 @@ const APP_CONFIG = {
     "Ha — o'tkazildi",
     "Yo'q — qurilma yo'q",
     "Yo'q — boshqa sabab"
+  ],
+
+  KUZATUV_DAVRLARI: [
+    "30 kunlik",
+    "3 oylik",
+    "6 oylik",
+    "1 yillik"
+  ],
+
+  KUZATUV_HOLATLARI: [
+    "Yaxshi / Barqaror",
+    "Qayta yotqizildi (re-hospitalization)",
+    "Qayta xuruj (takroriy infarkt/insult)",
+    "Vafot etdi"
   ]
 };
