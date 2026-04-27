@@ -320,7 +320,7 @@ const InfarktYangiPage = {
     if (!wrap) return;
 
     ['viloyat','muassasa','kt_no','qabul_vaqt','murojaat_yoli','yuborgan_muassasa',
-     'fio','tugilgan_sana','aha_bali','simptom_vaqt','birlamchi_yoki_takroriy',
+     'fio','aha_bali','simptom_vaqt','birlamchi_yoki_takroriy',
      'infarkt_turi','killip','qon_bosimi','puls','ekg_vaqti','troponin','kkfmb',
      'muolaja_turi','angio_natija','otkazilgan_muassasa','shifokor_fio']
     .forEach(id => {
@@ -328,16 +328,17 @@ const InfarktYangiPage = {
       if (el) InfarktYangiPage._data[id] = el.value;
     });
 
+    const tugilgan = document.getElementById('tugilgan_sana');
+    if (tugilgan) InfarktYangiPage._data.tugilgan_yil = tugilgan.value;
+
     const jinsEl = document.querySelector('input[name="jins"]:checked');
     if (jinsEl) InfarktYangiPage._data.jins = jinsEl.value;
 
     const ekgEl = document.querySelector('input[name="ekg_natija"]:checked');
-    if (ekgEl) InfarktYangiPage._data.ekg_natija = ekgEl.value;
+    if (ekgEl) InfarktYangiPage._data.ekg_natija = [ekgEl.value];
 
-    ['xavf_omillari'].forEach(name => {
-      const els = document.querySelectorAll(`input[name="${name}"]:checked`);
-      InfarktYangiPage._data[name] = Array.from(els).map(e=>e.value);
-    });
+    const xavfEls = document.querySelectorAll(`input[name="xavf_omillari"]:checked`);
+    InfarktYangiPage._data.xavf_omil = Array.from(xavfEls).map(e=>e.value);
   },
 
   validateStep() {

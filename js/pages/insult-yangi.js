@@ -290,13 +290,15 @@ const InsultYangiPage = {
     if (!wrap) return;
 
     ['viloyat','muassasa','kt_no','qabul_vaqt','murojaat_yoli','yuborgan_muassasa',
-     'fio','tugilgan_sana',
-     'simptom_vaqt','gcs_bali','insult_turi','qon_bosimi','aha_bali','nihss_qabul',
+     'fio','simptom_vaqt','gcs_bali','insult_turi','qon_bosimi','aha_bali','nihss_qabul',
      'mskt','otkazilgan_muassasa','dinamika_izoh','status','qoshimcha','shifokor_fio']
     .forEach(id => {
       const el = document.getElementById(id);
       if (el) InsultYangiPage._data[id] = el.value;
     });
+
+    const tugilgan = document.getElementById('tugilgan_sana');
+    if (tugilgan) InsultYangiPage._data.tugilgan_yil = tugilgan.value;
 
     const jinsEl = document.querySelector('input[name="jins"]:checked');
     if (jinsEl) InsultYangiPage._data.jins = jinsEl.value;
@@ -307,8 +309,11 @@ const InsultYangiPage = {
     const dinamikaEl = document.querySelector('input[name="dinamika_muolaja_turi"]:checked');
     if (dinamikaEl) InsultYangiPage._data.dinamika_muolaja_turi = dinamikaEl.value;
 
-    const xavfEls = document.querySelectorAll('input[name="xavf_omillari"]:checked');
-    InsultYangiPage._data.xavf_omillari = Array.from(xavfEls).map(e=>e.value);
+    ['xavf_omillari','asoratlar'].forEach(name => {
+      const els = document.querySelectorAll(`input[name="${name}"]:checked`);
+      const key = name === 'xavf_omillari' ? 'xavf_omil' : name;
+      InsultYangiPage._data[key] = Array.from(els).map(e=>e.value);
+    });
   },
 
   validateStep() {

@@ -27,9 +27,19 @@ const Utils = {
     return d.toISOString().slice(0, 16);
   },
 
-  calculateAge(tugilganYil) {
-    if (!tugilganYil) return null;
-    const yr = parseInt(tugilganYil.toString().slice(0, 4));
+  calculateAge(val) {
+    if (!val) return null;
+    const s = val.toString();
+    if (s.includes('-')) {
+      const b = new Date(s);
+      if (isNaN(b)) return null;
+      const now = new Date();
+      let age = now.getFullYear() - b.getFullYear();
+      const m = now.getMonth() - b.getMonth();
+      if (m < 0 || (m === 0 && now.getDate() < b.getDate())) age--;
+      return age;
+    }
+    const yr = parseInt(s.slice(0, 4));
     if (isNaN(yr)) return null;
     return new Date().getFullYear() - yr;
   },

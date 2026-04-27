@@ -36,7 +36,7 @@ const BemorKartaPage = {
   },
 
   renderContent(p, type) {
-    const age = Utils.calculateAge(p.tugilgan_yil);
+    const age = Utils.calculateAge(p.tugilgan_sana || p.tugilgan_yil);
     const inner = document.getElementById('karta-inner');
     if (!inner) return;
 
@@ -145,7 +145,7 @@ const BemorKartaPage = {
         <div class="card !mb-0">
           <div class="card-header bg-gray-50 border-b border-gray-100 !mb-0"><h3 class="card-title text-gray-900 flex items-center gap-2">${icon('user', 18)} Shaxsiy ma'lumotlar</h3></div>
           <div class="card-body p-5">
-            ${row('Tug\'ilgan yili', p.tugilgan_yil)}
+            ${row('Tug\'ilgan sanasi', Utils.formatDate(p.tugilgan_sana) || p.tugilgan_yil)}
             ${row('Jinsi', p.jins)}
             ${row('Viloyat', p.viloyat)}
             ${row('Muassasa', p.muassasa)}
@@ -161,9 +161,8 @@ const BemorKartaPage = {
               ${row('Infarkt turi', p.infarkt_turi)}
               ${row('Killip', p.killip)}
               ${row('Troponin', p.troponin)}
-              ${row('EF (%)', p.ejeksiya_fraksiyasi)}
-              ${row('EKG vaqti', Utils.formatDateTime(p.ekg_vaqti))}
-            `:`
+              ${row('EKG vaqti', p.ekg_vaqti)}
+            `: `
               ${row('Insult turi', p.insult_turi)}
               ${row('NIHSS', p.nihss_qabul!=null?p.nihss_qabul+' ball':null)}
               ${row('GCS', p.gcs_qabul!=null?p.gcs_qabul+' ball':null)}
@@ -191,8 +190,8 @@ const BemorKartaPage = {
             <div class="mb-4">
               <span class="text-sm text-gray-500 block mb-2">Qayd etilgan xavf omillari:</span>
               <div class="flex flex-wrap gap-2">
-                ${Array.isArray(p.xavf_omil) && p.xavf_omil.length > 0 
-                  ? p.xavf_omil.map(o => `<span class="px-3 py-1 bg-amber-50 text-amber-700 border border-amber-200 rounded-full text-xs font-semibold">${o}</span>`).join('') 
+                ${(p.xavf_omillari || p.xavf_omil || []).length > 0 
+                  ? (p.xavf_omillari || p.xavf_omil).map(o => `<span class="px-3 py-1 bg-amber-50 text-amber-700 border border-amber-200 rounded-full text-xs font-semibold">${o}</span>`).join('') 
                   : '<span class="text-sm text-gray-400">Hech qanday xavf omili kiritilmagan</span>'}
               </div>
             </div>
