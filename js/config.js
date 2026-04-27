@@ -45,6 +45,14 @@ const APP_CONFIG = {
     "Boshqa muassasadan"
   ],
 
+  SIMPTOM_VAQTLAR_INSULT: [
+    "0-4 soat ichida",
+    "4-6 soat ichida",
+    "6-24 soat ichida",
+    "24 soatdan ortiq",
+    "Uyquda boshlangan"
+  ],
+
   SIMPTOM_VAQTLAR: [
     "0–3 soat ichida",
     "3–6 soat ichida",
@@ -93,14 +101,15 @@ const APP_CONFIG = {
   XAVF_OMILLAR_INSULT: [
     "Arterial gipertenziya",
     "Qandli diabet",
-    "Fibrillyatsiya (AF)",
-    "O'tkazilgan insult / TIA",
-    "YuIK / PIKS",
+    "Yurak aritmiyasi",
+    "Yurak ishemik kasalligi",
+    "Avvalgi insult / TIA",
     "Chekish",
     "Spirtli ichimlik",
     "Semizlik",
-    "Surunkali buyrak kasalligi",
-    "Xavf omili yo'q"
+    "Dislipidemiya",
+    "Irsiy moyillik (qarindoshlarda insult)",
+    "COVID-19 o'tkazgan"
   ],
 
   YUTISH_TESTI_OPTIONS: [
@@ -155,21 +164,22 @@ const APP_CONFIG = {
 
   INSULT_TURLARI: [
     "Ishemik insult",
-    "Gemorragik insult (intraserebral qon quyilish)",
-    "Gemorragik insult (subaraknoid qon quyilish)",
-    "TIA (o'tkinchi ishemik xuruj)",
-    "Aniqlanmagan"
+    "Gemorragik insult",
+    "TIA (Tranzitor ishemik ataka)"
   ],
 
   INSULT_MUOLAJALARI: [
-    "Faqat CAG (diagnostik)",
-    "CAG + Tromboaspiratsiya",
-    "CAG + Tromboekstraksiya",
-    "CAG + Stentlash",
-    "CAG + TLBAP",
-    "CAG + TLT (trombolizis)",
-    "Kombinatsiya (TrAspir + TrEkstr)",
-    "O'tkazilmadi / Konservativ"
+    "Medikamentoz (konservativ) davo",
+    "MSKT angiografiya",
+    "Faqat serebral angiografiya",
+    "Serebral angiografiya + Trombolitik terapiya (TLT, trombolizis)",
+    "Serebral angiografiya + tromboaspiratsiya",
+    "Serebral angiografiya + tromboekstraksiya (mexanik trombektomiya)",
+    "Serebral angiografiya + stentlash",
+    "Serebral angiografiya + transluminal ballon angioplastika (TLBAP)",
+    "Kombinatsiyalangan muolaja: tromboaspiratsiya + tromboekstraksiya",
+    "Gemorragik insult bo'yicha jarrohlik amaliyoti",
+    "Boshqa muassasaga o'tkazildi — angiografiya va endovaskulyar muolaja uchun"
   ],
 
   MRS_DARAJALAR: [
