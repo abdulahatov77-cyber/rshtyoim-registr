@@ -381,25 +381,81 @@ const BemorKartaPage = {
       `;
       return;
     }
-    
+
+    const borderColor = type === 'insult' ? 'border-t-purple-500' : 'border-t-red-500';
+    const radioColor  = type === 'insult' ? 'text-purple-600' : 'text-red-600';
+    const hoverColor  = type === 'insult' ? 'hover:border-purple-400 hover:bg-purple-50' : 'hover:border-red-300 hover:bg-red-50';
+
+    const mrsBlock = type === 'insult' ? `
+      <div class="form-group mt-4">
+        <label class="form-label required">NIHSS ball chiqarishda</label>
+        <input type="number" id="ch-nihss" min="0" max="42" class="form-input" placeholder="0 dan 42 gacha"/>
+      </div>
+      <div class="form-group mt-4">
+        <label class="form-label required">Insultdan keyingi nogironlik darajasini baholash shkalasi (mRS darajalari)</label>
+        <div class="grid grid-cols-1 gap-2 mt-2">
+          ${APP_CONFIG.MRS_DARAJALAR.map(item => `
+            <label class="flex items-center gap-3 p-3 border rounded-xl cursor-pointer ${hoverColor} transition-colors">
+              <input type="radio" name="ch-mrs" value="${item}" class="w-4 h-4 ${radioColor}">
+              <span class="text-sm text-gray-700">${item}</span>
+            </label>
+          `).join('')}
+        </div>
+      </div>
+    ` : `
+      <div class="form-group mt-4">
+        <label class="form-label required">Asoratlar</label>
+        <div class="grid grid-cols-1 gap-2 mt-2">
+          ${APP_CONFIG.CHIQARISH_ASORATLAR.map(item => `
+            <label class="flex items-center gap-3 p-3 border rounded-xl cursor-pointer hover:bg-gray-50 transition-colors">
+              <input type="checkbox" name="ch-asorat" value="${item}" class="w-4 h-4 text-blue-600 rounded">
+              <span class="text-sm text-gray-700">${item}</span>
+            </label>
+          `).join('')}
+        </div>
+      </div>
+    `;
+
     el.innerHTML = `
       <div class="max-w-2xl mx-auto">
-        <div class="card border-t-4 border-t-gray-500">
+        <div class="card border-t-4 ${borderColor}">
           <div class="card-header bg-gray-50 border-b border-gray-100 p-5 !mb-0">
             <h3 class="card-title text-gray-900 flex items-center gap-2">${icon('log-out', 18)} Bemorni chiqarish</h3>
           </div>
           <div class="card-body p-6">
-              <label class="form-label text-red-600">O'lim sababi</label>
-              <input type="text" id="ch-vafot-sababi" class="form-input border-red-300 focus:border-red-500" placeholder="Masalan: Asoratlar, kardiogen shok..."/>
-            </div>
-            <div class="form-group mt-4">
-              <label class="form-label">Xulosa epikrizi</label>
-              <textarea id="ch-xulosa" class="form-textarea" rows="4" placeholder="Chiqarish xulosasini kiriting..."></textarea>
-            </div>
+
             <div class="form-group">
-              <label class="form-label">Chiqish sanasi</label>
-              <input type="date" id="ch-date" class="form-input" value="${new Date().toISOString().split('T')[0]}"/>
+              <label class="form-label required">Chiqarilgan sana</label>
+              <div class="grid grid-cols-2 gap-3">
+                <input type="date" id="ch-sana" class="form-input" value="${new Date().toISOString().split('T')[0]}"/>
+                <input type="time" id="ch-vaqt" class="form-input" value="${new Date().toTimeString().slice(0,5)}"/>
+              </div>
             </div>
+
+            ${mrsBlock}
+
+            <div class="form-group mt-4">
+              <label class="form-label required">Natija</label>
+              <div class="grid grid-cols-1 gap-2 mt-2">
+                ${APP_CONFIG.CHIQARISH_NATIJALARI.map(item => `
+                  <label class="flex items-center gap-3 p-3 border rounded-xl cursor-pointer ${hoverColor} transition-all">
+                    <input type="radio" name="ch-natija" value="${item}" class="w-4 h-4 ${radioColor}" onchange="BemorKartaPage.onNatijaChange('${item}')">
+                    <span class="text-sm font-medium text-gray-700">${item}</span>
+                  </label>
+                `).join('')}
+              </div>
+            </div>
+
+            <div id="ch-boshqa-div" class="form-group mt-4" style="display:none">
+              <label class="form-label required">Boshqa shifoxona nomi</label>
+              <input type="text" id="ch-boshqa-shifoxona" class="form-input" placeholder="Shifoxona nomini kiriting"/>
+            </div>
+
+            <div id="ch-reabil-div" class="form-group mt-4" style="display:none">
+              <label class="form-label required">Reabilitatsiya markazi nomi</label>
+              <input type="text" id="ch-reabil-markaz" class="form-input" placeholder="Markaz nomini kiriting"/>
+            </div>
+
             <div class="mt-6 flex justify-end">
               <button class="btn btn-primary px-8" id="btn-chiqarish" onclick="BemorKartaPage.chiqarishSave()">Saqlash va Chiqarish</button>
             </div>
@@ -417,34 +473,40 @@ const BemorKartaPage = {
     const sana = document.getElementById('ch-sana')?.value;
     const vaqt = document.getElementById('ch-vaqt')?.value;
     const natija = document.querySelector('input[name="ch-natija"]:checked')?.value;
+    const type = BemorKartaPage._type;
+
+    // Insult uchun NIHSS va mRS
+    const nihssChiqarish = document.getElementById('ch-nihss')?.value || null;
+    const mrsDaraja = document.querySelector('input[name="ch-mrs"]:checked')?.value || null;
+
+    // Infarkt uchun asoratlar
     const asoratlar = Array.from(document.querySelectorAll('input[name="ch-asorat"]:checked')).map(e => e.value);
+
     const boshqaShifoxona = document.getElementById('ch-boshqa-shifoxona')?.value || '';
-    const reabilMarkaz = document.getElementById('ch-reabil-markaz')?.value || '';
+    const reabilMarkaz   = document.getElementById('ch-reabil-markaz')?.value   || '';
 
     if (!sana) return showToast('Chiqarilgan sanani kiriting', 'warning');
     if (!natija) return showToast('Natijani tanlang', 'warning');
-    if (asoratlar.length === 0) return showToast('Asoratlarni belgilang', 'warning');
+    if (type === 'infarkt' && asoratlar.length === 0) return showToast('Asoratlarni belgilang', 'warning');
+    if (type === 'insult' && !mrsDaraja) return showToast('mRS darajasini tanlang', 'warning');
 
     if (!confirm('Rostdan ham bemorni shifoxonadan chiqarmoqchimisiz?')) return;
 
     const btn = document.getElementById('btn-chiqarish');
     setLoading(btn, true);
 
-    // status ni natija asosida aniqlash
     let status = 'chiqarildi';
     if (natija === 'Vafot etdi') status = 'vafot';
     else if (natija === "Boshqa shifoxonaga o'tkazildi") status = 'otkazildi';
 
     try {
       const kt_no = BemorKartaPage._patient.kt_no;
-      const type = BemorKartaPage._type;
       const chiqish_sana = `${sana}T${vaqt || '00:00'}`;
 
       if (type === 'infarkt') {
-        await DB.infarktUpdate(kt_no, { status: status });
+        await DB.infarktUpdate(kt_no, { status });
         await DB.infarktChiqarish({
-          kt_no,
-          chiqish_sana,
+          kt_no, chiqish_sana,
           chiqish_holat: natija,
           asoratlar: asoratlar.join(', '),
           boshqa_shifoxona: boshqaShifoxona,
@@ -452,12 +514,12 @@ const BemorKartaPage = {
           olim_sababi: natija === 'Vafot etdi' ? 'Vafot etdi' : null
         });
       } else {
-        await DB.insultUpdate(kt_no, { status: status });
+        await DB.insultUpdate(kt_no, { status });
         await DB.insultChiqarish({
-          kt_no,
-          chiqish_sana,
+          kt_no, chiqish_sana,
           natija,
-          asoratlar: asoratlar.join(', '),
+          nihss_chiqarish: nihssChiqarish,
+          mrs_daraja: mrsDaraja,
           boshqa_shifoxona: boshqaShifoxona,
           reabil_markaz: reabilMarkaz
         });

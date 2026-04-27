@@ -196,20 +196,19 @@ const APP_CONFIG = {
   ],
 
   MRS_DARAJALAR: [
-    "0 — Belgi yo'q",
-    "1 — Belgi bor, lekin faoliyat cheklanmagan",
-    "2 — Ozgina cheklanish",
-    "3 — O'rtacha cheklanish (yordamsiz yuradi)",
-    "4 — Kuchli cheklanish (yordamda yuradi)",
-    "5 — Og'ir nogirorlik (to'shakda)",
-    "6 — Vafot"
+    "0 – simptom yo'q",
+    "1 – yengil simptom, lekin kundalik ishlarni qila oladi",
+    "2 – yengil nogironlik, ba'zi ishlar qiyin",
+    "3 – o'rtacha nogironlik, yordam kerak",
+    "4 – og'ir nogironlik, mustaqil yura olmaydi",
+    "5 – juda og'ir nogironlik, doimiy parvarish kerak",
+    "6 – vafot"
   ],
 
   INSULT_NATIJALARI: [
-    "Tuzalib chiqarildi",
+    "Tuzaldi",
+    "Reabilitatsiyaga yuborildi",
     "Boshqa shifoxonaga o'tkazildi",
-    "Reabilitatsiya markaziga o'tkazildi",
-    "Bosh tortib chiqib ketdi",
     "Vafot etdi"
   ],
 
