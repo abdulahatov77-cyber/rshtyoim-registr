@@ -226,6 +226,25 @@ const InsultYangiPage = {
           ${this.field('status','Bemorni joriy holati',`<select id="status" class="form-select font-bold">
             ${this.selectOptions(['active','chiqarildi','vafot','otkazildi'], d.status||'active')}</select>`,true)}
         </div>
+        <div class="mt-4 border-t border-dashed border-gray-200 pt-4">
+          <div class="form-group">
+            <label class="form-label required">Dinamikada bajarilgan muolaja turi</label>
+            <div class="grid grid-cols-1 gap-2 mt-2">
+              ${APP_CONFIG.DINAMIKA_MUOLAJALAR_INSULT.map(item => {
+                const isSel = (d.dinamika_muolaja_turi || '') === item;
+                return `
+                  <label class="flex items-center gap-3 p-3 border rounded-xl cursor-pointer transition-all ${isSel ? 'border-purple-500 bg-purple-50 text-purple-700 font-medium shadow-sm' : 'border-gray-200 hover:border-purple-300 hover:bg-gray-50 text-gray-600'}">
+                    <input type="radio" name="dinamika_muolaja_turi" value="${item}" class="w-4 h-4 text-purple-600" ${isSel?'checked':''} onchange="InsultYangiPage.saveCurrentStep()">
+                    <span class="text-sm">${item}</span>
+                  </label>
+                `;
+              }).join('')}
+            </div>
+          </div>
+        </div>
+        <div class="mt-4">
+          ${this.field('dinamika_izoh','Izoh — Dinamikada muolaja o\'zgarishi sababi',`<textarea id="dinamika_izoh" class="form-textarea" rows="3" placeholder="Dinamikada muolaja o'zgarishi sababi...">${d.dinamika_izoh||''}</textarea>`)}
+        </div>
         <div class="mt-2">
           ${this.field('qoshimcha','Qo\'shimcha izoh yoki eslatma',`<textarea id="qoshimcha" class="form-textarea" placeholder="Boshqa muhim ma'lumotlar...">${d.qoshimcha||''}</textarea>`)}
         </div>
@@ -263,7 +282,7 @@ const InsultYangiPage = {
     ['viloyat','muassasa','kt_no','qabul_vaqt','murojaat_yoli','yuborgan_muassasa',
      'fio','tugilgan_sana',
      'simptom_vaqt','gcs_bali','insult_turi','qon_bosimi','aha_bali','nihss_qabul',
-     'mskt','otkazilgan_muassasa','status','qoshimcha','shifokor_fio']
+     'mskt','otkazilgan_muassasa','dinamika_izoh','status','qoshimcha','shifokor_fio']
     .forEach(id => {
       const el = document.getElementById(id);
       if (el) InsultYangiPage._data[id] = el.value;
@@ -274,6 +293,9 @@ const InsultYangiPage = {
 
     const muolajaEl = document.querySelector('input[name="muolaja_turi"]:checked');
     if (muolajaEl) InsultYangiPage._data.muolaja_turi = muolajaEl.value;
+
+    const dinamikaEl = document.querySelector('input[name="dinamika_muolaja_turi"]:checked');
+    if (dinamikaEl) InsultYangiPage._data.dinamika_muolaja_turi = dinamikaEl.value;
 
     const xavfEls = document.querySelectorAll('input[name="xavf_omillari"]:checked');
     InsultYangiPage._data.xavf_omillari = Array.from(xavfEls).map(e=>e.value);

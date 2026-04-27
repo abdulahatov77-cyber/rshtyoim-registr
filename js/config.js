@@ -162,6 +162,19 @@ const APP_CONFIG = {
     "Boshqa muassasaga o'tkazildi — angiografiya va endovaskulyar muolaja uchun"
   ],
 
+  DINAMIKA_MUOLAJALAR_INSULT: [
+    "MSKT angiografiya",
+    "Faqat serebral angiografiya",
+    "Serebral angiografiya + trombolitik terapiya (TLT, trombolizis)",
+    "Serebral angiografiya + tromboaspiratsiya",
+    "Serebral angiografiya + tromboekstraksiya (mexanik trombektomiya)",
+    "Serebral angiografiya + stentlash",
+    "Serebral angiografiya + transluminal ballon angioplastika (TLBAP)",
+    "Kombinatsiyalangan muolaja: tromboaspiratsiya + tromboekstraksiya",
+    "Gemorragik insult bo'yicha jarrohlik amaliyoti",
+    "Boshqa muassasaga o'tkazildi \u2013 angiografiya va endovaskulyar muolaja uchun"
+  ],
+
   INSULT_TURLARI: [
     "Ishemik insult",
     "Gemorragik insult",
