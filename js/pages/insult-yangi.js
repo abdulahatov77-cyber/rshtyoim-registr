@@ -150,7 +150,7 @@ const InsultYangiPage = {
     return `
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6">
         ${this.field('fio','Bemor F.I.O',`<input id="fio" class="form-input" value="${d.fio||''}" placeholder="Familiya Ism Otasining ismi"/>`,true)}
-        ${this.field('tugilgan_sana','Tug\'ilgan sanasi',`<input id="tugilgan_sana" type="date" class="form-input" value="${d.tugilgan_sana||''}"/>`,true)}
+        ${this.field('tugilgan_sana','Tug\'ilgan yili',`<input id="tugilgan_sana" type="date" class="form-input" value="${d.tugilgan_sana||''}"/>`,true)}
         <div class="col-span-1 sm:col-span-2">
           ${this.field('jins','Jinsi',`
             <div class="flex gap-4 mt-1">
@@ -176,12 +176,12 @@ const InsultYangiPage = {
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6">
         ${this.field('simptom_vaqt','Simptomlar qachon boshlangan?',`<select id="simptom_vaqt" class="form-select">
           ${this.selectOptions(APP_CONFIG.SIMPTOM_VAQTLAR_INSULT, d.simptom_vaqt||'')}</select>`,true)}
+        ${this.field('nihss_qabul','NIHSS qabul paytida (0–42 ball)',`<input id="nihss_qabul" type="number" min="0" max="42" class="form-input" value="${d.nihss_qabul||''}" placeholder="0 dan 42 gacha"/>`,true)}
         ${this.field('gcs_bali','Glazgo shkalasi (GCS), (3-15 ball)',`<input id="gcs_bali" type="number" min="3" max="15" class="form-input" value="${d.gcs_bali||''}" placeholder="3 dan 15 gacha"/>`,true)}
         ${this.field('insult_turi','Insult turi',`<select id="insult_turi" class="form-select border-purple-300 focus:border-purple-500">
           ${this.selectOptions(APP_CONFIG.INSULT_TURLARI, d.insult_turi||'')}</select>`,true)}
         ${this.field('qon_bosimi','Qon bosimi (qabul paytida)',`<input id="qon_bosimi" class="form-input font-mono" value="${d.qon_bosimi||''}" placeholder="140/90"/>`,true)}
         ${this.field('aha_bali','AHA (American Heart Association) savolnomasi bali',`<input id="aha_bali" type="number" class="form-input" value="${d.aha_bali||''}" placeholder="Ballarni kiriting"/>`,true)}
-        ${this.field('nihss_qabul','NIHSS qabul paytida (0–42 ball)',`<input id="nihss_qabul" type="number" min="0" max="42" class="form-input" value="${d.nihss_qabul||''}" placeholder="0 dan 42 gacha"/>`,true)}
       </div>
       <div class="mt-4 border-t border-dashed border-gray-200 pt-4">
         ${this.field('xavf_omillari','Xavf omillari (bir nechta tanlash mumkin)',
