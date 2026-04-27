@@ -389,15 +389,6 @@ const BemorKartaPage = {
             <h3 class="card-title text-gray-900 flex items-center gap-2">${icon('log-out', 18)} Bemorni chiqarish</h3>
           </div>
           <div class="card-body p-6">
-            <div class="form-group">
-              <label class="form-label required">Chiqarish turi</label>
-              <select id="ch-status" class="form-select border-gray-300 focus:border-blue-500" onchange="document.getElementById('ch-vafot-div').style.display=this.value==='vafot'?'block':'none'">
-                <option value="chiqarildi">Uyga javob berildi</option>
-                <option value="otkazildi">Boshqa muassasaga o'tkazildi</option>
-                <option value="vafot">Vafot etdi</option>
-              </select>
-            </div>
-            <div class="form-group hidden" id="ch-vafot-div">
               <label class="form-label text-red-600">O'lim sababi</label>
               <input type="text" id="ch-vafot-sababi" class="form-input border-red-300 focus:border-red-500" placeholder="Masalan: Asoratlar, kardiogen shok..."/>
             </div>
@@ -423,40 +414,55 @@ const BemorKartaPage = {
   },
 
   async chiqarishSave() {
-    const status = document.getElementById('ch-status')?.value;
-    const xulosa = document.getElementById('ch-xulosa')?.value;
-    const vafot_sabab = document.getElementById('ch-vafot-sababi')?.value;
-    
-    if (!status) return showToast('Holatni tanlang', 'warning');
-    if (status === 'vafot' && !vafot_sabab) return showToast('O\'lim sababini kiriting', 'warning');
-    
+    const sana = document.getElementById('ch-sana')?.value;
+    const vaqt = document.getElementById('ch-vaqt')?.value;
+    const natija = document.querySelector('input[name="ch-natija"]:checked')?.value;
+    const asoratlar = Array.from(document.querySelectorAll('input[name="ch-asorat"]:checked')).map(e => e.value);
+    const boshqaShifoxona = document.getElementById('ch-boshqa-shifoxona')?.value || '';
+    const reabilMarkaz = document.getElementById('ch-reabil-markaz')?.value || '';
+
+    if (!sana) return showToast('Chiqarilgan sanani kiriting', 'warning');
+    if (!natija) return showToast('Natijani tanlang', 'warning');
+    if (asoratlar.length === 0) return showToast('Asoratlarni belgilang', 'warning');
+
     if (!confirm('Rostdan ham bemorni shifoxonadan chiqarmoqchimisiz?')) return;
-    
+
     const btn = document.getElementById('btn-chiqarish');
     setLoading(btn, true);
+
+    // status ni natija asosida aniqlash
+    let status = 'chiqarildi';
+    if (natija === 'Vafot etdi') status = 'vafot';
+    else if (natija === "Boshqa shifoxonaga o'tkazildi") status = 'otkazildi';
+
     try {
       const kt_no = BemorKartaPage._patient.kt_no;
       const type = BemorKartaPage._type;
-      
+      const chiqish_sana = `${sana}T${vaqt || '00:00'}`;
+
       if (type === 'infarkt') {
         await DB.infarktUpdate(kt_no, { status: status });
         await DB.infarktChiqarish({
-          kt_no: kt_no,
-          chiqish_sana: document.getElementById('ch-date')?.value || new Date().toISOString().split('T')[0],
-          chiqish_holat: status,
-          yakuniy_diagnoz: xulosa,
-          olim_sababi: vafot_sabab || null
+          kt_no,
+          chiqish_sana,
+          chiqish_holat: natija,
+          asoratlar: asoratlar.join(', '),
+          boshqa_shifoxona: boshqaShifoxona,
+          reabil_markaz: reabilMarkaz,
+          olim_sababi: natija === 'Vafot etdi' ? 'Vafot etdi' : null
         });
       } else {
         await DB.insultUpdate(kt_no, { status: status });
         await DB.insultChiqarish({
-          kt_no: kt_no,
-          chiqish_sana: document.getElementById('ch-date')?.value || new Date().toISOString().split('T')[0],
-          natija: status,
-          boshqa_shifo: vafot_sabab ? "O'lim sababi: " + vafot_sabab + ". Xulosa: " + xulosa : xulosa
+          kt_no,
+          chiqish_sana,
+          natija,
+          asoratlar: asoratlar.join(', '),
+          boshqa_shifoxona: boshqaShifoxona,
+          reabil_markaz: reabilMarkaz
         });
       }
-      
+
       showToast('Bemor muvaffaqiyatli chiqarildi', 'success');
       setTimeout(() => Router.go('bemorlar'), 1500);
     } catch(err) {

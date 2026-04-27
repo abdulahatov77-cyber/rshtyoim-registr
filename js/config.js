@@ -197,6 +197,22 @@ const APP_CONFIG = {
     "Vafot etdi"
   ],
 
+  CHIQARISH_ASORATLAR: [
+    "Aritmiya",
+    "Kardiogen shok",
+    "O'pka shishi",
+    "Reinfarkt",
+    "Tromboemboliyalar",
+    "Asorat kuzatilmadi"
+  ],
+
+  CHIQARISH_NATIJALARI: [
+    "Tuzaldi",
+    "Reabilitatsiyaga yuborildi",
+    "Boshqa shifoxonaga o'tkazildi",
+    "Vafot etdi"
+  ],
+
   MSKT_TANLOVLAR: [
     "Ha — o'tkazildi",
     "Yo'q — qurilma yo'q",
