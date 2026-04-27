@@ -181,6 +181,7 @@ const InsultYangiPage = {
           ${this.selectOptions(APP_CONFIG.INSULT_TURLARI, d.insult_turi||'')}</select>`,true)}
         ${this.field('qon_bosimi','Qon bosimi (qabul paytida)',`<input id="qon_bosimi" class="form-input font-mono" value="${d.qon_bosimi||''}" placeholder="140/90"/>`,true)}
         ${this.field('aha_bali','AHA (American Heart Association) savolnomasi bali',`<input id="aha_bali" type="number" class="form-input" value="${d.aha_bali||''}" placeholder="Ballarni kiriting"/>`,true)}
+        ${this.field('nihss_qabul','NIHSS qabul paytida (0–42 ball)',`<input id="nihss_qabul" type="number" min="0" max="42" class="form-input" value="${d.nihss_qabul||''}" placeholder="0 dan 42 gacha"/>`,true)}
       </div>
       <div class="mt-4 border-t border-dashed border-gray-200 pt-4">
         ${this.field('xavf_omillari','Xavf omillari (bir nechta tanlash mumkin)',
@@ -259,7 +260,7 @@ const InsultYangiPage = {
 
     ['viloyat','muassasa','kt_no','qabul_vaqt','murojaat_yoli','yuborgan_muassasa',
      'fio','tugilgan_sana',
-     'simptom_vaqt','gcs_bali','insult_turi','qon_bosimi','aha_bali',
+     'simptom_vaqt','gcs_bali','insult_turi','qon_bosimi','aha_bali','nihss_qabul',
      'mskt','otkazilgan_muassasa','status','qoshimcha','shifokor_fio']
     .forEach(id => {
       const el = document.getElementById(id);
@@ -284,7 +285,7 @@ const InsultYangiPage = {
     let required = [];
     if (this._step === 0) required = ['viloyat','muassasa','kt_no','qabul_vaqt','murojaat_yoli'];
     if (this._step === 1) required = ['fio','tugilgan_sana','jins'];
-    if (this._step === 2) required = ['simptom_vaqt','gcs_bali','insult_turi','qon_bosimi','aha_bali'];
+    if (this._step === 2) required = ['simptom_vaqt','gcs_bali','insult_turi','qon_bosimi','aha_bali','nihss_qabul'];
     if (this._step === 3) required = ['mskt','muolaja_turi','status'];
     if (this._step === 4) required = ['shifokor_fio'];
 
