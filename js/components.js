@@ -243,8 +243,9 @@ const Components = {
     const bColor = isInf ? 'badge-red' : 'badge-purple';
     const typeLabel = isInf ? 'Infarkt' : 'Insult';
     const typeIcon = isInf ? 'heart' : 'brain';
-    const age = Utils.calculateAge(p.tugilgan_yil) || '—';
+    const age = Utils.calculateAge(p.tugilgan_sana || p.tugilgan_yil) || '—';
     const stBadge = Utils.statusBadge(p.status);
+    const jins = p.jins || p.jinsi || '—';
 
     return `
       <tr onclick="Router.go('bemor-karta', {kt_no:'${p.kt_no}', type:'${type}'})">
@@ -257,7 +258,7 @@ const Components = {
         <td>
           <div class="font-semibold text-gray-900">${p.fio || '—'}</div>
         </td>
-        <td>${age} yosh · ${p.jinsi==='erkak'?'Erkak':p.jinsi==='ayol'?'Ayol':'—'}</td>
+        <td>${age} yosh · ${jins}</td>
         <td>
           <div class="flex items-center gap-1.5 text-gray-600">
             ${icon('map-pin', 14)} ${p.viloyat || '—'}
