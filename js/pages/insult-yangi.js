@@ -2,7 +2,7 @@
 const InsultYangiPage = {
   _step: 0,
   _data: {},
-  STEPS: ['Muassasa', 'Bemor', 'Klinik', 'Muolaja', 'Shifokor'],
+  STEPS: ['Muassasa', 'Bemor', 'Klinik', 'Muolaja'],
 
   async render() {
     const user = await Auth.getUser();
@@ -26,13 +26,12 @@ const InsultYangiPage = {
   renderStep() {
     const step = InsultYangiPage._step;
     const wrap = document.getElementById('insult-form-wrap');
-    const sectionIcons = ['building-2', 'user', 'brain', 'pill', 'stethoscope'];
+    const sectionIcons = ['building-2', 'user', 'brain', 'pill'];
     const sectionTitles = [
       '1-BO\'LIM: Muassasa ma\'lumotlari',
       '2-BO\'LIM: Bemor ma\'lumotlari',
       '3-BO\'LIM: Klinik ma\'lumotlar',
-      '4-BO\'LIM: Diagnostika va Muolaja',
-      '5-BO\'LIM: Shifokor ma\'lumotlari'
+      '4-BO\'LIM: Diagnostika, Muolaja va Shifokor'
     ];
 
     wrap.innerHTML = `
@@ -210,7 +209,6 @@ const InsultYangiPage = {
 
     return `
       <div class="grid grid-cols-1 gap-x-6">
-
         ${this.field('mskt','MSKT o\'tkazilganmi?',`<select id="mskt" class="form-select">
           ${this.selectOptions(['Ha – o\'tkazildi', 'Yo\'q – boshqa sabab'], d.mskt||'')}</select>`,true)}
 
@@ -229,37 +227,29 @@ const InsultYangiPage = {
         `,true)}
 
         <div id="otkazilgan-div" style="display:${showOtkazilgan?'block':'none'}">
-          ${this.field('otkazilgan_muassasa','Boshqa muassasa nomi',`<input id="otkazilgan_muassasa" class="form-input" value="${d.otkazilgan_muassasa||''}" placeholder="Muassasa nomini kiriting"/>`)}
+          ${this.field('otkazilgan_muassasa','O\'tkazilgan muassasa nomi',`<select id="otkazilgan_muassasa" class="form-select">
+            <option value="">Muassasani tanlang...</option>
+            ${this.getAllMuassasalar().map(m => `<option value="${m}" ${d.otkazilgan_muassasa===m?'selected':''}>${m}</option>`).join('')}
+          </select>`)}
         </div>
 
-        <div class="mt-2">
-          ${this.field('status','Bemorni joriy holati',`<select id="status" class="form-select font-bold">
-            ${this.selectOptions(['active','chiqarildi','vafot','otkazildi'], d.status||'active')}</select>`,true)}
-        </div>
         <div class="mt-4 border-t border-dashed border-gray-200 pt-4">
-          <div class="form-group">
-            <label class="form-label required">Dinamikada bajarilgan muolaja turi</label>
-            <div class="grid grid-cols-1 gap-2 mt-2">
-              ${APP_CONFIG.DINAMIKA_MUOLAJALAR_INSULT.map(item => {
-                const isSel = (d.dinamika_muolaja_turi || '') === item;
-                return `
-                  <label class="flex items-center gap-3 p-3 border rounded-xl cursor-pointer transition-all ${isSel ? 'border-purple-500 bg-purple-50 text-purple-700 font-medium shadow-sm' : 'border-gray-200 hover:border-purple-300 hover:bg-gray-50 text-gray-600'}">
-                    <input type="radio" name="dinamika_muolaja_turi" value="${item}" class="w-4 h-4 text-purple-600" ${isSel?'checked':''} onchange="InsultYangiPage.saveCurrentStep()">
-                    <span class="text-sm">${item}</span>
-                  </label>
-                `;
-              }).join('')}
-            </div>
+          ${this.field('shifokor_fio','Ushbu formani to\'ldiruvchi shifokor F.I.O',`<input id="shifokor_fio" class="form-input" value="${d.shifokor_fio||''}" placeholder="Familiya Ism Otasining ismi"/>`,true)}
+        </div>
+
+        <div class="mt-6 p-4 bg-green-50 border border-green-200 rounded-xl flex items-start gap-3">
+          ${icon('check-circle', 24, 'text-green-500 flex-shrink-0 mt-0.5')}
+          <div>
+            <div class="font-semibold text-green-800">Saqlashga tayyor</div>
+            <div class="text-sm text-green-700 mt-1">Barcha ma'lumotlarni tekshirib chiqing va "Saqlash" tugmasini bosing.</div>
           </div>
-        </div>
-        <div class="mt-4">
-          ${this.field('dinamika_izoh','Izoh — Dinamikada muolaja o\'zgarishi sababi',`<textarea id="dinamika_izoh" class="form-textarea" rows="3" placeholder="Dinamikada muolaja o'zgarishi sababi...">${d.dinamika_izoh||''}</textarea>`)}
-        </div>
-        <div class="mt-2">
-          ${this.field('qoshimcha','Qo\'shimcha izoh yoki eslatma',`<textarea id="qoshimcha" class="form-textarea" placeholder="Boshqa muhim ma'lumotlar...">${d.qoshimcha||''}</textarea>`)}
         </div>
       </div>
     `;
+  },
+
+  getAllMuassasalar() {
+    return Object.values(APP_CONFIG.MUASSASALAR).flat().sort();
   },
 
   onMuolajaChange(val) {
@@ -268,30 +258,13 @@ const InsultYangiPage = {
     if (otkazDiv) otkazDiv.style.display = val === "Boshqa muassasaga o'tkazildi — angiografiya va endovaskulyar muolaja uchun" ? 'block' : 'none';
   },
 
-  // ============ 5-BO'LIM: Shifokor ============
-  renderStep4() {
-    const d = InsultYangiPage._data;
-    return `
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6">
-        ${this.field('shifokor_fio','Ushbu formani to\'ldiruvchi shifokor F.I.O',`<input id="shifokor_fio" class="form-input" value="${d.shifokor_fio||''}" placeholder="Familiya Ism Otasining ismi"/>`,true)}
-      </div>
-      <div class="mt-6 p-4 bg-green-50 border border-green-200 rounded-xl flex items-start gap-3">
-        ${icon('check-circle', 24, 'text-green-500 flex-shrink-0 mt-0.5')}
-        <div>
-          <div class="font-semibold text-green-800">Saqlashga tayyor</div>
-          <div class="text-sm text-green-700 mt-1">Barcha ma'lumotlarni tekshirib chiqing va "Saqlash" tugmasini bosing.</div>
-        </div>
-      </div>
-    `;
-  },
-
   saveCurrentStep() {
     const wrap = document.getElementById('step-body');
     if (!wrap) return;
 
     ['viloyat','muassasa','kt_no','qabul_vaqt','murojaat_yoli','yuborgan_muassasa',
      'fio','simptom_vaqt','gcs_bali','insult_turi','qon_bosimi','aha_bali','nihss_qabul',
-     'mskt','otkazilgan_muassasa','dinamika_izoh','status','qoshimcha','shifokor_fio']
+     'mskt','otkazilgan_muassasa','shifokor_fio']
     .forEach(id => {
       const el = document.getElementById(id);
       if (el) InsultYangiPage._data[id] = el.value;
@@ -309,9 +282,6 @@ const InsultYangiPage = {
     const muolajaEl = document.querySelector('input[name="muolaja_turi"]:checked');
     if (muolajaEl) InsultYangiPage._data.muolaja_turi = muolajaEl.value;
 
-    const dinamikaEl = document.querySelector('input[name="dinamika_muolaja_turi"]:checked');
-    if (dinamikaEl) InsultYangiPage._data.dinamika_muolaja_turi = dinamikaEl.value;
-
     ['xavf_omillari','asoratlar'].forEach(name => {
       const els = document.querySelectorAll(`input[name="${name}"]:checked`);
       const key = name === 'xavf_omillari' ? 'xavf_omil' : name;
@@ -327,9 +297,8 @@ const InsultYangiPage = {
     let required = [];
     if (this._step === 0) required = ['viloyat','muassasa','kt_no','qabul_vaqt','murojaat_yoli'];
     if (this._step === 1) required = ['fio','tugilgan_sana','jins'];
-    if (this._step === 2) required = ['simptom_vaqt','gcs_bali','insult_turi','qon_bosimi','aha_bali','nihss_qabul'];
-    if (this._step === 3) required = ['mskt','muolaja_turi','status'];
-    if (this._step === 4) required = ['shifokor_fio'];
+    if (this._step === 2) required = ['simptom_vaqt','nihss_qabul','gcs_bali','insult_turi','qon_bosimi'];
+    if (this._step === 3) required = ['mskt','muolaja_turi','shifokor_fio'];
 
     const errs = Utils.validate(this._data, required);
     let valid = true;
