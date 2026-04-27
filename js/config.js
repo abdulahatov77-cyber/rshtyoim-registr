@@ -34,15 +34,15 @@ const APP_CONFIG = {
   ],
 
   BIRLAMCHI_TAKROIRIY: [
-    "Birlamchi (birinchi marta)",
-    "Takroriy (oldingi anamnez bor)"
+    "Birlamchi",
+    "Takroriy"
   ],
 
   MUROJAAT_YOLLARI: [
     "Tez tibbiy yordam bilan",
-    "O'z-o'zidan",
-    "Boshqa tibbiyot muassasasidan",
-    "Tez yordam vertoloti bilan"
+    "O'z murojaati bilan",
+    "Poliklinika yo'llanmasi bilan",
+    "Boshqa muassasadan"
   ],
 
   SIMPTOM_VAQTLAR: [
@@ -55,29 +55,29 @@ const APP_CONFIG = {
   ],
 
   EKG_NATIJALARI: [
-    "ST ko'tarilishi (elevation)",
-    "ST pasayishi (depression)",
+    "ST ko'tarilishi",
+    "ST pasayishi",
     "Yangi chap blokada (LBBB)",
     "Patologik Q to'lqini",
     "T inversiya",
-    "Taxikardiya / aritmiya",
+    "Taxikardiya/aritmiya",
     "AV blokada",
-    "O'zgarishsiz (norma)"
+    "O'zgarishsiz"
   ],
 
   XAVF_OMILLAR_INFARKT: [
-    "Arterial gipertenziya (AGT)",
-    "Qandli diabet (QD)",
-    "Chekish (hozirgi yoki sobiq)",
-    "Giperxolesterolemiya / dislipidemiya",
-    "Ortiqcha vazn (BMI ≥ 30)",
-    "YuIK anamnezi — PIKS (o'tkazilgan infarkt)",
-    "Insult / TIA anamnezi",
-    "Yurak yetishmovchiligi anamnezi",
-    "Oilaviy YuIK (birinchi darajali)",
-    "Surunkali buyrak kasalligi",
-    "Semizlik (BMI ≥ 30)",
-    "Xavf omili yo'q"
+    "Arterial gipertenziya",
+    "Qandli diabet",
+    "Chekish",
+    "Dislipidemiya",
+    "Semizlik (BMI ≥30)",
+    "Oilaviy YIK",
+    "Oldin o'tkazilgan MI",
+    "Insult/TIA anamnezi",
+    "COVID-19",
+    "Spirtli ichimlik",
+    "Yurak aritmiyasi",
+    "Xavf omili aniqlanmadi"
   ],
 
   ASORATLAR_INFARKT: [
@@ -110,16 +110,24 @@ const APP_CONFIG = {
   ],
 
   INFARKT_TURLARI: [
-    "STEMI (ST segment ko'tarilishi bilan miokard infarkti)",
-    "NSTEMI (ST segment ko'tarilmasdan miokard infarkti)",
-    "O'tkir miokard infarkti"
+    "O'KS ST elevatsiya bilan (STEMI)",
+    "O'KS ST elevatsiyasiz (NSTEMI)",
+    "O'tkir miokard infarkti (AMI)",
+    "Stabil bo'lmagan stenokardiya"
   ],
 
   KILLIP_KLASSLAR: [
-    "Killip I — yurak yetishmovchiligi yo'q",
-    "Killip II — yurak yetishmovchiligi (nam xirildoqlar)",
-    "Killip III — o'pka shishi",
-    "Killip IV — kardiogen shok"
+    "Killip I (yo'q)",
+    "Killip II (yengil)",
+    "Killip III (o'pka shishi)",
+    "Killip IV (kardiogen shok)"
+  ],
+
+  ANGIO_NATIJALARI: [
+    "Gemodinamik ahamiyatli stenoz yo'q",
+    "Chap asosiy magistral (LM) zararlanishi",
+    "Ko'p tomirli diffuz zararlanishi",
+    "To'liq okklyuziya"
   ],
 
   INFARKT_MUOLAJALARI: [
