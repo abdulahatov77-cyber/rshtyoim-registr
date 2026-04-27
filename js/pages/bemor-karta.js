@@ -212,7 +212,7 @@ const BemorKartaPage = {
       <div class="card">
         <div class="card-header border-b border-gray-100 flex justify-between items-center bg-gray-50 p-5 !mb-0">
           <h3 class="card-title flex items-center gap-2 text-gray-900">${icon('clipboard-list', 18)} Holat dinamikasi</h3>
-          <button class="btn btn-primary btn-sm flex items-center gap-2" onclick="showModal({title:'Yangi baholash qo\\'shish', body:'Hozircha faqat ko\\'rish rejimi ishlab turibdi'})">
+          <button class="btn btn-primary btn-sm flex items-center gap-2" onclick="showModal({title:'Yangi baholash', body:'Hozircha faqat korish rejimi'})">
             ${icon('plus', 16)} Yangi qo'shish
           </button>
         </div>
@@ -229,7 +229,7 @@ const BemorKartaPage = {
       <div class="card">
         <div class="card-header border-b border-gray-100 flex justify-between items-center bg-gray-50 p-5 !mb-0">
           <h3 class="card-title flex items-center gap-2 text-gray-900">${icon('pill', 18)} Davolash varaqasi</h3>
-          <button class="btn btn-primary btn-sm flex items-center gap-2" onclick="showModal({title:'Dori buyurish', body:'Hozircha faqat ko\\'rish rejimi ishlab turibdi'})">
+          <button class="btn btn-primary btn-sm flex items-center gap-2" onclick="showModal({title:'Dori buyurish', body:'Hozircha faqat korish rejimi'})">
             ${icon('plus', 16)} Dori qo'shish
           </button>
         </div>
@@ -262,7 +262,7 @@ const BemorKartaPage = {
               </div>
               ${r.nogironlik_guruhi ? `<div class="text-xs text-gray-600 mb-1"><b>Nogironlik:</b> ${r.nogironlik_guruhi}</div>` : ''}
               ${r.izoh ? `<p class="text-sm text-gray-600 mt-2 italic">"${r.izoh}"</p>` : ''}
-              <div class="text-xs text-gray-400 mt-2 text-right">— Dr. ${r.shifokor_fio||'Noma\\'lum'}</div>
+              <div class="text-xs text-gray-400 mt-2 text-right">— Dr. ${r.shifokor_fio||'Noma\'lum'}</div>
             </div>
           `).join('');
 
@@ -343,7 +343,7 @@ const BemorKartaPage = {
     setLoading(btn, true);
     try {
       await DB.addKuzatuv(data);
-      showToast('Kuzatuv ma\\'lumoti saqlandi', 'success');
+      showToast('Kuzatuv saqlandi', 'success');
       BemorKartaPage.loadTab(3); // Reload tab
     } catch(err) {
       showToast(err.message, 'error');
@@ -356,7 +356,7 @@ const BemorKartaPage = {
       <div class="card">
         <div class="card-header border-b border-gray-100 flex justify-between items-center bg-gray-50 p-5 !mb-0">
           <h3 class="card-title flex items-center gap-2 text-gray-900">${icon('users', 18)} Navbatchi shifokorlar jurnali</h3>
-          <button class="btn btn-primary btn-sm flex items-center gap-2" onclick="showModal({title:'Navbatchilik yozuvi', body:'Hozircha faqat ko\\'rish rejimi ishlab turibdi'})">
+          <button class="btn btn-primary btn-sm flex items-center gap-2" onclick="showModal({title:'Navbatchilik yozuvi', body:'Hozircha faqat korish rejimi'})">
             ${icon('plus', 16)} Yozuv kiritish
           </button>
         </div>
