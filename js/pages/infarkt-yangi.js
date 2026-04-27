@@ -329,7 +329,10 @@ const InfarktYangiPage = {
     });
 
     const tugilgan = document.getElementById('tugilgan_sana');
-    if (tugilgan) InfarktYangiPage._data.tugilgan_yil = tugilgan.value;
+    if (tugilgan) {
+      InfarktYangiPage._data.tugilgan_sana = tugilgan.value;
+      InfarktYangiPage._data.tugilgan_yil = tugilgan.value;
+    }
 
     const jinsEl = document.querySelector('input[name="jins"]:checked');
     if (jinsEl) InfarktYangiPage._data.jins = jinsEl.value;

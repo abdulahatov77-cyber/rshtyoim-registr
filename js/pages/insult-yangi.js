@@ -298,7 +298,10 @@ const InsultYangiPage = {
     });
 
     const tugilgan = document.getElementById('tugilgan_sana');
-    if (tugilgan) InsultYangiPage._data.tugilgan_yil = tugilgan.value;
+    if (tugilgan) {
+      InsultYangiPage._data.tugilgan_sana = tugilgan.value;
+      InsultYangiPage._data.tugilgan_yil = tugilgan.value;
+    }
 
     const jinsEl = document.querySelector('input[name="jins"]:checked');
     if (jinsEl) InsultYangiPage._data.jins = jinsEl.value;
