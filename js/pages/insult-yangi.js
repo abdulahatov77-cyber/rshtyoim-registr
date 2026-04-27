@@ -119,9 +119,9 @@ const InsultYangiPage = {
     const d = InsultYangiPage._data;
     return `
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6">
-        ${this.field('viloyat','Viloyat / Shahar',`<select id="viloyat" class="form-select" ${InsultYangiPage._profile?.role !== 'admin' ? 'disabled' : ''}><option value="">Tanlang...</option>
+        ${this.field('viloyat','Viloyat / Shahar',`<select id="viloyat" class="form-select" onchange="InsultYangiPage.onViloyatChange(this.value)" ${InsultYangiPage._profile?.role !== 'admin' ? 'disabled' : ''}><option value="">Tanlang...</option>
           ${APP_CONFIG.VILOYATLAR.map(v=>`<option value="${v}" ${d.viloyat===v?'selected':''}>${v}</option>`).join('')}</select>`,true)}
-        ${this.field('muassasa','Muassasa to\'liq nomi',`<input id="muassasa" class="form-input" value="${d.muassasa||''}" placeholder="Muassasa nomini kiriting"/>`,true)}
+        ${this.field('muassasa','Muassasa',`<select id="muassasa" class="form-select"><option value="">Tanlang...</option>${(APP_CONFIG.MUASSASALAR[d.viloyat]||[]).map(m=>`<option value="${m}" ${d.muassasa===m?'selected':''}>${m}</option>`).join('')}</select>`,true)}
         ${this.field('kt_no','Kasallik tarixi №',`<input id="kt_no" class="form-input font-mono bg-gray-50" value="${d.kt_no||''}"/>`,true,'Avtomatik yaratiladi')}
         ${this.field('qabul_vaqt','Bemorni qabul qilgan sana va vaqt',`<input id="qabul_vaqt" type="datetime-local" class="form-input" value="${d.qabul_vaqt||''}"/>`,true)}
         <div class="col-span-1 sm:col-span-2">
@@ -142,6 +142,16 @@ const InsultYangiPage = {
     InsultYangiPage._data.murojaat_yoli = val;
     const div = document.getElementById('yuborgan-div');
     if (div) div.style.display = val === 'Boshqa muassasadan' ? 'block' : 'none';
+  },
+
+  onViloyatChange(val) {
+    InsultYangiPage._data.viloyat = val;
+    InsultYangiPage._data.muassasa = '';
+    const sel = document.getElementById('muassasa');
+    if (!sel) return;
+    const list = APP_CONFIG.MUASSASALAR[val] || [];
+    sel.innerHTML = `<option value="">Tanlang...</option>` +
+      list.map(m => `<option value="${m}">${m}</option>`).join('');
   },
 
   // ============ 2-BO'LIM: Bemor ============
