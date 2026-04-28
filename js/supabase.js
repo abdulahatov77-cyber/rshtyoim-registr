@@ -66,9 +66,24 @@ const DB = {
   // Infarkt CRUD
   async infarktQabul(data) {
     const user = await Auth.getUser();
+    // Faqat mavjud ustunlarni yuboramiz
+    const allowed = [
+      'viloyat','muassasa','kt_no','qabul_vaqt','murojaat_yoli','yuborgan_muassasa',
+      'fio','tugilgan_yil','jins',
+      'aha_bali','simptom_vaqt','birlamchi_yoki_takroriy',
+      'infarkt_turi','killip','qon_bosimi','puls','ekg_vaqti','troponin','kkfmb',
+      'ekg_natija','xavf_omil',
+      'muolaja_turi','angio_natija','otkazilgan_muassasa',
+      'dinamika_muolaja_turi','dinamika_izoh',
+      'shifokor_fio','status'
+    ];
+    const clean = {};
+    for (const k of allowed) {
+      if (data[k] !== undefined) clean[k] = data[k];
+    }
     const { data: result, error } = await getSupabase()
       .from('infarkt_qabul')
-      .insert({ ...data, user_id: user?.id })
+      .insert({ ...clean, user_id: user?.id })
       .select()
       .single();
     if (error) throw error;
@@ -105,9 +120,23 @@ const DB = {
   // Insult CRUD
   async insultQabul(data) {
     const user = await Auth.getUser();
+    // Faqat mavjud ustunlarni yuboramiz
+    const allowed = [
+      'viloyat','muassasa','kt_no','qabul_vaqt','murojaat_yoli','yuborgan_muassasa',
+      'fio','tugilgan_yil','jins',
+      'simptom_vaqt','nihss_qabul','gcs_bali','insult_turi','qon_bosimi',
+      'xavf_omil','aha_bali',
+      'mskt','muolaja_turi','otkazilgan_muassasa',
+      'dinamika_muolaja_turi','dinamika_izoh',
+      'shifokor_fio','status'
+    ];
+    const clean = {};
+    for (const k of allowed) {
+      if (data[k] !== undefined) clean[k] = data[k];
+    }
     const { data: result, error } = await getSupabase()
       .from('insult_qabul')
-      .insert({ ...data, user_id: user?.id })
+      .insert({ ...clean, user_id: user?.id })
       .select()
       .single();
     if (error) throw error;
