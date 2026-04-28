@@ -165,7 +165,7 @@ const BemorKartaPage = {
             `: `
               ${row('Insult turi', p.insult_turi)}
               ${row('NIHSS', p.nihss_qabul!=null?p.nihss_qabul+' ball':null)}
-              ${row('GCS', p.gcs_qabul!=null?p.gcs_qabul+' ball':null)}
+              ${row('GCS', p.gcs_bali!=null?p.gcs_bali+' ball':null)}
               ${row('Yutish testi', p.yutish_testi)}
               ${row('TLT vaqti', Utils.formatDateTime(p.trombolizis_vaqti))}
               ${row('Trombektomiya', Utils.formatDateTime(p.trombektomiya_vaqti))}
@@ -190,9 +190,13 @@ const BemorKartaPage = {
             <div class="mb-4">
               <span class="text-sm text-gray-500 block mb-2">Qayd etilgan xavf omillari:</span>
               <div class="flex flex-wrap gap-2">
-                ${(p.xavf_omillari || p.xavf_omil || []).length > 0 
-                  ? (p.xavf_omillari || p.xavf_omil).map(o => `<span class="px-3 py-1 bg-amber-50 text-amber-700 border border-amber-200 rounded-full text-xs font-semibold">${o}</span>`).join('') 
-                  : '<span class="text-sm text-gray-400">Hech qanday xavf omili kiritilmagan</span>'}
+                ${(() => {
+                  const xavf = Array.isArray(p.xavf_omil) ? p.xavf_omil 
+                    : Array.isArray(p.xavf_omillari) ? p.xavf_omillari : [];
+                  return xavf.length > 0
+                    ? xavf.map(o => `<span class="px-3 py-1 bg-amber-50 text-amber-700 border border-amber-200 rounded-full text-xs font-semibold">${o}</span>`).join('')
+                    : '<span class="text-sm text-gray-400">Hech qanday xavf omili kiritilmagan</span>';
+                })()}
               </div>
             </div>
             
