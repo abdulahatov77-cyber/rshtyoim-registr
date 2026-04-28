@@ -140,12 +140,20 @@ const BemorKartaPage = {
         <span class="text-sm font-semibold text-gray-900 text-right max-w-[60%]">${val||'—'}</span>
       </div>`;
       
+    // Tug'ilgan sanasini to'g'ri o'qish
+    const tugilgan = p.tugilgan_sana || p.tugilgan_yil || '';
+    const tugilganDisplay = tugilgan
+      ? (tugilgan.includes('-') && tugilgan.length >= 10
+          ? new Date(tugilgan).toLocaleDateString('uz-UZ', {day:'2-digit',month:'2-digit',year:'numeric'})
+          : tugilgan)
+      : null;
+
     el.innerHTML = `
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div class="card !mb-0">
           <div class="card-header bg-gray-50 border-b border-gray-100 !mb-0"><h3 class="card-title text-gray-900 flex items-center gap-2">${icon('user', 18)} Shaxsiy ma'lumotlar</h3></div>
           <div class="card-body p-5">
-            ${row('Tug\'ilgan sanasi', Utils.formatDate(p.tugilgan_sana) || p.tugilgan_yil)}
+            ${row('Tug\'ilgan sanasi', tugilganDisplay)}
             ${row('Jinsi', p.jins)}
             ${row('Viloyat', p.viloyat)}
             ${row('Muassasa', p.muassasa)}
@@ -159,33 +167,38 @@ const BemorKartaPage = {
             ${row('Qon bosimi', p.qon_bosimi)}
             ${type==='infarkt'?`
               ${row('Infarkt turi', p.infarkt_turi)}
-              ${row('Killip', p.killip)}
+              ${row('Killip klassifikatsiyasi', p.killip)}
               ${row('Troponin', p.troponin)}
+              ${row('KFK-MB', p.kkfmb)}
               ${row('EKG vaqti', p.ekg_vaqti)}
+              ${row('Puls', p.puls ? p.puls + ' ur/min' : null)}
+              ${row('AHA bali', p.aha_bali ? p.aha_bali + ' ball' : null)}
             `: `
               ${row('Insult turi', p.insult_turi)}
-              ${row('NIHSS', p.nihss_qabul!=null?p.nihss_qabul+' ball':null)}
-              ${row('GCS', p.gcs_bali!=null?p.gcs_bali+' ball':null)}
-              ${row('Yutish testi', p.yutish_testi)}
-              ${row('TLT vaqti', Utils.formatDateTime(p.trombolizis_vaqti))}
-              ${row('Trombektomiya', Utils.formatDateTime(p.trombektomiya_vaqti))}
+              ${row('NIHSS (qabul)', p.nihss_qabul!=null ? p.nihss_qabul+' ball' : null)}
+              ${row('GCS (Glazgo)', p.gcs_bali!=null ? p.gcs_bali+' ball' : null)}
+              ${row('AHA bali', p.aha_bali!=null ? p.aha_bali+' ball' : null)}
+              ${row('MSKT o\'tkazilganmi?', p.mskt)}
             `}
             ${row('Asosiy muolaja', p.muolaja_turi)}
+            ${p.otkazilgan_muassasa ? row('O\'tkazilgan muassasa', p.otkazilgan_muassasa) : ''}
           </div>
         </div>
         <div class="card !mb-0">
           <div class="card-header bg-gray-50 border-b border-gray-100 !mb-0"><h3 class="card-title text-gray-900 flex items-center gap-2">${icon('clock', 18)} Vaqt ko'rsatkichlari</h3></div>
           <div class="card-body p-5">
-            ${row('Kasallik turi', p.birlamchi_yoki_takroriy)}
+            ${type==='infarkt' ? row('Kasallik turi', p.birlamchi_yoki_takroriy) : ''}
             ${row('Simptomlar boshlanishi', p.simptom_vaqt)}
-            ${row('Birinchi murojaat', Utils.formatDateTime(p.birinchi_murojaat_vaqti))}
-            ${row('Tez yordam yetib keldi', Utils.formatDateTime(p.tez_yordam_kelgan_vaqt))}
             ${row('Shifoxonaga keldi', Utils.formatDateTime(p.qabul_vaqt))}
+            ${type==='infarkt' ? `
+              ${row('Birinchi murojaat', Utils.formatDateTime(p.birinchi_murojaat_vaqti))}
+              ${row('Tez yordam yetib keldi', Utils.formatDateTime(p.tez_yordam_kelgan_vaqt))}
+            ` : ''}
             ${p.reabilitatsiya_boshlangan_vaqt ? row('Reabilitatsiya boshlandi', Utils.formatDateTime(p.reabilitatsiya_boshlangan_vaqt)) : ''}
           </div>
         </div>
         <div class="card !mb-0 lg:col-span-2">
-          <div class="card-header bg-gray-50 border-b border-gray-100 !mb-0"><h3 class="card-title text-gray-900 flex items-center gap-2">${icon('alert-triangle', 18)} Xavf omillari va Asoratlar</h3></div>
+          <div class="card-header bg-gray-50 border-b border-gray-100 !mb-0"><h3 class="card-title text-gray-900 flex items-center gap-2">${icon('alert-triangle', 18)} Xavf omillari</h3></div>
           <div class="card-body p-5">
             <div class="mb-4">
               <span class="text-sm text-gray-500 block mb-2">Qayd etilgan xavf omillari:</span>
@@ -212,7 +225,7 @@ const BemorKartaPage = {
                 <div class="relative">
                   <div class="absolute -left-[31px] top-1 w-4 h-4 bg-orange-500 rounded-full border-2 border-white shadow-sm"></div>
                   <div class="font-bold text-gray-900 text-sm">Yo'naltirildi</div>
-                  <div class="text-xs text-gray-500">${p.otkazilgan_muassasa} muassasasiga angiografiya / endovaskulyar muolaja uchun</div>
+                  <div class="text-xs text-gray-500">${p.otkazilgan_muassasa}</div>
                 </div>
               </div>
             </div>
