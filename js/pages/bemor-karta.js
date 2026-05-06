@@ -9,6 +9,11 @@ const BemorKartaPage = {
   async render(params) {
     const { kt_no, type } = params || {};
     if (!kt_no || !type) { Router.go('bemorlar'); return; }
+    // Clean up previous keyboard listener from any prior karta render
+    if (BemorKartaPage._keyHandler) {
+      document.removeEventListener('keydown', BemorKartaPage._keyHandler);
+      BemorKartaPage._keyHandler = null;
+    }
     BemorKartaPage._type = type;
     BemorKartaPage._activeTab = 0;
 
@@ -146,7 +151,6 @@ const BemorKartaPage = {
     const navIdx  = BemorKartaPage._navIndex;
     const hasPrev = navIdx > 0;
     const hasNext = navIdx >= 0 && navIdx < navList.length - 1;
-    const navInfo = navIdx >= 0 ? `${navIdx + 1} / ${navList.length}` : '';
 
     inner.innerHTML = `
       <!-- Nav bar -->
@@ -216,6 +220,22 @@ const BemorKartaPage = {
     `;
     BemorKartaPage.loadTab(0);
     initIcons();
+    BemorKartaPage._bindKeyNav();
+  },
+
+  _bindKeyNav() {
+    // Remove any previous listener to avoid duplicates
+    if (BemorKartaPage._keyHandler) {
+      document.removeEventListener('keydown', BemorKartaPage._keyHandler);
+    }
+    BemorKartaPage._keyHandler = (e) => {
+      // Only fire when no input/textarea/select is focused
+      const tag = document.activeElement?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+      if (e.key === 'ArrowLeft')  BemorKartaPage.navPrev();
+      if (e.key === 'ArrowRight') BemorKartaPage.navNext();
+    };
+    document.addEventListener('keydown', BemorKartaPage._keyHandler);
   },
 
   switchTab(idx) {
@@ -1227,8 +1247,8 @@ const BemorKartaPage = {
   },
 
   async deletePatient() {
-    if (BemorKartaPage._profile?.role !== 'admin') {
-      showToast("Faqat administrator o'chirish huquqiga ega", 'error');
+    if (BemorKartaPage._profile?.role !== 'super_admin') {
+      showToast("Faqat Super Administrator o'chirish huquqiga ega", 'error');
       return;
     }
     if (!confirm("Rostdan ham ushbu bemor ma'lumotlarini o'chirmoqchimisiz? Bu amalni ortga qaytarib bo'lmaydi!")) return;

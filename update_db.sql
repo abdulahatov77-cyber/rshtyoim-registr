@@ -176,3 +176,21 @@ CREATE POLICY "nj_delete" ON navbatchi_jurnal FOR DELETE TO authenticated USING 
 -- CREATE POLICY "Public Access" ON storage.objects FOR SELECT USING (bucket_id = 'multimedia');
 -- CREATE POLICY "Auth Upload" ON storage.objects FOR INSERT TO authenticated WITH CHECK (bucket_id = 'multimedia');
 -- CREATE POLICY "Auth Delete" ON storage.objects FOR DELETE TO authenticated USING (bucket_id = 'multimedia');
+
+-- ============================================================
+-- SUPER ADMIN TAYINLASH
+-- Supabase Dashboard → SQL Editor da ishga tushiring
+-- ============================================================
+
+-- 1. Avval eski role check constraintni olib tashlaymiz
+ALTER TABLE profiles DROP CONSTRAINT IF EXISTS profiles_role_check;
+
+-- 2. Yangi constraint — super_admin ni ham qo'shamiz
+ALTER TABLE profiles
+  ADD CONSTRAINT profiles_role_check
+  CHECK (role IN ('user', 'admin', 'super_admin'));
+
+-- 3. Endi super_admin tayinlaymiz
+UPDATE profiles
+SET role = 'super_admin'
+WHERE LOWER(email) = 'abdulahatov77@gmail.com';

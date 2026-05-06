@@ -39,8 +39,8 @@ const SettingsPage = {
             <div>
               <p class="font-bold text-gray-900">${profile?.fio || profile?.full_name || '—'}</p>
               <p class="text-sm text-gray-500">${user?.email || '—'}</p>
-              <span class="inline-block mt-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase ${profile?.role === 'admin' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}">
-                ${profile?.role === 'admin' ? 'Administrator' : 'Shifokor'}
+              <span class="inline-block mt-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase ${profile?.role === 'super_admin' ? 'bg-red-100 text-red-700' : profile?.role === 'admin' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}">
+                ${profile?.role === 'super_admin' ? 'Super Administrator' : profile?.role === 'admin' ? 'Administrator' : 'Shifokor'}
               </span>
             </div>
           </div>
@@ -58,13 +58,15 @@ const SettingsPage = {
               value="${user?.email || ''}" disabled />
           </div>
 
+          ${profile?.role === 'super_admin' ? '' : `
           <div class="form-group">
             <label class="form-label">Viloyat</label>
-            <select id="s-viloyat" class="form-select" ${profile?.role === 'admin' ? '' : ''}>
+            <select id="s-viloyat" class="form-select" ${profile?.role === 'user' ? 'disabled' : ''}>
               <option value="">— Tanlang —</option>
               ${viloyatOptions}
             </select>
-          </div>
+            ${profile?.role === 'user' ? '<p class="text-xs text-gray-400 mt-1">Viloyatni faqat administrator o\'zgartira oladi</p>' : ''}
+          </div>`}
 
           <div class="flex justify-end pt-2">
             <button type="submit" id="save-profile-btn" class="btn btn-primary flex items-center gap-2">
@@ -121,16 +123,22 @@ const SettingsPage = {
   async saveProfile(e) {
     e.preventDefault();
     const fio = document.getElementById('s-fio').value.trim();
-    const viloyat = document.getElementById('s-viloyat').value;
+    const role = SettingsPage._profile?.role;
+    const viloyatEl = document.getElementById('s-viloyat');
+    const viloyat = viloyatEl ? viloyatEl.value : (SettingsPage._profile?.viloyat || null);
     const btn = document.getElementById('save-profile-btn');
 
     if (!fio) { showToast("Ism kiritilmagan", 'warning'); return; }
 
+    const updates = { fio, full_name: fio };
+    if (role !== 'user' && role !== 'super_admin') {
+      updates.viloyat = viloyat || null;
+    }
+
     setLoading(btn, true, 'Saqlanmoqda...');
     try {
-      await Profile.update({ fio, full_name: fio, viloyat: viloyat || null });
+      await Profile.update(updates);
       showToast('Profil muvaffaqiyatli yangilandi', 'success');
-      // Cache yangilanganligi uchun sahifani qayta render qilish
       const profile = await Profile.getCurrent();
       SettingsPage._profile = profile;
     } catch (err) {

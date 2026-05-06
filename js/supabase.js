@@ -871,6 +871,11 @@ const Profile = {
     const p = await this.getCurrent();
     return p?.role === 'super_admin';
   },
+  // O'chirish huquqi: faqat super_admin
+  async canDelete() {
+    const p = await this.getCurrent();
+    return p?.role === 'super_admin';
+  },
   async listAll() {
     const { data, error } = await getSupabase().from('profiles').select('*').order('created_at', { ascending: false });
     if (error) throw error;
