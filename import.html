@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8"/>
+  <title>Google Sheets → Supabase Import</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/config.js"></script>
+  <style>
+    body { font-family: sans-serif; max-width: 800px; margin: 40px auto; padding: 0 20px; background: #f8fafc; color: #1e293b; }
+    h2 { color: #2563eb; }
+    .card { background: white; border-radius: 12px; padding: 24px; margin: 16px 0; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+    .btn { padding: 10px 24px; border-radius: 8px; border: none; cursor: pointer; font-size: 15px; font-weight: 600; }
+    .btn-primary { background: #2563eb; color: white; }
+    .btn-success { background: #16a34a; color: white; }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    input[type=file] { display: block; margin: 12px 0; padding: 8px; border: 2px dashed #cbd5e1; border-radius: 8px; width: 100%; box-sizing: border-box; }
+    select { padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; }
+    .log { background: #0f172a; color: #94a3b8; padding: 16px; border-radius: 8px; font-family: monospace; font-size: 13px; height: 280px; overflow-y: auto; margin-top: 16px; }
+    .log .ok  { color: #4ade80; }
+    .log .err { color: #f87171; }
+    .log .inf { color: #60a5fa; }
+    .progress { height: 8px; background: #e2e8f0; border-radius: 4px; margin: 12px 0; }
+    .progress-bar { height: 100%; background: #2563eb; border-radius: 4px; transition: width 0.3s; width: 0%; }
+    label { font-weight: 600; font-size: 14px; color: #475569; display: block; margin-bottom: 4px; }
+    .step { display: flex; align-items: center; gap: 10px; margin: 8px 0; }
+    .step-num { width: 28px; height: 28px; background: #2563eb; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; flex-shrink: 0; }
+  </style>
+</head>
+<body>
+
+<h2>📥 Google Sheets → Supabase Import</h2>
+
+<div class="card">
+  <div class="step"><div class="step-num">1</div><b>Registr turini tanlang</b></div>
+  <select id="table-select">
+    <option value="infarkt">Infarkt (infarkt_qabul)</option>
+    <option value="insult">Insult (insult_qabul)</option>
+  </select>
+</div>
+
+<div class="card">
+  <div class="step"><div class="step-num">2</div><b>Google Sheets dan CSV eksport qiling va yuklang</b></div>
+  <small style="color:#64748b">Sheets → Fayl → Yuklab olish → CSV (.csv)</small>
+  <input type="file" id="csv-file" accept=".csv"/>
+  <div id="preview" style="color:#64748b;font-size:13px;margin-top:8px"></div>
+  <div id="viloyat-preview"></div>
+  <div id="muassasa-preview"></div>
+</div>
+
+<div class="card">
+  <div class="step"><div class="step-num">3</div><b>Import qilish</b></div>
+  <button class="btn btn-success" id="import-btn" onclick="startImport()" disabled>▶ Importni boshlash</button>
+  <div class="progress"><div class="progress-bar" id="prog"></div></div>
+  <div id="stats" style="font-size:14px;color:#475569"></div>
+  <div class="log" id="log"><span class="inf">CSV faylni yuklang...</span></div>
+</div>
+
+<script>
+const { createClient } = supabase;
+const sb = createClient(APP_CONFIG.SUPABASE_URL, APP_CONFIG.SUPABASE_ANON_KEY);
+
+let parsedRows = [];
+let viloyatOverrides  = {};
+let muassasaOverrides = {};
+
+// ── Standart viloyat nomlari ──────────────────────────────────
+const VILOYATLAR_STD = APP_CONFIG.VILOYATLAR || [
+  "Toshkent shahri","Toshkent viloyati","Andijon viloyati","Buxoro viloyati",
+  "Farg'ona viloyati","Jizzax viloyati","Xorazm viloyati","Namangan viloyati",
+  "Navoiy viloyati","Qashqadaryo viloyati","Surxondaryo viloyati",
+  "Samarqand viloyati","Sirdaryo viloyati","Qoraqalpog'iston Respublikasi"
+];
+
+// ── Viloyat normalizatsiyasi ──────────────────────────────────
+// Muhim: Toshkent shahri va viloyati ALOHIDA tekshiriladi
+const VILOYAT_KEYWORDS = [
+  { keys: ['toshkent shahri','toshkent sh.','toshkent sh,','toshkent city','toshkent shahar','г.ташкент','тошкент ш'], std: 'Toshkent shahri' },
+  { keys: ['toshkent viloyati','toshkent vil.','toshkent vil,','toshkent obl','ташкентская обл'], std: 'Toshkent viloyati' },
+  { keys: ['andijon','андижан'], std: 'Andijon viloyati' },
+  { keys: ['buxoro','bukhara','бухара'], std: 'Buxoro viloyati' },
+  { keys: ["farg'ona",'fergana','farghona','fargona','фергана'], std: "Farg'ona viloyati" },
+  { keys: ['jizzax','djizzak','жиззах'], std: 'Jizzax viloyati' },
+  { keys: ['xorazm','khorezm','хорезм'], std: 'Xorazm viloyati' },
+  { keys: ['namangan','наманган'], std: 'Namangan viloyati' },
+  { keys: ['navoiy','navoi','навои'], std: 'Navoiy viloyati' },
+  { keys: ['qashqadaryo','kashkadarya','qashqa','кашкадарья'], std: 'Qashqadaryo viloyati' },
+  { keys: ['surxondaryo','surkhandarya','surxon','сурхандарья'], std: 'Surxondaryo viloyati' },
+  { keys: ['samarqand','samarkand','самарканд'], std: 'Samarqand viloyati' },
+  { keys: ['sirdaryo','syrdarya','сырдарья'], std: 'Sirdaryo viloyati' },
+  { keys: ["qoraqalpog'",'karakalpak','qoraqalpoq','каракалпак'], std: "Qoraqalpog'iston Respublikasi" },
+];
+
+function normalizeViloyat(val) {
+  if (!val) return '';
+  if (viloyatOverrides[val] !== undefined) return viloyatOverrides[val];
+  const trimmed = val.trim();
+  if (VILOYATLAR_STD.includes(trimmed)) return trimmed;
+  const v = trimmed.toLowerCase();
+  for (const { keys, std } of VILOYAT_KEYWORDS) {
+    if (keys.some(k => v.includes(k))) return std;
+  }
+  // Fallback: "Andijon" → "Andijon viloyati", "Qoraqalpog'iston" → "Qoraqalpog'iston Respublikasi"
+  for (const std of VILOYATLAR_STD) {
+    if (std.toLowerCase().startsWith(v + ' ') || std.toLowerCase() === v) return std;
+  }
+  return trimmed;
+}
+
+// ── Muassasa normalizatsiyasi ─────────────────────────────────
+function normalizeMuassasa(val) {
+  if (!val) return '';
+  if (muassasaOverrides[val] !== undefined) return muassasaOverrides[val];
+  return val.trim();
+}
+
+// ── Status mapping ────────────────────────────────────────────
+function mapStatus(natija = '', holati = '') {
+  const v = (natija + ' ' + holati).toLowerCase();
+  if (v.includes('chiqar') || v.includes('davolanib')) return 'chiqarildi';
+  if (v.includes('vafot') || v.includes("o'ldi") || v.includes('öldi')) return 'vafot';
+  if (v.includes('otkazil') || v.includes("o'tkazil")) return 'otkazildi';
+  return 'active';
+}
+
+// ── Date parser ───────────────────────────────────────────────
+function parseDateTime(sana, soat) {
+  if (!sana || sana.trim() === '') return null;
+  let d = sana.trim();
+  let t = (soat || '').trim();
+
+  // Agar sana ichida vaqt ham bor bo'lsa: "23.03.2026 12:37:04"
+  if (/\s+\d{1,2}:\d{2}/.test(d)) {
+    const idx = d.indexOf(' ');
+    t = t || d.slice(idx + 1);  // soat berilmagan bo'lsa, sanadan olgan vaqtni ishlatamiz
+    d = d.slice(0, idx);
+  }
+
+  // DD.MM.YYYY yoki D.M.YYYY → YYYY-MM-DD
+  if (/^\d{1,2}\.\d{1,2}\.\d{4}$/.test(d)) {
+    const parts = d.split('.');
+    d = `${parts[2]}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}`;
+  }
+
+  // Vaqtni normallashtirish: "4:00:00" → "04:00:00", "9:06" → "09:06:00"
+  if (t) {
+    const tp = t.split(':');
+    t = `${tp[0].padStart(2,'0')}:${(tp[1]||'00').padStart(2,'0')}:${(tp[2]||'00').padStart(2,'0')}`;
+  } else {
+    t = '00:00:00';
+  }
+
+  try {
+    const dt = new Date(`${d}T${t}`);
+    if (isNaN(dt.getTime())) return null;
+    return dt.toISOString();
+  } catch { return null; }
+}
+
+// ── Array fields ──────────────────────────────────────────────
+function toArray(val) {
+  if (!val || val.trim() === '') return [];
+  return val.split(/[;,]+/).map(s => s.trim()).filter(Boolean);
+}
+
+// ── CSV parser ────────────────────────────────────────────────
+function parseCSV(text) {
+  const lines = text.split(/\r?\n/).filter(l => l.trim());
+  if (lines.length < 2) return [];
+
+  function splitLine(line) {
+    const cells = []; let cur = ''; let inQ = false;
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+      if (ch === '"') { inQ = !inQ; continue; }
+      if (ch === ',' && !inQ) { cells.push(cur); cur = ''; continue; }
+      cur += ch;
+    }
+    cells.push(cur);
+    return cells.map(c => c.trim());
+  }
+
+  const headers = splitLine(lines[0]);
+  return lines.slice(1).map(l => {
+    const vals = splitLine(l);
+    const obj = {};
+    headers.forEach((h, i) => obj[h] = (vals[i] || '').trim());
+    return obj;
+  }).filter(r => Object.values(r).some(v => v !== ''));
+}
+
+// ── INFARKT row mapper ────────────────────────────────────────
+function mapInfarkt(r) {
+  const kt = r['K/T №'] || r['K/T No'] || r['kt_no'] || r['№'];
+  if (!kt) return null;
+
+  return {
+    kt_no:              kt,
+    fio:                r['FIO'] || r['F.I.O'] || '',
+    tugilgan_yil:       r["Tug'ilgan yili"] || r['Tugilgan yili'] || '',
+    jins:               r['Jinsi'] || r['Jins'] || '',
+    viloyat:            normalizeViloyat(r['Viloyat / Shahar'] || r['Viloyat'] || ''),
+    muassasa:           normalizeMuassasa(r["Muassasa to'liq nomi"] || r['Muassasa'] || ''),
+    qabul_vaqt:         parseDateTime(r['Qabul sanasi'], r['Qabul soati']),
+    murojaat_yoli:      r["Murojaat yo'li"] || '',
+    yuborgan_muassasa:  r['Yuborgan muassasa'] || '',
+    simptom_vaqt:       r['Simptomlar qachon boshlangan?'] || '',
+    asosiy_simptom:     r['Asosiy simptom'] || '',
+    qon_bosimi:         r['Qon bosimi (qabul paytida)'] || '',
+    ekg_natija:         toArray(r['EKG natijasi']),
+    troponin:           r['Troponin natijasi'] || '',
+    kkfmb:              r['KFK-MB natijasi'] || '',
+    xavf_omil:          toArray(r['Xavf omillari']),
+    infarkt_turi:       r['Infarkt turi'] || '',
+    killip:             r['Killip klassifikatsiyasi'] || '',
+    muolaja_turi:       r['Bajarilgan muolaja turi'] || '',
+    asoratlar:          toArray(r['Asoratlar']),
+    otkazilgan_muassasa: r['Boshqa shifoxona nomi'] || '',
+    status:             mapStatus(r['Natija'], r['Holati']),
+    created_at:         parseDateTime(r['Отметка vaqti']) || new Date().toISOString(),
+  };
+}
+
+// ── INSULT row mapper ─────────────────────────────────────────
+function mapInsult(r) {
+  const kt = r['K/T №'] || r['K/T No'] || r['kt_no'] || r['№'];
+  if (!kt) return null;
+
+  return {
+    kt_no:              kt,
+    fio:                r['FIO'] || r['F.I.O'] || '',
+    tugilgan_yil:       r["Tug'ilgan yili"] || r['Tugilgan yili'] || '',
+    jins:               r['Jinsi'] || r['Jins'] || '',
+    viloyat:            normalizeViloyat(r['Viloyat / Shahar'] || r['Viloyat'] || ''),
+    muassasa:           normalizeMuassasa(r["Muassasa to'liq nomi"] || r['Muassasa'] || ''),
+    qabul_vaqt:         parseDateTime(r['Qabul sanasi'], r['Qabul soati']),
+    murojaat_yoli:      r["Murojaat yo'li"] || '',
+    yuborgan_muassasa:  r['Yuborgan muassasa'] || '',
+    simptom_vaqt:       r['Simptomlar qachon boshlangan?'] || '',
+    nihss_qabul:        parseInt(r['NIHSS qabul paytida'] || '') || null,
+    gcs_qabul:          parseInt(r['Glazgo shkalasi (GCS)'] || '') || null,
+    insult_turi:        r['Insult turi'] || '',
+    qon_bosimi:         r['Qon bosimi (qabul paytida)'] || '',
+    xavf_omil:          toArray(r['Xavf omillari']),
+    mskt:               r["MSKT o'tkazilganmi?"] || '',
+    muolaja_turi:       r['Muolaja turi (MSKT orqali)'] || '',
+    status:             mapStatus(r['Natija'], r['Holati']),
+    created_at:         parseDateTime(r['Отметка vaqti']) || new Date().toISOString(),
+  };
+}
+
+// ── Viloyat preview ───────────────────────────────────────────
+function showViloyatPreview(rawRows) {
+  // Har xil viloyat qiymatlarini sanash
+  const counts = {};
+  rawRows.forEach(r => {
+    const raw = (r['Viloyat / Shahar'] || r['Viloyat'] || '').trim();
+    if (raw) counts[raw] = (counts[raw] || 0) + 1;
+  });
+
+  const unknown = []; const known = [];
+  Object.entries(counts).forEach(([raw, cnt]) => {
+    const mapped = normalizeViloyat(raw);
+    if (VILOYATLAR_STD.includes(mapped)) known.push({ raw, mapped, cnt });
+    else unknown.push({ raw, mapped: mapped, cnt });
+  });
+
+  let html = '<div style="margin-top:12px;font-size:13px">';
+  if (known.length) {
+    html += '<b style="color:#16a34a">✅ Avtomatik aniqlandi:</b><div style="margin:6px 0 10px;line-height:1.8">';
+    known.forEach(({ raw, mapped, cnt }) => {
+      html += `<span style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:4px;padding:2px 8px;margin:2px;display:inline-block">
+        "<i>${raw}</i>" → <b>${mapped}</b> (${cnt} ta)</span>`;
+    });
+    html += '</div>';
+  }
+  if (unknown.length) {
+    html += '<b style="color:#dc2626">⚠️ Aniqlanmadi — qo\'lda tanlang:</b>';
+    unknown.forEach(({ raw, cnt }) => {
+      const id = 'v_' + btoa(encodeURIComponent(raw)).slice(0,10);
+      html += `<div style="display:flex;align-items:center;gap:8px;margin:6px 0">
+        <span style="min-width:200px;color:#64748b">"${raw}" (${cnt} ta) →</span>
+        <select id="${id}" onchange="viloyatOverrides['${raw}']=this.value;rebuildRows()" style="padding:4px 8px;border:1px solid #fca5a5;border-radius:6px;background:#fff7f7">
+          <option value="${raw}">-- Tanlang --</option>
+          ${VILOYATLAR_STD.map(v => `<option value="${v}">${v}</option>`).join('')}
+        </select>
+      </div>`;
+    });
+  }
+  html += '</div>';
+  document.getElementById('viloyat-preview').innerHTML = html;
+}
+
+// ── Muassasalar optgroup HTML ─────────────────────────────────
+function getMuassasaOptionsHtml() {
+  const map = APP_CONFIG.MUASSASALAR || {};
+  let html = '<option value="">-- Tanlang --</option>';
+  Object.entries(map).forEach(([viloyat, list]) => {
+    html += `<optgroup label="📍 ${viloyat}">`;
+    list.forEach(m => {
+      html += `<option value="${m.replace(/"/g,'&quot;')}">${m}</option>`;
+    });
+    html += '</optgroup>';
+  });
+  return html;
+}
+
+// ── Muassasa preview ──────────────────────────────────────────
+function getMuassasaByViloyat(viloyat) {
+  const list = (APP_CONFIG.MUASSASALAR || {})[viloyat] || [];
+  if (!list.length) return '<option value="">— muassasa topilmadi —</option>';
+  return '<option value="">-- Tanlang --</option>' +
+    list.map(m => `<option value="${m.replace(/"/g,'&quot;')}">${m}</option>`).join('');
+}
+
+function onViloyatChange(viloyatSelId, muassasaSelId) {
+  const v = document.getElementById(viloyatSelId).value;
+  document.getElementById(muassasaSelId).innerHTML = getMuassasaByViloyat(v);
+}
+
+function showMuassasaPreview(rawRows) {
+  // Har bir muassasa uchun: nechta bemor + qaysi viloyatdan (eng ko'p)
+  const counts = {};
+  const viloyatlar = {};
+  rawRows.forEach(r => {
+    const raw = (r["Muassasa to'liq nomi"] || r['Muassasa'] || '').trim();
+    const vil = normalizeViloyat(r['Viloyat / Shahar'] || r['Viloyat'] || '');
+    if (!raw) return;
+    counts[raw] = (counts[raw] || 0) + 1;
+    if (vil) {
+      if (!viloyatlar[raw]) viloyatlar[raw] = {};
+      viloyatlar[raw][vil] = (viloyatlar[raw][vil] || 0) + 1;
+    }
+  });
+
+  const entries = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+  if (!entries.length) return;
+
+  const viloyatOpts = '<option value="">-- Viloyat --</option>' +
+    VILOYATLAR_STD.map(v => `<option value="${v}">${v}</option>`).join('');
+
+  let html = `<div style="margin-top:12px;font-size:13px">
+    <b style="color:#2563eb">🏥 Muassasalar (${entries.length} xil) — viloyatni tanlang, keyin muassasani belgilang:</b>
+    <div style="max-height:420px;overflow-y:auto;margin-top:8px;border:1px solid #e2e8f0;border-radius:8px;padding:8px">`;
+
+  entries.forEach(([raw, cnt]) => {
+    const uid = 'mu_' + Math.random().toString(36).slice(2,9);
+    const cur = muassasaOverrides[raw] !== undefined ? muassasaOverrides[raw] : raw;
+    const safeRaw = raw.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+
+    // CSV dagi eng ko'p uchraydigan viloyatni aniqlash
+    const vMap = viloyatlar[raw] || {};
+    const detectedViloyat = Object.entries(vMap).sort((a,b) => b[1]-a[1])[0]?.[0] || '';
+
+    // Viloyat dropdown — aniqlangan viloyat selected bo'lsin
+    const vilOptHtml = '<option value="">-- Viloyat --</option>' +
+      VILOYATLAR_STD.map(v =>
+        `<option value="${v}" ${v === detectedViloyat ? 'selected' : ''}>${v}</option>`
+      ).join('');
+
+    // Muassasa dropdown — aniqlangan viloyat bo'yicha filtrlangan
+    const muassasaOptHtml = detectedViloyat
+      ? getMuassasaByViloyat(detectedViloyat)
+      : '<option value="">← Avval viloyat tanlang</option>';
+
+    const viloyatBadge = detectedViloyat
+      ? `<span style="font-size:11px;background:#fef3c7;color:#92400e;padding:2px 6px;border-radius:4px;margin-left:6px">📍 ${detectedViloyat}</span>`
+      : '';
+
+    html += `
+      <div style="margin:6px 0;padding:8px;border-bottom:1px solid #f1f5f9;background:#fafafa;border-radius:6px">
+        <div style="color:#94a3b8;font-size:11px;margin-bottom:6px">
+          CSV: "<i>${raw}</i>" — <b>${cnt} ta bemor</b>${viloyatBadge}
+        </div>
+        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+          <select id="vil_${uid}"
+            onchange="onViloyatChange('vil_${uid}','msel_${uid}')"
+            style="padding:5px 8px;border:1px solid #fbbf24;border-radius:6px;font-size:12px;background:#fffbeb;color:#92400e;min-width:180px">
+            ${vilOptHtml}
+          </select>
+          <select id="msel_${uid}"
+            onchange="if(this.value){document.getElementById('inp_${uid}').value=this.value;muassasaOverrides['${safeRaw}']=this.value;rebuildRows();}"
+            style="padding:5px 8px;border:1px solid #93c5fd;border-radius:6px;font-size:12px;background:#eff6ff;color:#1d4ed8;min-width:200px">
+            ${muassasaOptHtml}
+          </select>
+          <input id="inp_${uid}" value="${cur.replace(/"/g,'&quot;')}"
+            style="flex:1;min-width:160px;padding:5px 8px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px"
+            oninput="muassasaOverrides['${safeRaw}']=this.value;rebuildRows()"
+            placeholder="yoki qo'lda yozing..."/>
+        </div>
+      </div>`;
+  });
+
+  html += '</div></div>';
+  document.getElementById('muassasa-preview').innerHTML = html;
+}
+
+let _rawRows = [];
+function rebuildRows() {
+  const table = document.getElementById('table-select').value;
+  parsedRows = _rawRows.map(r => table === 'infarkt' ? mapInfarkt(r) : mapInsult(r))
+                       .filter(r => r && r.kt_no && r.fio);
+}
+
+// ── File select ───────────────────────────────────────────────
+document.getElementById('csv-file').addEventListener('change', function(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(ev) {
+    const table = document.getElementById('table-select').value;
+    _rawRows = parseCSV(ev.target.result);
+    viloyatOverrides  = {};
+    muassasaOverrides = {};
+    parsedRows = _rawRows.map(r => table === 'infarkt' ? mapInfarkt(r) : mapInsult(r))
+                         .filter(r => r && r.kt_no && r.fio);
+
+    document.getElementById('preview').innerHTML =
+      `✅ <b>${parsedRows.length}</b> ta bemor aniqlandi (${_rawRows.length} qatordan)`;
+    showViloyatPreview(_rawRows);
+    showMuassasaPreview(_rawRows);
+    document.getElementById('import-btn').disabled = false;
+    log(`${parsedRows.length} ta yozuv tayyorlandi`, 'inf');
+  };
+  reader.readAsText(file, 'UTF-8');
+});
+
+// ── Log ───────────────────────────────────────────────────────
+function log(msg, type = 'ok') {
+  const el = document.getElementById('log');
+  el.innerHTML += `<div class="${type}">${msg}</div>`;
+  el.scrollTop = el.scrollHeight;
+}
+
+// ── Import ────────────────────────────────────────────────────
+async function startImport() {
+  if (!parsedRows.length) return;
+  const table = document.getElementById('table-select').value === 'infarkt'
+    ? 'infarkt_qabul' : 'insult_qabul';
+
+  document.getElementById('import-btn').disabled = true;
+  document.getElementById('log').innerHTML = '';
+  let ok = 0, skip = 0, err = 0;
+  const total = parsedRows.length;
+
+  for (let i = 0; i < total; i++) {
+    const row = parsedRows[i];
+    const { error } = await sb.from(table).upsert(row, { onConflict: 'kt_no', ignoreDuplicates: false });
+    if (error) {
+      log(`❌ [${row.kt_no}] ${error.message}`, 'err');
+      err++;
+    } else {
+      ok++;
+      if (ok % 10 === 0 || i === total - 1) log(`✅ ${ok} ta import qilindi...`, 'ok');
+    }
+    document.getElementById('prog').style.width = ((i + 1) / total * 100) + '%';
+    document.getElementById('stats').textContent =
+      `✅ ${ok} ta muvaffaqiyatli | ❌ ${err} ta xato | Jami: ${total}`;
+  }
+
+  log(`\n🎉 Tugadi! ${ok} ta bemor import qilindi, ${err} ta xato`, ok > 0 ? 'ok' : 'err');
+  document.getElementById('import-btn').disabled = false;
+}
+</script>
+</body>
+</html>

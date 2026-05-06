@@ -5,6 +5,9 @@ const DashboardPage = {
 
   async render() {
     const user = await Auth.getUser();
+    const profile = await Profile.getCurrent();
+    DashboardPage._profile = profile;
+    
     document.getElementById('app').innerHTML = Components.renderLayout(
       'dashboard', 'Bosh sahifa', 'Real-time statistika va monitoring',
       `<div id="dashboard-inner" class="animate-fadein">
@@ -24,13 +27,16 @@ const DashboardPage = {
 
   async loadData() {
     try {
-      const [stats, trend, recent, viloyat] = await Promise.all([
+      const profile = await Profile.getCurrent();
+      const [stats, trend, recent, viloyat, demo] = await Promise.all([
         DB.getDashboardStats(),
         DB.getTrend30(),
         DB.getRecentPatients(10),
-        DB.getViloyatStats() // Needs to be grouped by type if possible, we'll adapt
+        DB.getViloyatStats(),
+        DB.getDemographics()
       ]);
-      DashboardPage.renderContent(stats, trend, recent, viloyat);
+      DashboardPage._recentPatients = recent;
+      DashboardPage.renderContent(stats, trend, recent, viloyat, profile, demo);
     } catch (err) {
       const inner = document.getElementById('dashboard-inner');
       if (inner) {
@@ -46,373 +52,561 @@ const DashboardPage = {
     }
   },
 
-  renderContent(stats, trend, recent, viloyat) {
+  renderContent(stats, trend, recent, viloyat, profile, demo) {
     const inner = document.getElementById('dashboard-inner');
     if (!inner) return;
 
+    const isFiltered = profile?.role !== 'admin';
+    const distTitle = isFiltered ? `${profile?.viloyat} muassasalari bo'yicha` : "Viloyatlar bo'yicha grafik";
+
+    // Gender Calculation
+    const infM = demo.infarkt.male, infF = demo.infarkt.female, infT = (infM + infF) || 1;
+    const insM = demo.insult.male, insF = demo.insult.female, insT = (insM + insF) || 1;
+    
+    const infMP = Math.round((infM/infT)*100), infFP = 100 - infMP;
+    const insMP = Math.round((insM/insT)*100), insFP = 100 - insMP;
+
     // Stat Values Calculation
     const jami = stats.jami || 0;
-    const jamiInfarkt = stats.jamiInfarkt || (stats.infarktAktiv + (stats.infarktBugun||0) * 10); // Approximation if backend doesn't provide jami
-    const jamiInsult = stats.jamiInsult || (stats.insultAktiv + (stats.insultBugun||0) * 10);
-    const infBugun = stats.infarktBugun || 0;
-    const insBugun = stats.insultBugun || 0;
-    const aktiv = stats.infarktAktiv + stats.insultAktiv;
-    const vafot = stats.vafot || 0;
-    const chiqarilgan = jami - aktiv - vafot;
+    const jamiInfarkt = stats.jamiInfarkt || 0;
+    const jamiInsult = stats.jamiInsult || 0;
+    
+    const aktivInfarkt = stats.infarktAktiv || 0;
+    const aktivInsult = stats.insultAktiv || 0;
+    
+    const vafotInfarkt = stats.vafotInfarkt || 0;
+    const vafotInsult = stats.vafotInsult || 0;
 
-    const infPercent = jami > 0 ? Math.round((jamiInfarkt / jami) * 100) : 0;
-    const insPercent = jami > 0 ? Math.round((jamiInsult / jami) * 100) : 0;
+    const chiqarilganInfarkt = stats.chiqarilganInfarkt || 0;
+    const chiqarilganInsult = stats.chiqarilganInsult || 0;
+
+    const bugunInfarkt = stats.infarktBugun || 0;
+    const bugunInsult = stats.insultBugun || 0;
 
     inner.innerHTML = `
-      <style>
-        .stat-box {
-          border-radius: 16px;
-          padding: 24px;
-          color: white;
-          box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-          position: relative;
-          overflow: hidden;
-        }
-        .stat-box::after {
-          content: ''; position: absolute; right: -20px; top: -20px;
-          width: 120px; height: 120px; background: rgba(255,255,255,0.1);
-          border-radius: 50%;
-        }
-        .stat-box-white {
-          background: #ffffff;
-          border-radius: 16px;
-          padding: 24px;
-          box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-          position: relative;
-        }
-        .chart-box {
-          background: #ffffff;
-          border-radius: 16px;
-          padding: 24px;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-          border: 1px solid #E5E7EB;
-          height: 100%;
-        }
-        .chart-title { font-size: 16px; font-weight: 700; color: #111827; margin-bottom: 16px; }
-      </style>
-
-      <!-- ROW 1: 6 STAT CARDS -->
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
-        
-        <!-- Jami Bemorlar -->
-        <div class="stat-box" style="background: linear-gradient(135deg, #2C74B3, #1E40AF)">
-          <div class="flex justify-between items-start mb-2">
-            <span class="text-white/80 font-medium uppercase tracking-wide text-xs">Jami registr bemorlari</span>
-            <span class="bg-white/20 p-2 rounded-lg backdrop-blur-sm">${icon('users', 20)}</span>
+      <!-- ROW 1: KPI CARDS (TOP 5) -->
+      <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6 mb-10">
+        <!-- 1. Jami Qabul Qilingan Bemorlar -->
+        <div class="bg-slate-900 p-7 rounded-[32px] border border-slate-800 shadow-2xl hover:shadow-indigo-500/20 hover:-translate-y-2 transition-all duration-500 group cursor-pointer relative overflow-hidden">
+          <div class="absolute -right-10 -top-10 w-32 h-32 bg-indigo-600/10 rounded-full blur-3xl group-hover:bg-indigo-600/20 transition-all"></div>
+          <div class="flex items-center justify-between mb-6 relative z-10">
+            <div class="w-14 h-14 bg-indigo-500/10 text-indigo-400 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-all duration-500">${icon('users', 32)}</div>
+            <span class="text-[12px] font-black text-slate-500 uppercase tracking-[0.2em]">JAMI BAZA</span>
           </div>
-          <div class="text-[36px] font-bold leading-none mb-3">${jami}</div>
-          <div class="inline-flex items-center gap-1 bg-green-400/20 text-green-100 px-2 py-1 rounded text-xs font-semibold backdrop-blur-sm">
-            ${icon('trending-up', 14)} +${infBugun+insBugun} bugun
-          </div>
-        </div>
-
-        <!-- Jami Infarkt -->
-        <div class="stat-box" style="background: linear-gradient(135deg, #EF4444, #DC2626)">
-          <div class="flex justify-between items-start mb-2">
-            <span class="text-white/80 font-medium uppercase tracking-wide text-xs">Jami infarkt bemorlari</span>
-            <span class="bg-white/20 p-2 rounded-lg backdrop-blur-sm">${icon('heart-pulse', 20)}</span>
-          </div>
-          <div class="text-[36px] font-bold leading-none mb-3">${jamiInfarkt}</div>
-          <div class="text-sm font-medium text-white/90">${infPercent}% jami bemorlardan</div>
-        </div>
-
-        <!-- Jami Insult -->
-        <div class="stat-box" style="background: linear-gradient(135deg, #8B5CF6, #7C3AED)">
-          <div class="flex justify-between items-start mb-2">
-            <span class="text-white/80 font-medium uppercase tracking-wide text-xs">Jami insult bemorlari</span>
-            <span class="bg-white/20 p-2 rounded-lg backdrop-blur-sm">${icon('brain', 20)}</span>
-          </div>
-          <div class="text-[36px] font-bold leading-none mb-3">${jamiInsult}</div>
-          <div class="text-sm font-medium text-white/90">${insPercent}% jami bemorlardan</div>
-        </div>
-
-        <!-- Bugun Infarkt -->
-        <div class="stat-box-white border-l-4 border-l-[#EF4444]">
-          <div class="flex justify-between items-start mb-2">
-            <span class="text-gray-500 font-medium uppercase tracking-wide text-xs">Bugun qabul — infarkt</span>
-            <span class="bg-red-50 text-red-500 p-2 rounded-lg">${icon('activity', 20)}</span>
-          </div>
-          <div class="text-[36px] font-bold leading-none mb-3 text-[#EF4444]">${infBugun}</div>
-          <div class="text-xs text-gray-400 font-medium flex items-center gap-1">
-            ${icon('clock', 12)} Yangilandi: <span id="time-inf">--:--</span>
-          </div>
-        </div>
-
-        <!-- Bugun Insult -->
-        <div class="stat-box-white border-l-4 border-l-[#8B5CF6]">
-          <div class="flex justify-between items-start mb-2">
-            <span class="text-gray-500 font-medium uppercase tracking-wide text-xs">Bugun qabul — insult</span>
-            <span class="bg-purple-50 text-purple-600 p-2 rounded-lg">${icon('brain', 20)}</span>
-          </div>
-          <div class="text-[36px] font-bold leading-none mb-3 text-[#8B5CF6]">${insBugun}</div>
-          <div class="text-xs text-gray-400 font-medium flex items-center gap-1">
-            ${icon('clock', 12)} Yangilandi: <span id="time-ins">--:--</span>
-          </div>
-        </div>
-
-        <!-- Hozir Statsionarda -->
-        <div class="stat-box" style="background: linear-gradient(135deg, #10B981, #059669)">
-          <div class="flex justify-between items-start mb-2">
-            <span class="text-white/80 font-medium uppercase tracking-wide text-xs">Hozir statsionarda</span>
-            <span class="bg-white/20 p-2 rounded-lg backdrop-blur-sm">${icon('bed', 20)}</span>
-          </div>
-          <div class="text-[36px] font-bold leading-none mb-3">${aktiv}</div>
-          <div class="text-sm font-medium text-white/90 flex items-center gap-1">
-            ${icon('log-out', 16)} Bugun chiqarildi: ${stats.chiqarilganBugun || 0} ta
-          </div>
-        </div>
-
-      </div>
-
-      <!-- ROW 2: CHARTS -->
-      <div class="grid grid-cols-1 lg:grid-cols-5 gap-6 mb-6">
-        
-        <!-- Trend Chart (60%) -->
-        <div class="chart-box lg:col-span-3">
-          <h3 class="chart-title">Kunlik qabul dinamikasi</h3>
-          <div style="height: 250px; position: relative;">
-            <canvas id="trend-chart"></canvas>
-          </div>
-        </div>
-
-        <!-- Doughnut (20%) -->
-        <div class="chart-box lg:col-span-1 flex flex-col">
-          <h3 class="chart-title">Bemorlar turi nisbati</h3>
-          <div class="flex-1 flex items-center justify-center relative" style="height: 180px;">
-            <canvas id="type-chart"></canvas>
-            <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-              <span class="text-2xl font-black text-gray-800">${jamiInfarkt+jamiInsult}</span>
-              <span class="text-xs text-gray-500">Jami</span>
+          <p class="text-slate-400 text-[11px] font-bold uppercase tracking-wider mb-2 relative z-10">Jami Qabul Qilingan</p>
+          <h3 class="text-5xl font-black text-white relative z-10 tracking-tight">${jami.toLocaleString()}</h3>
+          <div class="mt-6 flex flex-col gap-3 relative z-10">
+            <div class="flex items-center justify-between py-2 px-3 bg-slate-800/50 rounded-xl border border-slate-700/50">
+              <div class="flex items-center gap-2"><span class="w-2 h-2 bg-red-500 rounded-full shadow-[0_0_10px_rgba(239,68,68,0.6)]"></span> <span class="text-[13px] font-bold text-slate-300">Infarkt</span></div>
+              <span class="text-lg font-black text-white">${jamiInfarkt}</span>
+            </div>
+            <div class="flex items-center justify-between py-2 px-3 bg-slate-800/50 rounded-xl border border-slate-700/50">
+              <div class="flex items-center gap-2"><span class="w-2 h-2 bg-blue-500 rounded-full shadow-[0_0_10px_rgba(59,130,246,0.6)]"></span> <span class="text-[13px] font-bold text-slate-300">Insult</span></div>
+              <span class="text-lg font-black text-white">${jamiInsult}</span>
             </div>
           </div>
         </div>
 
-        <!-- Today's Status (20%) -->
-        <div class="chart-box lg:col-span-1">
-          <h3 class="chart-title">Umumiy holat</h3>
-          <div class="flex flex-col gap-4 mt-4">
-            <div class="flex items-center justify-between p-4 bg-green-50 rounded-2xl border border-green-100 shadow-sm">
-              <div class="flex items-center gap-3">
-                <div class="w-11 h-11 bg-green-500 text-white rounded-xl flex items-center justify-center shadow-lg shadow-green-200">${icon('activity', 20)}</div>
-                <div>
-                  <div class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Aktiv</div>
-                  <div class="text-xs text-green-600 font-bold">${aktiv > 0 ? Math.round((aktiv/jami)*100) : 0}% ulush</div>
-                </div>
-              </div>
-              <div class="text-2xl font-black text-gray-900">${aktiv}</div>
+        <!-- 2. Bugungi Yangi Bemorlar -->
+        <div class="bg-blue-600 p-7 rounded-[32px] shadow-2xl shadow-blue-900/30 hover:shadow-blue-500/40 hover:-translate-y-2 transition-all duration-500 group cursor-pointer relative overflow-hidden">
+          <div class="absolute -right-16 -bottom-16 w-56 h-56 bg-white/10 rounded-full blur-3xl group-hover:bg-white/20 transition-all duration-700"></div>
+          <div class="flex items-center justify-between mb-6 relative z-10">
+            <div class="w-14 h-14 bg-white/20 text-white rounded-2xl flex items-center justify-center group-hover:rotate-12 transition-all duration-500">${icon('activity', 32)}</div>
+            <span class="text-[12px] font-black text-blue-100 uppercase tracking-[0.2em]">BUGUN</span>
+          </div>
+          <p class="text-blue-100/80 text-[11px] font-bold uppercase tracking-wider mb-2 relative z-10">Bugungi Yangi Qabullar</p>
+          <div class="flex items-baseline gap-3 relative z-10">
+            <h3 class="text-6xl font-black text-white tracking-tighter">${bugunInfarkt + bugunInsult}</h3>
+            <span class="text-[12px] font-black bg-white text-blue-600 px-3 py-1 rounded-xl uppercase">Ta</span>
+          </div>
+          <div class="mt-6 flex flex-col gap-3 relative z-10">
+            <div class="flex items-center justify-between py-2 px-3 bg-white/10 rounded-xl border border-white/10">
+              <div class="flex items-center gap-2"><span class="w-2 h-2 bg-white rounded-full shadow-[0_0_10px_rgba(255,255,255,0.6)]"></span> <span class="text-[13px] font-bold text-white">Infarkt</span></div>
+              <span class="text-lg font-black text-white">${bugunInfarkt}</span>
             </div>
-            
-            <div class="flex items-center justify-between p-4 bg-blue-50 rounded-2xl border border-blue-100 shadow-sm">
-              <div class="flex items-center gap-3">
-                <div class="w-11 h-11 bg-blue-500 text-white rounded-xl flex items-center justify-center shadow-lg shadow-blue-200">${icon('log-out', 20)}</div>
-                <div>
-                  <div class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Chiqarilgan</div>
-                  <div class="text-xs text-blue-600 font-bold">${chiqarilgan > 0 ? Math.round((chiqarilgan/jami)*100) : 0}% ulush</div>
-                </div>
-              </div>
-              <div class="text-2xl font-black text-gray-900">${chiqarilgan}</div>
-            </div>
-            
-            <div class="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-gray-200 shadow-sm">
-              <div class="flex items-center gap-3">
-                <div class="w-11 h-11 bg-gray-400 text-white rounded-xl flex items-center justify-center shadow-lg shadow-gray-200">${icon('heart-crack', 20)}</div>
-                <div>
-                  <div class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Vafot etgan</div>
-                  <div class="text-xs text-gray-400 font-bold">${vafot > 0 ? Math.round((vafot/jami)*100) : 0}% ulush</div>
-                </div>
-              </div>
-              <div class="text-2xl font-black text-gray-900">${vafot}</div>
-            </div>
-
-            <div class="flex items-center justify-between p-4 bg-orange-50 rounded-2xl border border-orange-100 shadow-sm">
-              <div class="flex items-center gap-3">
-                <div class="w-11 h-11 bg-orange-500 text-white rounded-xl flex items-center justify-center shadow-lg shadow-orange-200">${icon('share-2', 20)}</div>
-                <div>
-                  <div class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Yo'naltirilgan</div>
-                  <div class="text-xs text-orange-600 font-bold">${stats.otkazildi || 0} ta bemor</div>
-                </div>
-              </div>
-              <div class="text-2xl font-black text-gray-900">${stats.otkazildi || 0}</div>
+            <div class="flex items-center justify-between py-2 px-3 bg-white/10 rounded-xl border border-white/10">
+              <div class="flex items-center gap-2"><span class="w-2 h-2 bg-white/50 rounded-full"></span> <span class="text-[13px] font-bold text-blue-100">Insult</span></div>
+              <span class="text-lg font-black text-white">${bugunInsult}</span>
             </div>
           </div>
         </div>
 
-      </div>
+        <!-- 3. Jami Chiqarilgan Bemorlar -->
+        <div class="bg-emerald-900 p-7 rounded-[32px] border border-emerald-800 shadow-2xl hover:shadow-emerald-500/20 hover:-translate-y-2 transition-all duration-500 group cursor-pointer relative overflow-hidden">
+          <div class="absolute -left-10 -bottom-10 w-32 h-32 bg-emerald-500/10 rounded-full blur-3xl"></div>
+          <div class="flex items-center justify-between mb-6 relative z-10">
+            <div class="w-14 h-14 bg-emerald-500/10 text-emerald-400 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-all duration-500">${icon('log-out', 32)}</div>
+            <span class="text-[12px] font-black text-emerald-500 uppercase tracking-[0.2em]">CHIQARILGAN</span>
+          </div>
+          <p class="text-emerald-500/60 text-[11px] font-bold uppercase tracking-wider mb-2 relative z-10">Uyga javob berilgan</p>
+          <h3 class="text-5xl font-black text-white relative z-10 tracking-tight">${(chiqarilganInfarkt + chiqarilganInsult).toLocaleString()}</h3>
+          <div class="mt-6 flex flex-col gap-3 relative z-10">
+            <div class="flex items-center justify-between py-2 px-3 bg-emerald-800/50 rounded-xl border border-emerald-700/50">
+              <div class="flex items-center gap-2"><span class="w-2 h-2 bg-red-400 rounded-full shadow-[0_0_10px_rgba(239,68,68,0.6)]"></span> <span class="text-[13px] font-bold text-emerald-100">Infarkt</span></div>
+              <span class="text-lg font-black text-white">${chiqarilganInfarkt}</span>
+            </div>
+            <div class="flex items-center justify-between py-2 px-3 bg-emerald-800/50 rounded-xl border border-emerald-700/50">
+              <div class="flex items-center gap-2"><span class="w-2 h-2 bg-blue-400 rounded-full shadow-[0_0_10px_rgba(59,130,246,0.6)]"></span> <span class="text-[13px] font-bold text-emerald-100">Insult</span></div>
+              <span class="text-lg font-black text-white">${chiqarilganInsult}</span>
+            </div>
+          </div>
+        </div>
 
-      <!-- ROW 3: VILOYATLAR (Full width) -->
-      <div class="chart-box mb-6">
-        <h3 class="chart-title">Viloyatlar bo'yicha bemorlar</h3>
-        <div style="height: 300px; position: relative;">
-          <canvas id="region-chart"></canvas>
+        <!-- 4. Statsionarda Davolanayotganlar -->
+        <div class="bg-slate-900 p-7 rounded-[32px] border border-slate-800 shadow-2xl hover:shadow-orange-500/20 hover:-translate-y-2 transition-all duration-500 group cursor-pointer relative overflow-hidden">
+          <div class="absolute right-0 bottom-0 w-40 h-40 bg-orange-500/5 rounded-full blur-3xl"></div>
+          <div class="flex items-center justify-between mb-6 relative z-10">
+            <div class="w-14 h-14 bg-orange-500/10 text-orange-400 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-all duration-500">${icon('bed-double', 32)}</div>
+            <span class="text-[12px] font-black text-orange-500 uppercase tracking-[0.2em]">AKTIV</span>
+          </div>
+          <p class="text-slate-400 text-[11px] font-bold uppercase tracking-wider mb-2 relative z-10">Hozir Statsionarda</p>
+          <h3 class="text-5xl font-black text-white relative z-10 tracking-tight">${(aktivInfarkt + aktivInsult).toLocaleString()}</h3>
+          <div class="mt-6 flex flex-col gap-3 relative z-10">
+            <div class="flex items-center justify-between py-2 px-3 bg-slate-800/50 rounded-xl border border-slate-700/50">
+              <div class="flex items-center gap-2"><span class="w-2 h-2 bg-red-500 rounded-full shadow-[0_0_10px_rgba(239,68,68,0.6)]"></span> <span class="text-[13px] font-bold text-slate-300">Infarkt</span></div>
+              <span class="text-lg font-black text-white">${aktivInfarkt}</span>
+            </div>
+            <div class="flex items-center justify-between py-2 px-3 bg-slate-800/50 rounded-xl border border-slate-700/50">
+              <div class="flex items-center gap-2"><span class="w-2 h-2 bg-blue-500 rounded-full shadow-[0_0_10px_rgba(59,130,246,0.6)]"></span> <span class="text-[13px] font-bold text-slate-300">Insult</span></div>
+              <span class="text-lg font-black text-white">${aktivInsult}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 5. Jami Vafot Etganlar -->
+        <div class="bg-slate-900 p-7 rounded-[32px] border border-slate-800 shadow-2xl hover:shadow-rose-500/20 hover:-translate-y-2 transition-all duration-500 group cursor-pointer relative overflow-hidden">
+          <div class="absolute -right-10 -top-10 w-32 h-32 bg-rose-600/5 rounded-full blur-3xl"></div>
+          <div class="flex items-center justify-between mb-6 relative z-10">
+            <div class="w-14 h-14 bg-rose-500/10 text-rose-400 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-all duration-500">${icon('user-x', 32)}</div>
+            <div class="px-3 py-1 bg-rose-500/10 rounded-xl border border-rose-500/20">
+              <span class="text-sm font-black text-rose-500">${jami > 0 ? ((vafotInfarkt + vafotInsult) / jami * 100).toFixed(1) : 0}%</span>
+            </div>
+          </div>
+          <p class="text-slate-400 text-[11px] font-bold uppercase tracking-wider mb-2 relative z-10">Vafot etganlar</p>
+          <h3 class="text-5xl font-black text-white relative z-10 tracking-tight">${(vafotInfarkt + vafotInsult).toLocaleString()}</h3>
+          <div class="mt-6 flex flex-col gap-3 relative z-10">
+            <div class="flex items-center justify-between py-2 px-3 bg-slate-800/50 rounded-xl border border-slate-700/50">
+              <div class="flex items-center gap-2"><span class="w-2 h-2 bg-red-500 rounded-full shadow-[0_0_10px_rgba(239,68,68,0.6)]"></span> <span class="text-[13px] font-bold text-slate-300">Infarkt</span></div>
+              <span class="text-lg font-black text-white">${vafotInfarkt}</span>
+            </div>
+            <div class="flex items-center justify-between py-2 px-3 bg-slate-800/50 rounded-xl border border-slate-700/50">
+              <div class="flex items-center gap-2"><span class="w-2 h-2 bg-blue-500 rounded-full shadow-[0_0_10px_rgba(59,130,246,0.6)]"></span> <span class="text-[13px] font-bold text-slate-300">Insult</span></div>
+              <span class="text-lg font-black text-white">${vafotInsult}</span>
+            </div>
+          </div>
         </div>
       </div>
 
-      <!-- ROW 4: RECENT PATIENTS -->
-      <div class="card !p-0 overflow-hidden">
-        <div class="p-5 border-b border-gray-200 flex items-center justify-between bg-gray-50">
-          <h3 class="text-lg font-bold text-gray-900 m-0">So'nggi qabul qilingan bemorlar</h3>
-          <button class="btn btn-secondary btn-sm" onclick="Router.go('bemorlar')">Barchasini ko'rish &rarr;</button>
+      <!-- ROW 2: DYNAMICS CHART (FULL WIDTH) -->
+      <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm mb-8">
+        <div class="flex items-center justify-between mb-8">
+          <h3 class="text-sm font-bold text-slate-800 uppercase tracking-wider">Kunlik qabul dinamikasi</h3>
+          <div class="flex gap-4">
+            <div class="flex items-center gap-1.5"><span class="w-3 h-1 bg-red-500 rounded-full"></span> <span class="text-[10px] font-bold text-slate-500 uppercase">Infarkt</span></div>
+            <div class="flex items-center gap-1.5"><span class="w-3 h-1 bg-blue-500 rounded-full"></span> <span class="text-[10px] font-bold text-slate-500 uppercase">Insult</span></div>
+          </div>
+        </div>
+        <div class="h-80"><canvas id="dynamicsChart"></canvas></div>
+      </div>
+
+      <!-- ROW 3: REGIONAL DISTRIBUTION CHART -->
+      <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm mb-8">
+        <div class="flex items-center justify-between mb-8">
+           <h3 class="text-sm font-bold text-slate-800 uppercase tracking-wider">${distTitle}</h3>
+           <div class="flex gap-4">
+             <div class="flex items-center gap-1.5"><span class="w-3 h-3 bg-[#dc2626]"></span> <span class="text-[10px] font-bold text-slate-500 uppercase">Infarkt</span></div>
+             <div class="flex items-center gap-1.5"><span class="w-3 h-3 bg-[#2563eb]"></span> <span class="text-[10px] font-bold text-slate-500 uppercase">Insult</span></div>
+           </div>
+        </div>
+        <div class="w-full" style="height:480px"><canvas id="regionChart"></canvas></div>
+      </div>
+
+      <!-- ROW 4: DEMOGRAPHICS -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+        <!-- Gender -->
+        <!-- Gender -->
+        <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between">
+          <h3 class="text-base font-bold text-slate-800 mb-2 text-center tracking-wide uppercase">Jins bo'yicha taqsimot</h3>
+
+          <div class="flex flex-col gap-6 w-full h-full justify-center mt-2">
+            <!-- Infarkt -->
+            <div class="relative flex flex-col items-center">
+              <div class="flex items-center justify-between gap-2 w-full px-2">
+                <div class="flex flex-col items-center">
+                   <svg width="40" height="40" viewBox="0 0 24 24" fill="#38bdf8"><path d="M12 2C10.9 2 10 2.9 10 4s.9 2 2 2 2-.9 2-2-.9-2-2-2zm-1.5 5h3C14.9 7 16 8.1 16 9.5V15h-1.5v6h-5v-6H8V9.5C8 8.1 9.1 7 10.5 7z"/></svg>
+                   <span class="text-3xl font-black text-[#2e3150] mt-1">${infMP}%</span>
+                   <span class="text-sm font-bold text-slate-500 mt-1">${infM} ta</span>
+                </div>
+                <div class="relative flex flex-col items-center justify-center">
+                   <div class="w-28 h-28 rounded-full shadow-sm" style="background: conic-gradient(#f472b6 0% ${infFP}%, #38bdf8 ${infFP}% 100%);"></div>
+                   <span class="absolute bg-white px-2 py-0.5 rounded-full text-xs font-bold text-red-500 shadow-sm -bottom-2">INFARKT</span>
+                </div>
+                <div class="flex flex-col items-center">
+                   <svg width="40" height="40" viewBox="0 0 24 24" fill="#f472b6"><path d="M12 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm2.94 5c-.32 0-.6.18-.74.46L13 10.74V22h-2v-11.26l-1.2-3.28A.8.8 0 0 0 9.06 7H9c-.55 0-1 .45-1 1v6h2v8h4v-8h2V8c0-.55-.45-1-1-1h-.06z"/></svg>
+                   <span class="text-3xl font-black text-[#2e3150] mt-1">${infFP}%</span>
+                   <span class="text-sm font-bold text-slate-500 mt-1">${infF} ta</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Insult -->
+            <div class="relative flex flex-col items-center">
+              <div class="flex items-center justify-between gap-2 w-full px-2">
+                <div class="flex flex-col items-center">
+                   <svg width="40" height="40" viewBox="0 0 24 24" fill="#38bdf8"><path d="M12 2C10.9 2 10 2.9 10 4s.9 2 2 2 2-.9 2-2-.9-2-2-2zm-1.5 5h3C14.9 7 16 8.1 16 9.5V15h-1.5v6h-5v-6H8V9.5C8 8.1 9.1 7 10.5 7z"/></svg>
+                   <span class="text-3xl font-black text-[#2e3150] mt-1">${insMP}%</span>
+                   <span class="text-sm font-bold text-slate-500 mt-1">${insM} ta</span>
+                </div>
+                <div class="relative flex flex-col items-center justify-center">
+                   <div class="w-28 h-28 rounded-full shadow-sm" style="background: conic-gradient(#f472b6 0% ${insFP}%, #38bdf8 ${insFP}% 100%);"></div>
+                   <span class="absolute bg-white px-2 py-0.5 rounded-full text-xs font-bold text-blue-500 shadow-sm -bottom-2">INSULT</span>
+                </div>
+                <div class="flex flex-col items-center">
+                   <svg width="40" height="40" viewBox="0 0 24 24" fill="#f472b6"><path d="M12 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm2.94 5c-.32 0-.6.18-.74.46L13 10.74V22h-2v-11.26l-1.2-3.28A.8.8 0 0 0 9.06 7H9c-.55 0-1 .45-1 1v6h2v8h4v-8h2V8c0-.55-.45-1-1-1h-.06z"/></svg>
+                   <span class="text-3xl font-black text-[#2e3150] mt-1">${insFP}%</span>
+                   <span class="text-sm font-bold text-slate-500 mt-1">${insF} ta</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Age Groups -->
+        <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between">
+          <h3 class="text-base font-bold text-slate-800 mb-6 text-center tracking-wide uppercase">Yosh guruhlari</h3>
+          <div class="flex justify-center gap-6 mb-4">
+             <div class="flex items-center gap-2">
+                <span class="w-4 h-4 rounded-full bg-[#3b82f6]"></span> <span class="text-sm font-bold text-slate-500 uppercase">Insult</span>
+             </div>
+             <div class="flex items-center gap-2">
+                <span class="w-4 h-4 rounded-full bg-[#ef4444]"></span> <span class="text-sm font-bold text-slate-500 uppercase">Infarkt</span>
+             </div>
+          </div>
+          <div class="flex-1 min-h-[220px] relative"><canvas id="ageChart"></canvas></div>
+        </div>
+      </div>
+
+      <!-- ROW 4: DETAILED CLINICAL INDICATORS -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+        <!-- Infarkt Detail -->
+        <div class="bg-white rounded-2xl border-t-4 border-t-red-500 shadow-sm overflow-hidden">
+          <div class="p-6 border-b border-slate-100 flex items-center justify-between">
+            <h3 class="font-bold text-slate-800 flex items-center gap-2">${icon('heart-pulse', 20, 'text-red-500')} Infarkt turlari va muolajalar</h3>
+            <span class="text-[10px] font-bold text-slate-400">YALPI KO'RSATKICHLAR</span>
+          </div>
+          <div class="p-6 grid grid-cols-2 md:grid-cols-3 gap-4">
+            ${this.renderDetailCard('STEMI', stats.stemi ?? 0)}
+            ${this.renderDetailCard('NSTEMI', stats.nstemi ?? 0)}
+            ${this.renderDetailCard("O'tkir miokard infarkti (AMI)", stats.miokard ?? 0)}
+            ${this.renderDetailCard('Koronarangiografiya', stats.koronar ?? 0)}
+            ${this.renderDetailCard('Trombolizis', stats.trombolizis ?? 0)}
+            ${this.renderDetailCard('Medikamentoz davo', stats.medikamentoz ?? 0)}
+          </div>
+        </div>
+
+        <!-- Stroke Detail -->
+        <div class="bg-white rounded-2xl border-t-4 border-t-blue-500 shadow-sm overflow-hidden">
+          <div class="p-6 border-b border-slate-100 flex items-center justify-between">
+            <h3 class="font-bold text-slate-800 flex items-center gap-2">${icon('brain-circuit', 20, 'text-blue-500')} Insult turlari va muolajalar</h3>
+            <span class="text-[10px] font-bold text-slate-400">YALPI KO'RSATKICHLAR</span>
+          </div>
+          <div class="p-6 grid grid-cols-2 md:grid-cols-3 gap-4">
+            ${this.renderDetailCard('Ishemik insult', stats.ishemik ?? 0)}
+            ${this.renderDetailCard('Gemorragik insult', stats.gemorragik ?? 0)}
+            ${this.renderDetailCard('Tranzitor ishemik ataka', stats.tia ?? 0)}
+            ${this.renderDetailCard('MSKT angiografiya', stats.mskt ?? 0)}
+            ${this.renderDetailCard('Trombektomiya', stats.trombektomiya ?? 0)}
+            ${this.renderDetailCard('Medikamentoz davo', stats.insultMedikamentoz ?? 0)}
+          </div>
+        </div>
+      </div>
+
+
+
+      <!-- ROW 6: PATIENT LIST TABLE -->
+      <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+        <div class="p-6 border-b border-slate-100 flex items-center justify-between">
+          <h3 class="font-bold text-slate-800">So'nggi qabul qilingan bemorlar</h3>
+          <div class="flex gap-2">
+            <button class="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-[11px] font-bold text-slate-600 flex items-center gap-1.5 hover:bg-slate-100 transition-all" onclick="Router.go('bemorlar')">
+              ${icon('clipboard-list', 14)} Barchasi
+            </button>
+            <button class="px-3 py-1.5 bg-green-50 border border-green-200 rounded-lg text-[11px] font-bold text-green-700 flex items-center gap-1.5 hover:bg-green-100 transition-all" onclick="DashboardPage.exportExcel()">
+              ${icon('file-down', 14)} Excel
+            </button>
+          </div>
         </div>
         <div class="overflow-x-auto">
-          <table class="data-table">
+          <table class="w-full text-left">
             <thead>
-              <tr>
-                <th>Tur</th>
-                <th>K/T No</th>
-                <th>Bemor F.I.O</th>
-                <th>Yosh / Jins</th>
-                <th>Viloyat</th>
-                <th>Qabul vaqti</th>
-                <th>Holat</th>
+              <tr class="bg-slate-50/50">
+                <th class="p-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100">K/T No</th>
+                <th class="p-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100">Bemor F.I.Sh</th>
+                <th class="p-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100">Tashxis</th>
+                <th class="p-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100">Qabul vaqti</th>
+                <th class="p-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100">Holat</th>
+                <th class="p-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100">DQ</th>
+                <th class="p-4 text-right border-b border-slate-100"></th>
               </tr>
             </thead>
-            <tbody>
-              ${recent.length === 0
-                ? `<tr><td colspan="7" class="text-center py-8 text-gray-500">Hozircha bemorlar kiritilmagan</td></tr>`
-                : recent.map(p => `
-                  <tr onclick="Router.go('bemor-karta',{kt_no:'${p.kt_no}', type:'${p._type}'})">
-                    <td>
-                      <span class="badge ${p._type==='infarkt' ? 'badge-red' : 'badge-purple'}">
-                        ${icon(p._type==='infarkt' ? 'heart' : 'brain', 14)}
-                        ${p._type==='infarkt' ? 'Infarkt' : 'Insult'}
-                      </span>
-                    </td>
-                    <td class="font-mono text-sm text-gray-600">${p.kt_no}</td>
-                    <td class="font-semibold">${p.fio || 'Ism kiritilmagan'}</td>
-                    <td>${Utils.calculateAge(p.tugilgan_yil)||'—'} yosh · ${p.jinsi==='erkak'?'E':'A'}</td>
-                    <td>${p.viloyat || '—'}</td>
-                    <td>${Utils.formatDateTime(p.qabul_vaqt)}</td>
-                    <td>${Utils.statusBadge(p.status)}</td>
-                  </tr>
-                `).join('')
-              }
+            <tbody class="text-sm">
+              ${recent.map(p => {
+                const rawDiag = p._type==='infarkt' ? (p.infarkt_turi || 'Miokard Infarkti') : (p.insult_turi || 'Ishemik Insult');
+                const t = rawDiag.toUpperCase();
+                let fDiag = t;
+                if (t.includes('STEMI')) fDiag = "O'KS ST ELEVATSIYA BILAN (STEMI)";
+                else if (t.includes('NSTEMI')) fDiag = "O'KS ST ELEVATSIYASIZ (NSTEMI)";
+                else if (t.includes("MIOKARD INFARKTI") || t.includes("AMI")) fDiag = "O'TKIR MIOKARD INFARKTI (AMI)";
+                else if (t.includes('TIA') || t.includes('TRANZITOR')) fDiag = "TIA (TRANZITOR ISHEMIK ATAKA)";
+                else if (t.includes('GEMORRAGIK')) fDiag = "GEMORRAGIK INSULT";
+                else if (t.includes('ISHEMIK')) fDiag = "ISHEMIK INSULT";
+
+                return `
+                <tr class="border-b border-slate-50 hover:bg-slate-50/50 cursor-pointer transition-colors" onclick="Router.go('bemor-karta',{kt_no:'${p.kt_no}', type:'${p._type}'})">
+                  <td class="p-4 text-slate-500 font-mono text-[11px]">${p.kt_no}</td>
+                  <td class="p-4">
+                    <div class="font-bold text-slate-800">${p.fio || '—'}</div>
+                    <div class="text-[10px] text-slate-400 font-medium uppercase mt-0.5">${Utils.calculateAge(p.tugilgan_yil)||'—'} yosh · ${p.jinsi==='Erkak'?'E':'A'}</div>
+                  </td>
+                  <td class="p-4">
+                    <span class="px-2 py-0.5 ${p._type==='infarkt' ? 'bg-red-50 text-red-600 border-red-100' : 'bg-blue-50 text-blue-600 border-blue-100'} text-[10px] font-bold rounded border uppercase">
+                      ${fDiag}
+                    </span>
+                  </td>
+                  <td class="p-4">
+                    <div class="text-slate-700 font-medium">${Utils.formatDate(p.qabul_vaqt)}</div>
+                    <div class="text-[10px] text-slate-400 font-bold">${Utils.formatDateTime(p.qabul_vaqt).split(', ')[1] || ''}</div>
+                  </td>
+                  <td class="p-4">${Utils.statusBadge(p.status)}</td>
+                  <td class="p-4">
+                    <div class="flex items-center gap-2">
+                       <div class="w-12 h-1.5 bg-slate-100 rounded-full overflow-hidden"><div class="h-full bg-green-500 w-[90%]"></div></div>
+                       <span class="text-[10px] font-bold text-slate-400">90%</span>
+                    </div>
+                  </td>
+                  <td class="p-4 text-right text-slate-300">${icon('chevron-right', 20)}</td>
+                </tr>
+                `;
+              }).join('')}
             </tbody>
           </table>
         </div>
       </div>
     `;
 
-    // Draw charts
+    // Initialize Charts
     requestAnimationFrame(() => {
       initIcons();
-      DashboardPage.drawTrendChart(trend);
-      DashboardPage.drawTypeChart(jamiInfarkt, jamiInsult);
-      DashboardPage.drawRegionChart(viloyat);
-      
-      // Update times
-      const t = new Date().toLocaleTimeString('uz-UZ', {hour:'2-digit', minute:'2-digit'});
-      const el1 = document.getElementById('time-inf');
-      const el2 = document.getElementById('time-ins');
-      if (el1) el1.textContent = t;
-      if (el2) el2.textContent = t;
+      setTimeout(() => {
+        DashboardPage.drawNewCharts(trend, stats, viloyat, demo, profile);
+      }, 300);
     });
   },
 
-  drawTrendChart(trend) {
-    const ctx = document.getElementById('trend-chart')?.getContext('2d');
-    if (!ctx) return;
-    if (this._charts.trend) this._charts.trend.destroy();
-    
-    this._charts.trend = new Chart(ctx, {
-      type: 'line',
-      data: {
-        labels: trend.labels,
-        datasets: [
-          {
-            label: 'Infarkt', data: trend.infData,
-            borderColor: '#EF4444', backgroundColor: 'rgba(239, 68, 68, 0.1)',
-            tension: 0.3, fill: true, pointRadius: 3, borderWidth: 2
+  renderAlertItem(ic, title, count, color) {
+    const bg = color === 'red' ? 'bg-red-50 text-red-500' : color === 'blue' ? 'bg-blue-50 text-blue-500' : 'bg-slate-100 text-slate-500';
+    const text = color === 'red' ? 'text-red-600' : 'text-slate-800';
+    return `
+      <div class="flex items-center justify-between p-3 hover:bg-slate-50 rounded-xl cursor-pointer group transition-all">
+        <div class="flex items-center gap-3">
+          <div class="w-8 h-8 ${bg} rounded-lg flex items-center justify-center">${icon(ic, 16)}</div>
+          <span class="text-xs font-semibold text-slate-700">${title}</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="text-sm font-black ${text}">${count}</span>
+          <i data-lucide="chevron-right" class="w-4 h-4 text-slate-300 group-hover:text-slate-500 transition-colors"></i>
+        </div>
+      </div>
+    `;
+  },
+
+  renderDetailCard(label, val, unit = '') {
+    return `
+      <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 hover:shadow-md hover:-translate-y-1 transition-all duration-300 cursor-pointer group">
+        <p class="text-[11px] font-bold text-slate-600 uppercase mb-2 group-hover:text-blue-600 transition-colors leading-tight">${label}</p>
+        <p class="text-2xl font-black text-slate-900">${val.toLocaleString()} ${unit ? `<span class="text-xs text-slate-500 font-semibold uppercase">${unit}</span>` : ''}</p>
+      </div>
+    `;
+  },
+
+  renderGoalCard(label, val, target, color) {
+    const isGood = color === 'green' ? val <= target : val >= target;
+    const barColor = isGood ? 'bg-green-500' : 'bg-red-500';
+    const textColor = isGood ? 'text-green-600' : 'text-red-600';
+    const percent = Math.min(100, (val / target) * 100);
+    return `
+      <div class="bg-slate-50 p-4 rounded-xl border border-slate-100">
+        <p class="text-[9px] font-bold ${textColor} uppercase mb-1 italic">${label}</p>
+        <p class="text-lg font-black text-slate-800">${val} <span class="text-[10px] text-slate-400 font-normal">MIN</span></p>
+        <div class="mt-2 h-1 bg-slate-200 rounded-full overflow-hidden"><div class="h-full ${barColor}" style="width:${percent}%"></div></div>
+        <p class="text-[8px] text-slate-400 mt-1 uppercase font-bold">Maqsad: ${color==='green'?'<':'>'}${target} min</p>
+      </div>
+    `;
+  },
+
+  renderDQInfo(title, val, color) {
+    const text = color === 'red' ? 'text-red-500' : color === 'orange' ? 'text-orange-500' : 'text-slate-700';
+    return `
+      <div class="flex items-center justify-between text-[11px]">
+        <span class="text-slate-500 font-medium">${title}</span>
+        <span class="font-black ${text}">${val}</span>
+      </div>
+    `;
+  },
+
+  drawNewCharts(trend, stats, viloyat, demo, profile) {
+    if (window.ChartDataLabels) {
+      Chart.register(window.ChartDataLabels);
+    }
+
+    // 1. Dynamics Chart
+    const ctxD = document.getElementById('dynamicsChart')?.getContext('2d');
+    if (ctxD) {
+      new Chart(ctxD, {
+        type: 'line',
+        data: {
+          labels: trend.labels,
+          datasets: [
+            { label: 'Infarkt', data: trend.infData, borderColor: '#ef4444', backgroundColor: 'rgba(239,68,68,0.05)', fill: true, tension: 0.4, pointRadius: 3, borderWidth: 3 },
+            { label: 'Insult',  data: trend.insData, borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.05)', fill: true, tension: 0.4, pointRadius: 3, borderWidth: 3 }
+          ]
+        },
+        plugins: window.ChartDataLabels ? [window.ChartDataLabels] : [],
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            datalabels: {
+              display: ctx => ctx.dataset.data[ctx.dataIndex] > 0,
+              align: 'top',
+              color: ctx => ctx.datasetIndex === 0 ? '#ef4444' : '#3b82f6',
+              font: { weight: 'bold', size: 12 }
+            }
           },
-          {
-            label: 'Insult', data: trend.insData,
-            borderColor: '#8B5CF6', backgroundColor: 'rgba(139, 92, 246, 0.1)',
-            tension: 0.3, fill: true, pointRadius: 3, borderWidth: 2
+          scales: {
+            x: { grid: { borderDash: [5,5], color: '#f1f5f9' }, ticks: { font: { size: 12, weight: '600' } } },
+            y: { grid: { borderDash: [5,5], color: '#f1f5f9' }, ticks: { font: { size: 12, weight: '600' } }, beginAtZero: true }
           }
-        ]
-      },
-      options: {
-        responsive: true, maintainAspectRatio: false,
-        interaction: { mode: 'index', intersect: false },
-        plugins: { 
-          legend: { position: 'top', align: 'end', labels: { boxWidth: 12, font: { family: 'Inter', size: 12 } } },
-          tooltip: { backgroundColor: '#111827', titleFont: { family: 'Inter' }, bodyFont: { family: 'Inter' }, padding: 12, cornerRadius: 8 }
-        },
-        scales: {
-          x: { grid: { display: false }, ticks: { font: { family: 'Inter', size: 11 }, color: '#6B7280' } },
-          y: { border: { display: false }, grid: { color: '#F3F4F6' }, beginAtZero: true, ticks: { font: { family: 'Inter', size: 11 }, color: '#6B7280', stepSize: 1 } }
         }
-      }
-    });
+      });
+    }
+
+    // 2. Region/Facility Distribution Chart
+    const ctxR = document.getElementById('regionChart')?.getContext('2d');
+    if (ctxR) {
+      const isFiltered = profile?.role !== 'admin';
+
+      const regionData = (isFiltered ? (viloyat || []) : (APP_CONFIG.VILOYATLAR || []).map(rName => {
+        const found = (viloyat || []).find(v => v[0] === rName);
+        return found ? { name: rName, total: found[1], inf: found[2]||0, ins: found[3]||0 } : { name: rName, total: 0, inf: 0, ins: 0 };
+      })).map(v => Array.isArray(v) ? { name: v[0], total: v[1], inf: v[2], ins: v[3] } : v)
+         .sort((a, b) => b.total - a.total);
+
+      new Chart(ctxR, {
+        type: 'bar',
+        data: {
+          labels: regionData.map(v => v.name),
+          datasets: [
+            { label: 'Infarkt', data: regionData.map(v => v.inf), backgroundColor: '#dc2626' },
+            { label: 'Insult',  data: regionData.map(v => v.ins), backgroundColor: '#2563eb' }
+          ]
+        },
+        plugins: window.ChartDataLabels ? [window.ChartDataLabels] : [],
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          layout: { padding: { bottom: 10 } },
+          plugins: {
+            legend: { display: false },
+            datalabels: {
+              display: ctx => ctx.dataset.data[ctx.dataIndex] > 0,
+              color: '#ffffff',
+              font: { weight: 'bold', size: 13 }
+            }
+          },
+          scales: {
+            x: {
+              stacked: true,
+              grid: { display: false },
+              ticks: { font: { size: 12, weight: '600' }, maxRotation: 45, minRotation: 45, autoSkip: false }
+            },
+            y: { stacked: true, grid: { borderDash: [5,5], color: '#e2e8f0' }, ticks: { font: { size: 12, weight: '600' } }, beginAtZero: true }
+          }
+        }
+      });
+    }
+
+    // 3. Age Groups Chart
+    const ctxA = document.getElementById('ageChart')?.getContext('2d');
+    if (ctxA && demo) {
+      const ageLabels = ['≤29', '30-44', '45-59', '60-74', '75+'];
+      new Chart(ctxA, {
+        type: 'bar',
+        data: {
+          labels: ageLabels,
+          datasets: [
+            { label: 'Insult',  data: ageLabels.map(k => demo.insult.ages[k]),  backgroundColor: '#3b82f6', borderRadius: 0 },
+            { label: 'Infarkt', data: ageLabels.map(k => demo.infarkt.ages[k]), backgroundColor: '#ef4444', borderRadius: { topLeft: 6, topRight: 6, bottomLeft: 0, bottomRight: 0 } }
+          ]
+        },
+        plugins: window.ChartDataLabels ? [window.ChartDataLabels] : [],
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          layout: { padding: { top: 28 } },
+          plugins: {
+            legend: { display: false },
+            datalabels: {
+              labels: {
+                // Ustun ichida — faqat katta segmentlar uchun
+                inside: {
+                  anchor: 'center',
+                  align: 'center',
+                  color: '#ffffff',
+                  font: { weight: 'bold', size: 13 },
+                  display: ctx => {
+                    const allVals = ctx.chart.data.datasets.flatMap(d => d.data);
+                    const max = Math.max(...allVals);
+                    return ctx.dataset.data[ctx.dataIndex] >= max * 0.07;
+                  },
+                  formatter: v => v
+                },
+                // Ustun tepasida — faqat oxirgi dataset (infarkt) uchun jami
+                total: {
+                  anchor: 'end',
+                  align: 'top',
+                  color: '#1e293b',
+                  font: { weight: 'bold', size: 13 },
+                  display: ctx => ctx.datasetIndex === ctx.chart.data.datasets.length - 1,
+                  formatter: (value, ctx) =>
+                    ctx.chart.data.datasets.reduce(
+                      (sum, ds) => sum + (ds.data[ctx.dataIndex] || 0), 0
+                    )
+                }
+              }
+            }
+          },
+          scales: {
+            x: { stacked: true, grid: { display: false }, ticks: { font: { size: 13, weight: '600' } } },
+            y: { stacked: true, grid: { borderDash: [5,5], color: '#f1f5f9' }, ticks: { font: { size: 12, weight: '600' } }, beginAtZero: true }
+          }
+        }
+      });
+    }
   },
 
-  drawTypeChart(inf, ins) {
-    const ctx = document.getElementById('type-chart')?.getContext('2d');
-    if (!ctx) return;
-    if (this._charts.type) this._charts.type.destroy();
-
-    if (inf === 0 && ins === 0) { inf = 1; ins = 0; } // Fallback empty
-
-    this._charts.type = new Chart(ctx, {
-      type: 'doughnut',
-      data: {
-        labels: ['Infarkt', 'Insult'],
-        datasets: [{
-          data: [inf, ins],
-          backgroundColor: ['#EF4444', '#8B5CF6'],
-          borderWidth: 0, hoverOffset: 4
-        }]
-      },
-      options: {
-        responsive: true, maintainAspectRatio: false, cutout: '75%',
-        plugins: { 
-          legend: { position: 'bottom', labels: { padding: 20, usePointStyle: true, font: { family: 'Inter', size: 12 } } },
-          tooltip: { callbacks: { label: function(context) {
-            const total = context.dataset.data.reduce((a,b)=>a+b, 0);
-            const p = Math.round((context.raw / total)*100) || 0;
-            return ' ' + context.label + ': ' + context.raw + ' (' + p + '%)';
-          }}}
-        }
-      }
-    });
-  },
-
-  drawRegionChart(viloyat) {
-    const ctx = document.getElementById('region-chart')?.getContext('2d');
-    if (!ctx) return;
-    if (this._charts.region) this._charts.region.destroy();
-    
-    // Convert viloyat to double bar data (approximation since our viloyat stats might not be split yet)
-    // Assuming viloyat is array of [name, count], we will split it roughly for demo or if it's already split, use it.
-    const labels = viloyat.map(v => v[0].replace(' viloyati', '').replace(' shahri', ''));
-    const infData = viloyat.map(v => Math.floor(v[1] * 0.6)); // Mock split if backend doesn't provide
-    const insData = viloyat.map(v => Math.ceil(v[1] * 0.4));  // Mock split
-
-    this._charts.region = new Chart(ctx, {
-      type: 'bar',
-      data: {
-        labels: labels,
-        datasets: [
-          { label: 'Infarkt', data: infData, backgroundColor: '#EF4444', borderRadius: 4, barPercentage: 0.7, categoryPercentage: 0.8 },
-          { label: 'Insult', data: insData, backgroundColor: '#8B5CF6', borderRadius: 4, barPercentage: 0.7, categoryPercentage: 0.8 }
-        ]
-      },
-      options: {
-        responsive: true, maintainAspectRatio: false,
-        plugins: { 
-          legend: { position: 'top', align: 'end', labels: { boxWidth: 12, font: { family: 'Inter' } } },
-          tooltip: { mode: 'index', intersect: false, backgroundColor: '#111827', titleFont: { family: 'Inter' }, bodyFont: { family: 'Inter' } }
-        },
-        scales: {
-          x: { grid: { display: false }, ticks: { font: { family: 'Inter', size: 11 }, color: '#4B5563' } },
-          y: { border: { display: false }, grid: { color: '#F3F4F6' }, beginAtZero: true, stacked: false, ticks: { font: { family: 'Inter', size: 11 }, stepSize: 1 } }
-        }
-      }
-    });
+  exportExcel() {
+    const data = DashboardPage._recentPatients;
+    if (!data?.length) { showToast("Ma'lumot yuklanmagan, biroz kuting", 'warning'); return; }
+    Utils.exportCSV(data.map(p => ({
+      Turi: p._type === 'infarkt' ? 'Infarkt' : 'Insult',
+      'K/T No': p.kt_no,
+      'F.I.O': p.fio || '—',
+      Viloyat: p.viloyat || '—',
+      Muassasa: p.muassasa || '—',
+      'Qabul vaqti': Utils.formatDateTime(p.qabul_vaqt),
+      Holat: p.status || '—',
+      'Kasallik turi': p.infarkt_turi || p.insult_turi || '—',
+      Muolaja: p.muolaja_turi || '—'
+    })), `dashboard_bemorlar_${new Date().toISOString().slice(0,10)}.csv`);
+    showToast('Excel eksport boshlandi', 'success');
   },
 
   subscribeRealtime() {

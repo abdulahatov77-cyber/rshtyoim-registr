@@ -87,6 +87,9 @@ const HisobotPage = {
             <button class="btn btn-success shadow-md hover:shadow-lg flex items-center justify-center px-4 rounded-xl" onclick="HisobotPage.exportReport()" title="Eksport">
               ${icon('download', 18)}
             </button>
+            <button class="btn btn-secondary shadow-md hover:shadow-lg flex items-center justify-center px-4 rounded-xl" onclick="HisobotPage.printReport()" title="Chop etish">
+              ${icon('printer', 18)}
+            </button>
           </div>
         </div>
       </div>
@@ -135,13 +138,21 @@ const HisobotPage = {
         filters.viloyat = profile.viloyat;
       }
       
-      const [infs, ins, kuzatuv] = await Promise.all([
-        DB.infarktList(filters),
-        DB.insultList(filters),
-        getSupabase().from('kuzatuv').select('*').gte('created_at', filters.from).lte('created_at', filters.to)
+      const [infRes, insRes, kuzatuvRes] = await Promise.all([
+        DB.infarktList({ ...filters, allCols: true }),
+        DB.insultList({ ...filters, allCols: true }),
+        getSupabase().from('kuzatuv').select('*').gte('created_at', filters.from).lte('created_at', filters.to).range(0, 9999)
       ]);
-      HisobotPage._lastData = { infs, ins, kuzatuv: kuzatuv.data||[], from, to };
-      HisobotPage.renderReport(infs, ins, kuzatuv.data||[], from, to);
+      const infs = infRes.data || infRes;
+      const ins  = insRes.data || insRes;
+      const kuzatuvAll = kuzatuvRes.data || [];
+      
+      // Filter kuzatuv by region (since table lacks viloyat field)
+      const validKtNos = new Set([...infs.map(p => p.kt_no), ...ins.map(p => p.kt_no)]);
+      const kuzatuv = kuzatuvAll.filter(k => validKtNos.has(k.kt_no));
+
+      HisobotPage._lastData = { infs, ins, kuzatuv, from, to };
+      HisobotPage.renderReport(infs, ins, kuzatuv, from, to);
     } catch(err) {
       if (el) el.innerHTML = `
         <div class="h-card text-center text-red-600 py-12">
@@ -153,7 +164,7 @@ const HisobotPage = {
     }
   },
 
-  renderReport(infs, ins, from, to) {
+  renderReport(infs, ins, kuzatuv, from, to) {
     const el = document.getElementById('h-results');
     // counts
     const stemi = infs.filter(p=>p.infarkt_turi?.includes('STEMI')).length;
@@ -161,9 +172,9 @@ const HisobotPage = {
     const pci = infs.filter(p=>p.muolaja_turi?.includes('PCI')||p.muolaja_turi?.includes('stentlash')).length;
     const tlt_inf = infs.filter(p=>p.muolaja_turi?.includes('TLT')||p.muolaja_turi?.includes('trombolitik')).length;
     const killip34 = infs.filter(p=>p.killip?.includes('III')||p.killip?.includes('IV')).length;
-    const ishemik = ins.filter(p=>p.insult_turi?.includes('Ishemik')).length;
-    const gemorragik = ins.filter(p=>p.insult_turi?.includes('Gemorragik')).length;
-    const tia = ins.filter(p=>p.insult_turi?.includes('TIA')).length;
+    const ishemik = ins.filter(p=>p.insult_turi?.toLowerCase().includes('ishemik')).length;
+    const gemorragik = ins.filter(p=>p.insult_turi?.toLowerCase().includes('gemorragik')).length;
+    const tia = ins.filter(p=>p.insult_turi?.toLowerCase().includes('tia')).length;
     const nihss15 = ins.filter(p=>p.nihss_qabul>=15).length;
     const vafot_inf = infs.filter(p=>p.status==='vafot').length;
     const vafot_ins = ins.filter(p=>p.status==='vafot').length;
@@ -186,7 +197,7 @@ const HisobotPage = {
     const avgDoorToPCI = calcAvgTime(infs.filter(p=>p.pci_vaqt), 'qabul_vaqt', 'pci_vaqt');
 
     // Readmission (30 days)
-    const readm30 = (HisobotPage._lastData.kuzatuv || []).filter(k => k.kuzatuv_davri==='30 kunlik' && (k.holati?.includes('Qayta') || k.qayta_xuruj)).length;
+    const readm30 = (kuzatuv || []).filter(k => k.kuzatuv_davri==='30 kunlik' && (k.holati?.includes('Qayta') || k.qayta_xuruj)).length;
 
     const statRow = (label, val, iconName, colorClass) =>
       `<div class="h-row">
@@ -354,10 +365,10 @@ const HisobotPage = {
         new Chart(ctx2, { 
           type:'doughnut', 
           data:{
-            labels:['Ishemik','Gemorragik','TIA','Aniqlanmagan'],
+            labels:['Ishemik','Gemorragik','TIA'],
             datasets:[{
-              data:[ishemik, gemorragik, tia, Math.max(0, ins.length-ishemik-gemorragik-tia)],
-              backgroundColor:['#3b82f6','#ef4444','#f59e0b','#94a3b8'],
+              data:[ishemik, gemorragik, tia],
+              backgroundColor:['#3b82f6','#ef4444','#f59e0b'],
               borderWidth: 3, borderColor: '#ffffff', hoverOffset: 6
             }]
           }, 
@@ -370,6 +381,80 @@ const HisobotPage = {
         });
       }
     });
+  },
+
+  printReport() {
+    const d = HisobotPage._lastData;
+    if (!d) { showToast('Avval hisobot yuklab oling','warning'); return; }
+    const { infs, ins, from, to } = d;
+    const stemi = infs.filter(p=>p.infarkt_turi?.includes('STEMI')).length;
+    const nstemi = infs.filter(p=>p.infarkt_turi?.includes('NSTEMI')).length;
+    const pci = infs.filter(p=>p.muolaja_turi?.includes('PCI')||p.muolaja_turi?.includes('stentlash')).length;
+    const tlt_inf = infs.filter(p=>p.muolaja_turi?.includes('TLT')||p.muolaja_turi?.includes('trombolitik')).length;
+    const killip34 = infs.filter(p=>p.killip?.includes('III')||p.killip?.includes('IV')).length;
+    const ishemik = ins.filter(p=>p.insult_turi?.toLowerCase().includes('ishemik')).length;
+    const gemorragik = ins.filter(p=>p.insult_turi?.toLowerCase().includes('gemorragik')).length;
+    const tia = ins.filter(p=>p.insult_turi?.toLowerCase().includes('tia')).length;
+    const nihss15 = ins.filter(p=>p.nihss_qabul>=15).length;
+    const vafot_inf = infs.filter(p=>p.status==='vafot').length;
+    const vafot_ins = ins.filter(p=>p.status==='vafot').length;
+
+    const row = (label, val) => `<tr><td style="padding:6px 10px;border-bottom:1px solid #e2e8f0;color:#334155">${label}</td><td style="padding:6px 10px;border-bottom:1px solid #e2e8f0;font-weight:700;text-align:right">${val}</td></tr>`;
+    const w = window.open('','_blank');
+    w.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8">
+<title>Hisobot ${from} – ${to}</title>
+<style>
+  body{font-family:Arial,sans-serif;margin:24px;color:#1e293b}
+  h1{font-size:20px;font-weight:800;margin-bottom:4px;color:#1e3a8a}
+  .sub{font-size:13px;color:#64748b;margin-bottom:20px}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px}
+  .card{border:1px solid #cbd5e1;border-radius:10px;overflow:hidden}
+  .card-head{background:#f1f5f9;padding:10px 14px;font-weight:700;font-size:14px;color:#1e3a8a;border-bottom:1px solid #e2e8f0}
+  .card-head.red{background:#fef2f2;color:#991b1b}
+  .card-head.purple{background:#faf5ff;color:#6b21a8}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  .summary{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:20px}
+  .stat{border:1px solid #e2e8f0;border-radius:10px;padding:12px 18px;text-align:center;min-width:120px}
+  .stat-num{font-size:26px;font-weight:900;color:#1e3a8a}
+  .stat-lbl{font-size:11px;color:#64748b;margin-top:2px}
+  .footer{margin-top:20px;font-size:11px;color:#94a3b8;border-top:1px solid #e2e8f0;padding-top:10px}
+  @media print{body{margin:10px}}
+</style></head><body>
+<h1>Statistik Hisobot</h1>
+<div class="sub">Davr: ${from} dan ${to} gacha &nbsp;|&nbsp; Jami: ${infs.length+ins.length} ta bemor</div>
+<div class="summary">
+  <div class="stat"><div class="stat-num">${infs.length}</div><div class="stat-lbl">Infarkt</div></div>
+  <div class="stat"><div class="stat-num">${ins.length}</div><div class="stat-lbl">Insult</div></div>
+  <div class="stat"><div class="stat-num">${killip34+nihss15}</div><div class="stat-lbl">Kritik holatlar</div></div>
+  <div class="stat"><div class="stat-num">${vafot_inf+vafot_ins}</div><div class="stat-lbl">Vafot</div></div>
+</div>
+<div class="grid">
+  <div class="card">
+    <div class="card-head red">Infarkt tahlili (${infs.length} ta)</div>
+    <table>
+      ${row('STEMI', stemi)}
+      ${row('NSTEMI', nstemi)}
+      ${row('PCI / Stentlash', pci)}
+      ${row('Trombolitik terapiya (TLT)', tlt_inf)}
+      ${row('Killip III–IV (kritik)', killip34)}
+      ${row('Vafot', vafot_inf)}
+    </table>
+  </div>
+  <div class="card">
+    <div class="card-head purple">Insult tahlili (${ins.length} ta)</div>
+    <table>
+      ${row('Ishemik insult', ishemik)}
+      ${row('Gemorragik insult', gemorragik)}
+      ${row('TIA', tia)}
+      ${row('NIHSS ≥ 15 (og\'ir)', nihss15)}
+      ${row('Vafot', vafot_ins)}
+    </table>
+  </div>
+</div>
+<div class="footer">Hisobot sanasi: ${new Date().toLocaleString('uz-UZ')}</div>
+<script>window.onload=()=>{window.print()}<\/script>
+</body></html>`);
+    w.document.close();
   },
 
   exportReport() {

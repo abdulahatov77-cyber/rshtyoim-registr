@@ -12,7 +12,7 @@ const InfarktYangiPage = {
     InfarktYangiPage._data = {
       kt_no: Utils.generateKtNo(),
       qabul_vaqt: Utils.formatDateInput(new Date()),
-      viloyat: profile?.role === 'admin' ? '' : (profile?.viloyat || '')
+      viloyat: (profile?.role === 'admin' || profile?.role === 'super_admin') ? '' : (profile?.viloyat || '')
     };
 
     document.getElementById('app').innerHTML = Components.renderLayout(
@@ -28,39 +28,54 @@ const InfarktYangiPage = {
     const wrap = document.getElementById('infarkt-form-wrap');
     const sectionIcons = ['building-2', 'user', 'activity', 'pill'];
     const sectionTitles = [
-      '1-BO\'LIM: Muassasa ma\'lumotlari',
-      '2-BO\'LIM: Bemor ma\'lumotlari',
-      '3-BO\'LIM: Klinik ma\'lumotlar',
-      '4-BO\'LIM: Muolaja va Shifokor'
+      'Muassasa ma\'lumotlari',
+      'Bemor ma\'lumotlari',
+      'Klinik ma\'lumotlar',
+      'Muolaja va Shifokor'
     ];
 
     wrap.innerHTML = `
-      <div class="max-w-4xl mx-auto animate-fadein">
-        ${Components.renderSteps(InfarktYangiPage.STEPS, step)}
-        <div class="card border-t-4 border-t-[#EF4444] shadow-lg">
-          <div class="card-header bg-gray-50 border-b border-gray-100 flex items-center justify-between !mb-0 p-5">
-            <div class="flex items-center gap-3">
-              <div class="w-10 h-10 bg-red-100 text-[#EF4444] rounded-xl flex items-center justify-center">
-                ${icon(sectionIcons[step], 24)}
+      <div class="max-w-4xl mx-auto animate-fadein pb-20">
+        <div class="mb-10">
+          ${Components.renderSteps(InfarktYangiPage.STEPS, step)}
+        </div>
+
+        <div class="bg-white rounded-[32px] shadow-2xl shadow-slate-200/50 border border-slate-100 overflow-hidden">
+          <div class="p-8 border-b border-slate-50 bg-slate-50/30 flex items-center justify-between">
+            <div class="flex items-center gap-4">
+              <div class="w-14 h-14 bg-red-50 text-red-600 rounded-2xl flex items-center justify-center shadow-sm">
+                ${icon(sectionIcons[step], 28)}
               </div>
               <div>
-                <h3 class="card-title !mb-0 text-gray-900">${sectionTitles[step]}</h3>
-                <div class="text-xs text-gray-500 font-medium mt-1">Qadam ${step+1} / ${InfarktYangiPage.STEPS.length}</div>
+                <p class="text-[10px] font-black text-red-600 uppercase tracking-widest mb-1">Bo'lim ${step+1} / 4</p>
+                <h3 class="text-xl font-black text-slate-800 tracking-tight">${sectionTitles[step]}</h3>
+              </div>
+            </div>
+            <div class="hidden sm:block text-right">
+              <div class="text-[10px] font-bold text-slate-400 uppercase mb-1">To'ldirilish darajasi</div>
+              <div class="w-32 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                <div class="h-full bg-red-500" style="width: ${(step+1)/4*100}%"></div>
               </div>
             </div>
           </div>
-          <div class="card-body p-6" id="step-body">
+
+          <div class="p-10" id="step-body">
             ${InfarktYangiPage['renderStep' + step]()}
           </div>
-          <div class="p-5 border-t border-gray-100 bg-gray-50 rounded-b-xl flex justify-between items-center">
-            <button class="btn btn-secondary flex items-center gap-2" onclick="InfarktYangiPage.prevStep()" ${step===0?'disabled':''}>
-              ${icon('arrow-left', 16)} Orqaga
+
+          <div class="p-8 border-t border-slate-50 bg-slate-50/50 flex justify-between items-center">
+            <button class="flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm text-slate-500 hover:bg-slate-100 transition-all" onclick="InfarktYangiPage.prevStep()" ${step===0?'disabled style="opacity:0"':''}>
+              ${icon('arrow-left', 18)} Orqaga
             </button>
-            <div class="flex gap-3">
-              <button class="btn btn-secondary hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-colors" onclick="Router.go('dashboard')">Bekor qilish</button>
+            
+            <div class="flex gap-4">
+              <button class="px-6 py-3 rounded-xl font-bold text-sm text-slate-400 hover:text-red-600 hover:bg-red-50 transition-all" onclick="Router.go('dashboard')">Bekor qilish</button>
               ${step < InfarktYangiPage.STEPS.length-1
-                ? `<button class="btn btn-infarkt flex items-center gap-2 px-6" onclick="InfarktYangiPage.nextStep()">Keyingi ${icon('arrow-right', 16)}</button>`
-                : `<button class="btn btn-success flex items-center gap-2 px-6 shadow-md" id="save-btn" onclick="InfarktYangiPage.save()">${icon('save', 16)} Saqlash</button>`
+                ? `<button class="flex items-center gap-2 px-8 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold text-sm shadow-lg shadow-red-200 transition-all active:scale-95" onclick="InfarktYangiPage.nextStep()">Keyingi ${icon('arrow-right', 18)}</button>`
+                : (() => {
+                    const isOtk = InfarktYangiPage._data.muolaja_turi === "Boshqa muassasaga o'tkazildi";
+                    return `<button class="flex items-center gap-2 px-10 py-3 ${isOtk ? 'bg-orange-500 hover:bg-orange-600 shadow-orange-200' : 'bg-green-600 hover:bg-green-700 shadow-green-200'} text-white rounded-xl font-bold text-sm shadow-lg transition-all active:scale-95" id="save-btn" onclick="InfarktYangiPage.save()">${icon(isOtk ? 'log-out' : 'save', 18)} ${isOtk ? 'Chiqarish' : 'Saqlash'}</button>`;
+                  })()
               }
             </div>
           </div>
@@ -144,6 +159,49 @@ const InfarktYangiPage = {
     return Object.values(APP_CONFIG.MUASSASALAR).flat().sort();
   },
 
+  _dupTimer: null,
+  async checkDuplicate(fio) {
+    clearTimeout(this._dupTimer);
+    const warn = document.getElementById('fio-dup-warn');
+    if (!warn) return;
+    const q = (fio || '').trim();
+    if (q.length < 3) { warn.innerHTML = ''; return; }
+    this._dupTimer = setTimeout(async () => {
+      try {
+        const sb = getSupabase();
+        const [{ data: inf }, { data: ins }] = await Promise.all([
+          sb.from('infarkt_qabul').select('kt_no,fio,qabul_vaqt').ilike('fio', `%${q}%`).limit(5),
+          sb.from('insult_qabul').select('kt_no,fio,qabul_vaqt').ilike('fio', `%${q}%`).limit(5)
+        ]);
+        const found = [
+          ...(inf || []).map(p => ({ ...p, _t: 'Infarkt' })),
+          ...(ins || []).map(p => ({ ...p, _t: 'Insult' }))
+        ];
+        if (found.length === 0) { warn.innerHTML = ''; return; }
+        const rows = found.map(p => {
+          const d = p.qabul_vaqt ? new Date(p.qabul_vaqt).toLocaleDateString('uz-UZ', { day:'2-digit', month:'2-digit', year:'numeric' }) : '—';
+          return `<div class="flex items-center gap-2 text-xs py-1 border-b border-amber-100 last:border-0">
+            <span class="font-bold text-amber-900">${p.fio}</span>
+            <span class="text-amber-600">·</span>
+            <span class="px-1.5 py-0.5 rounded text-[10px] font-bold ${p._t==='Infarkt'?'bg-red-100 text-red-700':'bg-purple-100 text-purple-700'}">${p._t}</span>
+            <span class="text-amber-600">·</span>
+            <span class="text-amber-700">${d} sanasida yotgan</span>
+            <span class="text-amber-400">·</span>
+            <span class="font-mono text-amber-500 text-[10px]">${p.kt_no}</span>
+          </div>`;
+        }).join('');
+        warn.innerHTML = `
+          <div class="mt-2 p-3 bg-amber-50 border border-amber-300 rounded-xl">
+            <div class="flex items-center gap-2 font-bold text-amber-800 text-sm mb-2">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+              Bu bemor avval ham ro'yxatda bor!
+            </div>
+            ${rows}
+          </div>`;
+      } catch(e) { /* silent */ }
+    }, 700);
+  },
+
   toggleCheckbox(el) {
     const parent = el.closest('label');
     const isSel = el.checked;
@@ -160,7 +218,10 @@ const InfarktYangiPage = {
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6">
         ${this.field('viloyat','Viloyat / Shahar',`<select id="viloyat" class="form-select" onchange="InfarktYangiPage.onViloyatChange(this.value)" ${InfarktYangiPage._profile?.role !== 'admin' ? 'disabled' : ''}><option value="">Tanlang...</option>
           ${APP_CONFIG.VILOYATLAR.map(v=>`<option value="${v}" ${d.viloyat===v?'selected':''}>${v}</option>`).join('')}</select>`,true)}
-        ${this.field('muassasa','Muassasa',`<select id="muassasa" class="form-select"><option value="">Tanlang...</option>${(APP_CONFIG.MUASSASALAR[d.viloyat]||[]).map(m=>`<option value="${m}" ${d.muassasa===m?'selected':''}>${m}</option>`).join('')}</select>`,true)}
+        ${this.field('muassasa','Muassasa',`<select id="muassasa" class="form-select" onchange="InfarktYangiPage.onMuassasaChange(this.value)"><option value="">Tanlang...</option>${(APP_CONFIG.MUASSASALAR[d.viloyat]||[]).map(m=>`<option value="${m}" ${d.muassasa===m?'selected':''}>${m}</option>`).join('')}<option value="Boshqa" ${d.muassasa==='Boshqa'?'selected':''}>Boshqa</option></select>`,true)}
+        <div class="col-span-1 sm:col-span-2" id="boshqa-muassasa-div" style="display:${d.muassasa==='Boshqa'?'block':'none'}">
+          ${this.field('boshqa_muassasa','Boshqa muassasa nomi',`<input id="boshqa_muassasa" class="form-input" value="${d.boshqa_muassasa||''}" placeholder="Muassasa nomini kiriting"/>`,true)}
+        </div>
         ${this.field('kt_no','Kasallik tarixi №',`<input id="kt_no" class="form-input font-mono bg-gray-50" value="${d.kt_no||''}"/>`,true,'Avtomatik yaratiladi')}
         ${this.field('qabul_vaqt','Bemor qabul qilingan sana va vaqt',`<input id="qabul_vaqt" type="datetime-local" class="form-input" value="${d.qabul_vaqt||''}"/>`,true)}
         <div class="col-span-1 sm:col-span-2">
@@ -180,6 +241,12 @@ const InfarktYangiPage = {
     if (div) div.style.display = val === 'Boshqa muassasadan' ? 'block' : 'none';
   },
 
+  onMuassasaChange(val) {
+    InfarktYangiPage._data.muassasa = val;
+    const div = document.getElementById('boshqa-muassasa-div');
+    if (div) div.style.display = val === 'Boshqa' ? 'block' : 'none';
+  },
+
   onViloyatChange(val) {
     InfarktYangiPage._data.viloyat = val;
     InfarktYangiPage._data.muassasa = '';
@@ -187,7 +254,9 @@ const InfarktYangiPage = {
     if (!sel) return;
     const list = APP_CONFIG.MUASSASALAR[val] || [];
     sel.innerHTML = `<option value="">Tanlang...</option>` +
-      list.map(m => `<option value="${m}">${m}</option>`).join('');
+      list.map(m => `<option value="${m}">${m}</option>`).join('') +
+      `<option value="Boshqa">Boshqa</option>`;
+    InfarktYangiPage.onMuassasaChange('');
   },
 
   // ============ 2-BO'LIM: Bemor ============
@@ -195,7 +264,10 @@ const InfarktYangiPage = {
     const d = InfarktYangiPage._data;
     return `
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6">
-        ${this.field('fio','Bemor F.I.O',`<input id="fio" class="form-input" value="${d.fio||''}" placeholder="Familiya Ism Otasining ismi"/>`,true)}
+        <div class="col-span-1 sm:col-span-2">
+          ${this.field('fio','Bemor F.I.O',`<input id="fio" class="form-input" value="${d.fio||''}" placeholder="Familiya Ism Otasining ismi" oninput="InfarktYangiPage.checkDuplicate(this.value)"/>`,true)}
+          <div id="fio-dup-warn"></div>
+        </div>
         ${this.field('tugilgan_sana','Tug\'ilgan sanasi',`<input id="tugilgan_sana" type="date" class="form-input" value="${d.tugilgan_sana||''}"/>`,true)}
         <div class="col-span-1 sm:col-span-2">
           ${this.field('jins','Jinsi',`
@@ -220,7 +292,7 @@ const InfarktYangiPage = {
     const d = InfarktYangiPage._data;
     return `
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6">
-        ${this.field('aha_bali','AHA (American Heart Association) savolnomasi bali',`<input id="aha_bali" type="number" class="form-input" value="${d.aha_bali||''}" placeholder="Ballarni kiriting"/>`)}
+        ${this.field('aha_bali','AHA (American Heart Association) savolnomasi bali',`<div class="flex gap-2 items-center"><input id="aha_bali" type="number" class="form-input w-full" value="${d.aha_bali||''}" placeholder="Ballarni kiriting"/><button type="button" class="flex-shrink-0 bg-rose-100 text-rose-700 hover:bg-rose-200 px-3 py-2 rounded-lg text-sm font-bold shadow-sm transition-colors border border-rose-200 flex items-center gap-1" onclick="Calculators.openAHA('aha_bali')">🧮 Hisoblash</button></div>`,true)}
         ${this.field('simptom_vaqt','Simptomlar qachon boshlangan?',`<select id="simptom_vaqt" class="form-select">
           ${this.selectOptions(APP_CONFIG.SIMPTOM_VAQTLAR, d.simptom_vaqt||'')}</select>`,true)}
         ${this.field('birlamchi_yoki_takroriy','Birlamchi yoki takroriy?',`<select id="birlamchi_yoki_takroriy" class="form-select">
@@ -291,6 +363,7 @@ const InfarktYangiPage = {
 
   onMuolajaChange(val) {
     InfarktYangiPage._data.muolaja_turi = val;
+    const isOtk = val === "Boshqa muassasaga o'tkazildi";
     const angioDiv = document.getElementById('angio-div');
     const otkazDiv = document.getElementById('otkazilgan-div');
     if (angioDiv) {
@@ -301,7 +374,13 @@ const InfarktYangiPage = {
         if (angioVal) InfarktYangiPage.onAngioChange(angioVal);
       }
     }
-    if (otkazDiv) otkazDiv.style.display = val === "Boshqa muassasaga o'tkazildi" ? 'block' : 'none';
+    if (otkazDiv) otkazDiv.style.display = isOtk ? 'block' : 'none';
+    const btn = document.getElementById('save-btn');
+    if (btn) {
+      btn.className = `flex items-center gap-2 px-10 py-3 ${isOtk ? 'bg-orange-500 hover:bg-orange-600 shadow-orange-200' : 'bg-green-600 hover:bg-green-700 shadow-green-200'} text-white rounded-xl font-bold text-sm shadow-lg transition-all active:scale-95`;
+      btn.innerHTML = `${icon(isOtk ? 'log-out' : 'save', 18)} ${isOtk ? 'Chiqarish' : 'Saqlash'}`;
+      initIcons();
+    }
   },
 
   onAngioChange(val) {
@@ -319,7 +398,7 @@ const InfarktYangiPage = {
     const wrap = document.getElementById('step-body');
     if (!wrap) return;
 
-    ['viloyat','muassasa','kt_no','qabul_vaqt','murojaat_yoli','yuborgan_muassasa',
+    ['viloyat','muassasa','boshqa_muassasa','kt_no','qabul_vaqt','murojaat_yoli','yuborgan_muassasa',
      'fio','aha_bali','simptom_vaqt','birlamchi_yoki_takroriy',
      'infarkt_turi','killip','qon_bosimi','puls','ekg_vaqti','troponin','kkfmb',
      'muolaja_turi','angio_natija','otkazilgan_muassasa','shifokor_fio']
@@ -340,8 +419,10 @@ const InfarktYangiPage = {
     const ekgEl = document.querySelector('input[name="ekg_natija"]:checked');
     if (ekgEl) InfarktYangiPage._data.ekg_natija = [ekgEl.value];
 
-    const xavfEls = document.querySelectorAll(`input[name="xavf_omillari"]:checked`);
-    InfarktYangiPage._data.xavf_omil = Array.from(xavfEls).map(e=>e.value);
+    if (document.querySelector(`input[name="xavf_omillari"]`)) {
+      const xavfEls = document.querySelectorAll(`input[name="xavf_omillari"]:checked`);
+      InfarktYangiPage._data.xavf_omil = Array.from(xavfEls).map(e=>e.value);
+    }
   },
 
   validateStep() {
@@ -350,10 +431,18 @@ const InfarktYangiPage = {
     document.querySelectorAll('.form-error-msg').forEach(el => { el.textContent=''; el.classList.add('hidden'); });
 
     let required = [];
-    if (this._step === 0) required = ['viloyat','muassasa','kt_no','qabul_vaqt','murojaat_yoli'];
+    if (this._step === 0) {
+      required = ['viloyat','muassasa','kt_no','qabul_vaqt','murojaat_yoli'];
+      if (this._data.muassasa === 'Boshqa') required.push('boshqa_muassasa');
+      if (this._data.murojaat_yoli === 'Boshqa muassasadan') required.push('yuborgan_muassasa');
+    }
     if (this._step === 1) required = ['fio','tugilgan_sana','jins'];
-    if (this._step === 2) required = ['simptom_vaqt','birlamchi_yoki_takroriy','infarkt_turi','killip','qon_bosimi','puls','ekg_vaqti','troponin','kkfmb','ekg_natija'];
-    if (this._step === 3) required = ['muolaja_turi','shifokor_fio'];
+    if (this._step === 2) required = ['aha_bali','simptom_vaqt','birlamchi_yoki_takroriy','infarkt_turi','killip','qon_bosimi','puls','ekg_vaqti','troponin','kkfmb','ekg_natija'];
+    if (this._step === 3) {
+      required = ['muolaja_turi','shifokor_fio'];
+      if (this._data.muolaja_turi === "Boshqa muassasaga o'tkazildi") required.push('otkazilgan_muassasa');
+      if (this._data.muolaja_turi === 'Faqat KAG (diagnostik koronar angiografiya)') required.push('angio_natija');
+    }
 
     const errs = Utils.validate(this._data, required);
     let valid = true;
@@ -362,8 +451,15 @@ const InfarktYangiPage = {
       const el = document.getElementById(key);
       if (el) { el.classList.add('border-red-500'); el.focus(); }
       else if (key === 'jins') showToast('Jinsini tanlang', 'warning');
+      else if (key === 'ekg_natija') showToast('EKG natijasini tanlang', 'warning');
       const errEl = document.getElementById('err-'+key);
       if (errEl) { errEl.textContent = msg; errEl.classList.remove('hidden'); }
+    }
+    if (this._step === 2 && valid) {
+      if (!this._data.xavf_omil || this._data.xavf_omil.length === 0) {
+        valid = false;
+        showToast('Xavf omillarini belgilang (kamida bittasini)', 'warning');
+      }
     }
     return valid;
   },
@@ -388,8 +484,19 @@ const InfarktYangiPage = {
     const btn = document.getElementById('save-btn');
     setLoading(btn, true);
     try {
-      await DB.infarktQabul(this._data);
-      showToast('🎉 Bemor muvaffaqiyatli saqlandi!', 'success');
+      const payload = { ...this._data };
+      if (payload.muassasa === 'Boshqa' && payload.boshqa_muassasa) {
+        payload.muassasa = payload.boshqa_muassasa;
+      }
+      delete payload.boshqa_muassasa;
+      if (payload.muolaja_turi === "Boshqa muassasaga o'tkazildi") {
+        payload.status = 'otkazildi';
+      }
+
+      const saved = await DB.infarktQabul(payload);
+      Telegram.notify(saved, 'infarkt').catch(() => {});
+      const isOtk = payload.status === 'otkazildi';
+      showToast(isOtk ? `✅ Bemor ${payload.otkazilgan_muassasa || 'boshqa muassasa'}ga o'tkazildi!` : '🎉 Bemor muvaffaqiyatli saqlandi!', 'success');
       setTimeout(() => Router.go('dashboard'), 1500);
     } catch(err) {
       showToast(err.message, 'error');

@@ -14,9 +14,15 @@ const BemorlarPage = {
     );
     Components.startClock();
     
-    if (BemorlarPage._profile?.role !== 'admin') {
+    if (BemorlarPage._profile?.role !== 'super_admin') {
       BemorlarPage._filters.viloyat = BemorlarPage._profile?.viloyat || '';
     }
+
+    if (Router._params.type) BemorlarPage._filters.type = Router._params.type;
+    if (Router._params.viloyat) BemorlarPage._filters.viloyat = Router._params.viloyat;
+    if (Router._params.muassasa) BemorlarPage._filters.search = Router._params.muassasa;
+    if (Router._params.search) BemorlarPage._filters.search = Router._params.search;
+    if (Router._params.status) BemorlarPage._filters.status = Router._params.status;
     
     BemorlarPage.renderFilters();
     await BemorlarPage.loadData();
@@ -28,6 +34,14 @@ const BemorlarPage = {
     if (!inner) return;
     
     inner.innerHTML = `
+      <!-- Back button -->
+      <div class="mb-4 flex items-center gap-3">
+        <button class="btn btn-secondary flex items-center gap-2" onclick="Router.back()">
+          ${icon('arrow-left', 16)} Orqaga
+        </button>
+        <span class="text-gray-400 text-sm">Bemorlar ro'yxati</span>
+      </div>
+
       <!-- Filter Card -->
       <div class="card mb-6 border-t-4 border-t-blue-500">
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-4">
@@ -48,7 +62,7 @@ const BemorlarPage = {
               <option value="vafot">Vafot</option>
             </select>
           </div>
-          ${BemorlarPage._profile?.role === 'admin' ? `
+          ${BemorlarPage._profile?.role === 'super_admin' ? `
           <div>
             <label class="form-label">${icon('map-pin', 14)} Viloyat</label>
             <select id="f-viloyat" class="form-select" onchange="BemorlarPage.applyFilter()">
@@ -109,7 +123,7 @@ const BemorlarPage = {
   applyFilter() {
     BemorlarPage._filters.type = document.getElementById('f-type')?.value || 'all';
     BemorlarPage._filters.status = document.getElementById('f-status')?.value || '';
-    if (BemorlarPage._profile?.role === 'admin') {
+    if (BemorlarPage._profile?.role === 'super_admin') {
       BemorlarPage._filters.viloyat = document.getElementById('f-viloyat')?.value || '';
     } else {
       BemorlarPage._filters.viloyat = BemorlarPage._profile?.viloyat || '';
@@ -123,34 +137,36 @@ const BemorlarPage = {
   resetFilters() {
     BemorlarPage._filters = { 
       type: 'all', status: '', search: '', date: '',
-      viloyat: BemorlarPage._profile?.role === 'admin' ? '' : (BemorlarPage._profile?.viloyat || '') 
+      viloyat: BemorlarPage._profile?.role === 'super_admin' ? '' : (BemorlarPage._profile?.viloyat || '') 
     };
     BemorlarPage._currentPage = 1;
+    Router._params = {}; // Clear router params after reset
     BemorlarPage.renderFilters();
     BemorlarPage.loadData();
   },
 
   async loadData() {
     const f = BemorlarPage._filters;
-    const fObj = { status: f.status||undefined, viloyat: f.viloyat||undefined, search: f.search||undefined };
+    const page = (BemorlarPage._currentPage || 1) - 1;
+    const pageSize = BemorlarPage._perPage || 50;
+    const fObj = {
+      status:   f.status   || undefined,
+      viloyat:  f.viloyat  || undefined,
+      search:   f.search   || undefined,
+      page, pageSize
+    };
+    if (f.date) { fObj.from = f.date + 'T00:00:00'; fObj.to = f.date + 'T23:59:59'; }
     try {
       let combined = [];
-      if (f.type !== 'insult') {
-        const infs = await DB.infarktList(fObj);
-        combined.push(...infs.map(r=>({...r,_type:'infarkt'})));
-      }
-      if (f.type !== 'infarkt') {
-        const ins = await DB.insultList(fObj);
-        combined.push(...ins.map(r=>({...r,_type:'insult'})));
-      }
-      
-      // Additional client side date filtering if provided
-      if (f.date) {
-        combined = combined.filter(p => p.qabul_vaqt && p.qabul_vaqt.startsWith(f.date));
-      }
-
-      combined.sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
+      let totalCount = 0;
+      const fetches = [];
+      if (f.type !== 'insult') fetches.push(DB.infarktList(fObj).then(r => ({ rows: r.data.map(x=>({...x,_type:'infarkt'})), count: r.count })));
+      if (f.type !== 'infarkt') fetches.push(DB.insultList(fObj).then(r => ({ rows: r.data.map(x=>({...x,_type:'insult'})), count: r.count })));
+      const results = await Promise.all(fetches);
+      results.forEach(r => { combined.push(...r.rows); totalCount += r.count; });
+      combined.sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
       BemorlarPage._allData = combined;
+      BemorlarPage._totalCount = totalCount;
       BemorlarPage.renderTable();
     } catch(err) {
       const wrap = document.getElementById('bl-table-wrap');
@@ -168,8 +184,9 @@ const BemorlarPage = {
 
   renderTable() {
     const data = BemorlarPage._allData || [];
+    const total = BemorlarPage._totalCount || data.length;
     const countEl = document.getElementById('bl-count');
-    if (countEl) countEl.innerHTML = `${icon('users', 18)} Jami: ${data.length} ta bemor`;
+    if (countEl) countEl.innerHTML = `${icon('users', 18)} Jami: ~${total} ta bemor`;
 
     const wrap = document.getElementById('bl-table-wrap');
     if (!wrap) return;
@@ -186,13 +203,6 @@ const BemorlarPage = {
       return;
     }
 
-    // Pagination logic
-    const total = data.length;
-    const totalPages = Math.ceil(total / BemorlarPage._perPage);
-    if (BemorlarPage._currentPage > totalPages) BemorlarPage._currentPage = totalPages;
-    const start = (BemorlarPage._currentPage - 1) * BemorlarPage._perPage;
-    const pagedData = data.slice(start, start + BemorlarPage._perPage);
-
     wrap.innerHTML = `
       <table class="data-table">
         <thead>
@@ -207,27 +217,31 @@ const BemorlarPage = {
             <th style="width:2%"></th>
           </tr>
         </thead>
-        <tbody>${pagedData.map(p=>Components.patientRow(p, p._type)).join('')}</tbody>
+        <tbody>${data.map(p=>Components.patientRow(p, p._type)).join('')}</tbody>
       </table>`;
 
-    // Render Pagination Controls
+    // Server-side pagination controls
+    const cur = BemorlarPage._currentPage || 1;
+    const perPage = BemorlarPage._perPage;
+    const hasPrev = cur > 1;
+    const hasNext = (cur * perPage) < total;
     const pag = document.getElementById('bl-pagination');
     if (pag) {
-      if (totalPages > 1) {
+      if (total > perPage) {
+        const from = (cur - 1) * perPage + 1;
+        const to   = Math.min(cur * perPage, total);
         pag.innerHTML = `
           <div class="text-sm text-gray-500">
-            Ko'rsatilmoqda <span class="font-bold text-gray-900">${start+1}</span> - <span class="font-bold text-gray-900">${Math.min(start+BemorlarPage._perPage, total)}</span> / jami <span class="font-bold text-gray-900">${total}</span> ta
+            <span class="font-bold text-gray-900">${from}–${to}</span> / jami <span class="font-bold text-gray-900">${total}</span> ta bemor
           </div>
           <div class="flex items-center gap-1">
-            <button class="btn btn-secondary !px-2 !py-1 ${BemorlarPage._currentPage === 1 ? 'opacity-50 cursor-not-allowed' : ''}" 
-              onclick="if(BemorlarPage._currentPage>1){BemorlarPage._currentPage--; BemorlarPage.renderTable();}" ${BemorlarPage._currentPage === 1 ? 'disabled' : ''}>
+            <button class="btn btn-secondary !px-2 !py-1 ${!hasPrev ? 'opacity-50 cursor-not-allowed' : ''}"
+              onclick="if(BemorlarPage._currentPage>1){BemorlarPage._currentPage--;BemorlarPage.loadData();}" ${!hasPrev ? 'disabled' : ''}>
               ${icon('chevron-left', 18)}
             </button>
-            <span class="px-4 py-1 text-sm font-semibold text-gray-700 bg-white border border-gray-200 rounded">
-              ${BemorlarPage._currentPage} / ${totalPages}
-            </span>
-            <button class="btn btn-secondary !px-2 !py-1 ${BemorlarPage._currentPage === totalPages ? 'opacity-50 cursor-not-allowed' : ''}" 
-              onclick="if(BemorlarPage._currentPage<${totalPages}){BemorlarPage._currentPage++; BemorlarPage.renderTable();}" ${BemorlarPage._currentPage === totalPages ? 'disabled' : ''}>
+            <span class="px-4 py-1 text-sm font-semibold text-gray-700 bg-white border border-gray-200 rounded">${cur}</span>
+            <button class="btn btn-secondary !px-2 !py-1 ${!hasNext ? 'opacity-50 cursor-not-allowed' : ''}"
+              onclick="if(${hasNext}){BemorlarPage._currentPage++;BemorlarPage.loadData();}" ${!hasNext ? 'disabled' : ''}>
               ${icon('chevron-right', 18)}
             </button>
           </div>

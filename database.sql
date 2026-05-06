@@ -182,17 +182,21 @@ ALTER TABLE kuzatuv           ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "infarkt_select" ON infarkt_qabul;
 DROP POLICY IF EXISTS "infarkt_insert" ON infarkt_qabul;
 DROP POLICY IF EXISTS "infarkt_update" ON infarkt_qabul;
+DROP POLICY IF EXISTS "infarkt_delete" ON infarkt_qabul;
 CREATE POLICY "infarkt_select" ON infarkt_qabul FOR SELECT TO authenticated USING (true);
 CREATE POLICY "infarkt_insert" ON infarkt_qabul FOR INSERT TO authenticated WITH CHECK (true);
 CREATE POLICY "infarkt_update" ON infarkt_qabul FOR UPDATE TO authenticated USING (true);
+CREATE POLICY "infarkt_delete" ON infarkt_qabul FOR DELETE TO authenticated USING (true);
 
 -- insult_qabul
 DROP POLICY IF EXISTS "insult_select" ON insult_qabul;
 DROP POLICY IF EXISTS "insult_insert" ON insult_qabul;
 DROP POLICY IF EXISTS "insult_update" ON insult_qabul;
+DROP POLICY IF EXISTS "insult_delete" ON insult_qabul;
 CREATE POLICY "insult_select" ON insult_qabul FOR SELECT TO authenticated USING (true);
 CREATE POLICY "insult_insert" ON insult_qabul FOR INSERT TO authenticated WITH CHECK (true);
 CREATE POLICY "insult_update" ON insult_qabul FOR UPDATE TO authenticated USING (true);
+CREATE POLICY "insult_delete" ON insult_qabul FOR DELETE TO authenticated USING (true);
 
 -- insult_chiqarish
 DROP POLICY IF EXISTS "i_chiq_select" ON insult_chiqarish;

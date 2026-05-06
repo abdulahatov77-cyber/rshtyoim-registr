@@ -12,7 +12,7 @@ const InsultYangiPage = {
     InsultYangiPage._data = {
       kt_no: Utils.generateKtNo(),
       qabul_vaqt: Utils.formatDateInput(new Date()),
-      viloyat: profile?.role === 'admin' ? '' : (profile?.viloyat || '')
+      viloyat: (profile?.role === 'admin' || profile?.role === 'super_admin') ? '' : (profile?.viloyat || '')
     };
 
     document.getElementById('app').innerHTML = Components.renderLayout(
@@ -28,39 +28,54 @@ const InsultYangiPage = {
     const wrap = document.getElementById('insult-form-wrap');
     const sectionIcons = ['building-2', 'user', 'brain', 'pill'];
     const sectionTitles = [
-      '1-BO\'LIM: Muassasa ma\'lumotlari',
-      '2-BO\'LIM: Bemor ma\'lumotlari',
-      '3-BO\'LIM: Klinik ma\'lumotlar',
-      '4-BO\'LIM: Diagnostika, Muolaja va Shifokor'
+      'Muassasa ma\'lumotlari',
+      'Bemor ma\'lumotlari',
+      'Klinik ma\'lumotlar',
+      'Diagnostika va Muolaja'
     ];
 
     wrap.innerHTML = `
-      <div class="max-w-4xl mx-auto animate-fadein">
-        ${Components.renderSteps(InsultYangiPage.STEPS, step)}
-        <div class="card border-t-4 border-t-[#8B5CF6] shadow-lg">
-          <div class="card-header bg-gray-50 border-b border-gray-100 flex items-center justify-between !mb-0 p-5">
-            <div class="flex items-center gap-3">
-              <div class="w-10 h-10 bg-purple-100 text-[#8B5CF6] rounded-xl flex items-center justify-center">
-                ${icon(sectionIcons[step], 24)}
+      <div class="max-w-4xl mx-auto animate-fadein pb-20">
+        <div class="mb-10">
+          ${Components.renderSteps(InsultYangiPage.STEPS, step)}
+        </div>
+
+        <div class="bg-white rounded-[32px] shadow-2xl shadow-slate-200/50 border border-slate-100 overflow-hidden">
+          <div class="p-8 border-b border-slate-50 bg-slate-50/30 flex items-center justify-between">
+            <div class="flex items-center gap-4">
+              <div class="w-14 h-14 bg-purple-50 text-purple-600 rounded-2xl flex items-center justify-center shadow-sm">
+                ${icon(sectionIcons[step], 28)}
               </div>
               <div>
-                <h3 class="card-title !mb-0 text-gray-900">${sectionTitles[step]}</h3>
-                <div class="text-xs text-gray-500 font-medium mt-1">Qadam ${step+1} / ${InsultYangiPage.STEPS.length}</div>
+                <p class="text-[10px] font-black text-purple-600 uppercase tracking-widest mb-1">Bo'lim ${step+1} / 4</p>
+                <h3 class="text-xl font-black text-slate-800 tracking-tight">${sectionTitles[step]}</h3>
+              </div>
+            </div>
+            <div class="hidden sm:block text-right">
+              <div class="text-[10px] font-bold text-slate-400 uppercase mb-1">To'ldirilish darajasi</div>
+              <div class="w-32 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                <div class="h-full bg-purple-500" style="width: ${(step+1)/4*100}%"></div>
               </div>
             </div>
           </div>
-          <div class="card-body p-6" id="step-body">
+
+          <div class="p-10" id="step-body">
             ${InsultYangiPage['renderStep' + step]()}
           </div>
-          <div class="p-5 border-t border-gray-100 bg-gray-50 rounded-b-xl flex justify-between items-center">
-            <button class="btn btn-secondary flex items-center gap-2" onclick="InsultYangiPage.prevStep()" ${step===0?'disabled':''}>
-              ${icon('arrow-left', 16)} Orqaga
+
+          <div class="p-8 border-t border-slate-50 bg-slate-50/50 flex justify-between items-center">
+            <button class="flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm text-slate-500 hover:bg-slate-100 transition-all" onclick="InsultYangiPage.prevStep()" ${step===0?'disabled style="opacity:0"':''}>
+              ${icon('arrow-left', 18)} Orqaga
             </button>
-            <div class="flex gap-3">
-              <button class="btn btn-secondary hover:bg-purple-50 hover:text-purple-600 hover:border-purple-200 transition-colors" onclick="Router.go('dashboard')">Bekor qilish</button>
+            
+            <div class="flex gap-4">
+              <button class="px-6 py-3 rounded-xl font-bold text-sm text-slate-400 hover:text-purple-600 hover:bg-purple-50 transition-all" onclick="Router.go('dashboard')">Bekor qilish</button>
               ${step < InsultYangiPage.STEPS.length-1
-                ? `<button class="btn btn-insult flex items-center gap-2 px-6" onclick="InsultYangiPage.nextStep()">Keyingi ${icon('arrow-right', 16)}</button>`
-                : `<button class="btn btn-success flex items-center gap-2 px-6 shadow-md" id="save-btn" onclick="InsultYangiPage.save()">${icon('save', 16)} Saqlash</button>`
+                ? `<button class="flex items-center gap-2 px-8 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-bold text-sm shadow-lg shadow-purple-200 transition-all active:scale-95" onclick="InsultYangiPage.nextStep()">Keyingi ${icon('arrow-right', 18)}</button>`
+                : (() => {
+                    const isOtk = InsultYangiPage._data.muolaja_turi === "Boshqa muassasaga o'tkazildi — angiografiya va endovaskulyar muolaja uchun";
+                    return `<button class="flex items-center gap-2 px-10 py-3 ${isOtk ? 'bg-orange-500 hover:bg-orange-600 shadow-orange-200' : 'bg-green-600 hover:bg-green-700 shadow-green-200'} text-white rounded-xl font-bold text-sm shadow-lg transition-all active:scale-95" id="save-btn" onclick="InsultYangiPage.save()">${icon(isOtk ? 'log-out' : 'save', 18)} ${isOtk ? 'Chiqarish' : 'Saqlash'}</button>`;
+                  })()
               }
             </div>
           </div>
@@ -120,7 +135,10 @@ const InsultYangiPage = {
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6">
         ${this.field('viloyat','Viloyat / Shahar',`<select id="viloyat" class="form-select" onchange="InsultYangiPage.onViloyatChange(this.value)" ${InsultYangiPage._profile?.role !== 'admin' ? 'disabled' : ''}><option value="">Tanlang...</option>
           ${APP_CONFIG.VILOYATLAR.map(v=>`<option value="${v}" ${d.viloyat===v?'selected':''}>${v}</option>`).join('')}</select>`,true)}
-        ${this.field('muassasa','Muassasa',`<select id="muassasa" class="form-select"><option value="">Tanlang...</option>${(APP_CONFIG.MUASSASALAR[d.viloyat]||[]).map(m=>`<option value="${m}" ${d.muassasa===m?'selected':''}>${m}</option>`).join('')}</select>`,true)}
+        ${this.field('muassasa','Muassasa',`<select id="muassasa" class="form-select" onchange="InsultYangiPage.onMuassasaChange(this.value)"><option value="">Tanlang...</option>${(APP_CONFIG.MUASSASALAR[d.viloyat]||[]).map(m=>`<option value="${m}" ${d.muassasa===m?'selected':''}>${m}</option>`).join('')}<option value="Boshqa" ${d.muassasa==='Boshqa'?'selected':''}>Boshqa</option></select>`,true)}
+        <div class="col-span-1 sm:col-span-2" id="boshqa-muassasa-div" style="display:${d.muassasa==='Boshqa'?'block':'none'}">
+          ${this.field('boshqa_muassasa','Boshqa muassasa nomi',`<input id="boshqa_muassasa" class="form-input" value="${d.boshqa_muassasa||''}" placeholder="Muassasa nomini kiriting"/>`,true)}
+        </div>
         ${this.field('kt_no','Kasallik tarixi №',`<input id="kt_no" class="form-input font-mono bg-gray-50" value="${d.kt_no||''}"/>`,true,'Avtomatik yaratiladi')}
         ${this.field('qabul_vaqt','Bemorni qabul qilgan sana va vaqt',`<input id="qabul_vaqt" type="datetime-local" class="form-input" value="${d.qabul_vaqt||''}"/>`,true)}
         <div class="col-span-1 sm:col-span-2">
@@ -143,6 +161,12 @@ const InsultYangiPage = {
     if (div) div.style.display = val === 'Boshqa muassasadan' ? 'block' : 'none';
   },
 
+  onMuassasaChange(val) {
+    InsultYangiPage._data.muassasa = val;
+    const div = document.getElementById('boshqa-muassasa-div');
+    if (div) div.style.display = val === 'Boshqa' ? 'block' : 'none';
+  },
+
   onViloyatChange(val) {
     InsultYangiPage._data.viloyat = val;
     InsultYangiPage._data.muassasa = '';
@@ -150,7 +174,9 @@ const InsultYangiPage = {
     if (!sel) return;
     const list = APP_CONFIG.MUASSASALAR[val] || [];
     sel.innerHTML = `<option value="">Tanlang...</option>` +
-      list.map(m => `<option value="${m}">${m}</option>`).join('');
+      list.map(m => `<option value="${m}">${m}</option>`).join('') +
+      `<option value="Boshqa">Boshqa</option>`;
+    InsultYangiPage.onMuassasaChange('');
   },
 
   // ============ 2-BO'LIM: Bemor ============
@@ -158,7 +184,10 @@ const InsultYangiPage = {
     const d = InsultYangiPage._data;
     return `
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6">
-        ${this.field('fio','Bemor F.I.O',`<input id="fio" class="form-input" value="${d.fio||''}" placeholder="Familiya Ism Otasining ismi"/>`,true)}
+        <div class="col-span-1 sm:col-span-2">
+          ${this.field('fio','Bemor F.I.O',`<input id="fio" class="form-input" value="${d.fio||''}" placeholder="Familiya Ism Otasining ismi" oninput="InsultYangiPage.checkDuplicate(this.value)"/>`,true)}
+          <div id="fio-dup-warn"></div>
+        </div>
         ${this.field('tugilgan_sana','Tug\'ilgan yili',`<input id="tugilgan_sana" type="date" class="form-input" value="${d.tugilgan_sana||''}"/>`,true)}
         <div class="col-span-1 sm:col-span-2">
           ${this.field('jins','Jinsi',`
@@ -185,8 +214,8 @@ const InsultYangiPage = {
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6">
         ${this.field('simptom_vaqt','Simptomlar qachon boshlangan?',`<select id="simptom_vaqt" class="form-select">
           ${this.selectOptions(APP_CONFIG.SIMPTOM_VAQTLAR_INSULT, d.simptom_vaqt||'')}</select>`,true)}
-        ${this.field('nihss_qabul','NIHSS qabul paytida (0–42 ball)',`<input id="nihss_qabul" type="number" min="0" max="42" class="form-input" value="${d.nihss_qabul||''}" placeholder="0 dan 42 gacha"/>`,true)}
-        ${this.field('gcs_bali','Glazgo shkalasi (GCS), (3-15 ball)',`<input id="gcs_bali" type="number" min="3" max="15" class="form-input" value="${d.gcs_bali||''}" placeholder="3 dan 15 gacha"/>`,true)}
+        ${this.field('nihss_qabul','NIHSS qabul paytida (0–42 ball)',`<div class="flex gap-2 items-center"><input id="nihss_qabul" type="number" min="0" max="42" class="form-input w-full" value="${d.nihss_qabul||''}" placeholder="0 dan 42 gacha"/><button type="button" class="flex-shrink-0 bg-blue-100 text-blue-700 hover:bg-blue-200 px-3 py-2 rounded-lg text-sm font-bold shadow-sm transition-colors border border-blue-200 flex items-center gap-1" onclick="Calculators.openNIHSS('nihss_qabul')">🧮 Hisoblash</button></div>`,true)}
+        ${this.field('gcs_bali','Glazgo shkalasi (GCS), (3-15 ball)',`<div class="flex gap-2 items-center"><input id="gcs_bali" type="number" min="3" max="15" class="form-input w-full" value="${d.gcs_bali||''}" placeholder="3 dan 15 gacha"/><button type="button" class="flex-shrink-0 bg-purple-100 text-purple-700 hover:bg-purple-200 px-3 py-2 rounded-lg text-sm font-bold shadow-sm transition-colors border border-purple-200 flex items-center gap-1" onclick="Calculators.openGCS('gcs_bali')">🧮 Hisoblash</button></div>`,true)}
         ${this.field('insult_turi','Insult turi',`<select id="insult_turi" class="form-select border-purple-300 focus:border-purple-500">
           ${this.selectOptions(APP_CONFIG.INSULT_TURLARI, d.insult_turi||'')}</select>`,true)}
         ${this.field('qon_bosimi','Qon bosimi (qabul paytida)',`<input id="qon_bosimi" class="form-input font-mono" value="${d.qon_bosimi||''}" placeholder="140/90"/>`,true)}
@@ -196,7 +225,7 @@ const InsultYangiPage = {
           this.checkboxGroup('xavf_omillari', APP_CONFIG.XAVF_OMILLAR_INSULT, d.xavf_omillari||[]), true)}
       </div>
       <div class="mt-4 border-t border-dashed border-gray-200 pt-4">
-        ${this.field('aha_bali','AHA (American Heart Association) savolnomasi bali',`<input id="aha_bali" type="number" class="form-input" value="${d.aha_bali||''}" placeholder="Ballarni kiriting"/>`,true)}
+        ${this.field('aha_bali','AHA (American Heart Association) savolnomasi bali',`<div class="flex gap-2 items-center"><input id="aha_bali" type="number" class="form-input w-full" value="${d.aha_bali||''}" placeholder="Ballarni kiriting"/><button type="button" class="flex-shrink-0 bg-rose-100 text-rose-700 hover:bg-rose-200 px-3 py-2 rounded-lg text-sm font-bold shadow-sm transition-colors border border-rose-200 flex items-center gap-1" onclick="Calculators.openAHA('aha_bali')">🧮 Hisoblash</button></div>`,true)}
       </div>
     `;
   },
@@ -252,17 +281,67 @@ const InsultYangiPage = {
     return Object.values(APP_CONFIG.MUASSASALAR).flat().sort();
   },
 
+  _dupTimer: null,
+  async checkDuplicate(fio) {
+    clearTimeout(this._dupTimer);
+    const warn = document.getElementById('fio-dup-warn');
+    if (!warn) return;
+    const q = (fio || '').trim();
+    if (q.length < 3) { warn.innerHTML = ''; return; }
+    this._dupTimer = setTimeout(async () => {
+      try {
+        const sb = getSupabase();
+        const [{ data: inf }, { data: ins }] = await Promise.all([
+          sb.from('infarkt_qabul').select('kt_no,fio,qabul_vaqt').ilike('fio', `%${q}%`).limit(5),
+          sb.from('insult_qabul').select('kt_no,fio,qabul_vaqt').ilike('fio', `%${q}%`).limit(5)
+        ]);
+        const found = [
+          ...(inf || []).map(p => ({ ...p, _t: 'Infarkt' })),
+          ...(ins || []).map(p => ({ ...p, _t: 'Insult' }))
+        ];
+        if (found.length === 0) { warn.innerHTML = ''; return; }
+        const rows = found.map(p => {
+          const d = p.qabul_vaqt ? new Date(p.qabul_vaqt).toLocaleDateString('uz-UZ', { day:'2-digit', month:'2-digit', year:'numeric' }) : '—';
+          return `<div class="flex items-center gap-2 text-xs py-1 border-b border-amber-100 last:border-0">
+            <span class="font-bold text-amber-900">${p.fio}</span>
+            <span class="text-amber-600">·</span>
+            <span class="px-1.5 py-0.5 rounded text-[10px] font-bold ${p._t==='Infarkt'?'bg-red-100 text-red-700':'bg-purple-100 text-purple-700'}">${p._t}</span>
+            <span class="text-amber-600">·</span>
+            <span class="text-amber-700">${d} sanasida yotgan</span>
+            <span class="text-amber-400">·</span>
+            <span class="font-mono text-amber-500 text-[10px]">${p.kt_no}</span>
+          </div>`;
+        }).join('');
+        warn.innerHTML = `
+          <div class="mt-2 p-3 bg-amber-50 border border-amber-300 rounded-xl">
+            <div class="flex items-center gap-2 font-bold text-amber-800 text-sm mb-2">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+              Bu bemor avval ham ro'yxatda bor!
+            </div>
+            ${rows}
+          </div>`;
+      } catch(e) { /* silent */ }
+    }, 700);
+  },
+
   onMuolajaChange(val) {
     InsultYangiPage._data.muolaja_turi = val;
+    const isOtk = val === "Boshqa muassasaga o'tkazildi — angiografiya va endovaskulyar muolaja uchun";
     const otkazDiv = document.getElementById('otkazilgan-div');
-    if (otkazDiv) otkazDiv.style.display = val === "Boshqa muassasaga o'tkazildi — angiografiya va endovaskulyar muolaja uchun" ? 'block' : 'none';
+    if (otkazDiv) otkazDiv.style.display = isOtk ? 'block' : 'none';
+    const btn = document.getElementById('save-btn');
+    if (btn) {
+      btn.className = `flex items-center gap-2 px-10 py-3 ${isOtk ? 'bg-orange-500 hover:bg-orange-600 shadow-orange-200' : 'bg-green-600 hover:bg-green-700 shadow-green-200'} text-white rounded-xl font-bold text-sm shadow-lg transition-all active:scale-95`;
+      btn.innerHTML = `${icon(isOtk ? 'log-out' : 'save', 18)} ${isOtk ? 'Chiqarish' : 'Saqlash'}`;
+      initIcons();
+    }
   },
 
   saveCurrentStep() {
     const wrap = document.getElementById('step-body');
     if (!wrap) return;
 
-    ['viloyat','muassasa','kt_no','qabul_vaqt','murojaat_yoli','yuborgan_muassasa',
+    ['viloyat','muassasa','boshqa_muassasa','kt_no','qabul_vaqt','murojaat_yoli','yuborgan_muassasa',
      'fio','simptom_vaqt','gcs_bali','insult_turi','qon_bosimi','aha_bali','nihss_qabul',
      'mskt','otkazilgan_muassasa','shifokor_fio']
     .forEach(id => {
@@ -283,9 +362,12 @@ const InsultYangiPage = {
     if (muolajaEl) InsultYangiPage._data.muolaja_turi = muolajaEl.value;
 
     ['xavf_omillari','asoratlar'].forEach(name => {
-      const els = document.querySelectorAll(`input[name="${name}"]:checked`);
-      const key = name === 'xavf_omillari' ? 'xavf_omil' : name;
-      InsultYangiPage._data[key] = Array.from(els).map(e=>e.value);
+      // Faqat shu qadamda inputlar mavjud bo'lsa o'qiymiz
+      if (document.querySelector(`input[name="${name}"]`)) {
+        const els = document.querySelectorAll(`input[name="${name}"]:checked`);
+        const key = name === 'xavf_omillari' ? 'xavf_omil' : name;
+        InsultYangiPage._data[key] = Array.from(els).map(e=>e.value);
+      }
     });
   },
 
@@ -295,10 +377,17 @@ const InsultYangiPage = {
     document.querySelectorAll('.form-error-msg').forEach(el => { el.textContent=''; el.classList.add('hidden'); });
 
     let required = [];
-    if (this._step === 0) required = ['viloyat','muassasa','kt_no','qabul_vaqt','murojaat_yoli'];
+    if (this._step === 0) {
+      required = ['viloyat','muassasa','kt_no','qabul_vaqt','murojaat_yoli'];
+      if (this._data.muassasa === 'Boshqa') required.push('boshqa_muassasa');
+      if (this._data.murojaat_yoli === 'Boshqa muassasadan') required.push('yuborgan_muassasa');
+    }
     if (this._step === 1) required = ['fio','tugilgan_sana','jins'];
-    if (this._step === 2) required = ['simptom_vaqt','nihss_qabul','gcs_bali','insult_turi','qon_bosimi'];
-    if (this._step === 3) required = ['mskt','muolaja_turi','shifokor_fio'];
+    if (this._step === 2) required = ['aha_bali','simptom_vaqt','nihss_qabul','gcs_bali','insult_turi','qon_bosimi'];
+    if (this._step === 3) {
+      required = ['mskt','muolaja_turi','shifokor_fio'];
+      if (this._data.muolaja_turi === "Boshqa muassasaga o'tkazildi — angiografiya va endovaskulyar muolaja uchun") required.push('otkazilgan_muassasa');
+    }
 
     const errs = Utils.validate(this._data, required);
     let valid = true;
@@ -310,6 +399,12 @@ const InsultYangiPage = {
       else if (key === 'muolaja_turi') showToast('Muolaja turini tanlang', 'warning');
       const errEl = document.getElementById('err-'+key);
       if (errEl) { errEl.textContent = msg; errEl.classList.remove('hidden'); }
+    }
+    if (this._step === 2 && valid) {
+      if (!this._data.xavf_omil || this._data.xavf_omil.length === 0) {
+        valid = false;
+        showToast('Xavf omillarini belgilang (kamida bittasini)', 'warning');
+      }
     }
     return valid;
   },
@@ -334,8 +429,19 @@ const InsultYangiPage = {
     const btn = document.getElementById('save-btn');
     setLoading(btn, true);
     try {
-      await DB.insultQabul(this._data);
-      showToast('🎉 Bemor muvaffaqiyatli saqlandi!', 'success');
+      const payload = { ...this._data };
+      if (payload.muassasa === 'Boshqa' && payload.boshqa_muassasa) {
+        payload.muassasa = payload.boshqa_muassasa;
+      }
+      delete payload.boshqa_muassasa;
+      if (payload.muolaja_turi === "Boshqa muassasaga o'tkazildi — angiografiya va endovaskulyar muolaja uchun") {
+        payload.status = 'otkazildi';
+      }
+
+      const saved = await DB.insultQabul(payload);
+      Telegram.notify(saved, 'insult').catch(() => {});
+      const isOtk = payload.status === 'otkazildi';
+      showToast(isOtk ? `✅ Bemor ${payload.otkazilgan_muassasa || 'boshqa muassasa'}ga o'tkazildi!` : '🎉 Bemor muvaffaqiyatli saqlandi!', 'success');
       setTimeout(() => Router.go('dashboard'), 1500);
     } catch(err) {
       showToast(err.message, 'error');

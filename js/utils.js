@@ -85,19 +85,25 @@ const Utils = {
   // Status badge HTML
   statusBadge(status) {
     const map = {
-      active: ['badge-green', '🟢 Aktiv'],
-      chiqarildi: ['badge-blue', '🔵 Chiqarildi'],
-      vafot: ['badge-red', '🔴 Vafot'],
-      otkazildi: ['badge-orange', '🟠 O\'tkazildi']
+      active: ['bg-green-50 text-green-700 border-green-100', 'check-circle', 'Aktiv'],
+      chiqarildi: ['bg-blue-50 text-blue-700 border-blue-100', 'log-out', 'Chiqarildi'],
+      vafot: ['bg-red-50 text-red-700 border-red-100', 'skull', 'Vafot'],
+      otkazildi: ['bg-orange-50 text-orange-700 border-orange-100', 'share-2', 'O\'tkazildi']
     };
-    const [cls, label] = map[status] || ['badge-gray', status];
-    return `<span class="badge ${cls}">${label}</span>`;
+    const [cls, ic, label] = map[status] || ['bg-slate-50 text-slate-500 border-slate-100', 'help-circle', status];
+    return `<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border ${cls} text-[10px] font-bold uppercase tracking-wider shadow-sm">
+      <i data-lucide="${ic}" class="w-3 h-3"></i> ${label}
+    </span>`;
   },
 
   // Type badge
   typeBadge(type) {
-    if (type === 'infarkt') return `<span class="badge badge-red">🫀 Infarkt</span>`;
-    return `<span class="badge badge-purple">🧠 Insult</span>`;
+    if (type === 'infarkt') return `<span class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-red-50 text-red-700 border border-red-100 rounded-lg text-[10px] font-bold uppercase tracking-wider">
+      <i data-lucide="heart" class="w-3 h-3"></i> Infarkt
+    </span>`;
+    return `<span class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-blue-50 text-blue-700 border border-blue-100 rounded-lg text-[10px] font-bold uppercase tracking-wider">
+      <i data-lucide="brain" class="w-3 h-3"></i> Insult
+    </span>`;
   },
 
   // Truncate text
@@ -115,21 +121,29 @@ const Utils = {
     };
   },
 
-  // Export to CSV
+  // Export to CSV (Excel/Google Sheets friendly, UTF-8 BOM, RFC 4180)
   exportCSV(data, filename = 'bemorlar.csv') {
     if (!data || !data.length) return;
+    const escape = v => {
+      if (v === null || v === undefined) v = '';
+      if (Array.isArray(v)) v = v.join(', ');
+      v = String(v);
+      if (v.includes('"') || v.includes(',') || v.includes('\n') || v.includes('\r')) {
+        return '"' + v.replace(/"/g, '""') + '"';
+      }
+      return v;
+    };
     const headers = Object.keys(data[0]);
-    const rows = data.map(r => headers.map(h => {
-      const v = r[h];
-      if (Array.isArray(v)) return `"${v.join('; ')}"`;
-      if (typeof v === 'string' && v.includes(',')) return `"${v}"`;
-      return v ?? '';
-    }).join(','));
-    const csv = [headers.join(','), ...rows].join('\n');
-    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+    const lines = [
+      headers.map(escape).join(','),
+      ...data.map(r => headers.map(h => escape(r[h])).join(','))
+    ];
+    const blob = new Blob(['\uFEFF' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = url; a.download = filename; a.click();
+    a.href = url;
+    a.download = filename;
+    a.click();
     URL.revokeObjectURL(url);
   },
 

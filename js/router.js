@@ -1,22 +1,33 @@
 // ==================== ROUTER ====================
 const Router = {
   _current: null,
+  _prev: null,
   _params: {},
 
   routes: {
-    'login':         () => LoginPage.render(),
-    'dashboard':     () => DashboardPage.render(),
-    'infarkt-yangi': () => InfarktYangiPage.render(),
-    'insult-yangi':  () => InsultYangiPage.render(),
-    'bemor-karta':   () => BemorKartaPage.render(Router._params),
-    'bemorlar':      () => BemorlarPage.render(),
-    'hisobot':       () => HisobotPage.render(),
+    'login':            () => LoginPage.render(),
+    'dashboard':        () => DashboardPage.render(),
+    'infarkt-yangi':    () => InfarktYangiPage.render(),
+    'insult-yangi':     () => InsultYangiPage.render(),
+    'infarkt-reyestri': () => InfarktReyestriPage.render(),
+    'insult-reyestri':  () => InsultReyestriPage.render(),
+    'bemor-karta':      () => BemorKartaPage.render(Router._params),
+    'bemorlar':         () => BemorlarPage.render(),
+    'hisobot':          () => HisobotPage.render(),
+    'admin':            () => AdminPage.render(),
+    'settings':         () => SettingsPage.render(),
+  },
+
+  back() {
+    const prev = Router._prev || 'bemorlar';
+    Router.go(prev);
   },
 
   async go(route, params = {}) {
     // Cleanup previous page
     if (Router._current && Router._current !== route) {
       Realtime.unsubscribeAll();
+      Router._prev = Router._current;
     }
 
     Router._current = route;
