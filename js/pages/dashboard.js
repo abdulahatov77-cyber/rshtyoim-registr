@@ -271,17 +271,21 @@ const DashboardPage = {
           </div>
         </div>
         <!-- Age Groups -->
-        <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between">
-          <h3 class="text-base font-bold text-slate-800 mb-6 text-center tracking-wide uppercase">Yosh guruhlari</h3>
-          <div class="flex justify-center gap-6 mb-4">
-             <div class="flex items-center gap-2">
-                <span class="w-4 h-4 rounded-full bg-[#3b82f6]"></span> <span class="text-sm font-bold text-slate-500 uppercase">Insult</span>
-             </div>
-             <div class="flex items-center gap-2">
-                <span class="w-4 h-4 rounded-full bg-[#ef4444]"></span> <span class="text-sm font-bold text-slate-500 uppercase">Infarkt</span>
-             </div>
+        <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden flex flex-col">
+          <div class="px-6 pt-5 pb-3 border-b border-slate-100" style="background:linear-gradient(135deg,#eff6ff 0%,#fef2f2 100%)">
+            <h3 class="text-sm font-bold text-slate-700 uppercase tracking-wider text-center">Yosh guruhlari bo'yicha taqsimot</h3>
+            <div class="flex justify-center gap-6 mt-3">
+              <div class="flex items-center gap-2">
+                <span class="w-3 h-3 rounded-sm" style="background:#3b82f6"></span>
+                <span class="text-xs font-semibold text-slate-600">Insult — <b>${Object.values(demo?.insult?.ages||{}).reduce((a,b)=>a+b,0)} ta</b></span>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="w-3 h-3 rounded-sm" style="background:#ef4444"></span>
+                <span class="text-xs font-semibold text-slate-600">Infarkt — <b>${Object.values(demo?.infarkt?.ages||{}).reduce((a,b)=>a+b,0)} ta</b></span>
+              </div>
+            </div>
           </div>
-          <div class="flex-1 min-h-[220px] relative"><canvas id="ageChart"></canvas></div>
+          <div class="flex-1 p-4" style="min-height:280px;position:relative"><canvas id="ageChart"></canvas></div>
         </div>
       </div>
 
@@ -538,54 +542,86 @@ const DashboardPage = {
     const ctxA = document.getElementById('ageChart')?.getContext('2d');
     if (ctxA && demo) {
       const ageLabels = ['≤29', '30-44', '45-59', '60-74', '75+'];
+      const insData = ageLabels.map(k => demo.insult.ages[k]  || 0);
+      const infData = ageLabels.map(k => demo.infarkt.ages[k] || 0);
       new Chart(ctxA, {
         type: 'bar',
         data: {
           labels: ageLabels,
           datasets: [
-            { label: 'Insult',  data: ageLabels.map(k => demo.insult.ages[k]),  backgroundColor: '#3b82f6', borderRadius: 0 },
-            { label: 'Infarkt', data: ageLabels.map(k => demo.infarkt.ages[k]), backgroundColor: '#ef4444', borderRadius: { topLeft: 6, topRight: 6, bottomLeft: 0, bottomRight: 0 } }
+            {
+              label: 'Insult',
+              data: insData,
+              backgroundColor: 'rgba(59,130,246,0.85)',
+              borderColor: '#2563eb',
+              borderWidth: 0,
+              borderRadius: { topLeft: 0, topRight: 0, bottomLeft: 6, bottomRight: 6 },
+              borderSkipped: false
+            },
+            {
+              label: 'Infarkt',
+              data: infData,
+              backgroundColor: 'rgba(239,68,68,0.85)',
+              borderColor: '#dc2626',
+              borderWidth: 0,
+              borderRadius: { topLeft: 6, topRight: 6, bottomLeft: 0, bottomRight: 0 },
+              borderSkipped: false
+            }
           ]
         },
         plugins: window.ChartDataLabels ? [window.ChartDataLabels] : [],
         options: {
-          responsive: true, maintainAspectRatio: false,
-          layout: { padding: { top: 28 } },
+          responsive: true,
+          maintainAspectRatio: false,
+          layout: { padding: { top: 32, left: 4, right: 4, bottom: 4 } },
           plugins: {
             legend: { display: false },
-            datalabels: {
-              labels: {
-                // Ustun ichida — faqat katta segmentlar uchun
-                inside: {
-                  anchor: 'center',
-                  align: 'center',
-                  color: '#ffffff',
-                  font: { weight: 'bold', size: 13 },
-                  display: ctx => {
-                    const allVals = ctx.chart.data.datasets.flatMap(d => d.data);
-                    const max = Math.max(...allVals);
-                    return ctx.dataset.data[ctx.dataIndex] >= max * 0.07;
-                  },
-                  formatter: v => v
-                },
-                // Ustun tepasida — faqat oxirgi dataset (infarkt) uchun jami
-                total: {
-                  anchor: 'end',
-                  align: 'top',
-                  color: '#1e293b',
-                  font: { weight: 'bold', size: 13 },
-                  display: ctx => ctx.datasetIndex === ctx.chart.data.datasets.length - 1,
-                  formatter: (value, ctx) =>
-                    ctx.chart.data.datasets.reduce(
-                      (sum, ds) => sum + (ds.data[ctx.dataIndex] || 0), 0
-                    )
+            tooltip: {
+              callbacks: {
+                footer: (items) => {
+                  const total = items.reduce((s, i) => s + i.parsed.y, 0);
+                  return `Jami: ${total} ta`;
                 }
               }
-            }
+            },
+            datalabels: window.ChartDataLabels ? {
+              labels: {
+                inside: {
+                  anchor: 'center', align: 'center',
+                  color: '#fff',
+                  font: { weight: 'bold', size: 12 },
+                  display: ctx => {
+                    const max = Math.max(...ctx.chart.data.datasets.flatMap(d => d.data));
+                    return ctx.dataset.data[ctx.dataIndex] >= max * 0.06;
+                  },
+                  formatter: v => v > 0 ? v.toLocaleString() : ''
+                },
+                total: {
+                  anchor: 'end', align: 'top',
+                  offset: 4,
+                  color: '#1e293b',
+                  font: { weight: '800', size: 13 },
+                  display: ctx => ctx.datasetIndex === 1,
+                  formatter: (_, ctx) =>
+                    ctx.chart.data.datasets.reduce((s, ds) => s + (ds.data[ctx.dataIndex] || 0), 0).toLocaleString()
+                }
+              }
+            } : {}
           },
           scales: {
-            x: { stacked: true, grid: { display: false }, ticks: { font: { size: 13, weight: '600' } } },
-            y: { stacked: true, grid: { borderDash: [5,5], color: '#f1f5f9' }, ticks: { font: { size: 12, weight: '600' } }, beginAtZero: true }
+            x: {
+              stacked: true,
+              grid: { display: false },
+              border: { display: false },
+              ticks: { font: { size: 13, weight: '700' }, color: '#475569' }
+            },
+            y: {
+              stacked: true,
+              grid: { color: '#f1f5f9', lineWidth: 1 },
+              border: { display: false, dash: [4, 4] },
+              ticks: { font: { size: 11 }, color: '#94a3b8' },
+              beginAtZero: true
+            }
           }
         }
       });
