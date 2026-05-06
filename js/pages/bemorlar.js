@@ -26,6 +26,10 @@ const BemorlarPage = {
     
     BemorlarPage.renderFilters();
     await BemorlarPage.loadData();
+    Realtime.subscribeBemorlar(async () => {
+      if (!document.getElementById('bemorlar-inner')) return;
+      await BemorlarPage.loadData();
+    });
   },
 
   renderFilters() {

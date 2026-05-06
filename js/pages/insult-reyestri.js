@@ -21,6 +21,10 @@ const InsultReyestriPage = {
     this._currentData = [];
     initIcons();
     await this.loadStats();
+    Realtime.subscribeBemorlar(async () => {
+      if (Router._current !== 'insult-reyestri') return;
+      await InsultReyestriPage.loadStats();
+    });
   },
 
   async refreshStats() {

@@ -21,6 +21,10 @@ const InfarktReyestriPage = {
     this._currentData = [];
     initIcons();
     await this.loadStats();
+    Realtime.subscribeBemorlar(async () => {
+      if (Router._current !== 'infarkt-reyestri') return;
+      await InfarktReyestriPage.loadStats();
+    });
   },
 
   async refreshStats() {
