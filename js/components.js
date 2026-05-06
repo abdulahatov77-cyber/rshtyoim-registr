@@ -367,8 +367,14 @@ const Notifications = {
     if (!el) return;
     el.classList.remove('hidden');
     if (!this._loaded) {
-      this.load().then(() => this.renderDropdown());
+      this.load().then(() => {
+        this._list.forEach(n => n.read = true);
+        this._updateBadge();
+        this.renderDropdown();
+      });
     } else {
+      this._list.forEach(n => n.read = true);
+      this._updateBadge();
       this.renderDropdown();
     }
     setTimeout(() => {
