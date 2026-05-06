@@ -36,19 +36,19 @@ const InfarktYangiPage = {
 
     wrap.innerHTML = `
       <div class="max-w-4xl mx-auto animate-fadein pb-20">
-        <div class="mb-10">
+        <div class="mb-4 sm:mb-10">
           ${Components.renderSteps(InfarktYangiPage.STEPS, step)}
         </div>
 
-        <div class="bg-white rounded-[32px] shadow-2xl shadow-slate-200/50 border border-slate-100 overflow-hidden">
-          <div class="p-8 border-b border-slate-50 bg-slate-50/30 flex items-center justify-between">
-            <div class="flex items-center gap-4">
-              <div class="w-14 h-14 bg-red-50 text-red-600 rounded-2xl flex items-center justify-center shadow-sm">
-                ${icon(sectionIcons[step], 28)}
+        <div class="bg-white rounded-2xl sm:rounded-[32px] shadow-xl sm:shadow-2xl border border-slate-100 overflow-hidden">
+          <div class="p-4 sm:p-8 border-b border-slate-50 bg-slate-50/30 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 sm:w-14 sm:h-14 bg-red-50 text-red-600 rounded-xl sm:rounded-2xl flex items-center justify-center shadow-sm shrink-0">
+                ${icon(sectionIcons[step], 24)}
               </div>
               <div>
-                <p class="text-[10px] font-black text-red-600 uppercase tracking-widest mb-1">Bo'lim ${step+1} / 4</p>
-                <h3 class="text-xl font-black text-slate-800 tracking-tight">${sectionTitles[step]}</h3>
+                <p class="text-[10px] font-black text-red-600 uppercase tracking-widest mb-0.5">Bo'lim ${step+1} / 4</p>
+                <h3 class="text-base sm:text-xl font-black text-slate-800 tracking-tight">${sectionTitles[step]}</h3>
               </div>
             </div>
             <div class="hidden sm:block text-right">
@@ -59,22 +59,21 @@ const InfarktYangiPage = {
             </div>
           </div>
 
-          <div class="p-10" id="step-body">
+          <div class="p-4 sm:p-8" id="step-body">
             ${InfarktYangiPage['renderStep' + step]()}
           </div>
 
-          <div class="p-8 border-t border-slate-50 bg-slate-50/50 flex justify-between items-center">
-            <button class="flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm text-slate-500 hover:bg-slate-100 transition-all" onclick="InfarktYangiPage.prevStep()" ${step===0?'disabled style="opacity:0"':''}>
-              ${icon('arrow-left', 18)} Orqaga
+          <div class="p-4 sm:p-8 border-t border-slate-50 bg-slate-50/50 flex justify-between items-center gap-2">
+            <button class="flex items-center gap-1 px-3 py-2 sm:px-6 sm:py-3 rounded-xl font-bold text-xs sm:text-sm text-slate-500 hover:bg-slate-100 transition-all shrink-0" onclick="InfarktYangiPage.prevStep()" ${step===0?'disabled style="opacity:0"':''}>
+              ${icon('arrow-left', 16)} <span class="hidden sm:inline">Orqaga</span>
             </button>
-            
-            <div class="flex gap-4">
-              <button class="px-6 py-3 rounded-xl font-bold text-sm text-slate-400 hover:text-red-600 hover:bg-red-50 transition-all" onclick="Router.go('dashboard')">Bekor qilish</button>
+            <div class="flex gap-2 sm:gap-4">
+              <button class="px-3 py-2 sm:px-6 sm:py-3 rounded-xl font-bold text-xs sm:text-sm text-slate-400 hover:text-red-600 hover:bg-red-50 transition-all hidden sm:block" onclick="Router.go('dashboard')">Bekor qilish</button>
               ${step < InfarktYangiPage.STEPS.length-1
-                ? `<button class="flex items-center gap-2 px-8 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold text-sm shadow-lg shadow-red-200 transition-all active:scale-95" onclick="InfarktYangiPage.nextStep()">Keyingi ${icon('arrow-right', 18)}</button>`
+                ? `<button class="flex items-center gap-1 px-4 py-2 sm:px-8 sm:py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold text-xs sm:text-sm shadow-md transition-all active:scale-95" onclick="InfarktYangiPage.nextStep()">Keyingi ${icon('arrow-right', 16)}</button>`
                 : (() => {
                     const isOtk = InfarktYangiPage._data.muolaja_turi === "Boshqa muassasaga o'tkazildi";
-                    return `<button class="flex items-center gap-2 px-10 py-3 ${isOtk ? 'bg-orange-500 hover:bg-orange-600 shadow-orange-200' : 'bg-green-600 hover:bg-green-700 shadow-green-200'} text-white rounded-xl font-bold text-sm shadow-lg transition-all active:scale-95" id="save-btn" onclick="InfarktYangiPage.save()">${icon(isOtk ? 'log-out' : 'save', 18)} ${isOtk ? 'Chiqarish' : 'Saqlash'}</button>`;
+                    return `<button class="flex items-center gap-1 px-4 py-2 sm:px-8 sm:py-3 ${isOtk ? 'bg-orange-500 hover:bg-orange-600' : 'bg-green-600 hover:bg-green-700'} text-white rounded-xl font-bold text-xs sm:text-sm shadow-md transition-all active:scale-95" id="save-btn" onclick="InfarktYangiPage.save()">${icon(isOtk ? 'log-out' : 'save', 16)} ${isOtk ? 'Chiqarish' : 'Saqlash'}</button>`;
                   })()
               }
             </div>

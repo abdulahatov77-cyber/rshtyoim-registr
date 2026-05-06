@@ -244,20 +244,19 @@ const Components = {
   // ── Step Progress ──
   renderSteps(steps, currentIdx) {
     let html = '<div class="progress-container"><div class="progress-bar" style="width: ' + ((currentIdx + 1) / steps.length * 100) + '%"></div></div>';
-    html += '<div class="flex items-center justify-between mb-8">';
+    html += '<div class="flex items-center justify-between mb-4 sm:mb-8">';
     steps.forEach((st, i) => {
       const isDone = i < currentIdx;
       const isActive = i === currentIdx;
       let clr = 'text-gray-400';
       if (isActive) clr = 'text-blue-600 font-bold';
       if (isDone) clr = 'text-green-600';
-      
       html += `
         <div class="flex flex-col items-center flex-1">
-          <div class="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold border-2 mb-2 transition-all ${isActive ? 'bg-blue-600 text-white border-blue-600 shadow-md ring-4 ring-blue-100' : isDone ? 'bg-green-500 text-white border-green-500' : 'bg-white text-gray-400 border-gray-300'}">
-            ${isDone ? icon('check', 18) : (i + 1)}
+          <div class="w-7 h-7 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-xs sm:text-sm font-bold border-2 mb-1 sm:mb-2 transition-all ${isActive ? 'bg-blue-600 text-white border-blue-600 shadow-md ring-2 sm:ring-4 ring-blue-100' : isDone ? 'bg-green-500 text-white border-green-500' : 'bg-white text-gray-400 border-gray-300'}">
+            ${isDone ? icon('check', 14) : (i + 1)}
           </div>
-          <span class="text-xs text-center ${clr}">${st}</span>
+          <span class="text-[10px] sm:text-xs text-center ${clr} leading-tight">${st}</span>
         </div>
       `;
     });

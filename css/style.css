@@ -384,8 +384,6 @@ input:focus, select:focus {
 
   /* Kartalar padding */
   .card { padding: 14px !important; }
-  [class*="p-6"] { padding: 12px !important; }
-  [class*="p-8"] { padding: 14px !important; }
 
   /* Grid — barcha ko'p ustunli gridlar 1 ustunga */
   [class*="grid-cols-2"],
