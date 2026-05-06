@@ -214,7 +214,7 @@ const Components = {
         ${this.renderSidebar(pageName, user)}
         <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
           ${this.renderTopbar(title, subtitle, user)}
-          <main class="flex-1 overflow-y-auto custom-scrollbar p-8">
+          <main class="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar p-8">
             <div class="mb-8">
                <h1 class="text-2xl font-black text-slate-800 leading-none mb-2">${title}</h1>
                <p class="text-sm font-medium text-slate-500">${subtitle || 'Tizim ko\'rsatkichlari'}</p>

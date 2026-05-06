@@ -370,3 +370,81 @@ input:focus, select:focus {
   border-color: #3b82f6 !important;
   box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1) !important;
 }
+
+/* ==================== MOBILE RESPONSIVE ==================== */
+@media (max-width: 768px) {
+
+  /* Ana kontent padding kamaytirish */
+  main.flex-1 { padding: 12px !important; }
+  .mb-8 { margin-bottom: 12px !important; }
+
+  /* Sarlavha kichraytirish */
+  h1, .text-2xl { font-size: 17px !important; }
+  .text-xl { font-size: 15px !important; }
+
+  /* Kartalar padding */
+  .card { padding: 14px !important; }
+  [class*="p-6"] { padding: 12px !important; }
+  [class*="p-8"] { padding: 14px !important; }
+
+  /* Grid — barcha ko'p ustunli gridlar 1 ustunga */
+  [class*="grid-cols-2"],
+  [class*="grid-cols-3"],
+  [class*="grid-cols-4"],
+  [class*="grid-cols-5"],
+  [class*="grid-cols-6"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* 2 ustunli kichik maydonlar (badge, jins) saqlansin */
+  .grid-cols-2-keep { grid-template-columns: repeat(2, 1fr) !important; }
+
+  /* Jadval — gorizontal scroll */
+  .overflow-x-auto, table { overflow-x: auto !important; -webkit-overflow-scrolling: touch; }
+  .data-table { min-width: 560px; }
+
+  /* Form elementlar */
+  .form-input, .form-select, .form-textarea {
+    font-size: 16px !important; /* iOS zoom oldini olish */
+    padding: 10px 12px !important;
+  }
+  .form-label { font-size: 13px !important; }
+  .form-group { margin-bottom: 14px !important; }
+
+  /* Tugmalar */
+  .btn { padding: 9px 14px !important; font-size: 13px !important; }
+  .btn-lg { padding: 11px 18px !important; font-size: 14px !important; }
+
+  /* Topbar */
+  header.h-16 { padding-left: 12px !important; padding-right: 12px !important; }
+
+  /* Step form sarlavhasi */
+  .progress-container { margin-bottom: 16px !important; }
+
+  /* Flex wrap — tugmalar ketma-ket chiqishi */
+  .flex.gap-3, .flex.gap-4 { flex-wrap: wrap; }
+
+  /* Karta sarlavha qismi */
+  .card-header { flex-wrap: wrap; gap: 8px; }
+
+  /* Modal */
+  .modal-overlay { padding: 12px !important; align-items: flex-end !important; }
+  .modal-box { border-radius: 20px 20px 0 0 !important; max-height: 92vh !important; }
+
+  /* Dashboard stat kartochkalar */
+  [class*="gap-8"] { gap: 12px !important; }
+  [class*="gap-6"] { gap: 10px !important; }
+}
+
+@media (max-width: 480px) {
+  main.flex-1 { padding: 8px !important; }
+  .card { padding: 12px !important; }
+  h1, .text-2xl { font-size: 15px !important; }
+  .btn { padding: 8px 12px !important; font-size: 12px !important; }
+
+  /* Juda kichik ekranlarda aytrim matnlar qisqarsin */
+  .truncate-mobile {
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    max-width: 140px;
+  }
+}
