@@ -408,12 +408,25 @@ const DB = {
       eqViloyat(getSupabase().from('insult_qabul').select('id', { count: 'exact', head: true }).not('otkazilgan_muassasa', 'is', null))
     ]);
 
-    // Klinik turlari va muolajalar breakdown
-    const [{ data: infT }, { data: insT }] = await Promise.all([
-      eqViloyat(getSupabase().from('infarkt_qabul').select('infarkt_turi, muolaja_turi')).range(0, 9999),
-      eqViloyat(getSupabase().from('insult_qabul').select('insult_turi, muolaja_turi')).range(0, 9999)
+    // Klinik turlari va muolajalar breakdown (paginated)
+    const fetchAllTypes = async (table, cols) => {
+      let all = [], offset = 0;
+      while (true) {
+        const { data, error } = await eqViloyat(
+          getSupabase().from(table).select(cols)
+        ).range(offset, offset + 999);
+        if (error) { if (error.code === 'PGRST103') break; throw error; }
+        if (!data || data.length === 0) break;
+        all = all.concat(data);
+        if (data.length < 1000) break;
+        offset += 1000;
+      }
+      return all;
+    };
+    const [iT, nT] = await Promise.all([
+      fetchAllTypes('infarkt_qabul', 'infarkt_turi,muolaja_turi'),
+      fetchAllTypes('insult_qabul', 'insult_turi,muolaja_turi')
     ]);
-    const iT = infT || [], nT = insT || [];
 
     return {
       jamiInfarkt: infAll || 0,
@@ -456,10 +469,26 @@ const DB = {
     const from = new Date();
     from.setDate(from.getDate() - 29);
     from.setHours(0, 0, 0, 0);
+    const fromISO = from.toISOString();
 
-    const [{ data: inf }, { data: ins }] = await Promise.all([
-      eqViloyat(getSupabase().from('infarkt_qabul').select('qabul_vaqt').gte('qabul_vaqt', from.toISOString())).range(0, 9999),
-      eqViloyat(getSupabase().from('insult_qabul').select('qabul_vaqt').gte('qabul_vaqt', from.toISOString())).range(0, 9999)
+    const fetchAll = async (table) => {
+      let all = [], offset = 0;
+      while (true) {
+        const { data, error } = await eqViloyat(
+          getSupabase().from(table).select('qabul_vaqt').gte('qabul_vaqt', fromISO)
+        ).range(offset, offset + 999);
+        if (error) { if (error.code === 'PGRST103') break; throw error; }
+        if (!data || data.length === 0) break;
+        all = all.concat(data);
+        if (data.length < 1000) break;
+        offset += 1000;
+      }
+      return all;
+    };
+
+    const [inf, ins] = await Promise.all([
+      fetchAll('infarkt_qabul'),
+      fetchAll('insult_qabul')
     ]);
 
     const labels = [], infData = [], insData = [];
@@ -468,8 +497,8 @@ const DB = {
       d.setDate(from.getDate() + i);
       const ds = d.toISOString().split('T')[0];
       labels.push(ds.slice(5));
-      infData.push((inf || []).filter(r => r.qabul_vaqt?.startsWith(ds)).length);
-      insData.push((ins || []).filter(r => r.qabul_vaqt?.startsWith(ds)).length);
+      infData.push(inf.filter(r => r.qabul_vaqt?.startsWith(ds)).length);
+      insData.push(ins.filter(r => r.qabul_vaqt?.startsWith(ds)).length);
     }
     return { labels, infData, insData };
   },
