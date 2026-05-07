@@ -61,11 +61,11 @@ const SettingsPage = {
           ${profile?.role === 'super_admin' ? '' : `
           <div class="form-group">
             <label class="form-label">Viloyat</label>
-            <select id="s-viloyat" class="form-select" ${profile?.role === 'user' ? 'disabled' : ''}>
+            <select id="s-viloyat" class="form-select" disabled>
               <option value="">— Tanlang —</option>
               ${viloyatOptions}
             </select>
-            ${profile?.role === 'user' ? '<p class="text-xs text-gray-400 mt-1">Viloyatni faqat administrator o\'zgartira oladi</p>' : ''}
+            <p class="text-xs text-gray-400 mt-1">Viloyatni faqat Super Administrator o'zgartira oladi</p>
           </div>`}
 
           <div class="flex justify-end pt-2">
@@ -123,17 +123,11 @@ const SettingsPage = {
   async saveProfile(e) {
     e.preventDefault();
     const fio = document.getElementById('s-fio').value.trim();
-    const role = SettingsPage._profile?.role;
-    const viloyatEl = document.getElementById('s-viloyat');
-    const viloyat = viloyatEl ? viloyatEl.value : (SettingsPage._profile?.viloyat || null);
     const btn = document.getElementById('save-profile-btn');
 
     if (!fio) { showToast("Ism kiritilmagan", 'warning'); return; }
 
     const updates = { fio, full_name: fio };
-    if (role !== 'user' && role !== 'super_admin') {
-      updates.viloyat = viloyat || null;
-    }
 
     setLoading(btn, true, 'Saqlanmoqda...');
     try {

@@ -937,11 +937,10 @@ const Profile = {
   async update(updates) {
     const user = await Auth.getUser();
     if (!user) throw new Error('Foydalanuvchi tizimga kirmagan');
-    const { data, error } = await getSupabase()
-      .from('profiles').update(updates).eq('id', user.id).select().single();
+    const { error } = await getSupabase()
+      .from('profiles').update(updates).eq('id', user.id);
     if (error) throw error;
-    this._cache[user.id] = data;
-    return data;
+    delete this._cache[user.id];
   }
 };
 
