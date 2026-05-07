@@ -372,7 +372,12 @@ const DB = {
     const p = await Profile.getCurrent();
     const viloyat = p?.role === 'super_admin' ? null : p?.viloyat;
     const eqViloyat = (q) => viloyat ? q.eq('viloyat', viloyat) : q;
-    const todayISO = new Date().toISOString().split('T')[0]; // "2026-05-07" — UTC sana, hisobot bilan bir xil
+    // Kasalxona ish kuni 07:00 dan boshlanadi (Telegram bot bilan mos)
+    const now = new Date();
+    const cutoff = new Date();
+    cutoff.setHours(7, 0, 0, 0);
+    if (now < cutoff) cutoff.setDate(cutoff.getDate() - 1);
+    const todayISO = cutoff.toISOString();
 
     const [
       { count: infAll },
