@@ -285,34 +285,7 @@ const DashboardPage = {
               </div>
             </div>
           </div>
-          <div class="p-4" style="min-height:240px;position:relative"><canvas id="ageChart"></canvas></div>
-          <!-- Aniq raqamlar jadvali -->
-          <div class="border-t border-slate-100 mx-4 mb-4">
-            <table class="w-full text-xs" style="border-collapse:separate;border-spacing:0">
-              <thead>
-                <tr style="background:#f8fafc">
-                  <th class="text-left py-2 px-3 font-bold text-slate-500 rounded-tl-lg">Yosh</th>
-                  <th class="text-center py-2 px-2 font-bold" style="color:#3b82f6">Insult</th>
-                  <th class="text-center py-2 px-2 font-bold" style="color:#ef4444">Infarkt</th>
-                  <th class="text-center py-2 px-3 font-bold text-slate-700 rounded-tr-lg">Jami</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${['≤29','30-44','45-59','60-74','75+'].map((k,i) => {
-                  const ins = demo?.insult?.ages?.[k] || 0;
-                  const inf = demo?.infarkt?.ages?.[k] || 0;
-                  const tot = ins + inf;
-                  const bg = i % 2 === 0 ? '#ffffff' : '#f8fafc';
-                  return `<tr style="background:${bg}">
-                    <td class="py-1.5 px-3 font-bold text-slate-700">${k}</td>
-                    <td class="py-1.5 px-2 text-center font-semibold" style="color:#3b82f6">${ins.toLocaleString()}</td>
-                    <td class="py-1.5 px-2 text-center font-semibold" style="color:#ef4444">${inf.toLocaleString()}</td>
-                    <td class="py-1.5 px-3 text-center font-bold text-slate-800">${tot.toLocaleString()}</td>
-                  </tr>`;
-                }).join('')}
-              </tbody>
-            </table>
-          </div>
+          <div class="p-4 pb-6" style="min-height:300px;position:relative"><canvas id="ageChart"></canvas></div>
         </div>
       </div>
 
@@ -615,9 +588,10 @@ const DashboardPage = {
             },
             datalabels: window.ChartDataLabels ? {
               anchor: 'end', align: 'top',
+              offset: 2,
               display: ctx => ctx.dataset.data[ctx.dataIndex] > 0,
-              color: ctx => ctx.datasetIndex === 0 ? '#2563eb' : '#dc2626',
-              font: { weight: '800', size: 13 },
+              color: ctx => ctx.datasetIndex === 0 ? '#1d4ed8' : '#b91c1c',
+              font: { weight: '900', size: 15 },
               formatter: v => v > 0 ? v.toLocaleString() : ''
             } : { display: false }
           },
