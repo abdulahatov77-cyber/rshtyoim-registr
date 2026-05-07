@@ -56,7 +56,7 @@ const DashboardPage = {
     const inner = document.getElementById('dashboard-inner');
     if (!inner) return;
 
-    const isFiltered = profile?.role !== 'admin';
+    const isFiltered = profile?.role !== 'super_admin' && !!profile?.viloyat;
     const distTitle = isFiltered ? `${profile?.viloyat} muassasalari bo'yicha` : "Viloyatlar bo'yicha grafik";
 
     // Gender Calculation
@@ -537,29 +537,35 @@ const DashboardPage = {
         data: {
           labels: regionData.map(v => v.name),
           datasets: [
-            { label: 'Infarkt', data: regionData.map(v => v.inf), backgroundColor: '#dc2626' },
-            { label: 'Insult',  data: regionData.map(v => v.ins), backgroundColor: '#2563eb' }
+            { label: 'Infarkt', data: regionData.map(v => v.inf), backgroundColor: '#dc2626', borderRadius: 4, borderSkipped: false },
+            { label: 'Insult',  data: regionData.map(v => v.ins), backgroundColor: '#2563eb', borderRadius: 4, borderSkipped: false }
           ]
         },
         plugins: window.ChartDataLabels ? [window.ChartDataLabels] : [],
         options: {
           responsive: true, maintainAspectRatio: false,
-          layout: { padding: { bottom: 10 } },
+          layout: { padding: { top: 24, bottom: 10 } },
           plugins: {
-            legend: { display: false },
-            datalabels: {
+            legend: {
+              display: true,
+              position: 'top',
+              align: 'end',
+              labels: { usePointStyle: true, pointStyle: 'rect', font: { weight: '700', size: 12 }, color: '#475569', padding: 20 }
+            },
+            datalabels: window.ChartDataLabels ? {
+              anchor: 'end', align: 'top',
               display: ctx => ctx.dataset.data[ctx.dataIndex] > 0,
-              color: '#ffffff',
-              font: { weight: 'bold', size: 13 }
-            }
+              color: ctx => ctx.datasetIndex === 0 ? '#dc2626' : '#2563eb',
+              font: { weight: 'bold', size: 11 },
+              formatter: v => v > 0 ? v : ''
+            } : { display: false }
           },
           scales: {
             x: {
-              stacked: true,
               grid: { display: false },
-              ticks: { font: { size: 12, weight: '600' }, maxRotation: 45, minRotation: 45, autoSkip: false }
+              ticks: { font: { size: 12, weight: '600' }, maxRotation: 45, minRotation: 45, autoSkip: false, color: '#475569' }
             },
-            y: { stacked: true, grid: { borderDash: [5,5], color: '#e2e8f0' }, ticks: { font: { size: 12, weight: '600' } }, beginAtZero: true }
+            y: { grid: { borderDash: [5,5], color: '#e2e8f0' }, ticks: { font: { size: 12, weight: '600' } }, beginAtZero: true }
           }
         }
       });
