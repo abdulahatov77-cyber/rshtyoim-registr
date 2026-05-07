@@ -929,10 +929,8 @@ const Profile = {
     return data;
   },
   async deleteProfile(userId) {
-    const { error, count } = await getSupabase()
-      .from('profiles').delete({ count: 'exact' }).eq('id', userId);
+    const { error } = await getSupabase().rpc('admin_delete_user', { target_user_id: userId });
     if (error) throw error;
-    if (count === 0) throw new Error("O'chirishga ruxsat yo'q. Supabase SQL Editorida DELETE politikasini qo'shing.");
     delete this._cache[userId];
   },
 
