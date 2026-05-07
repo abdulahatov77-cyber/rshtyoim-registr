@@ -585,19 +585,15 @@ const DashboardPage = {
             {
               label: 'Insult',
               data: insData,
-              backgroundColor: 'rgba(59,130,246,0.85)',
-              borderColor: '#2563eb',
-              borderWidth: 0,
-              borderRadius: { topLeft: 0, topRight: 0, bottomLeft: 6, bottomRight: 6 },
+              backgroundColor: '#2563eb',
+              borderRadius: 5,
               borderSkipped: false
             },
             {
               label: 'Infarkt',
               data: infData,
-              backgroundColor: 'rgba(239,68,68,0.85)',
-              borderColor: '#dc2626',
-              borderWidth: 0,
-              borderRadius: { topLeft: 6, topRight: 6, bottomLeft: 0, bottomRight: 0 },
+              backgroundColor: '#dc2626',
+              borderRadius: 5,
               borderSkipped: false
             }
           ]
@@ -606,7 +602,7 @@ const DashboardPage = {
         options: {
           responsive: true,
           maintainAspectRatio: false,
-          layout: { padding: { top: 32, left: 4, right: 4, bottom: 4 } },
+          layout: { padding: { top: 30, left: 4, right: 4, bottom: 4 } },
           plugins: {
             legend: { display: false },
             tooltip: {
@@ -618,38 +614,20 @@ const DashboardPage = {
               }
             },
             datalabels: window.ChartDataLabels ? {
-              labels: {
-                inside: {
-                  anchor: 'center', align: 'center',
-                  color: '#fff',
-                  font: { weight: 'bold', size: 12 },
-                  display: ctx => {
-                    const max = Math.max(...ctx.chart.data.datasets.flatMap(d => d.data));
-                    return ctx.dataset.data[ctx.dataIndex] >= max * 0.06;
-                  },
-                  formatter: v => v > 0 ? v.toLocaleString() : ''
-                },
-                total: {
-                  anchor: 'end', align: 'top',
-                  offset: 4,
-                  color: '#1e293b',
-                  font: { weight: '800', size: 13 },
-                  display: ctx => ctx.datasetIndex === 1,
-                  formatter: (_, ctx) =>
-                    ctx.chart.data.datasets.reduce((s, ds) => s + (ds.data[ctx.dataIndex] || 0), 0).toLocaleString()
-                }
-              }
-            } : {}
+              anchor: 'end', align: 'top',
+              display: ctx => ctx.dataset.data[ctx.dataIndex] > 0,
+              color: ctx => ctx.datasetIndex === 0 ? '#2563eb' : '#dc2626',
+              font: { weight: '800', size: 13 },
+              formatter: v => v > 0 ? v.toLocaleString() : ''
+            } : { display: false }
           },
           scales: {
             x: {
-              stacked: true,
               grid: { display: false },
               border: { display: false },
               ticks: { font: { size: 13, weight: '700' }, color: '#475569' }
             },
             y: {
-              stacked: true,
               grid: { color: '#f1f5f9', lineWidth: 1 },
               border: { display: false, dash: [4, 4] },
               ticks: { font: { size: 11 }, color: '#94a3b8' },
