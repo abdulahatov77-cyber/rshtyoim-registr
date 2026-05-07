@@ -467,8 +467,8 @@ const DB = {
     const viloyat = p?.role === 'super_admin' ? null : p?.viloyat;
     const eqViloyat = (q) => viloyat ? q.eq('viloyat', viloyat) : q;
     const from = new Date();
-    from.setDate(from.getDate() - 29);
-    from.setHours(0, 0, 0, 0);
+    from.setUTCDate(from.getUTCDate() - 29);
+    from.setUTCHours(0, 0, 0, 0);
     const fromISO = from.toISOString();
 
     const fetchAll = async (table) => {
@@ -494,7 +494,7 @@ const DB = {
     const labels = [], infData = [], insData = [];
     for (let i = 0; i < 30; i++) {
       const d = new Date(from);
-      d.setDate(from.getDate() + i);
+      d.setUTCDate(from.getUTCDate() + i);
       const ds = d.toISOString().split('T')[0];
       labels.push(ds.slice(5));
       infData.push(inf.filter(r => r.qabul_vaqt?.startsWith(ds)).length);
