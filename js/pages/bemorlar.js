@@ -1,6 +1,6 @@
 // ==================== BEMORLAR RO'YXATI ====================
 const BemorlarPage = {
-  _filters: { type: 'all', status: '', viloyat: '', search: '', date: '' },
+  _filters: { type: 'all', status: '', viloyat: '', search: '', date: '', dateTo: '' },
   _currentPage: 1,
   _perPage: 20,
 
@@ -48,7 +48,7 @@ const BemorlarPage = {
 
       <!-- Filter Card -->
       <div class="card mb-6 border-t-4 border-t-blue-500">
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
           <div>
             <label class="form-label">${icon('filter', 14)} Registr turi</label>
             <select id="f-type" class="form-select" onchange="BemorlarPage.applyFilter()">
@@ -78,6 +78,10 @@ const BemorlarPage = {
           <div>
             <label class="form-label">${icon('calendar', 14)} Sana (dan)</label>
             <input type="date" id="f-date" class="form-input" onchange="BemorlarPage.applyFilter()" value="${f.date}"/>
+          </div>
+          <div>
+            <label class="form-label">${icon('calendar', 14)} Sana (gacha)</label>
+            <input type="date" id="f-date-to" class="form-input" onchange="BemorlarPage.applyFilter()" value="${f.dateTo}"/>
           </div>
           <div>
             <label class="form-label">${icon('search', 14)} Qidiruv</label>
@@ -133,15 +137,16 @@ const BemorlarPage = {
       BemorlarPage._filters.viloyat = BemorlarPage._profile?.viloyat || '';
     }
     BemorlarPage._filters.date = document.getElementById('f-date')?.value || '';
+    BemorlarPage._filters.dateTo = document.getElementById('f-date-to')?.value || '';
     BemorlarPage._filters.search = document.getElementById('f-search')?.value || '';
     BemorlarPage._currentPage = 1;
     BemorlarPage.loadData();
   },
 
   resetFilters() {
-    BemorlarPage._filters = { 
-      type: 'all', status: '', search: '', date: '',
-      viloyat: BemorlarPage._profile?.role === 'super_admin' ? '' : (BemorlarPage._profile?.viloyat || '') 
+    BemorlarPage._filters = {
+      type: 'all', status: '', search: '', date: '', dateTo: '',
+      viloyat: BemorlarPage._profile?.role === 'super_admin' ? '' : (BemorlarPage._profile?.viloyat || '')
     };
     BemorlarPage._currentPage = 1;
     Router._params = {}; // Clear router params after reset
@@ -159,7 +164,9 @@ const BemorlarPage = {
       search:   f.search   || undefined,
       page, pageSize
     };
-    if (f.date) { fObj.from = f.date + 'T00:00:00'; fObj.to = f.date + 'T23:59:59'; }
+    if (f.date)   fObj.from = f.date   + 'T00:00:00';
+    if (f.dateTo) fObj.to   = f.dateTo + 'T23:59:59';
+    else if (f.date) fObj.to = f.date  + 'T23:59:59';
     try {
       let combined = [];
       let totalCount = 0;
