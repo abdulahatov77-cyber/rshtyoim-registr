@@ -3,6 +3,7 @@ const BemorlarPage = {
   _filters: { type: 'all', status: '', viloyat: '', search: '', date: '', dateTo: '' },
   _currentPage: 1,
   _perPage: 20,
+  _selected: new Set(),
 
   async render() {
     const user = await Auth.getUser();
@@ -106,7 +107,11 @@ const BemorlarPage = {
       <div class="card !p-0 overflow-hidden">
         <div class="card-header bg-gray-50 !mb-0 !border-b-gray-200">
           <span class="card-title text-gray-900" id="bl-count">Yuklanmoqda...</span>
-          <div class="flex gap-3">
+          <div class="flex gap-3 items-center">
+            ${BemorlarPage._profile?.role === 'super_admin' ? `
+            <button id="bl-delete-btn" class="btn flex items-center gap-2 bg-red-600 text-white hover:bg-red-700 transition-colors" style="display:none" onclick="BemorlarPage.deleteSelected()">
+              ${icon('trash-2', 16)} <span id="bl-delete-count">O'chirish</span>
+            </button>` : ''}
             <button class="btn btn-infarkt flex items-center gap-2" onclick="Router.go('infarkt-yangi')">
               ${icon('heart', 16)} Yangi Infarkt
             </button>
@@ -214,21 +219,61 @@ const BemorlarPage = {
       return;
     }
 
+    const isSuperAdmin = BemorlarPage._profile?.role === 'super_admin';
+    BemorlarPage._selected.clear();
     wrap.innerHTML = `
       <table class="data-table">
         <thead>
           <tr>
-            <th style="width:12%">Tur</th>
-            <th style="width:12%">K/T No</th>
-            <th style="width:25%">Bemor F.I.O</th>
+            ${isSuperAdmin ? `<th style="width:3%"><input type="checkbox" id="bl-select-all" style="width:16px;height:16px;cursor:pointer" onclick="BemorlarPage.toggleAll(this.checked)"/></th>` : ''}
+            <th style="width:11%">Tur</th>
+            <th style="width:11%">K/T No</th>
+            <th style="width:23%">Bemor F.I.O</th>
             <th style="width:10%">Yosh / Jins</th>
-            <th style="width:15%">Viloyat</th>
-            <th style="width:14%">Qabul vaqti</th>
+            <th style="width:14%">Viloyat</th>
+            <th style="width:13%">Qabul vaqti</th>
             <th style="width:10%">Holat</th>
             <th style="width:2%"></th>
           </tr>
         </thead>
-        <tbody>${data.map(p=>Components.patientRow(p, p._type)).join('')}</tbody>
+        <tbody>
+          ${data.map(p => {
+            const isInf = p._type === 'infarkt';
+            const age = Utils.calculateAge(p.tugilgan_sana || p.tugilgan_yil) || '—';
+            const key = p.kt_no + ':' + p._type;
+            return `
+              <tr class="group">
+                ${isSuperAdmin ? `
+                <td onclick="event.stopPropagation()">
+                  <input type="checkbox" class="bl-cb" data-key="${key}" style="width:16px;height:16px;cursor:pointer"
+                    onchange="BemorlarPage.toggleRow(this)"/>
+                </td>` : ''}
+                <td onclick="Router.go('bemor-karta',{kt_no:'${p.kt_no}',type:'${p._type}'})">
+                  <span class="badge ${isInf ? 'badge-red' : 'badge-purple'} flex items-center gap-1.5 w-fit">
+                    ${icon(isInf ? 'heart' : 'brain', 14)} ${isInf ? 'Infarkt' : 'Insult'}
+                  </span>
+                </td>
+                <td class="font-mono text-xs text-gray-500" onclick="Router.go('bemor-karta',{kt_no:'${p.kt_no}',type:'${p._type}'})">
+                  ${p.kt_no}
+                </td>
+                <td onclick="Router.go('bemor-karta',{kt_no:'${p.kt_no}',type:'${p._type}'})">
+                  <div class="font-semibold text-gray-900">${p.fio || '—'}</div>
+                </td>
+                <td onclick="Router.go('bemor-karta',{kt_no:'${p.kt_no}',type:'${p._type}'})">${age} yosh · ${p.jins || p.jinsi || '—'}</td>
+                <td onclick="Router.go('bemor-karta',{kt_no:'${p.kt_no}',type:'${p._type}'})">
+                  <div class="flex items-center gap-1.5 text-gray-600">${icon('map-pin', 14)} ${p.viloyat || '—'}</div>
+                </td>
+                <td onclick="Router.go('bemor-karta',{kt_no:'${p.kt_no}',type:'${p._type}'})">
+                  <div class="flex flex-col">
+                    <span class="text-gray-900">${Utils.formatDate(p.qabul_vaqt)}</span>
+                    <span class="text-xs text-gray-500">${Utils.formatDateTime(p.qabul_vaqt).split(', ')[1] || ''}</span>
+                  </div>
+                </td>
+                <td onclick="Router.go('bemor-karta',{kt_no:'${p.kt_no}',type:'${p._type}'})">${Utils.statusBadge(p.status)}</td>
+                <td onclick="Router.go('bemor-karta',{kt_no:'${p.kt_no}',type:'${p._type}'})" class="text-right text-gray-400">${icon('chevron-right', 20)}</td>
+              </tr>`;
+          }).join('')}
+        </tbody>
       </table>`;
 
     // Server-side pagination controls
@@ -276,5 +321,55 @@ const BemorlarPage = {
       Holat: p.status, Jins: p.jins, 'Tug\'ilgan yili': p.tugilgan_yil
     })), 'bemorlar_royxati.csv');
     showToast('Eksport boshlandi', 'success');
+  },
+
+  _updateDeleteBtn() {
+    const btn = document.getElementById('bl-delete-btn');
+    const lbl = document.getElementById('bl-delete-count');
+    if (!btn) return;
+    const n = BemorlarPage._selected.size;
+    btn.style.display = n > 0 ? '' : 'none';
+    if (lbl) lbl.textContent = `${n} ta o'chirish`;
+  },
+
+  toggleRow(cb) {
+    const key = cb.dataset.key;
+    if (cb.checked) BemorlarPage._selected.add(key);
+    else BemorlarPage._selected.delete(key);
+    const all = document.querySelectorAll('.bl-cb');
+    const allChecked = [...all].every(c => c.checked);
+    const selectAll = document.getElementById('bl-select-all');
+    if (selectAll) selectAll.checked = allChecked;
+    BemorlarPage._updateDeleteBtn();
+  },
+
+  toggleAll(checked) {
+    document.querySelectorAll('.bl-cb').forEach(cb => {
+      cb.checked = checked;
+      const key = cb.dataset.key;
+      if (checked) BemorlarPage._selected.add(key);
+      else BemorlarPage._selected.delete(key);
+    });
+    BemorlarPage._updateDeleteBtn();
+  },
+
+  async deleteSelected() {
+    const n = BemorlarPage._selected.size;
+    if (!n) return;
+    if (!confirm(`Tanlangan ${n} ta bemorni o'chirishni tasdiqlaysizmi?\nBu amalni qaytarib bo'lmaydi!`)) return;
+    const btn = document.getElementById('bl-delete-btn');
+    if (btn) { btn.disabled = true; btn.textContent = 'O\'chirilmoqda...'; }
+    const sb = getSupabase();
+    const errors = [];
+    for (const key of BemorlarPage._selected) {
+      const [kt_no, type] = key.split(':');
+      const table = type === 'infarkt' ? 'infarkt_qabul' : 'insult_qabul';
+      const { error } = await sb.from(table).delete().eq('kt_no', kt_no);
+      if (error) errors.push(kt_no);
+    }
+    if (errors.length) showToast(`${errors.length} ta o'chirishda xatolik`, 'error');
+    else showToast(`${n} ta bemor o'chirildi`, 'success');
+    BemorlarPage._selected.clear();
+    await BemorlarPage.loadData();
   }
 };
