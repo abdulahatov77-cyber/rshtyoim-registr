@@ -61,7 +61,7 @@ const HisobotPage = {
 
       <!-- Filter -->
       <div class="h-card">
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 items-end">
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 items-end">
           <div>
             <label class="form-label !text-blue-900 font-semibold mb-1 block">Davr turi</label>
             <select id="h-period" class="form-select bg-slate-50 text-blue-900 border-blue-200 focus:border-blue-500 font-medium" onchange="HisobotPage.onPeriodChange()">
@@ -80,14 +80,24 @@ const HisobotPage = {
             <label class="form-label !text-blue-900 font-semibold mb-1 block">Gacha</label>
             <input id="h-to" type="date" class="form-input bg-slate-50 text-blue-900 border-blue-200 font-medium" value="${today}"/>
           </div>
-          <div class="flex gap-3">
+          <div>
+            <label class="form-label !text-blue-900 font-semibold mb-1 block">${icon('user', 14)} Yosh (dan)</label>
+            <input id="h-age-from" type="number" min="0" max="120" placeholder="0"
+              class="form-input bg-slate-50 text-blue-900 border-blue-200 font-medium"/>
+          </div>
+          <div>
+            <label class="form-label !text-blue-900 font-semibold mb-1 block">${icon('user', 14)} Yosh (gacha)</label>
+            <input id="h-age-to" type="number" min="0" max="120" placeholder="120"
+              class="form-input bg-slate-50 text-blue-900 border-blue-200 font-medium"/>
+          </div>
+          <div class="flex gap-2">
             <button class="btn btn-primary flex-1 shadow-md hover:shadow-lg flex items-center justify-center gap-2 rounded-xl" onclick="HisobotPage.loadReport()">
               ${icon('bar-chart-2', 18)} Ko'rish
             </button>
-            <button class="btn btn-success shadow-md hover:shadow-lg flex items-center justify-center px-4 rounded-xl" onclick="HisobotPage.exportReport()" title="Eksport">
+            <button class="btn btn-success shadow-md hover:shadow-lg flex items-center justify-center px-3 rounded-xl" onclick="HisobotPage.exportReport()" title="Eksport">
               ${icon('download', 18)}
             </button>
-            <button class="btn btn-secondary shadow-md hover:shadow-lg flex items-center justify-center px-4 rounded-xl" onclick="HisobotPage.printReport()" title="Chop etish">
+            <button class="btn btn-secondary shadow-md hover:shadow-lg flex items-center justify-center px-3 rounded-xl" onclick="HisobotPage.printReport()" title="Chop etish">
               ${icon('printer', 18)}
             </button>
           </div>
@@ -138,21 +148,30 @@ const HisobotPage = {
         filters.viloyat = profile.viloyat;
       }
       
+      const ageFrom = parseInt(document.getElementById('h-age-from')?.value) || 0;
+      const ageTo   = parseInt(document.getElementById('h-age-to')?.value)   || 120;
+      const byAge = arr => arr.filter(p => {
+        const age = Utils.calculateAge(p.tugilgan_sana || p.tugilgan_yil);
+        if (age === null || age === undefined || isNaN(age)) return true;
+        return age >= ageFrom && age <= ageTo;
+      });
+
       const [infRes, insRes, kuzatuvRes] = await Promise.all([
         DB.infarktList({ ...filters, allCols: true }),
         DB.insultList({ ...filters, allCols: true }),
         getSupabase().from('kuzatuv').select('*').gte('created_at', filters.from).lte('created_at', filters.to).range(0, 9999)
       ]);
-      const infs = infRes.data || infRes;
-      const ins  = insRes.data || insRes;
+      const infs = byAge(infRes.data || infRes);
+      const ins  = byAge(insRes.data || insRes);
       const kuzatuvAll = kuzatuvRes.data || [];
-      
+
       // Filter kuzatuv by region (since table lacks viloyat field)
       const validKtNos = new Set([...infs.map(p => p.kt_no), ...ins.map(p => p.kt_no)]);
       const kuzatuv = kuzatuvAll.filter(k => validKtNos.has(k.kt_no));
 
-      HisobotPage._lastData = { infs, ins, kuzatuv, from, to };
-      HisobotPage.renderReport(infs, ins, kuzatuv, from, to);
+      const ageLabel = (ageFrom > 0 || ageTo < 120) ? ` · Yosh: ${ageFrom}–${ageTo}` : '';
+      HisobotPage._lastData = { infs, ins, kuzatuv, from, to, ageLabel };
+      HisobotPage.renderReport(infs, ins, kuzatuv, from, to, ageLabel);
     } catch(err) {
       if (el) el.innerHTML = `
         <div class="h-card text-center text-red-600 py-12">
@@ -164,7 +183,7 @@ const HisobotPage = {
     }
   },
 
-  renderReport(infs, ins, kuzatuv, from, to) {
+  renderReport(infs, ins, kuzatuv, from, to, ageLabel = '') {
     const el = document.getElementById('h-results');
     // counts
     const stemi = infs.filter(p=>p.infarkt_turi?.includes('STEMI')).length;
@@ -207,6 +226,11 @@ const HisobotPage = {
 
     if (!el) return;
     el.innerHTML = `
+      <div class="h-card !py-3 !px-5 mb-4 flex items-center gap-3 bg-blue-50 border-blue-200">
+        ${icon('calendar', 16)}
+        <span class="text-sm font-bold text-blue-900">${from} — ${to}${ageLabel}</span>
+        <span class="ml-auto text-xs text-slate-500 font-semibold">Infarkt: ${infs.length} · Insult: ${ins.length} · Jami: ${infs.length + ins.length}</span>
+      </div>
       <!-- Summary Blocks -->
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <div class="h-stat group">
