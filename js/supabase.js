@@ -109,7 +109,7 @@ const DB = {
       if (filters.viloyat) q = q.eq('viloyat', filters.viloyat);
       if (filters.from)    q = q.gte('qabul_vaqt', filters.from);
       if (filters.to)      q = q.lte('qabul_vaqt', filters.to);
-      if (filters.search)  q = q.or(`fio.ilike.%${filters.search}%,kt_no.ilike.%${filters.search}%,muassasa.ilike.%${filters.search}%`);
+      if (filters.search) { const s = filters.search.replace(/[,().*%]/g, '').trim(); if (s) q = q.or(`fio.ilike.%${s}%,kt_no.ilike.%${s}%,muassasa.ilike.%${s}%`); }
       return q;
     };
 
@@ -193,7 +193,7 @@ const DB = {
       if (filters.viloyat) q = q.eq('viloyat', filters.viloyat);
       if (filters.from)    q = q.gte('qabul_vaqt', filters.from);
       if (filters.to)      q = q.lte('qabul_vaqt', filters.to);
-      if (filters.search)  q = q.or(`fio.ilike.%${filters.search}%,kt_no.ilike.%${filters.search}%,muassasa.ilike.%${filters.search}%`);
+      if (filters.search) { const s = filters.search.replace(/[,().*%]/g, '').trim(); if (s) q = q.or(`fio.ilike.%${s}%,kt_no.ilike.%${s}%,muassasa.ilike.%${s}%`); }
       return q;
     };
 
