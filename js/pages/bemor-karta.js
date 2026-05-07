@@ -1128,7 +1128,14 @@ const BemorKartaPage = {
 
             <div id="ch-boshqa-div" class="form-group mt-4 p-4 bg-blue-50 border border-blue-200 rounded-xl" style="display:none">
               <label class="form-label required text-blue-900">Qaysi muassasaga o'tkazildi?</label>
-              <input type="text" id="ch-boshqa-shifoxona" class="form-input mt-1" placeholder="Masalan: 1-shahar kasalxonasi, RSHTYOIM filiali..."/>
+              <select id="ch-boshqa-shifoxona" class="form-select mt-1" onchange="BemorKartaPage.onMuassasaSelect(this)">
+                <option value="">— Muassasani tanlang —</option>
+                ${Object.entries(APP_CONFIG.MUASSASALAR).map(([vil, list]) =>
+                  `<optgroup label="${vil}">${list.map(m => `<option value="${m}">${m}</option>`).join('')}</optgroup>`
+                ).join('')}
+                <option value="__boshqa__">Boshqa (qo'lda kiritish)...</option>
+              </select>
+              <input type="text" id="ch-boshqa-qolda" class="form-input mt-2" placeholder="Muassasa nomini kiriting..." style="display:none"/>
             </div>
 
             <div id="ch-reabil-div" class="form-group mt-4" style="display:none">
@@ -1164,6 +1171,27 @@ const BemorKartaPage = {
         BemorKartaPage.onNatijaChange(this.value);
       });
     });
+  },
+
+  onMuassasaSelect(sel) {
+    const qolda = document.getElementById('ch-boshqa-qolda');
+    if (!qolda) return;
+    if (sel.value === '__boshqa__') {
+      qolda.style.display = '';
+      qolda.focus();
+    } else {
+      qolda.style.display = 'none';
+      qolda.value = '';
+    }
+  },
+
+  getChiqarishMuassasa() {
+    const sel = document.getElementById('ch-boshqa-shifoxona');
+    if (!sel) return '';
+    if (sel.value === '__boshqa__') {
+      return document.getElementById('ch-boshqa-qolda')?.value?.trim() || '';
+    }
+    return sel.value;
   },
 
   editPatient() {
@@ -1314,7 +1342,7 @@ const BemorKartaPage = {
     // Infarkt uchun asoratlar
     const asoratlar = Array.from(document.querySelectorAll('input[name="ch-asorat"]:checked')).map(e => e.value);
 
-    const boshqaShifoxona = document.getElementById('ch-boshqa-shifoxona')?.value || '';
+    const boshqaShifoxona = BemorKartaPage.getChiqarishMuassasa();
     const reabilMarkaz   = document.getElementById('ch-reabil-markaz')?.value   || '';
 
     if (!sana) return showToast('Chiqarilgan sanani kiriting', 'warning');
