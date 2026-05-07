@@ -573,9 +573,21 @@ const DB = {
 
     if (userViloyat) {
       // Non-admin: muassasa kesimida ko'rsatish
-      const [{ data: inf }, { data: ins }] = await Promise.all([
-        sb.from('infarkt_qabul').select('muassasa').eq('viloyat', userViloyat).range(0, 9999),
-        sb.from('insult_qabul').select('muassasa').eq('viloyat', userViloyat).range(0, 9999)
+      const fetchAll = async (table) => {
+        let all = [], offset = 0;
+        while (true) {
+          const { data, error } = await sb.from(table).select('muassasa').eq('viloyat', userViloyat).range(offset, offset + 999);
+          if (error) { if (error.code === 'PGRST103') break; throw error; }
+          if (!data || data.length === 0) break;
+          all = all.concat(data);
+          if (data.length < 1000) break;
+          offset += 1000;
+        }
+        return all;
+      };
+      const [inf, ins] = await Promise.all([
+        fetchAll('infarkt_qabul'),
+        fetchAll('insult_qabul')
       ]);
       const map = {};
       (inf || []).forEach(r => {
@@ -613,13 +625,20 @@ const DB = {
   async getRegistryStats(type, viloyat = null) {
     const table = type === 'infarkt' ? 'infarkt_qabul' : 'insult_qabul';
     const sb = getSupabase();
-    
-    let query = sb.from(table).select('viloyat, muassasa, status');
-    if (viloyat) query = query.eq('viloyat', viloyat);
-    query = query.range(0, 9999);
 
-    const { data, error } = await query;
-    if (error) throw error;
+    let all = [], offset = 0;
+    while (true) {
+      let query = sb.from(table).select('viloyat, muassasa, status');
+      if (viloyat) query = query.eq('viloyat', viloyat);
+      query = query.range(offset, offset + 999);
+      const { data, error } = await query;
+      if (error) { if (error.code === 'PGRST103') break; throw error; }
+      if (!data || data.length === 0) break;
+      all = all.concat(data);
+      if (data.length < 1000) break;
+      offset += 1000;
+    }
+    const data = all;
     
     const stats = {};
     
