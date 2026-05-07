@@ -96,7 +96,7 @@ const InfarktReyestriPage = {
               ${data.map(r => {
                 const mortality = r.jami > 0 ? ((r.vafot / r.jami) * 100).toFixed(1) : 0;
                 return `
-                  <tr class="hover:bg-slate-50/80 transition-colors cursor-pointer group" onclick="${!this._viloyat ? `InfarktReyestriPage.drillDown('${r.name}')` : `Router.go('bemorlar', {type: 'infarkt', viloyat: '${this._viloyat}', muassasa: '${r.name}'})`}">
+                  <tr class="hover:bg-slate-50/80 transition-colors cursor-pointer group" data-name="${r.name.replace(/"/g,'&quot;')}" onclick="InfarktReyestriPage._rowClick(this)">
                     <td class="px-6 py-5">
                       <div class="flex items-center gap-3">
                         <div class="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-500 group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors">
@@ -107,16 +107,16 @@ const InfarktReyestriPage = {
                     </td>
                     <td class="px-6 py-5 text-center font-black text-slate-900">${r.jami}</td>
                     <td class="px-6 py-5 text-center">
-                      <span class="px-2.5 py-1 bg-green-50 text-green-600 rounded-lg text-[10px] font-black uppercase tracking-wider border border-green-100 hover:bg-green-100 transition-colors" onclick="event.stopPropagation(); Router.go('bemorlar', {type: 'infarkt', viloyat: '${this._viloyat || r.name}', muassasa: '${this._viloyat ? r.name : ''}', status: 'active'})">${r.aktiv}</span>
+                      <span class="px-2.5 py-1 bg-green-50 text-green-600 rounded-lg text-[10px] font-black uppercase tracking-wider border border-green-100 hover:bg-green-100 transition-colors" onclick="event.stopPropagation(); InfarktReyestriPage._badgeClick(this,'active')">${r.aktiv}</span>
                     </td>
                     <td class="px-6 py-5 text-center">
-                      <span class="px-2.5 py-1 bg-red-50 text-red-600 rounded-lg text-[10px] font-black uppercase tracking-wider border border-red-100 hover:bg-red-100 transition-colors" onclick="event.stopPropagation(); Router.go('bemorlar', {type: 'infarkt', viloyat: '${this._viloyat || r.name}', muassasa: '${this._viloyat ? r.name : ''}', status: 'vafot'})">${r.vafot}</span>
+                      <span class="px-2.5 py-1 bg-red-50 text-red-600 rounded-lg text-[10px] font-black uppercase tracking-wider border border-red-100 hover:bg-red-100 transition-colors" onclick="event.stopPropagation(); InfarktReyestriPage._badgeClick(this,'vafot')">${r.vafot}</span>
                     </td>
                     <td class="px-6 py-5 text-center">
-                      <span class="px-2.5 py-1 bg-blue-50 text-blue-600 rounded-lg text-[10px] font-black uppercase tracking-wider border border-blue-100 hover:bg-blue-100 transition-colors" onclick="event.stopPropagation(); Router.go('bemorlar', {type: 'infarkt', viloyat: '${this._viloyat || r.name}', muassasa: '${this._viloyat ? r.name : ''}', status: 'chiqarildi'})">${r.chiqarildi}</span>
+                      <span class="px-2.5 py-1 bg-blue-50 text-blue-600 rounded-lg text-[10px] font-black uppercase tracking-wider border border-blue-100 hover:bg-blue-100 transition-colors" onclick="event.stopPropagation(); InfarktReyestriPage._badgeClick(this,'chiqarildi')">${r.chiqarildi}</span>
                     </td>
                     <td class="px-6 py-5 text-center">
-                      <span class="px-2.5 py-1 bg-amber-50 text-amber-600 rounded-lg text-[10px] font-black uppercase tracking-wider border border-amber-100 hover:bg-amber-100 transition-colors" onclick="event.stopPropagation(); Router.go('bemorlar', {type: 'infarkt', viloyat: '${this._viloyat || r.name}', muassasa: '${this._viloyat ? r.name : ''}', status: 'otkazildi'})">${r.otkazildi}</span>
+                      <span class="px-2.5 py-1 bg-amber-50 text-amber-600 rounded-lg text-[10px] font-black uppercase tracking-wider border border-amber-100 hover:bg-amber-100 transition-colors" onclick="event.stopPropagation(); InfarktReyestriPage._badgeClick(this,'otkazildi')">${r.otkazildi}</span>
                     </td>
                     <td class="px-6 py-5 text-center">
                       <div class="flex items-center justify-center gap-3">
@@ -136,6 +136,23 @@ const InfarktReyestriPage = {
     `;
     wrap.innerHTML = html;
     initIcons();
+  },
+
+  _rowClick(el) {
+    const name = el.dataset.name;
+    if (!InfarktReyestriPage._viloyat) {
+      InfarktReyestriPage.drillDown(name);
+    } else {
+      Router.go('bemorlar', { type: 'infarkt', viloyat: InfarktReyestriPage._viloyat, muassasa: name });
+    }
+  },
+
+  _badgeClick(el, status) {
+    const row = el.closest('tr');
+    const name = row.dataset.name;
+    const viloyat = InfarktReyestriPage._viloyat || name;
+    const muassasa = InfarktReyestriPage._viloyat ? name : '';
+    Router.go('bemorlar', { type: 'infarkt', viloyat, muassasa, status });
   },
 
   drillDown(viloyat) {

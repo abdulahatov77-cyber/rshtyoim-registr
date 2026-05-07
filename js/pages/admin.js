@@ -323,7 +323,7 @@ const AdminPage = {
           </div>
           ${viloyatlar.map(v => {
             const hasChanges = AdminPage._overrides.some(o => o.viloyat === v);
-            return `<button onclick="AdminPage.selectViloyat('${v.replace(/'/g,"\\'")}') "
+            return `<button onclick="AdminPage.selectViloyat(this.dataset.v)" data-v="${v.replace(/"/g,'&quot;')}"
               style="display:flex;justify-content:space-between;align-items:center;width:100%;padding:9px 12px;border:none;border-radius:8px;cursor:pointer;text-align:left;font-size:13px;transition:background 0.15s;
               ${sel === v ? 'background:#1e293b;color:#e2e8f0;font-weight:700' : 'background:transparent;color:#94a3b8'}">
               <span>${v}</span>
@@ -352,7 +352,9 @@ const AdminPage = {
                   return `<div style="display:inline-flex;align-items:center;gap:6px;background:${isCustom?'rgba(16,185,129,0.1)':'rgba(30,41,59,0.8)'};border:1px solid ${isCustom?'rgba(16,185,129,0.3)':'rgba(99,118,158,0.15)'};border-radius:20px;padding:5px 10px 5px 12px">
                     <span style="font-size:13px;color:${isCustom?'#34d399':'#cbd5e1'}">${nomi}</span>
                     ${isCustom ? '<span style="font-size:10px;color:#34d399;font-weight:700">YO\'Q</span>' : ''}
-                    <button onclick="AdminPage.removeMuassasa('${sel.replace(/'/g,"\\'")}','${nomi.replace(/'/g,"\\'")}',${isCustom},${ovId?`'${ovId}'`:'null'})"
+                    <button onclick="AdminPage._removeMuassasaByData(this)"
+                      data-v="${sel.replace(/"/g,'&quot;')}" data-n="${nomi.replace(/"/g,'&quot;')}"
+                      data-custom="${isCustom?'1':'0'}" data-ov="${ovId||''}"
                       style="background:none;border:none;cursor:pointer;color:#ef4444;padding:0;display:flex;align-items:center;line-height:1"
                       title="O'chirish">✕</button>
                   </div>`;
@@ -418,6 +420,14 @@ const AdminPage = {
       showToast(`✅ "${nomi}" qo'shildi`, 'success');
       AdminPage._renderTabContent();
     } catch(err) { showToast('❌ ' + err.message, 'error'); }
+  },
+
+  _removeMuassasaByData(btn) {
+    const v = btn.dataset.v;
+    const n = btn.dataset.n;
+    const isCustom = btn.dataset.custom === '1';
+    const ovId = btn.dataset.ov || null;
+    AdminPage.removeMuassasa(v, n, isCustom, ovId);
   },
 
   async removeMuassasa(viloyat, nomi, isCustom, ovId) {
