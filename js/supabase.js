@@ -372,9 +372,7 @@ const DB = {
     const p = await Profile.getCurrent();
     const viloyat = p?.role === 'super_admin' ? null : p?.viloyat;
     const eqViloyat = (q) => viloyat ? q.eq('viloyat', viloyat) : q;
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const todayISO = today.toISOString();
+    const todayISO = new Date().toISOString().split('T')[0]; // "2026-05-07" — UTC sana, hisobot bilan bir xil
 
     const [
       { count: infAll },
