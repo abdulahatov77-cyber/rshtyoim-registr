@@ -1119,7 +1119,7 @@ const BemorKartaPage = {
               <div class="grid grid-cols-1 gap-2 mt-2">
                 ${APP_CONFIG.CHIQARISH_NATIJALARI.map(item => `
                   <label class="flex items-center gap-3 p-3 border rounded-xl cursor-pointer ${hoverColor} transition-all">
-                    <input type="radio" name="ch-natija" value="${item}" class="w-4 h-4 ${radioColor}" onchange="BemorKartaPage.onNatijaChange('${item}')">
+                    <input type="radio" name="ch-natija" value="${item}" class="w-4 h-4 ${radioColor} ch-natija-radio">
                     <span class="text-sm font-medium text-gray-700">${item}</span>
                   </label>
                 `).join('')}
@@ -1143,6 +1143,8 @@ const BemorKartaPage = {
         </div>
       </div>
     `;
+    initIcons();
+    BemorKartaPage.initChiqarishRadio();
   },
 
   chiqarishModal() {
@@ -1154,6 +1156,14 @@ const BemorKartaPage = {
     const reabilDiv = document.getElementById('ch-reabil-div');
     if (boshqaDiv) boshqaDiv.style.display = natija === "Boshqa shifoxonaga o'tkazildi" ? '' : 'none';
     if (reabilDiv) reabilDiv.style.display = natija === 'Reabilitatsiyaga yuborildi' ? '' : 'none';
+  },
+
+  initChiqarishRadio() {
+    document.querySelectorAll('.ch-natija-radio').forEach(radio => {
+      radio.addEventListener('change', function() {
+        BemorKartaPage.onNatijaChange(this.value);
+      });
+    });
   },
 
   editPatient() {
