@@ -3,6 +3,12 @@ const App = {
   _user: null,
 
   async init() {
+    // Load muassasa overrides before routing so all dropdowns have correct data
+    try {
+      const overrides = await MuassasaDB.getOverrides();
+      if (overrides.length) MuassasaDB.applyToConfig(overrides);
+    } catch(e) { /* muassasa_overrides table may not exist yet */ }
+
     try {
       const session = await Auth.getSession();
       if (session) {

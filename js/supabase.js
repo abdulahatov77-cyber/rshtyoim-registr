@@ -944,3 +944,80 @@ const Profile = {
     return data;
   }
 };
+
+// ==================== MUASSASA CONFIG DB ====================
+const MuassasaDB = {
+  async getOverrides() {
+    try {
+      const { data, error } = await getSupabase()
+        .from('muassasa_overrides').select('*').order('created_at');
+      if (error) throw error;
+      return data || [];
+    } catch(e) {
+      return [];
+    }
+  },
+
+  async addOverride(viloyat, nomi, action) {
+    const sb = getSupabase();
+    const opposite = action === 'add' ? 'remove' : 'add';
+    await sb.from('muassasa_overrides').delete()
+      .eq('viloyat', viloyat).eq('nomi', nomi).eq('action', opposite);
+    const { data: existing } = await sb.from('muassasa_overrides').select('id')
+      .eq('viloyat', viloyat).eq('nomi', nomi).eq('action', action);
+    if (existing && existing.length > 0) return;
+    const { error } = await sb.from('muassasa_overrides').insert({ viloyat, nomi, action });
+    if (error) throw error;
+  },
+
+  async deleteOverride(id) {
+    const { error } = await getSupabase().from('muassasa_overrides').delete().eq('id', id);
+    if (error) throw error;
+  },
+
+  applyToConfig(overrides) {
+    if (!APP_CONFIG._MUASSASALAR_BASE) {
+      APP_CONFIG._MUASSASALAR_BASE = {};
+      Object.keys(APP_CONFIG.MUASSASALAR).forEach(v => {
+        APP_CONFIG._MUASSASALAR_BASE[v] = [...APP_CONFIG.MUASSASALAR[v]];
+      });
+    }
+    const result = {};
+    Object.keys(APP_CONFIG._MUASSASALAR_BASE).forEach(v => {
+      result[v] = [...APP_CONFIG._MUASSASALAR_BASE[v]];
+    });
+    overrides.forEach(ov => {
+      if (!result[ov.viloyat]) result[ov.viloyat] = [];
+      if (ov.action === 'add' && !result[ov.viloyat].includes(ov.nomi)) {
+        result[ov.viloyat].push(ov.nomi);
+      } else if (ov.action === 'remove') {
+        result[ov.viloyat] = result[ov.viloyat].filter(n => n !== ov.nomi);
+      }
+    });
+    APP_CONFIG.MUASSASALAR = result;
+  },
+
+  async fetchAllRecords() {
+    const sb = getSupabase();
+    const cols = 'kt_no,fio,viloyat,muassasa,qabul_vaqt,status';
+    const fetchAll = async (table) => {
+      let all = [], from = 0;
+      while (true) {
+        const { data, error } = await sb.from(table).select(cols).range(from, from + 999);
+        if (error || !data) break;
+        all = all.concat(data);
+        if (data.length < 1000) break;
+        from += 1000;
+      }
+      return all;
+    };
+    const [infs, ins] = await Promise.all([
+      fetchAll('infarkt_qabul'),
+      fetchAll('insult_qabul')
+    ]);
+    return [
+      ...infs.map(p => ({ ...p, _type: 'infarkt' })),
+      ...ins.map(p => ({ ...p, _type: 'insult' }))
+    ];
+  }
+};
