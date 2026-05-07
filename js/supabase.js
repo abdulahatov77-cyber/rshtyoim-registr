@@ -378,6 +378,9 @@ const DB = {
     cutoff.setHours(7, 0, 0, 0);
     if (now < cutoff) cutoff.setDate(cutoff.getDate() - 1);
     const todayISO = cutoff.toISOString();
+    const cutoffEnd = new Date(cutoff);
+    cutoffEnd.setDate(cutoffEnd.getDate() + 1); // Ertaga 07:00 — yuqori chegara
+    const todayEndISO = cutoffEnd.toISOString();
 
     const [
       { count: infAll },
@@ -403,8 +406,8 @@ const DB = {
       eqViloyat(getSupabase().from('insult_qabul').select('id', { count: 'exact', head: true }).eq('status', 'vafot')),
       eqViloyat(getSupabase().from('infarkt_qabul').select('id', { count: 'exact', head: true }).eq('status', 'chiqarildi')),
       eqViloyat(getSupabase().from('insult_qabul').select('id', { count: 'exact', head: true }).eq('status', 'chiqarildi')),
-      eqViloyat(getSupabase().from('infarkt_qabul').select('id', { count: 'exact', head: true }).gte('qabul_vaqt', todayISO)),
-      eqViloyat(getSupabase().from('insult_qabul').select('id', { count: 'exact', head: true }).gte('qabul_vaqt', todayISO)),
+      eqViloyat(getSupabase().from('infarkt_qabul').select('id', { count: 'exact', head: true }).gte('qabul_vaqt', todayISO).lt('qabul_vaqt', todayEndISO)),
+      eqViloyat(getSupabase().from('insult_qabul').select('id', { count: 'exact', head: true }).gte('qabul_vaqt', todayISO).lt('qabul_vaqt', todayEndISO)),
       eqViloyat(getSupabase().from('infarkt_qabul').select('id', { count: 'exact', head: true }).eq('status', 'active')).in('killip', ['Killip III — o\'pka shishi', 'Killip IV — kardiogen shok']),
       eqViloyat(getSupabase().from('insult_qabul').select('id', { count: 'exact', head: true }).eq('status', 'active')).gte('nihss_qabul', 15),
       eqViloyat(getSupabase().from('infarkt_qabul').select('id', { count: 'exact', head: true }).not('otkazilgan_muassasa', 'is', null)),
