@@ -441,6 +441,12 @@ const HisobotPage = {
     if (!d) return;
     HisobotPage._lastListType = type;
     const patients = type === 'infarkt' ? d.infs : d.ins;
+
+    // Bemor-karta navigatsiyasini hisobot ro'yxati bilan to'ldirish
+    if (window.BemorKartaPage) {
+      BemorKartaPage._navList = patients.map(p => ({ ...p, _type: type }));
+      BemorKartaPage._navIndex = -1;
+    }
     const color = type === 'infarkt' ? '#dc2626' : '#7c3aed';
     const title = type === 'infarkt' ? 'Infarkt' : 'Insult';
 
