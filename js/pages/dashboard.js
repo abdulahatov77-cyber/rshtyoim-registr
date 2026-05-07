@@ -295,15 +295,15 @@ const DashboardPage = {
         <div class="bg-white rounded-2xl border-t-4 border-t-red-500 shadow-sm overflow-hidden">
           <div class="p-6 border-b border-slate-100 flex items-center justify-between">
             <h3 class="font-bold text-slate-800 flex items-center gap-2">${icon('heart-pulse', 20, 'text-red-500')} Infarkt turlari va muolajalar</h3>
-            <span class="text-[10px] font-bold text-slate-400">YALPI KO'RSATKICHLAR</span>
+            <span class="text-[10px] font-bold text-slate-400">DAVOLANISH / O'LIM</span>
           </div>
-          <div class="p-6 grid grid-cols-2 md:grid-cols-3 gap-4">
-            ${this.renderDetailCard('STEMI', stats.stemi ?? 0)}
-            ${this.renderDetailCard('NSTEMI', stats.nstemi ?? 0)}
-            ${this.renderDetailCard("O'tkir miokard infarkti (AMI)", stats.miokard ?? 0)}
-            ${this.renderDetailCard('Koronarangiografiya', stats.koronar ?? 0)}
-            ${this.renderDetailCard('Trombolizis', stats.trombolizis ?? 0)}
-            ${this.renderDetailCard('Medikamentoz davo', stats.medikamentoz ?? 0)}
+          <div class="p-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+            ${this.renderDetailCard('STEMI', stats.stemi ?? 0, stats.stemiDavol ?? 0, stats.stemiVafot ?? 0)}
+            ${this.renderDetailCard('NSTEMI', stats.nstemi ?? 0, stats.nstemiDavol ?? 0, stats.nstemiVafot ?? 0)}
+            ${this.renderDetailCard("O'tkir miokard infarkti (AMI)", stats.miokard ?? 0, stats.miokardDavol ?? 0, stats.miokardVafot ?? 0)}
+            ${this.renderDetailCard('Koronarangiografiya', stats.koronar ?? 0, stats.koronarDavol ?? 0, stats.koronarVafot ?? 0)}
+            ${this.renderDetailCard('Trombolizis (TLT)', stats.trombolizis ?? 0, stats.trombolizisDavol ?? 0, stats.trombolizisVafot ?? 0)}
+            ${this.renderDetailCard('Medikamentoz davo', stats.medikamentoz ?? 0, stats.medikamentozDavol ?? 0, stats.medikamentozVafot ?? 0)}
           </div>
         </div>
 
@@ -311,15 +311,15 @@ const DashboardPage = {
         <div class="bg-white rounded-2xl border-t-4 border-t-blue-500 shadow-sm overflow-hidden">
           <div class="p-6 border-b border-slate-100 flex items-center justify-between">
             <h3 class="font-bold text-slate-800 flex items-center gap-2">${icon('brain-circuit', 20, 'text-blue-500')} Insult turlari va muolajalar</h3>
-            <span class="text-[10px] font-bold text-slate-400">YALPI KO'RSATKICHLAR</span>
+            <span class="text-[10px] font-bold text-slate-400">DAVOLANISH / O'LIM</span>
           </div>
-          <div class="p-6 grid grid-cols-2 md:grid-cols-3 gap-4">
-            ${this.renderDetailCard('Ishemik insult', stats.ishemik ?? 0)}
-            ${this.renderDetailCard('Gemorragik insult', stats.gemorragik ?? 0)}
-            ${this.renderDetailCard('Tranzitor ishemik ataka', stats.tia ?? 0)}
-            ${this.renderDetailCard('MSKT angiografiya', stats.mskt ?? 0)}
-            ${this.renderDetailCard('Trombektomiya', stats.trombektomiya ?? 0)}
-            ${this.renderDetailCard('Medikamentoz davo', stats.insultMedikamentoz ?? 0)}
+          <div class="p-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+            ${this.renderDetailCard('Ishemik insult', stats.ishemik ?? 0, stats.ishemikDavol ?? 0, stats.ishemikVafot ?? 0)}
+            ${this.renderDetailCard('Gemorragik insult', stats.gemorragik ?? 0, stats.gemorragikDavol ?? 0, stats.gemorragikVafot ?? 0)}
+            ${this.renderDetailCard('Tranzitor ishemik ataka (TIA)', stats.tia ?? 0, stats.tiaDavol ?? 0, stats.tiaVafot ?? 0)}
+            ${this.renderDetailCard('MSKT bosh miya', stats.mskt ?? 0, stats.msktDavol ?? 0, stats.msktVafot ?? 0)}
+            ${this.renderDetailCard('Trombektomiya', stats.trombektomiya ?? 0, stats.trombektomiyaDavol ?? 0, stats.trombektomiyaVafot ?? 0)}
+            ${this.renderDetailCard('Medikamentoz davo', stats.insultMedikamentoz ?? 0, stats.insultMedikamentozDavol ?? 0, stats.insultMedikamentozVafot ?? 0)}
           </div>
         </div>
       </div>
@@ -423,11 +423,23 @@ const DashboardPage = {
     `;
   },
 
-  renderDetailCard(label, val, unit = '') {
+  renderDetailCard(label, val, davol = null, vafot = null) {
+    const hasSub = davol !== null && vafot !== null;
     return `
       <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 hover:shadow-md hover:-translate-y-1 transition-all duration-300 cursor-pointer group">
         <p class="text-[11px] font-bold text-slate-600 uppercase mb-2 group-hover:text-blue-600 transition-colors leading-tight">${label}</p>
-        <p class="text-2xl font-black text-slate-900">${val.toLocaleString()} ${unit ? `<span class="text-xs text-slate-500 font-semibold uppercase">${unit}</span>` : ''}</p>
+        <p class="text-2xl font-black text-slate-900 mb-2">${val.toLocaleString()}</p>
+        ${hasSub ? `
+        <div class="flex gap-2 mt-1">
+          <span class="flex items-center gap-1 text-[10px] font-bold text-green-600 bg-green-50 border border-green-200 rounded-md px-2 py-0.5">
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            ${davol.toLocaleString()} davolandi
+          </span>
+          <span class="flex items-center gap-1 text-[10px] font-bold text-red-600 bg-red-50 border border-red-200 rounded-md px-2 py-0.5">
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            ${vafot.toLocaleString()} vafot
+          </span>
+        </div>` : ''}
       </div>
     `;
   },

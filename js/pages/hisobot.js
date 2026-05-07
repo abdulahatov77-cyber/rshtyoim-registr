@@ -209,14 +209,43 @@ const HisobotPage = {
   renderReport(infs, ins, kuzatuv, from, to, ageLabel = '') {
     const el = document.getElementById('h-results');
     // counts
-    const stemi = infs.filter(p=>p.infarkt_turi?.includes('STEMI')).length;
-    const nstemi = infs.filter(p=>p.infarkt_turi?.includes('NSTEMI')).length;
-    const pci = infs.filter(p=>p.muolaja_turi?.includes('PCI')||p.muolaja_turi?.includes('stentlash')).length;
-    const tlt_inf = infs.filter(p=>p.muolaja_turi?.includes('TLT')||p.muolaja_turi?.includes('trombolitik')).length;
+    const stemi = infs.filter(p=>p.infarkt_turi?.toUpperCase().includes('STEMI')&&!p.infarkt_turi?.toUpperCase().includes('NSTEMI')).length;
+    const stemiDavol = infs.filter(p=>p.infarkt_turi?.toUpperCase().includes('STEMI')&&!p.infarkt_turi?.toUpperCase().includes('NSTEMI')&&p.status==='chiqarildi').length;
+    const stemiVafot = infs.filter(p=>p.infarkt_turi?.toUpperCase().includes('STEMI')&&!p.infarkt_turi?.toUpperCase().includes('NSTEMI')&&p.status==='vafot').length;
+    const nstemi = infs.filter(p=>p.infarkt_turi?.toUpperCase().includes('NSTEMI')).length;
+    const nstemiDavol = infs.filter(p=>p.infarkt_turi?.toUpperCase().includes('NSTEMI')&&p.status==='chiqarildi').length;
+    const nstemiVafot = infs.filter(p=>p.infarkt_turi?.toUpperCase().includes('NSTEMI')&&p.status==='vafot').length;
+    const ami = infs.filter(p=>p.infarkt_turi?.toLowerCase().includes('miokard')).length;
+    const amiDavol = infs.filter(p=>p.infarkt_turi?.toLowerCase().includes('miokard')&&p.status==='chiqarildi').length;
+    const amiVafot = infs.filter(p=>p.infarkt_turi?.toLowerCase().includes('miokard')&&p.status==='vafot').length;
+    const koronar = infs.filter(p=>p.muolaja_turi?.includes('KAG')||p.muolaja_turi?.toLowerCase().includes('koronarangiografiya')).length;
+    const koronarDavol = infs.filter(p=>(p.muolaja_turi?.includes('KAG')||p.muolaja_turi?.toLowerCase().includes('koronarangiografiya'))&&p.status==='chiqarildi').length;
+    const koronarVafot = infs.filter(p=>(p.muolaja_turi?.includes('KAG')||p.muolaja_turi?.toLowerCase().includes('koronarangiografiya'))&&p.status==='vafot').length;
+    const tlt_inf = infs.filter(p=>p.muolaja_turi?.includes('TLT')||p.muolaja_turi?.toLowerCase().includes('trombolitik')).length;
+    const tltDavol = infs.filter(p=>(p.muolaja_turi?.includes('TLT')||p.muolaja_turi?.toLowerCase().includes('trombolitik'))&&p.status==='chiqarildi').length;
+    const tltVafot = infs.filter(p=>(p.muolaja_turi?.includes('TLT')||p.muolaja_turi?.toLowerCase().includes('trombolitik'))&&p.status==='vafot').length;
+    const medInf = infs.filter(p=>p.muolaja_turi?.toLowerCase().includes('medikamentoz')).length;
+    const medInfDavol = infs.filter(p=>p.muolaja_turi?.toLowerCase().includes('medikamentoz')&&p.status==='chiqarildi').length;
+    const medInfVafot = infs.filter(p=>p.muolaja_turi?.toLowerCase().includes('medikamentoz')&&p.status==='vafot').length;
     const killip34 = infs.filter(p=>p.killip?.includes('III')||p.killip?.includes('IV')).length;
     const ishemik = ins.filter(p=>p.insult_turi?.toLowerCase().includes('ishemik')).length;
+    const ishemikDavol = ins.filter(p=>p.insult_turi?.toLowerCase().includes('ishemik')&&p.status==='chiqarildi').length;
+    const ishemikVafot = ins.filter(p=>p.insult_turi?.toLowerCase().includes('ishemik')&&p.status==='vafot').length;
     const gemorragik = ins.filter(p=>p.insult_turi?.toLowerCase().includes('gemorragik')).length;
-    const tia = ins.filter(p=>p.insult_turi?.toLowerCase().includes('tia')).length;
+    const gemorragikDavol = ins.filter(p=>p.insult_turi?.toLowerCase().includes('gemorragik')&&p.status==='chiqarildi').length;
+    const gemorragikVafot = ins.filter(p=>p.insult_turi?.toLowerCase().includes('gemorragik')&&p.status==='vafot').length;
+    const tia = ins.filter(p=>p.insult_turi?.toUpperCase().includes('TIA')).length;
+    const tiaDavol = ins.filter(p=>p.insult_turi?.toUpperCase().includes('TIA')&&p.status==='chiqarildi').length;
+    const tiaVafot = ins.filter(p=>p.insult_turi?.toUpperCase().includes('TIA')&&p.status==='vafot').length;
+    const mskt = ins.filter(p=>p.muolaja_turi?.toUpperCase().includes('MSKT')).length;
+    const msktDavol = ins.filter(p=>p.muolaja_turi?.toUpperCase().includes('MSKT')&&p.status==='chiqarildi').length;
+    const msktVafot = ins.filter(p=>p.muolaja_turi?.toUpperCase().includes('MSKT')&&p.status==='vafot').length;
+    const trombektomiya = ins.filter(p=>p.muolaja_turi?.toLowerCase().includes('trombektom')||p.muolaja_turi?.toLowerCase().includes('tromboekstraksiya')).length;
+    const trombektomiyaDavol = ins.filter(p=>(p.muolaja_turi?.toLowerCase().includes('trombektom')||p.muolaja_turi?.toLowerCase().includes('tromboekstraksiya'))&&p.status==='chiqarildi').length;
+    const trombektomiyaVafot = ins.filter(p=>(p.muolaja_turi?.toLowerCase().includes('trombektom')||p.muolaja_turi?.toLowerCase().includes('tromboekstraksiya'))&&p.status==='vafot').length;
+    const medIns = ins.filter(p=>p.muolaja_turi?.toLowerCase().includes('medikamentoz')||p.muolaja_turi?.toLowerCase().includes('konservativ')).length;
+    const medInsDavol = ins.filter(p=>(p.muolaja_turi?.toLowerCase().includes('medikamentoz')||p.muolaja_turi?.toLowerCase().includes('konservativ'))&&p.status==='chiqarildi').length;
+    const medInsVafot = ins.filter(p=>(p.muolaja_turi?.toLowerCase().includes('medikamentoz')||p.muolaja_turi?.toLowerCase().includes('konservativ'))&&p.status==='vafot').length;
     const nihss15 = ins.filter(p=>p.nihss_qabul>=15).length;
     const vafot_inf = infs.filter(p=>p.status==='vafot').length;
     const vafot_ins = ins.filter(p=>p.status==='vafot').length;
@@ -241,10 +270,14 @@ const HisobotPage = {
     // Readmission (30 days)
     const readm30 = (kuzatuv || []).filter(k => k.kuzatuv_davri==='30 kunlik' && (k.holati?.includes('Qayta') || k.qayta_xuruj)).length;
 
-    const statRow = (label, val, iconName, colorClass) =>
+    const statRow = (label, val, iconName, colorClass, davol = null, vafot = null) =>
       `<div class="h-row">
         <span class="h-label flex items-center gap-2">${icon(iconName, 16)} ${label}</span>
-        <span class="h-val ${colorClass} bg-white px-3 py-1 rounded-lg border border-slate-200 shadow-sm">${val}</span>
+        <span class="flex items-center gap-2 ml-auto">
+          ${davol !== null ? `<span class="flex items-center gap-1 text-[10px] font-bold text-green-600 bg-green-50 border border-green-200 rounded-md px-2 py-0.5">${icon('check-circle',12)} ${davol} davolandi</span>` : ''}
+          ${vafot !== null ? `<span class="flex items-center gap-1 text-[10px] font-bold text-red-600 bg-red-50 border border-red-200 rounded-md px-2 py-0.5">${icon('x-circle',12)} ${vafot} vafot</span>` : ''}
+          <span class="h-val ${colorClass} bg-white px-3 py-1 rounded-lg border border-slate-200 shadow-sm">${val}</span>
+        </span>
       </div>`;
 
     if (!el) return;
@@ -305,15 +338,16 @@ const HisobotPage = {
             </button>
           </div>
           <div class="p-2">
-            ${statRow('STEMI', stemi, 'activity', 'text-red-700')}
-            ${statRow('NSTEMI', nstemi, 'pulse', 'text-orange-600')}
-            ${statRow('PCI / Stentlash', pci, 'syringe', 'text-blue-700')}
-            ${statRow('Trombolitik terapiya (TLT)', tlt_inf, 'droplets', 'text-purple-700')}
-            ${statRow('Killip III-IV (kritik)', killip34, 'alert-circle', 'text-red-600')}
+            ${statRow('STEMI', stemi, 'activity', 'text-red-700', stemiDavol, stemiVafot)}
+            ${statRow('NSTEMI', nstemi, 'pulse', 'text-orange-600', nstemiDavol, nstemiVafot)}
+            ${statRow("O'tkir miokard infarkti (AMI)", ami, 'heart', 'text-rose-700', amiDavol, amiVafot)}
+            ${statRow('Koronarangiografiya', koronar, 'syringe', 'text-blue-700', koronarDavol, koronarVafot)}
+            ${statRow('Trombolitik terapiya (TLT)', tlt_inf, 'droplets', 'text-purple-700', tltDavol, tltVafot)}
+            ${statRow('Medikamentoz davo', medInf, 'pill', 'text-teal-700', medInfDavol, medInfVafot)}
             ${statRow('Vafot', vafot_inf, 'heart-crack', 'text-slate-700')}
           </div>
         </div>
-        
+
         <!-- Insult Detail -->
         <div class="h-card !p-0 overflow-hidden">
           <div class="bg-purple-50 p-5 border-b border-purple-100 flex items-center justify-between">
@@ -323,10 +357,12 @@ const HisobotPage = {
             </button>
           </div>
           <div class="p-2">
-            ${statRow('Ishemik insult', ishemik, 'circle-dot', 'text-blue-700')}
-            ${statRow('Gemorragik insult', gemorragik, 'droplet', 'text-red-700')}
-            ${statRow('TIA', tia, 'zap', 'text-amber-600')}
-            ${statRow('NIHSS ≥ 15 (og\'ir)', nihss15, 'alert-octagon', 'text-red-600')}
+            ${statRow('Ishemik insult', ishemik, 'circle-dot', 'text-blue-700', ishemikDavol, ishemikVafot)}
+            ${statRow('Gemorragik insult', gemorragik, 'droplet', 'text-red-700', gemorragikDavol, gemorragikVafot)}
+            ${statRow('Tranzitor ishemik ataka (TIA)', tia, 'zap', 'text-amber-600', tiaDavol, tiaVafot)}
+            ${statRow('MSKT bosh miya', mskt, 'scan', 'text-indigo-700', msktDavol, msktVafot)}
+            ${statRow('Trombektomiya', trombektomiya, 'scissors', 'text-pink-700', trombektomiyaDavol, trombektomiyaVafot)}
+            ${statRow('Medikamentoz davo', medIns, 'pill', 'text-teal-700', medInsDavol, medInsVafot)}
             ${statRow('Vafot', vafot_ins, 'heart-crack', 'text-slate-700')}
           </div>
         </div>
@@ -504,19 +540,53 @@ const HisobotPage = {
     const d = HisobotPage._lastData;
     if (!d) { showToast('Avval hisobot yuklab oling','warning'); return; }
     const { infs, ins, from, to } = d;
-    const stemi = infs.filter(p=>p.infarkt_turi?.includes('STEMI')).length;
-    const nstemi = infs.filter(p=>p.infarkt_turi?.includes('NSTEMI')).length;
-    const pci = infs.filter(p=>p.muolaja_turi?.includes('PCI')||p.muolaja_turi?.includes('stentlash')).length;
-    const tlt_inf = infs.filter(p=>p.muolaja_turi?.includes('TLT')||p.muolaja_turi?.includes('trombolitik')).length;
+    const stemi = infs.filter(p=>p.infarkt_turi?.toUpperCase().includes('STEMI')&&!p.infarkt_turi?.toUpperCase().includes('NSTEMI')).length;
+    const stemiDavol = infs.filter(p=>p.infarkt_turi?.toUpperCase().includes('STEMI')&&!p.infarkt_turi?.toUpperCase().includes('NSTEMI')&&p.status==='chiqarildi').length;
+    const stemiVafot = infs.filter(p=>p.infarkt_turi?.toUpperCase().includes('STEMI')&&!p.infarkt_turi?.toUpperCase().includes('NSTEMI')&&p.status==='vafot').length;
+    const nstemi = infs.filter(p=>p.infarkt_turi?.toUpperCase().includes('NSTEMI')).length;
+    const nstemiDavol = infs.filter(p=>p.infarkt_turi?.toUpperCase().includes('NSTEMI')&&p.status==='chiqarildi').length;
+    const nstemiVafot = infs.filter(p=>p.infarkt_turi?.toUpperCase().includes('NSTEMI')&&p.status==='vafot').length;
+    const ami = infs.filter(p=>p.infarkt_turi?.toLowerCase().includes('miokard')).length;
+    const amiDavol = infs.filter(p=>p.infarkt_turi?.toLowerCase().includes('miokard')&&p.status==='chiqarildi').length;
+    const amiVafot = infs.filter(p=>p.infarkt_turi?.toLowerCase().includes('miokard')&&p.status==='vafot').length;
+    const koronar = infs.filter(p=>p.muolaja_turi?.includes('KAG')||p.muolaja_turi?.toLowerCase().includes('koronarangiografiya')).length;
+    const koronarDavol = infs.filter(p=>(p.muolaja_turi?.includes('KAG')||p.muolaja_turi?.toLowerCase().includes('koronarangiografiya'))&&p.status==='chiqarildi').length;
+    const koronarVafot = infs.filter(p=>(p.muolaja_turi?.includes('KAG')||p.muolaja_turi?.toLowerCase().includes('koronarangiografiya'))&&p.status==='vafot').length;
+    const tlt_inf = infs.filter(p=>p.muolaja_turi?.includes('TLT')||p.muolaja_turi?.toLowerCase().includes('trombolitik')).length;
+    const tltDavol = infs.filter(p=>(p.muolaja_turi?.includes('TLT')||p.muolaja_turi?.toLowerCase().includes('trombolitik'))&&p.status==='chiqarildi').length;
+    const tltVafot = infs.filter(p=>(p.muolaja_turi?.includes('TLT')||p.muolaja_turi?.toLowerCase().includes('trombolitik'))&&p.status==='vafot').length;
+    const medInf = infs.filter(p=>p.muolaja_turi?.toLowerCase().includes('medikamentoz')).length;
+    const medInfDavol = infs.filter(p=>p.muolaja_turi?.toLowerCase().includes('medikamentoz')&&p.status==='chiqarildi').length;
+    const medInfVafot = infs.filter(p=>p.muolaja_turi?.toLowerCase().includes('medikamentoz')&&p.status==='vafot').length;
     const killip34 = infs.filter(p=>p.killip?.includes('III')||p.killip?.includes('IV')).length;
     const ishemik = ins.filter(p=>p.insult_turi?.toLowerCase().includes('ishemik')).length;
+    const ishemikDavol = ins.filter(p=>p.insult_turi?.toLowerCase().includes('ishemik')&&p.status==='chiqarildi').length;
+    const ishemikVafot = ins.filter(p=>p.insult_turi?.toLowerCase().includes('ishemik')&&p.status==='vafot').length;
     const gemorragik = ins.filter(p=>p.insult_turi?.toLowerCase().includes('gemorragik')).length;
-    const tia = ins.filter(p=>p.insult_turi?.toLowerCase().includes('tia')).length;
+    const gemorragikDavol = ins.filter(p=>p.insult_turi?.toLowerCase().includes('gemorragik')&&p.status==='chiqarildi').length;
+    const gemorragikVafot = ins.filter(p=>p.insult_turi?.toLowerCase().includes('gemorragik')&&p.status==='vafot').length;
+    const tia = ins.filter(p=>p.insult_turi?.toUpperCase().includes('TIA')).length;
+    const tiaDavol = ins.filter(p=>p.insult_turi?.toUpperCase().includes('TIA')&&p.status==='chiqarildi').length;
+    const tiaVafot = ins.filter(p=>p.insult_turi?.toUpperCase().includes('TIA')&&p.status==='vafot').length;
+    const mskt = ins.filter(p=>p.muolaja_turi?.toUpperCase().includes('MSKT')).length;
+    const msktDavol = ins.filter(p=>p.muolaja_turi?.toUpperCase().includes('MSKT')&&p.status==='chiqarildi').length;
+    const msktVafot = ins.filter(p=>p.muolaja_turi?.toUpperCase().includes('MSKT')&&p.status==='vafot').length;
+    const trombektomiya = ins.filter(p=>p.muolaja_turi?.toLowerCase().includes('trombektom')||p.muolaja_turi?.toLowerCase().includes('tromboekstraksiya')).length;
+    const trombektomiyaDavol = ins.filter(p=>(p.muolaja_turi?.toLowerCase().includes('trombektom')||p.muolaja_turi?.toLowerCase().includes('tromboekstraksiya'))&&p.status==='chiqarildi').length;
+    const trombektomiyaVafot = ins.filter(p=>(p.muolaja_turi?.toLowerCase().includes('trombektom')||p.muolaja_turi?.toLowerCase().includes('tromboekstraksiya'))&&p.status==='vafot').length;
+    const medIns = ins.filter(p=>p.muolaja_turi?.toLowerCase().includes('medikamentoz')||p.muolaja_turi?.toLowerCase().includes('konservativ')).length;
+    const medInsDavol = ins.filter(p=>(p.muolaja_turi?.toLowerCase().includes('medikamentoz')||p.muolaja_turi?.toLowerCase().includes('konservativ'))&&p.status==='chiqarildi').length;
+    const medInsVafot = ins.filter(p=>(p.muolaja_turi?.toLowerCase().includes('medikamentoz')||p.muolaja_turi?.toLowerCase().includes('konservativ'))&&p.status==='vafot').length;
     const nihss15 = ins.filter(p=>p.nihss_qabul>=15).length;
     const vafot_inf = infs.filter(p=>p.status==='vafot').length;
     const vafot_ins = ins.filter(p=>p.status==='vafot').length;
 
-    const row = (label, val) => `<tr><td style="padding:6px 10px;border-bottom:1px solid #e2e8f0;color:#334155">${label}</td><td style="padding:6px 10px;border-bottom:1px solid #e2e8f0;font-weight:700;text-align:right">${val}</td></tr>`;
+    const row = (label, val, davol = null, vafot = null) => `<tr>
+      <td style="padding:6px 10px;border-bottom:1px solid #e2e8f0;color:#334155">${label}</td>
+      ${davol !== null ? `<td style="padding:6px 10px;border-bottom:1px solid #e2e8f0;color:#16a34a;font-size:11px">${davol} davolandi</td>` : '<td></td>'}
+      ${vafot !== null ? `<td style="padding:6px 10px;border-bottom:1px solid #e2e8f0;color:#dc2626;font-size:11px">${vafot} vafot</td>` : '<td></td>'}
+      <td style="padding:6px 10px;border-bottom:1px solid #e2e8f0;font-weight:700;text-align:right">${val}</td>
+    </tr>`;
     const w = window.open('','_blank');
     w.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8">
 <title>Hisobot ${from} – ${to}</title>
@@ -549,21 +619,24 @@ const HisobotPage = {
   <div class="card">
     <div class="card-head red">Infarkt tahlili (${infs.length} ta)</div>
     <table>
-      ${row('STEMI', stemi)}
-      ${row('NSTEMI', nstemi)}
-      ${row('PCI / Stentlash', pci)}
-      ${row('Trombolitik terapiya (TLT)', tlt_inf)}
-      ${row('Killip III–IV (kritik)', killip34)}
+      ${row('STEMI', stemi, stemiDavol, stemiVafot)}
+      ${row('NSTEMI', nstemi, nstemiDavol, nstemiVafot)}
+      ${row("O'tkir miokard infarkti (AMI)", ami, amiDavol, amiVafot)}
+      ${row('Koronarangiografiya', koronar, koronarDavol, koronarVafot)}
+      ${row('Trombolitik terapiya (TLT)', tlt_inf, tltDavol, tltVafot)}
+      ${row('Medikamentoz davo', medInf, medInfDavol, medInfVafot)}
       ${row('Vafot', vafot_inf)}
     </table>
   </div>
   <div class="card">
     <div class="card-head purple">Insult tahlili (${ins.length} ta)</div>
     <table>
-      ${row('Ishemik insult', ishemik)}
-      ${row('Gemorragik insult', gemorragik)}
-      ${row('TIA', tia)}
-      ${row('NIHSS ≥ 15 (og\'ir)', nihss15)}
+      ${row('Ishemik insult', ishemik, ishemikDavol, ishemikVafot)}
+      ${row('Gemorragik insult', gemorragik, gemorragikDavol, gemorragikVafot)}
+      ${row('Tranzitor ishemik ataka (TIA)', tia, tiaDavol, tiaVafot)}
+      ${row('MSKT bosh miya', mskt, msktDavol, msktVafot)}
+      ${row('Trombektomiya', trombektomiya, trombektomiyaDavol, trombektomiyaVafot)}
+      ${row('Medikamentoz davo', medIns, medInsDavol, medInsVafot)}
       ${row('Vafot', vafot_ins)}
     </table>
   </div>

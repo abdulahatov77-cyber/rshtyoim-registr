@@ -430,8 +430,8 @@ const DB = {
       return all;
     };
     const [iT, nT] = await Promise.all([
-      fetchAllTypes('infarkt_qabul', 'infarkt_turi,muolaja_turi'),
-      fetchAllTypes('insult_qabul', 'insult_turi,muolaja_turi')
+      fetchAllTypes('infarkt_qabul', 'infarkt_turi,muolaja_turi,status'),
+      fetchAllTypes('insult_qabul', 'insult_turi,muolaja_turi,status')
     ]);
 
     return {
@@ -451,19 +451,43 @@ const DB = {
       kritikInsult: kritikInsult || 0,
       otkazildi: (infOtkaz || 0) + (insOtkaz || 0),
       // Infarkt klinik
-      stemi:        iT.filter(p => p.infarkt_turi?.toUpperCase().includes('STEMI') && !p.infarkt_turi?.toUpperCase().includes('NSTEMI')).length,
-      nstemi:       iT.filter(p => p.infarkt_turi?.toUpperCase().includes('NSTEMI')).length,
-      miokard:      iT.filter(p => p.infarkt_turi?.toLowerCase().includes('miokard')).length,
-      koronar:      iT.filter(p => p.muolaja_turi?.includes('KAG') || p.muolaja_turi?.toLowerCase().includes('angiografiya')).length,
-      trombolizis:  iT.filter(p => p.muolaja_turi?.includes('TLT') || p.muolaja_turi?.toLowerCase().includes('trombolitik')).length,
-      medikamentoz: iT.filter(p => p.muolaja_turi?.toLowerCase().includes('medikamentoz')).length,
+      stemi:              iT.filter(p => p.infarkt_turi?.toUpperCase().includes('STEMI') && !p.infarkt_turi?.toUpperCase().includes('NSTEMI')).length,
+      stemiDavol:         iT.filter(p => p.infarkt_turi?.toUpperCase().includes('STEMI') && !p.infarkt_turi?.toUpperCase().includes('NSTEMI') && p.status === 'chiqarildi').length,
+      stemiVafot:         iT.filter(p => p.infarkt_turi?.toUpperCase().includes('STEMI') && !p.infarkt_turi?.toUpperCase().includes('NSTEMI') && p.status === 'vafot').length,
+      nstemi:             iT.filter(p => p.infarkt_turi?.toUpperCase().includes('NSTEMI')).length,
+      nstemiDavol:        iT.filter(p => p.infarkt_turi?.toUpperCase().includes('NSTEMI') && p.status === 'chiqarildi').length,
+      nstemiVafot:        iT.filter(p => p.infarkt_turi?.toUpperCase().includes('NSTEMI') && p.status === 'vafot').length,
+      miokard:            iT.filter(p => p.infarkt_turi?.toLowerCase().includes('miokard')).length,
+      miokardDavol:       iT.filter(p => p.infarkt_turi?.toLowerCase().includes('miokard') && p.status === 'chiqarildi').length,
+      miokardVafot:       iT.filter(p => p.infarkt_turi?.toLowerCase().includes('miokard') && p.status === 'vafot').length,
+      koronar:            iT.filter(p => p.muolaja_turi?.includes('KAG') || p.muolaja_turi?.toLowerCase().includes('koronarangiografiya')).length,
+      koronarDavol:       iT.filter(p => (p.muolaja_turi?.includes('KAG') || p.muolaja_turi?.toLowerCase().includes('koronarangiografiya')) && p.status === 'chiqarildi').length,
+      koronarVafot:       iT.filter(p => (p.muolaja_turi?.includes('KAG') || p.muolaja_turi?.toLowerCase().includes('koronarangiografiya')) && p.status === 'vafot').length,
+      trombolizis:        iT.filter(p => p.muolaja_turi?.includes('TLT') || p.muolaja_turi?.toLowerCase().includes('trombolitik')).length,
+      trombolizisDavol:   iT.filter(p => (p.muolaja_turi?.includes('TLT') || p.muolaja_turi?.toLowerCase().includes('trombolitik')) && p.status === 'chiqarildi').length,
+      trombolizisVafot:   iT.filter(p => (p.muolaja_turi?.includes('TLT') || p.muolaja_turi?.toLowerCase().includes('trombolitik')) && p.status === 'vafot').length,
+      medikamentoz:       iT.filter(p => p.muolaja_turi?.toLowerCase().includes('medikamentoz')).length,
+      medikamentozDavol:  iT.filter(p => p.muolaja_turi?.toLowerCase().includes('medikamentoz') && p.status === 'chiqarildi').length,
+      medikamentozVafot:  iT.filter(p => p.muolaja_turi?.toLowerCase().includes('medikamentoz') && p.status === 'vafot').length,
       // Insult klinik
-      ishemik:           nT.filter(p => p.insult_turi?.toLowerCase().includes('ishemik')).length,
-      gemorragik:        nT.filter(p => p.insult_turi?.toLowerCase().includes('gemorragik')).length,
-      tia:               nT.filter(p => p.insult_turi?.toUpperCase().includes('TIA')).length,
-      mskt:              nT.filter(p => p.muolaja_turi?.toUpperCase().includes('MSKT')).length,
-      trombektomiya:     nT.filter(p => p.muolaja_turi?.toLowerCase().includes('trombektom') || p.muolaja_turi?.toLowerCase().includes('tromboekstraksiya')).length,
-      insultMedikamentoz: nT.filter(p => p.muolaja_turi?.toLowerCase().includes('medikamentoz') || p.muolaja_turi?.toLowerCase().includes('konservativ')).length,
+      ishemik:                nT.filter(p => p.insult_turi?.toLowerCase().includes('ishemik')).length,
+      ishemikDavol:           nT.filter(p => p.insult_turi?.toLowerCase().includes('ishemik') && p.status === 'chiqarildi').length,
+      ishemikVafot:           nT.filter(p => p.insult_turi?.toLowerCase().includes('ishemik') && p.status === 'vafot').length,
+      gemorragik:             nT.filter(p => p.insult_turi?.toLowerCase().includes('gemorragik')).length,
+      gemorragikDavol:        nT.filter(p => p.insult_turi?.toLowerCase().includes('gemorragik') && p.status === 'chiqarildi').length,
+      gemorragikVafot:        nT.filter(p => p.insult_turi?.toLowerCase().includes('gemorragik') && p.status === 'vafot').length,
+      tia:                    nT.filter(p => p.insult_turi?.toUpperCase().includes('TIA')).length,
+      tiaDavol:               nT.filter(p => p.insult_turi?.toUpperCase().includes('TIA') && p.status === 'chiqarildi').length,
+      tiaVafot:               nT.filter(p => p.insult_turi?.toUpperCase().includes('TIA') && p.status === 'vafot').length,
+      mskt:                   nT.filter(p => p.muolaja_turi?.toUpperCase().includes('MSKT')).length,
+      msktDavol:              nT.filter(p => p.muolaja_turi?.toUpperCase().includes('MSKT') && p.status === 'chiqarildi').length,
+      msktVafot:              nT.filter(p => p.muolaja_turi?.toUpperCase().includes('MSKT') && p.status === 'vafot').length,
+      trombektomiya:          nT.filter(p => p.muolaja_turi?.toLowerCase().includes('trombektom') || p.muolaja_turi?.toLowerCase().includes('tromboekstraksiya')).length,
+      trombektomiyaDavol:     nT.filter(p => (p.muolaja_turi?.toLowerCase().includes('trombektom') || p.muolaja_turi?.toLowerCase().includes('tromboekstraksiya')) && p.status === 'chiqarildi').length,
+      trombektomiyaVafot:     nT.filter(p => (p.muolaja_turi?.toLowerCase().includes('trombektom') || p.muolaja_turi?.toLowerCase().includes('tromboekstraksiya')) && p.status === 'vafot').length,
+      insultMedikamentoz:       nT.filter(p => p.muolaja_turi?.toLowerCase().includes('medikamentoz') || p.muolaja_turi?.toLowerCase().includes('konservativ')).length,
+      insultMedikamentozDavol:  nT.filter(p => (p.muolaja_turi?.toLowerCase().includes('medikamentoz') || p.muolaja_turi?.toLowerCase().includes('konservativ')) && p.status === 'chiqarildi').length,
+      insultMedikamentozVafot:  nT.filter(p => (p.muolaja_turi?.toLowerCase().includes('medikamentoz') || p.muolaja_turi?.toLowerCase().includes('konservativ')) && p.status === 'vafot').length,
     };
   },
 
