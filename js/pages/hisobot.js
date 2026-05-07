@@ -275,8 +275,11 @@ const HisobotPage = {
         
         <!-- Infarkt Detail -->
         <div class="h-card !p-0 overflow-hidden">
-          <div class="bg-red-50 p-5 border-b border-red-100">
+          <div class="bg-red-50 p-5 border-b border-red-100 flex items-center justify-between">
             <h3 class="h-title !mb-0 text-red-900">${icon('activity', 24)} Infarkt tahlili (${infs.length} ta)</h3>
+            <button class="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-xl text-xs font-bold hover:bg-red-700 transition-colors shadow-sm" onclick="HisobotPage.showPatientList('infarkt')">
+              ${icon('list', 14)} Ro'yxatni ko'rish
+            </button>
           </div>
           <div class="p-2">
             ${statRow('STEMI', stemi, 'activity', 'text-red-700')}
@@ -290,8 +293,11 @@ const HisobotPage = {
         
         <!-- Insult Detail -->
         <div class="h-card !p-0 overflow-hidden">
-          <div class="bg-purple-50 p-5 border-b border-purple-100">
+          <div class="bg-purple-50 p-5 border-b border-purple-100 flex items-center justify-between">
             <h3 class="h-title !mb-0 text-purple-900">${icon('brain', 24)} Insult tahlili (${ins.length} ta)</h3>
+            <button class="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-xl text-xs font-bold hover:bg-purple-700 transition-colors shadow-sm" onclick="HisobotPage.showPatientList('insult')">
+              ${icon('list', 14)} Ro'yxatni ko'rish
+            </button>
           </div>
           <div class="p-2">
             ${statRow('Ishemik insult', ishemik, 'circle-dot', 'text-blue-700')}
@@ -405,6 +411,63 @@ const HisobotPage = {
         });
       }
     });
+  },
+
+  showPatientList(type) {
+    const d = HisobotPage._lastData;
+    if (!d) return;
+    const patients = type === 'infarkt' ? d.infs : d.ins;
+    const color = type === 'infarkt' ? '#dc2626' : '#7c3aed';
+    const title = type === 'infarkt' ? 'Infarkt' : 'Insult';
+
+    const rows = patients.map(p => {
+      const age = Utils.calculateAge(p.tugilgan_sana || p.tugilgan_yil) || '—';
+      const statusColors = { active: '#16a34a', vafot: '#dc2626', chiqarildi: '#2563eb', otkazildi: '#d97706' };
+      const sc = statusColors[p.status] || '#64748b';
+      return `<tr style="border-bottom:1px solid #f1f5f9;cursor:pointer" onclick="document.getElementById('h-modal').remove();Router.go('bemor-karta',{kt_no:'${p.kt_no}',type:'${type}'})">
+        <td style="padding:10px 14px;font-family:monospace;font-size:12px;color:#64748b">${p.kt_no}</td>
+        <td style="padding:10px 14px;font-weight:700;color:#0f172a">${p.fio || '—'}</td>
+        <td style="padding:10px 14px;color:#475569">${age} yosh · ${p.jins || '—'}</td>
+        <td style="padding:10px 14px;color:#475569;font-size:12px">${p.viloyat || '—'}</td>
+        <td style="padding:10px 14px;font-size:12px;color:#475569">${Utils.formatDate(p.qabul_vaqt)}</td>
+        <td style="padding:10px 14px"><span style="background:${sc}20;color:${sc};font-size:11px;font-weight:800;padding:3px 10px;border-radius:8px;text-transform:uppercase">${p.status || '—'}</span></td>
+      </tr>`;
+    }).join('');
+
+    const modal = document.createElement('div');
+    modal.id = 'h-modal';
+    modal.style.cssText = 'position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,0.5);display:flex;align-items:flex-start;justify-content:center;padding:40px 16px;overflow-y:auto';
+    modal.innerHTML = `
+      <div style="background:#fff;border-radius:24px;width:100%;max-width:900px;overflow:hidden;box-shadow:0 25px 60px rgba(0,0,0,0.3)">
+        <div style="background:${color};padding:20px 24px;display:flex;align-items:center;justify-content:space-between">
+          <div style="color:#fff">
+            <div style="font-size:18px;font-weight:900">${title} bemorlari ro'yxati</div>
+            <div style="font-size:12px;opacity:0.8;margin-top:2px">${d.from} — ${d.to}${d.ageLabel || ''} · Jami: ${patients.length} ta</div>
+          </div>
+          <button onclick="document.getElementById('h-modal').remove()" style="background:rgba(255,255,255,0.2);border:none;color:#fff;width:36px;height:36px;border-radius:50%;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center">✕</button>
+        </div>
+        <div style="overflow-x:auto;max-height:60vh;overflow-y:auto">
+          <table style="width:100%;border-collapse:collapse">
+            <thead style="position:sticky;top:0;background:#f8fafc">
+              <tr style="border-bottom:2px solid #e2e8f0">
+                <th style="padding:12px 14px;text-align:left;font-size:11px;color:#64748b;text-transform:uppercase;font-weight:800">K/T No</th>
+                <th style="padding:12px 14px;text-align:left;font-size:11px;color:#64748b;text-transform:uppercase;font-weight:800">F.I.O</th>
+                <th style="padding:12px 14px;text-align:left;font-size:11px;color:#64748b;text-transform:uppercase;font-weight:800">Yosh / Jins</th>
+                <th style="padding:12px 14px;text-align:left;font-size:11px;color:#64748b;text-transform:uppercase;font-weight:800">Viloyat</th>
+                <th style="padding:12px 14px;text-align:left;font-size:11px;color:#64748b;text-transform:uppercase;font-weight:800">Qabul</th>
+                <th style="padding:12px 14px;text-align:left;font-size:11px;color:#64748b;text-transform:uppercase;font-weight:800">Holat</th>
+              </tr>
+            </thead>
+            <tbody>${rows || '<tr><td colspan="6" style="padding:40px;text-align:center;color:#94a3b8">Bemor topilmadi</td></tr>'}</tbody>
+          </table>
+        </div>
+        <div style="padding:16px 24px;background:#f8fafc;border-top:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center">
+          <span style="font-size:13px;color:#64748b">Qatorga bosing — bemor kartasini ochish</span>
+          <button onclick="document.getElementById('h-modal').remove()" style="padding:8px 20px;background:#e2e8f0;border:none;border-radius:10px;font-weight:700;cursor:pointer;font-size:13px">Yopish</button>
+        </div>
+      </div>`;
+    modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+    document.body.appendChild(modal);
   },
 
   printReport() {
