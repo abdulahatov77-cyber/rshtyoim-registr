@@ -22,7 +22,7 @@ const BemorKartaPage = {
     // just update the index — don't blow away the list.
     // Only rebuild when arriving fresh from bemorlar or dashboard.
     const existingIdx = BemorKartaPage._navList.findIndex(
-      p => p.kt_no === kt_no && p._type === type
+      p => String(p.kt_no) === String(kt_no) && p._type === type
     );
     if (existingIdx >= 0) {
       // We are navigating within an existing list — preserve it
@@ -32,7 +32,7 @@ const BemorKartaPage = {
       const freshList = (window.BemorlarPage?._allData) || [];
       BemorKartaPage._navList = freshList;
       BemorKartaPage._navIndex = freshList.findIndex(
-        p => p.kt_no === kt_no && p._type === type
+        p => String(p.kt_no) === String(kt_no) && p._type === type
       );
     }
 

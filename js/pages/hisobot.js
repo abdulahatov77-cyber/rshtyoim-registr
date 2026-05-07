@@ -454,7 +454,7 @@ const HisobotPage = {
       const age = Utils.calculateAge(p.tugilgan_sana || p.tugilgan_yil) || '—';
       const statusColors = { active: '#16a34a', vafot: '#dc2626', chiqarildi: '#2563eb', otkazildi: '#d97706' };
       const sc = statusColors[p.status] || '#64748b';
-      return `<tr style="border-bottom:1px solid #f1f5f9;cursor:pointer" onclick="Router.go('bemor-karta',{kt_no:'${p.kt_no}',type:'${type}'})"  >
+      return `<tr style="border-bottom:1px solid #f1f5f9;cursor:pointer" onclick="document.getElementById('h-modal')?.remove();Router.go('bemor-karta',{kt_no:'${p.kt_no}',type:'${type}'})"  >
         <td style="padding:10px 14px;font-family:monospace;font-size:12px;color:#64748b">${p.kt_no}</td>
         <td style="padding:10px 14px;font-weight:700;color:#0f172a">${p.fio || '—'}</td>
         <td style="padding:10px 14px;color:#475569">${age} yosh · ${p.jins || '—'}</td>
