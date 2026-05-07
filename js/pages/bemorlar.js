@@ -242,35 +242,29 @@ const BemorlarPage = {
             const age = Utils.calculateAge(p.tugilgan_sana || p.tugilgan_yil) || '—';
             const key = p.kt_no + ':' + p._type;
             return `
-              <tr class="group">
+              <tr class="group bl-row" data-kt="${esc(p.kt_no)}" data-type="${esc(p._type)}" style="cursor:pointer">
                 ${isSuperAdmin ? `
                 <td onclick="event.stopPropagation()">
-                  <input type="checkbox" class="bl-cb" data-key="${key}" style="width:16px;height:16px;cursor:pointer"
+                  <input type="checkbox" class="bl-cb" data-key="${esc(key)}" style="width:16px;height:16px;cursor:pointer"
                     onchange="BemorlarPage.toggleRow(this)"/>
                 </td>` : ''}
-                <td onclick="Router.go('bemor-karta',{kt_no:'${p.kt_no}',type:'${p._type}'})">
+                <td>
                   <span class="badge ${isInf ? 'badge-red' : 'badge-purple'} flex items-center gap-1.5 w-fit">
                     ${icon(isInf ? 'heart' : 'brain', 14)} ${isInf ? 'Infarkt' : 'Insult'}
                   </span>
                 </td>
-                <td class="font-mono text-xs text-gray-500" onclick="Router.go('bemor-karta',{kt_no:'${p.kt_no}',type:'${p._type}'})">
-                  ${p.kt_no}
-                </td>
-                <td onclick="Router.go('bemor-karta',{kt_no:'${p.kt_no}',type:'${p._type}'})">
-                  <div class="font-semibold text-gray-900">${p.fio || '—'}</div>
-                </td>
-                <td onclick="Router.go('bemor-karta',{kt_no:'${p.kt_no}',type:'${p._type}'})">${age} yosh · ${p.jins || p.jinsi || '—'}</td>
-                <td onclick="Router.go('bemor-karta',{kt_no:'${p.kt_no}',type:'${p._type}'})">
-                  <div class="flex items-center gap-1.5 text-gray-600">${icon('map-pin', 14)} ${p.viloyat || '—'}</div>
-                </td>
-                <td onclick="Router.go('bemor-karta',{kt_no:'${p.kt_no}',type:'${p._type}'})">
+                <td class="font-mono text-xs text-gray-500">${esc(p.kt_no)}</td>
+                <td><div class="font-semibold text-gray-900">${esc(p.fio) || '—'}</div></td>
+                <td>${esc(age)} yosh · ${esc(p.jins || p.jinsi) || '—'}</td>
+                <td><div class="flex items-center gap-1.5 text-gray-600">${icon('map-pin', 14)} ${esc(p.viloyat) || '—'}</div></td>
+                <td>
                   <div class="flex flex-col">
                     <span class="text-gray-900">${Utils.formatDate(p.qabul_vaqt)}</span>
                     <span class="text-xs text-gray-500">${Utils.formatDateTime(p.qabul_vaqt).split(', ')[1] || ''}</span>
                   </div>
                 </td>
-                <td onclick="Router.go('bemor-karta',{kt_no:'${p.kt_no}',type:'${p._type}'})">${Utils.statusBadge(p.status)}</td>
-                <td onclick="Router.go('bemor-karta',{kt_no:'${p.kt_no}',type:'${p._type}'})" class="text-right text-gray-400">${icon('chevron-right', 20)}</td>
+                <td>${Utils.statusBadge(p.status)}</td>
+                <td class="text-right text-gray-400">${icon('chevron-right', 20)}</td>
               </tr>`;
           }).join('')}
         </tbody>
@@ -310,6 +304,14 @@ const BemorlarPage = {
       }
     }
     initIcons();
+
+    // tr click — data-atribut orqali xavfsiz navigatsiya
+    document.querySelectorAll('.bl-row').forEach(tr => {
+      tr.addEventListener('click', function(e) {
+        if (e.target.closest('.bl-cb') || e.target.type === 'checkbox') return;
+        Router.go('bemor-karta', { kt_no: this.dataset.kt, type: this.dataset.type });
+      });
+    });
   },
 
   exportData() {

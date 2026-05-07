@@ -180,13 +180,13 @@ const InfarktYangiPage = {
         const rows = found.map(p => {
           const d = p.qabul_vaqt ? new Date(p.qabul_vaqt).toLocaleDateString('uz-UZ', { day:'2-digit', month:'2-digit', year:'numeric' }) : '—';
           return `<div class="flex items-center gap-2 text-xs py-1 border-b border-amber-100 last:border-0">
-            <span class="font-bold text-amber-900">${p.fio}</span>
+            <span class="font-bold text-amber-900">${esc(p.fio)}</span>
             <span class="text-amber-600">·</span>
-            <span class="px-1.5 py-0.5 rounded text-[10px] font-bold ${p._t==='Infarkt'?'bg-red-100 text-red-700':'bg-purple-100 text-purple-700'}">${p._t}</span>
+            <span class="px-1.5 py-0.5 rounded text-[10px] font-bold ${p._t==='Infarkt'?'bg-red-100 text-red-700':'bg-purple-100 text-purple-700'}">${esc(p._t)}</span>
             <span class="text-amber-600">·</span>
-            <span class="text-amber-700">${d} sanasida yotgan</span>
+            <span class="text-amber-700">${esc(d)} sanasida yotgan</span>
             <span class="text-amber-400">·</span>
-            <span class="font-mono text-amber-500 text-[10px]">${p.kt_no}</span>
+            <span class="font-mono text-amber-500 text-[10px]">${esc(p.kt_no)}</span>
           </div>`;
         }).join('');
         warn.innerHTML = `

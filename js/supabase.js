@@ -142,15 +142,21 @@ const DB = {
   },
 
   async infarktByKtNo(kt_no) {
-    const { data, error } = await getSupabase()
-      .from('infarkt_qabul').select('*').eq('kt_no', kt_no).single();
+    const p = await Profile.getCurrent();
+    const sb = getSupabase();
+    let q = sb.from('infarkt_qabul').select('*').eq('kt_no', kt_no);
+    if (p?.role !== 'super_admin' && p?.viloyat) q = q.eq('viloyat', p.viloyat);
+    const { data, error } = await q.single();
     if (error) throw error;
     return data;
   },
 
   async infarktUpdate(kt_no, updates) {
-    const { data, error } = await getSupabase()
-      .from('infarkt_qabul').update(updates).eq('kt_no', kt_no).select().single();
+    const p = await Profile.getCurrent();
+    const sb = getSupabase();
+    let q = sb.from('infarkt_qabul').update(updates).eq('kt_no', kt_no);
+    if (p?.role !== 'super_admin' && p?.viloyat) q = q.eq('viloyat', p.viloyat);
+    const { data, error } = await q.select().single();
     if (error) throw error;
     return data;
   },
@@ -226,15 +232,21 @@ const DB = {
   },
 
   async insultByKtNo(kt_no) {
-    const { data, error } = await getSupabase()
-      .from('insult_qabul').select('*').eq('kt_no', kt_no).single();
+    const p = await Profile.getCurrent();
+    const sb = getSupabase();
+    let q = sb.from('insult_qabul').select('*').eq('kt_no', kt_no);
+    if (p?.role !== 'super_admin' && p?.viloyat) q = q.eq('viloyat', p.viloyat);
+    const { data, error } = await q.single();
     if (error) throw error;
     return data;
   },
 
   async insultUpdate(kt_no, updates) {
-    const { data, error } = await getSupabase()
-      .from('insult_qabul').update(updates).eq('kt_no', kt_no).select().single();
+    const p = await Profile.getCurrent();
+    const sb = getSupabase();
+    let q = sb.from('insult_qabul').update(updates).eq('kt_no', kt_no);
+    if (p?.role !== 'super_admin' && p?.viloyat) q = q.eq('viloyat', p.viloyat);
+    const { data, error } = await q.select().single();
     if (error) throw error;
     return data;
   },

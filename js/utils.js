@@ -1,5 +1,16 @@
 // ==================== UTILITIES ====================
 
+// HTML maxsus belgilarini xavfsiz ko'rinishga o'tkazish (XSS oldini olish)
+function esc(str) {
+  if (!str && str !== 0) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 // Date/time formatting
 const Utils = {
   formatDate(dt, opts = {}) {
