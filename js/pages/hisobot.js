@@ -394,14 +394,14 @@ const HisobotPage = {
       <!-- Charts -->
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div class="h-card">
-          <h3 class="h-title">${icon('bar-chart-2', 20)} Infarkt davolash turlari</h3>
-          <div style="height:200px; position:relative;">
+          <h3 class="h-title">${icon('bar-chart-2', 20)} Infarkt muolajalar</h3>
+          <div style="height:250px; position:relative;">
             <canvas id="h-inf-chart"></canvas>
           </div>
         </div>
         <div class="h-card">
-          <h3 class="h-title">${icon('bar-chart-2', 20)} Insult davolash turlari</h3>
-          <div style="height:200px; position:relative;">
+          <h3 class="h-title">${icon('bar-chart-2', 20)} Insult muolajalar</h3>
+          <div style="height:250px; position:relative;">
             <canvas id="h-ins-chart"></canvas>
           </div>
         </div>
@@ -419,59 +419,63 @@ const HisobotPage = {
 
     // Make charts render in next frame to ensure DOM is ready
     requestAnimationFrame(() => {
-      const CHART_COLORS = ['#3b82f6','#ef4444','#f59e0b','#10b981','#8b5cf6','#06b6d4','#f97316','#ec4899','#6366f1','#84cc16'];
-
-      const buildBarChart = (canvasId, categories, counts, colorStart) => {
-        const ctx = document.getElementById(canvasId)?.getContext('2d');
-        if (!ctx || !categories.length) return;
-        const colors = categories.map((_, i) => CHART_COLORS[(i + colorStart) % CHART_COLORS.length]);
-        new Chart(ctx, {
+      // Infarkt muolajalar — xuddi avvalgidek, muolaja_turi dan dinamik
+      const infMuolajaCounts = {};
+      infs.forEach(p => { if (p.muolaja_turi) infMuolajaCounts[p.muolaja_turi] = (infMuolajaCounts[p.muolaja_turi] || 0) + 1; });
+      const infMLabels = Object.keys(infMuolajaCounts);
+      const infMVals = Object.values(infMuolajaCounts);
+      const ctx1 = document.getElementById('h-inf-chart')?.getContext('2d');
+      if (ctx1 && infMLabels.length) {
+        new Chart(ctx1, {
           type: 'bar',
           data: {
-            labels: categories.map(k => k.length > 22 ? k.slice(0, 22) + '…' : k),
+            labels: infMLabels.map(k => k.slice(0, 20)),
             datasets: [{
-              data: counts,
-              backgroundColor: colors.map(c => c + 'cc'),
-              hoverBackgroundColor: colors,
-              borderRadius: 7,
-              borderSkipped: false
+              data: infMVals,
+              backgroundColor: 'rgba(59, 130, 246, 0.8)',
+              hoverBackgroundColor: 'rgba(37, 99, 235, 1)',
+              borderRadius: 6
             }]
           },
           options: {
-            indexAxis: 'y',
-            plugins: {
-              legend: { display: false },
-              tooltip: {
-                callbacks: {
-                  label: ctx => ` ${ctx.parsed.x} ta bemor`
-                }
-              }
-            },
+            plugins: { legend: { display: false } },
             scales: {
-              x: { border: { display: false }, grid: { color: '#f1f5f9' }, beginAtZero: true, ticks: { font: { size: 11 }, color: '#64748b' } },
-              y: { grid: { display: false }, ticks: { font: { size: 12, weight: '600' }, color: '#1e3a8a' } }
+              x: { grid: { display: false }, ticks: { font: { size: 11, family: 'Inter' }, color: '#1e3a8a' } },
+              y: { border: { display: false }, grid: { color: '#f1f5f9' }, beginAtZero: true, ticks: { stepSize: 1, font: { size: 11, family: 'Inter' }, color: '#64748b' } }
             },
-            responsive: true,
-            maintainAspectRatio: false
+            responsive: true, maintainAspectRatio: false
           }
         });
-      };
+      }
 
-      // Infarkt davolash turlari
-      const infMuolaja = [
-        { label: 'Koronarangiografiya (KAG)', val: koronar },
-        { label: 'Trombolizis (TLT)',          val: tlt_inf },
-        { label: 'Medikamentoz davo',           val: medInf },
-      ].filter(d => d.val > 0).sort((a, b) => b.val - a.val);
-      buildBarChart('h-inf-chart', infMuolaja.map(d => d.label), infMuolaja.map(d => d.val), 0);
-
-      // Insult davolash turlari
-      const insMuolaja = [
-        { label: 'MSKT bosh miya',    val: mskt },
-        { label: 'Trombektomiya',      val: trombektomiya },
-        { label: 'Medikamentoz davo',  val: medIns },
-      ].filter(d => d.val > 0).sort((a, b) => b.val - a.val);
-      buildBarChart('h-ins-chart', insMuolaja.map(d => d.label), insMuolaja.map(d => d.val), 3);
+      // Insult muolajalar — xuddi shu usulda, muolaja_turi dan dinamik
+      const insMuolajaCounts = {};
+      ins.forEach(p => { if (p.muolaja_turi) insMuolajaCounts[p.muolaja_turi] = (insMuolajaCounts[p.muolaja_turi] || 0) + 1; });
+      const insMLabels = Object.keys(insMuolajaCounts);
+      const insMVals = Object.values(insMuolajaCounts);
+      const ctx2 = document.getElementById('h-ins-chart')?.getContext('2d');
+      if (ctx2 && insMLabels.length) {
+        new Chart(ctx2, {
+          type: 'bar',
+          data: {
+            labels: insMLabels.map(k => k.slice(0, 20)),
+            datasets: [{
+              data: insMVals,
+              backgroundColor: 'rgba(139, 92, 246, 0.8)',
+              hoverBackgroundColor: 'rgba(109, 40, 217, 1)',
+              borderRadius: 6
+            }]
+          },
+          options: {
+            plugins: { legend: { display: false } },
+            scales: {
+              x: { grid: { display: false }, ticks: { font: { size: 11, family: 'Inter' }, color: '#6d28d9' } },
+              y: { border: { display: false }, grid: { color: '#f5f3ff' }, beginAtZero: true, ticks: { stepSize: 1, font: { size: 11, family: 'Inter' }, color: '#64748b' } }
+            },
+            responsive: true, maintainAspectRatio: false
+          }
+        });
+      }
     });
   },
 
