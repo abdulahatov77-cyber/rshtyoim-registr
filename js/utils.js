@@ -24,7 +24,9 @@ const Utils = {
     if (!dt) return '';
     const d = new Date(dt);
     if (isNaN(d)) return '';
-    return d.toISOString().slice(0, 16);
+    // Local time for datetime-local inputs (not UTC)
+    const pad = n => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
   },
 
   calculateAge(val) {
