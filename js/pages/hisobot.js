@@ -394,14 +394,14 @@ const HisobotPage = {
       <!-- Charts -->
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div class="h-card">
-          <h3 class="h-title">${icon('pie-chart', 20)} Infarkt muolajalar</h3>
-          <div style="height:250px; position:relative;">
+          <h3 class="h-title">${icon('bar-chart-2', 20)} Infarkt davolash turlari</h3>
+          <div style="height:200px; position:relative;">
             <canvas id="h-inf-chart"></canvas>
           </div>
         </div>
         <div class="h-card">
-          <h3 class="h-title">${icon('pie-chart', 20)} Insult turlari</h3>
-          <div style="height:250px; position:relative;">
+          <h3 class="h-title">${icon('bar-chart-2', 20)} Insult davolash turlari</h3>
+          <div style="height:200px; position:relative;">
             <canvas id="h-ins-chart"></canvas>
           </div>
         </div>
@@ -419,56 +419,59 @@ const HisobotPage = {
 
     // Make charts render in next frame to ensure DOM is ready
     requestAnimationFrame(() => {
-      // Muolaja chart
-      const muolajaCounts = {};
-      infs.forEach(p => { if(p.muolaja_turi) muolajaCounts[p.muolaja_turi] = (muolajaCounts[p.muolaja_turi]||0)+1; });
-      const mLabels = Object.keys(muolajaCounts).map(k=>k.slice(0,20));
-      const mVals = Object.values(muolajaCounts);
-      const ctx1 = document.getElementById('h-inf-chart')?.getContext('2d');
-      if (ctx1 && mLabels.length) {
-        new Chart(ctx1, { 
-          type:'bar', 
-          data:{
-            labels: mLabels,
-            datasets:[{
-              data: mVals,
-              backgroundColor: 'rgba(59, 130, 246, 0.8)',
-              hoverBackgroundColor: 'rgba(37, 99, 235, 1)',
-              borderRadius: 6
-            }]
-          }, 
-          options: {
-            plugins:{ legend:{display:false} },
-            scales: {
-              x:{ grid:{display:false}, ticks:{font:{size:11, family:'Inter'}, color:'#1e3a8a'} },
-              y:{ border:{display:false}, grid:{color:'#f1f5f9'}, beginAtZero:true, ticks:{stepSize:1, font:{size:11, family:'Inter'}, color:'#64748b'} }
-            },
-            responsive:true, maintainAspectRatio:false
-          }
-        });
-      }
+      const CHART_COLORS = ['#3b82f6','#ef4444','#f59e0b','#10b981','#8b5cf6','#06b6d4','#f97316','#ec4899','#6366f1','#84cc16'];
 
-      // Insult pie
-      const ctx2 = document.getElementById('h-ins-chart')?.getContext('2d');
-      if (ctx2) {
-        new Chart(ctx2, { 
-          type:'doughnut', 
-          data:{
-            labels:['Ishemik','Gemorragik','TIA'],
-            datasets:[{
-              data:[ishemik, gemorragik, tia],
-              backgroundColor:['#3b82f6','#ef4444','#f59e0b'],
-              borderWidth: 3, borderColor: '#ffffff', hoverOffset: 6
+      const buildBarChart = (canvasId, categories, counts, colorStart) => {
+        const ctx = document.getElementById(canvasId)?.getContext('2d');
+        if (!ctx || !categories.length) return;
+        const colors = categories.map((_, i) => CHART_COLORS[(i + colorStart) % CHART_COLORS.length]);
+        new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: categories.map(k => k.length > 22 ? k.slice(0, 22) + '…' : k),
+            datasets: [{
+              data: counts,
+              backgroundColor: colors.map(c => c + 'cc'),
+              hoverBackgroundColor: colors,
+              borderRadius: 7,
+              borderSkipped: false
             }]
-          }, 
+          },
           options: {
-            plugins: { 
-              legend: { position:'right', labels:{ font:{size:12, family:'Inter'}, color:'#1e3a8a', padding: 20 } } 
+            indexAxis: 'y',
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                callbacks: {
+                  label: ctx => ` ${ctx.parsed.x} ta bemor`
+                }
+              }
             },
-            responsive:true, maintainAspectRatio:false, cutout: '65%'
+            scales: {
+              x: { border: { display: false }, grid: { color: '#f1f5f9' }, beginAtZero: true, ticks: { font: { size: 11 }, color: '#64748b' } },
+              y: { grid: { display: false }, ticks: { font: { size: 12, weight: '600' }, color: '#1e3a8a' } }
+            },
+            responsive: true,
+            maintainAspectRatio: false
           }
         });
-      }
+      };
+
+      // Infarkt davolash turlari
+      const infMuolaja = [
+        { label: 'Koronarangiografiya (KAG)', val: koronar },
+        { label: 'Trombolizis (TLT)',          val: tlt_inf },
+        { label: 'Medikamentoz davo',           val: medInf },
+      ].filter(d => d.val > 0).sort((a, b) => b.val - a.val);
+      buildBarChart('h-inf-chart', infMuolaja.map(d => d.label), infMuolaja.map(d => d.val), 0);
+
+      // Insult davolash turlari
+      const insMuolaja = [
+        { label: 'MSKT bosh miya',    val: mskt },
+        { label: 'Trombektomiya',      val: trombektomiya },
+        { label: 'Medikamentoz davo',  val: medIns },
+      ].filter(d => d.val > 0).sort((a, b) => b.val - a.val);
+      buildBarChart('h-ins-chart', insMuolaja.map(d => d.label), insMuolaja.map(d => d.val), 3);
     });
   },
 
