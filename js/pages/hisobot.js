@@ -1,6 +1,9 @@
 // ==================== HISOBOT SAHIFASI ====================
 const HisobotPage = {
   _charts: {},
+  _lastData: null,
+  _lastListType: null,
+  _savedFilters: null,
 
   async render() {
     const user = await Auth.getUser();
@@ -10,6 +13,20 @@ const HisobotPage = {
     );
     Components.startClock();
     HisobotPage.renderUI();
+
+    // Oldingi hisobot holatini tiklash
+    if (HisobotPage._lastData) {
+      const f = HisobotPage._savedFilters || {};
+      if (f.from)    { const el = document.getElementById('h-from');    if (el) el.value = f.from; }
+      if (f.to)      { const el = document.getElementById('h-to');      if (el) el.value = f.to; }
+      if (f.ageFrom) { const el = document.getElementById('h-age-from'); if (el) el.value = f.ageFrom; }
+      if (f.ageTo)   { const el = document.getElementById('h-age-to');   if (el) el.value = f.ageTo; }
+      const { infs, ins, kuzatuv, from, to, ageLabel } = HisobotPage._lastData;
+      HisobotPage.renderReport(infs, ins, kuzatuv, from, to, ageLabel);
+      if (HisobotPage._lastListType) {
+        setTimeout(() => HisobotPage.showPatientList(HisobotPage._lastListType), 150);
+      }
+    }
   },
 
   renderUI() {
@@ -132,6 +149,12 @@ const HisobotPage = {
     const from = document.getElementById('h-from')?.value;
     const to = document.getElementById('h-to')?.value;
     if (!from||!to) { showToast('Sana oralig\'ini tanlang','warning'); return; }
+    HisobotPage._lastListType = null;
+    HisobotPage._savedFilters = {
+      from, to,
+      ageFrom: document.getElementById('h-age-from')?.value || '',
+      ageTo:   document.getElementById('h-age-to')?.value   || ''
+    };
     const el = document.getElementById('h-results');
     if (!el) return;
     
@@ -416,6 +439,7 @@ const HisobotPage = {
   showPatientList(type) {
     const d = HisobotPage._lastData;
     if (!d) return;
+    HisobotPage._lastListType = type;
     const patients = type === 'infarkt' ? d.infs : d.ins;
     const color = type === 'infarkt' ? '#dc2626' : '#7c3aed';
     const title = type === 'infarkt' ? 'Infarkt' : 'Insult';
@@ -424,7 +448,7 @@ const HisobotPage = {
       const age = Utils.calculateAge(p.tugilgan_sana || p.tugilgan_yil) || '—';
       const statusColors = { active: '#16a34a', vafot: '#dc2626', chiqarildi: '#2563eb', otkazildi: '#d97706' };
       const sc = statusColors[p.status] || '#64748b';
-      return `<tr style="border-bottom:1px solid #f1f5f9;cursor:pointer" onclick="document.getElementById('h-modal').remove();Router.go('bemor-karta',{kt_no:'${p.kt_no}',type:'${type}'})">
+      return `<tr style="border-bottom:1px solid #f1f5f9;cursor:pointer" onclick="Router.go('bemor-karta',{kt_no:'${p.kt_no}',type:'${type}'})"  >
         <td style="padding:10px 14px;font-family:monospace;font-size:12px;color:#64748b">${p.kt_no}</td>
         <td style="padding:10px 14px;font-weight:700;color:#0f172a">${p.fio || '—'}</td>
         <td style="padding:10px 14px;color:#475569">${age} yosh · ${p.jins || '—'}</td>
@@ -444,7 +468,7 @@ const HisobotPage = {
             <div style="font-size:18px;font-weight:900">${title} bemorlari ro'yxati</div>
             <div style="font-size:12px;opacity:0.8;margin-top:2px">${d.from} — ${d.to}${d.ageLabel || ''} · Jami: ${patients.length} ta</div>
           </div>
-          <button onclick="document.getElementById('h-modal').remove()" style="background:rgba(255,255,255,0.2);border:none;color:#fff;width:36px;height:36px;border-radius:50%;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center">✕</button>
+          <button onclick="HisobotPage._lastListType=null;document.getElementById('h-modal').remove()" style="background:rgba(255,255,255,0.2);border:none;color:#fff;width:36px;height:36px;border-radius:50%;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center">✕</button>
         </div>
         <div style="overflow-x:auto;max-height:60vh;overflow-y:auto">
           <table style="width:100%;border-collapse:collapse">
@@ -463,10 +487,10 @@ const HisobotPage = {
         </div>
         <div style="padding:16px 24px;background:#f8fafc;border-top:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center">
           <span style="font-size:13px;color:#64748b">Qatorga bosing — bemor kartasini ochish</span>
-          <button onclick="document.getElementById('h-modal').remove()" style="padding:8px 20px;background:#e2e8f0;border:none;border-radius:10px;font-weight:700;cursor:pointer;font-size:13px">Yopish</button>
+          <button onclick="HisobotPage._lastListType=null;document.getElementById('h-modal').remove()" style="padding:8px 20px;background:#e2e8f0;border:none;border-radius:10px;font-weight:700;cursor:pointer;font-size:13px">Yopish</button>
         </div>
       </div>`;
-    modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+    modal.addEventListener('click', e => { if (e.target === modal) { HisobotPage._lastListType = null; modal.remove(); } });
     document.body.appendChild(modal);
   },
 
