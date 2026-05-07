@@ -1261,6 +1261,10 @@ const BemorKartaPage = {
         if (error) throw error;
       }
       showToast("Bemor muvaffaqiyatli o'chirildi", 'success');
+      // Keshlarni tozalash — hisobot va bemorlar ro'yxati yangilansin
+      if (window.HisobotPage) { HisobotPage._lastData = null; HisobotPage._lastListType = null; }
+      BemorKartaPage._navList = [];
+      BemorKartaPage._navIndex = -1;
       setTimeout(() => Router.go('bemorlar'), 1500);
     } catch(err) {
       showToast("O'chirishda xatolik: " + err.message, 'error');
