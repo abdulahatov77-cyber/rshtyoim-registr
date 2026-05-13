@@ -645,6 +645,33 @@ const DB = {
     return combined.slice(0, limit);
   },
 
+  // 15+ kun davolanayotgan bemorlar muassasa bo'yicha
+  async getLongStayPatients() {
+    const p = await Profile.getCurrent();
+    const viloyat = p?.role === 'super_admin' ? null : p?.viloyat;
+    const eqViloyat = (q) => viloyat ? q.eq('viloyat', viloyat) : q;
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - 15);
+    const cutoffISO = cutoff.toISOString();
+    const [{ data: inf }, { data: ins }] = await Promise.all([
+      eqViloyat(getSupabase().from('infarkt_qabul').select('kt_no,fio,tugilgan_yil,muassasa,viloyat,qabul_vaqt,status,infarkt_turi').eq('status', 'active').lte('qabul_vaqt', cutoffISO)),
+      eqViloyat(getSupabase().from('insult_qabul').select('kt_no,fio,tugilgan_yil,muassasa,viloyat,qabul_vaqt,status,insult_turi').eq('status', 'active').lte('qabul_vaqt', cutoffISO))
+    ]);
+    const all = [
+      ...(inf || []).map(r => ({ ...r, _type: 'infarkt' })),
+      ...(ins || []).map(r => ({ ...r, _type: 'insult' }))
+    ];
+    // Muassasa bo'yicha guruhlash
+    const map = {};
+    all.forEach(r => {
+      const key = r.muassasa || r.viloyat || 'Noma\'lum';
+      if (!map[key]) map[key] = { muassasa: key, bemorlar: [] };
+      const days = Math.floor((new Date() - new Date(r.qabul_vaqt)) / 86400000);
+      map[key].bemorlar.push({ ...r, kunlar: days });
+    });
+    return Object.values(map).sort((a, b) => b.bemorlar.length - a.bemorlar.length);
+  },
+
   // Demographics
   async getDemographics() {
     const p = await Profile.getCurrent();

@@ -28,17 +28,18 @@ const DashboardPage = {
   async loadData() {
     try {
       const profile = await Profile.getCurrent();
-      const [stats, trend, trend12, recent, viloyat, demo, riskFactors] = await Promise.all([
+      const [stats, trend, trend12, recent, viloyat, demo, riskFactors, longStay] = await Promise.all([
         DB.getDashboardStats(),
         DB.getTrend30(),
         DB.getTrend12Month(),
         DB.getRecentPatients(10),
         DB.getViloyatStats(),
         DB.getDemographics(),
-        DB.getRiskFactors()
+        DB.getRiskFactors(),
+        DB.getLongStayPatients()
       ]);
       DashboardPage._recentPatients = recent;
-      DashboardPage.renderContent(stats, trend, trend12, recent, viloyat, profile, demo, riskFactors);
+      DashboardPage.renderContent(stats, trend, trend12, recent, viloyat, profile, demo, riskFactors, longStay);
     } catch (err) {
       const inner = document.getElementById('dashboard-inner');
       if (inner) {
@@ -54,7 +55,7 @@ const DashboardPage = {
     }
   },
 
-  renderContent(stats, trend, trend12, recent, viloyat, profile, demo, riskFactors) {
+  renderContent(stats, trend, trend12, recent, viloyat, profile, demo, riskFactors, longStay = []) {
     const inner = document.getElementById('dashboard-inner');
     if (!inner) return;
 
@@ -360,7 +361,71 @@ const DashboardPage = {
 
 
 
-      <!-- ROW 6: PATIENT LIST TABLE -->
+      <!-- ROW 6: 15+ KUN DAVOLANAYOTGANLAR -->
+      <div class="bg-white rounded-2xl border border-orange-100 shadow-sm overflow-hidden mb-8">
+        <div class="p-6 border-b border-orange-50 flex items-center justify-between bg-orange-50/50">
+          <div class="flex items-center gap-3">
+            <div class="w-9 h-9 bg-orange-100 text-orange-600 rounded-xl flex items-center justify-center">${icon('clock', 18)}</div>
+            <div>
+              <h3 class="font-bold text-slate-800">15 kun va undan ko'p davolanayotganlar</h3>
+              <p class="text-[11px] text-slate-400 font-medium">Statsionarda 15+ kun qolgan aktiv bemorlar — muassasa bo'yicha</p>
+            </div>
+          </div>
+          <span class="px-3 py-1.5 bg-orange-100 text-orange-700 text-xs font-black rounded-xl border border-orange-200">${longStay.reduce((s,g)=>s+g.bemorlar.length,0)} ta bemor</span>
+        </div>
+        ${longStay.length === 0 ? `
+          <div class="p-10 text-center text-slate-400 font-medium">15 kun va undan ko'p davolanayotgan bemorlar yo'q</div>
+        ` : `
+        <div class="overflow-x-auto">
+          <table class="w-full text-left">
+            <thead>
+              <tr class="bg-slate-50/50">
+                <th class="p-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100">Muassasa</th>
+                <th class="p-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100">Bemorlar soni</th>
+                <th class="p-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100">Eng uzoq (kun)</th>
+                <th class="p-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100">Infarkt / Insult</th>
+                <th class="p-4 border-b border-slate-100"></th>
+              </tr>
+            </thead>
+            <tbody class="text-sm divide-y divide-slate-50">
+              ${longStay.map(g => {
+                const inf = g.bemorlar.filter(b=>b._type==='infarkt').length;
+                const ins = g.bemorlar.filter(b=>b._type==='insult').length;
+                const maxDays = Math.max(...g.bemorlar.map(b=>b.kunlar));
+                return `
+                <tr class="hover:bg-orange-50/30 transition-colors">
+                  <td class="p-4">
+                    <div class="flex items-center gap-2">
+                      <div class="w-7 h-7 bg-orange-100 text-orange-500 rounded-lg flex items-center justify-center">${icon('building-2', 14)}</div>
+                      <span class="font-bold text-slate-700">${esc(g.muassasa)}</span>
+                    </div>
+                  </td>
+                  <td class="p-4">
+                    <span class="px-2.5 py-1 bg-orange-50 text-orange-700 border border-orange-100 rounded-lg text-xs font-black">${g.bemorlar.length} ta</span>
+                  </td>
+                  <td class="p-4">
+                    <span class="px-2.5 py-1 bg-red-50 text-red-700 border border-red-100 rounded-lg text-xs font-black">${maxDays} kun</span>
+                  </td>
+                  <td class="p-4">
+                    <div class="flex gap-2">
+                      ${inf > 0 ? `<span class="px-2 py-0.5 bg-red-50 text-red-600 border border-red-100 rounded text-[10px] font-bold">${inf} infarkt</span>` : ''}
+                      ${ins > 0 ? `<span class="px-2 py-0.5 bg-blue-50 text-blue-600 border border-blue-100 rounded text-[10px] font-bold">${ins} insult</span>` : ''}
+                    </div>
+                  </td>
+                  <td class="p-4 text-right">
+                    <button class="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-[10px] font-bold text-slate-600 hover:bg-slate-100 transition-all" onclick="DashboardPage.showLongStayDetail('${esc(g.muassasa)}')">
+                      Ko'rish
+                    </button>
+                  </td>
+                </tr>`;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
+        `}
+      </div>
+
+      <!-- ROW 7: PATIENT LIST TABLE -->
       <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
         <div class="p-6 border-b border-slate-100 flex items-center justify-between">
           <h3 class="font-bold text-slate-800">So'nggi qabul qilingan bemorlar</h3>
@@ -431,6 +496,8 @@ const DashboardPage = {
       </div>
     `;
 
+    DashboardPage._longStayData = longStay;
+
     // Initialize Charts
     requestAnimationFrame(() => {
       initIcons();
@@ -438,6 +505,45 @@ const DashboardPage = {
         DashboardPage.drawNewCharts(trend, trend12, stats, viloyat, demo, profile, riskFactors);
       }, 300);
     });
+  },
+
+  showLongStayDetail(muassasa) {
+    const group = (DashboardPage._longStayData || []).find(g => g.muassasa === muassasa);
+    if (!group) return;
+    const rows = group.bemorlar.sort((a, b) => b.kunlar - a.kunlar).map(b => `
+      <tr class="border-b border-slate-50 hover:bg-slate-50/50 cursor-pointer" onclick="closeModal(); Router.go('bemor-karta',{kt_no:'${b.kt_no}', type:'${b._type}'})">
+        <td class="p-3 font-mono text-[11px] text-slate-500">${esc(b.kt_no)}</td>
+        <td class="p-3 font-bold text-slate-700">${esc(b.fio || '—')}</td>
+        <td class="p-3 text-slate-500 text-xs">${Utils.calculateAge(b.tugilgan_yil) || '—'} yosh</td>
+        <td class="p-3">
+          <span class="px-2 py-0.5 ${b._type==='infarkt'?'bg-red-50 text-red-600 border-red-100':'bg-blue-50 text-blue-600 border-blue-100'} text-[10px] font-bold rounded border uppercase">${b._type}</span>
+        </td>
+        <td class="p-3 text-xs text-slate-500">${Utils.formatDate(b.qabul_vaqt)}</td>
+        <td class="p-3">
+          <span class="px-2.5 py-1 bg-orange-50 text-orange-700 border border-orange-100 rounded-lg text-xs font-black">${b.kunlar} kun</span>
+        </td>
+      </tr>
+    `).join('');
+    showModal({
+      title: `${esc(muassasa)} — 15+ kun bemorlar`,
+      size: 'lg',
+      body: `
+        <div class="overflow-x-auto">
+          <table class="w-full text-left">
+            <thead><tr class="bg-slate-50">
+              <th class="p-3 text-[10px] font-bold text-slate-400 uppercase">K/T No</th>
+              <th class="p-3 text-[10px] font-bold text-slate-400 uppercase">F.I.Sh</th>
+              <th class="p-3 text-[10px] font-bold text-slate-400 uppercase">Yosh</th>
+              <th class="p-3 text-[10px] font-bold text-slate-400 uppercase">Turi</th>
+              <th class="p-3 text-[10px] font-bold text-slate-400 uppercase">Qabul vaqti</th>
+              <th class="p-3 text-[10px] font-bold text-slate-400 uppercase">Kunlar</th>
+            </tr></thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>
+      `
+    });
+    initIcons();
   },
 
   renderAlertItem(ic, title, count, color) {
