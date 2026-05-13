@@ -380,9 +380,9 @@ const DB = {
   },
 
   // Dashboard stats
-  async getDashboardStats() {
+  async getDashboardStats(overrideViloyat) {
     const p = await Profile.getCurrent();
-    const viloyat = p?.role === 'super_admin' ? null : p?.viloyat;
+    const viloyat = overrideViloyat !== undefined ? overrideViloyat : (p?.role === 'super_admin' ? null : p?.viloyat);
     const eqViloyat = (q) => viloyat ? q.eq('viloyat', viloyat) : q;
     // Bugungi sana: UTC da bugunning 00:00 dan ertangi 00:00 gacha
     const nowUtc = new Date();
@@ -502,9 +502,9 @@ const DB = {
   },
 
   // Last 30 days trend
-  async getTrend30() {
+  async getTrend30(overrideViloyat) {
     const p = await Profile.getCurrent();
-    const viloyat = p?.role === 'super_admin' ? null : p?.viloyat;
+    const viloyat = overrideViloyat !== undefined ? overrideViloyat : (p?.role === 'super_admin' ? null : p?.viloyat);
     const eqViloyat = (q) => viloyat ? q.eq('viloyat', viloyat) : q;
     const from = new Date();
     from.setUTCDate(from.getUTCDate() - 29);
@@ -544,9 +544,9 @@ const DB = {
   },
 
   // Last 12 months trend
-  async getTrend12Month() {
+  async getTrend12Month(overrideViloyat) {
     const p = await Profile.getCurrent();
-    const viloyat = p?.role === 'super_admin' ? null : p?.viloyat;
+    const viloyat = overrideViloyat !== undefined ? overrideViloyat : (p?.role === 'super_admin' ? null : p?.viloyat);
     const eqViloyat = (q) => viloyat ? q.eq('viloyat', viloyat) : q;
     const now = new Date();
     const from = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 11, 1));
@@ -587,9 +587,9 @@ const DB = {
   },
 
   // Risk factors distribution
-  async getRiskFactors() {
+  async getRiskFactors(overrideViloyat) {
     const p = await Profile.getCurrent();
-    const viloyat = p?.role === 'super_admin' ? null : p?.viloyat;
+    const viloyat = overrideViloyat !== undefined ? overrideViloyat : (p?.role === 'super_admin' ? null : p?.viloyat);
     const eqViloyat = (q) => viloyat ? q.eq('viloyat', viloyat) : q;
 
     const fetchAll = async (table) => {
@@ -629,9 +629,9 @@ const DB = {
   },
 
   // Recent patients
-  async getRecentPatients(limit = 10) {
+  async getRecentPatients(limit = 10, overrideViloyat) {
     const p = await Profile.getCurrent();
-    const viloyat = p?.role === 'super_admin' ? null : p?.viloyat;
+    const viloyat = overrideViloyat !== undefined ? overrideViloyat : (p?.role === 'super_admin' ? null : p?.viloyat);
     const eqViloyat = (q) => viloyat ? q.eq('viloyat', viloyat) : q;
     const [{ data: inf }, { data: ins }] = await Promise.all([
       eqViloyat(getSupabase().from('infarkt_qabul').select('*').order('created_at', { ascending: false }).limit(limit)),
@@ -646,9 +646,9 @@ const DB = {
   },
 
   // 15+ kun davolanayotgan bemorlar muassasa bo'yicha
-  async getLongStayPatients() {
+  async getLongStayPatients(overrideViloyat) {
     const p = await Profile.getCurrent();
-    const viloyat = p?.role === 'super_admin' ? null : p?.viloyat;
+    const viloyat = overrideViloyat !== undefined ? overrideViloyat : (p?.role === 'super_admin' ? null : p?.viloyat);
     const eqViloyat = (q) => viloyat ? q.eq('viloyat', viloyat) : q;
     const cutoff = new Date();
     cutoff.setDate(cutoff.getDate() - 15);
@@ -673,9 +673,9 @@ const DB = {
   },
 
   // Demographics
-  async getDemographics() {
+  async getDemographics(overrideViloyat) {
     const p = await Profile.getCurrent();
-    const viloyat = p?.role === 'super_admin' ? null : p?.viloyat;
+    const viloyat = overrideViloyat !== undefined ? overrideViloyat : (p?.role === 'super_admin' ? null : p?.viloyat);
     const { data, error } = await getSupabase().rpc('get_demographics', { p_viloyat: viloyat });
     if (error) {
       console.error('getDemographics RPC xato:', error.message);
@@ -688,9 +688,9 @@ const DB = {
   },
 
   // Viloyat (yoki Muassasa) distribution
-  async getViloyatStats() {
+  async getViloyatStats(overrideViloyat) {
     const p = await Profile.getCurrent();
-    const userViloyat = p?.role === 'super_admin' ? null : p?.viloyat;
+    const userViloyat = overrideViloyat !== undefined ? overrideViloyat : (p?.role === 'super_admin' ? null : p?.viloyat);
     const sb = getSupabase();
 
     if (userViloyat) {

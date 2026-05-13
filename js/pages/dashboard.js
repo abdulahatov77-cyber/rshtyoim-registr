@@ -2,6 +2,7 @@
 const DashboardPage = {
   _charts: {},
   _realtimeSub: null,
+  _viewViloyat: undefined, // super_admin uchun viloyat filter
 
   async render() {
     const user = await Auth.getUser();
@@ -28,15 +29,16 @@ const DashboardPage = {
   async loadData() {
     try {
       const profile = await Profile.getCurrent();
+      const ov = DashboardPage._viewViloyat;
       const [stats, trend, trend12, recent, viloyat, demo, riskFactors, longStay] = await Promise.all([
-        DB.getDashboardStats(),
-        DB.getTrend30(),
-        DB.getTrend12Month(),
-        DB.getRecentPatients(10),
-        DB.getViloyatStats(),
-        DB.getDemographics(),
-        DB.getRiskFactors(),
-        DB.getLongStayPatients()
+        DB.getDashboardStats(ov),
+        DB.getTrend30(ov),
+        DB.getTrend12Month(ov),
+        DB.getRecentPatients(10, ov),
+        DB.getViloyatStats(ov),
+        DB.getDemographics(ov),
+        DB.getRiskFactors(ov),
+        DB.getLongStayPatients(ov)
       ]);
       DashboardPage._recentPatients = recent;
       DashboardPage.renderContent(stats, trend, trend12, recent, viloyat, profile, demo, riskFactors, longStay);
@@ -86,7 +88,31 @@ const DashboardPage = {
     const bugunInfarkt = stats.infarktBugun || 0;
     const bugunInsult = stats.insultBugun || 0;
 
+    const isSuperAdmin = profile?.role === 'super_admin';
+    const viewViloyat = DashboardPage._viewViloyat;
+    const viloyatlarList = APP_CONFIG.VILOYATLAR || [];
+
     inner.innerHTML = `
+      ${isSuperAdmin ? `
+      <!-- VILOYAT FILTER (faqat super_admin) -->
+      <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 mb-6 flex flex-wrap items-center gap-3">
+        <div class="flex items-center gap-2 mr-2">
+          <div class="w-7 h-7 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center">${icon('map-pin', 14)}</div>
+          <span class="text-xs font-bold text-slate-600 uppercase tracking-wider">Ko'rish rejimi:</span>
+        </div>
+        <button onclick="DashboardPage.setViewViloyat(undefined)"
+          class="px-3 py-1.5 rounded-xl text-[11px] font-bold border transition-all ${!viewViloyat ? 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-200' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'}">
+          Barcha viloyatlar
+        </button>
+        ${viloyatlarList.map(v => `
+          <button onclick="DashboardPage.setViewViloyat('${v}')"
+            class="px-3 py-1.5 rounded-xl text-[11px] font-bold border transition-all ${viewViloyat === v ? 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-200' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'}">
+            ${v.replace(' viloyati','').replace(' Respublikasi','')}
+          </button>
+        `).join('')}
+      </div>
+      ` : ''}
+
       <!-- ROW 1: KPI CARDS (TOP 5) -->
       <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6 mb-10">
         <!-- 1. Jami Qabul Qilingan Bemorlar -->
@@ -505,6 +531,11 @@ const DashboardPage = {
         DashboardPage.drawNewCharts(trend, trend12, stats, viloyat, demo, profile, riskFactors);
       }, 300);
     });
+  },
+
+  setViewViloyat(viloyat) {
+    DashboardPage._viewViloyat = viloyat;
+    DashboardPage.loadData();
   },
 
   showLongStayDetail(muassasa) {
