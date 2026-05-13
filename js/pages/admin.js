@@ -1,4 +1,4 @@
-// ==================== ADMIN PANEL ====================
+﻿// ==================== ADMIN PANEL ====================
 const AdminPage = {
   _profiles: [],
   _search: '',
@@ -562,7 +562,10 @@ const AdminPage = {
     AdminPage._renderTabContent();
     try {
       const all = await MuassasaDB.fetchAllRecords();
-      const norm = (s) => s.replace(/[‘’ʼ`´’ʹ′’‘ʼ]/g, "’").toLowerCase().trim();
+      const norm = (s) => s.split(‘’).map(c => {
+        const code = c.charCodeAt(0);
+        return (code===0x2018||code===0x2019||code===0x02BC||code===0x00B4||code===0x02B9||code===0x2032||code===0x60) ? "’" : c;
+      }).join(‘’).toLowerCase().trim();
       const issues = [];
       const sb = getSupabase();
 
