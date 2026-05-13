@@ -309,7 +309,7 @@ const BemorKartaPage = {
           <div class="card-body p-5">
             ${row('Qon bosimi', p.qon_bosimi)}
             ${type==='infarkt'?`
-              ${row('Infarkt turi', p.infarkt_turi?.includes("O'tkir miokard infarkti") ? "O'tkir miokard infarkti (AMI)" : p.infarkt_turi)}
+              ${row('Infarkt turi', (() => { const t = p.infarkt_turi; if (!t) return null; if (t === 'STEMI' || t.toUpperCase() === 'STEMI') return "O'KS ST elevatsiya bilan (STEMI)"; if (t === 'NSTEMI' || t.toUpperCase() === 'NSTEMI') return "O'KS ST elevatsiyasiz (NSTEMI)"; if (t.includes("O'tkir miokard infarkti")) return "O'tkir miokard infarkti (AMI)"; return t; })())}
               ${row('Killip klassifikatsiyasi', p.killip)}
               ${row('Troponin', p.troponin)}
               ${row('KFK-MB', p.kkfmb)}
