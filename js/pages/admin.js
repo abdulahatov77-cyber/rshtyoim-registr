@@ -566,23 +566,57 @@ const AdminPage = {
         const codes = {0x2018:1,0x2019:1,0x02BC:1,0x00B4:1,0x02B9:1,0x2032:1,0x60:1,0x27:1};
         return Array.from(s).map(c => codes[c.charCodeAt(0)] ? String.fromCharCode(0x27) : c).join("").toLowerCase().trim();
       };
+      // Kirill -> Lotin transliteratsiya (oddiy)
+      const cyrToLat = (s) => s
+        .replace(/К/g,'K').replace(/к/g,'k')
+        .replace(/Ҳ/g,'Q').replace(/ҳ/g,'q')
+        .replace(/У/g,'U').replace(/у/g,'u')
+        .replace(/Ӯ/g,'U').replace(/ӯ/g,'u')
+        .replace(/О/g,'O').replace(/о/g,'o')
+        .replace(/Ў/g,"O'").replace(/ў/g,"o'")
+        .replace(/ғ/g,"G'").replace(/Ғ/g,"G'")
+        .replace(/Н/g,'N').replace(/н/g,'n')
+        .replace(/Ш/g,'Sh').replace(/ш/g,'sh')
+        .replace(/А/g,'A').replace(/а/g,'a')
+        .replace(/Ҳ/g,'H').replace(/ҳ/g,'h')
+        .replace(/Һ/g,'H').replace(/һ/g,'h')
+        .replace(/Р/g,'R').replace(/р/g,'r')
+        .replace(/Т/g,'T').replace(/т/g,'t')
+        .replace(/И/g,'I').replace(/и/g,'i')
+        .replace(/Б/g,'B').replace(/б/g,'b')
+        .replace(/Й/g,'Y').replace(/й/g,'y')
+        .replace(/Ё/g,'Yo').replace(/ё/g,'yo')
+        .replace(/Д/g,'D').replace(/д/g,'d')
+        .replace(/Ф/g,'F').replace(/ф/g,'f')
+        .replace(/М/g,'M').replace(/м/g,'m')
+        .replace(/Х/g,'X').replace(/х/g,'x')
+        .replace(/Л/g,'L').replace(/л/g,'l')
+        .replace(/Ч/g,'Ch').replace(/ч/g,'ch')
+        .replace(/С/g,'S').replace(/с/g,'s')
+        .replace(/Ц/g,'S').replace(/ц/g,'s')
+        .replace(/В/g,'V').replace(/в/g,'v')
+        .replace(/Г/g,'G').replace(/г/g,'g')
+        .replace(/П/g,'P').replace(/п/g,'p')
+        .replace(/Ж/g,'J').replace(/ж/g,'j')
+        .replace(/З/g,'Z').replace(/з/g,'z')
+        .replace(/Ъ/g,"'").replace(/ъ/g,"'");
+      const normKey = (s) => norm(cyrToLat(s));
       // Qisqartma va noto'g'ri yozuvlarni standart nomga moslashtirish
+      // { normKey(alias): { correct, anyViloyat } }
       const ALIAS_MAP = {
-        "rshtyimff": "RSHTYOIM Farg'ona filiali",
-        "rshtyimff farg'ona filiali": "RSHTYOIM Farg'ona filiali",
-        "rshtyoim farg'ona filiali": "RSHTYOIM Farg'ona filiali",
-        "yshtb": "Yangiyer ShTB",
-        "yangiyer shtb": "Yangiyer ShTB",
-        "dttb": "Dehqonobod TTB",
-        "dehqonobod tttb": "Dehqonobod TTB",
-        "kukon shahar shoshilinch tibbiy yordam shifoxonasi": "Qo'qon politravma markazi",
-        "qo'qon shahar shoshilinch tibbiy yordam shifoxonasi": "Qo'qon politravma markazi",
-        "respublika shoshilinch tibbiy yordam ilmiy markazi": "Respublika Shoshilinch Tibbiy Yordam Ilmiy Markazi",
+        "rshtyimff": { correct: "RSHTYOIM Farg'ona filiali" },
+        "yshtb": { correct: "Yangiyer ShTB" },
+        "dttb": { correct: "Dehqonobod TTB" },
+        "kukon shahar shoshilinch tibbiy yordam shifoxonasi": { correct: "Qo'qon politravma markazi" },
+        "qo'qon shahar shoshilinch tibbiy yordam shifoxonasi": { correct: "Qo'qon politravma markazi" },
+        "respublika shoshilinch tibbiy yordam ilmiy markazi": { correct: "Respublika Shoshilinch Tibbiy Yordam Ilmiy Markazi", anyViloyat: true },
       };
+      // Barcha viloyatlardagi muassasalar uchun yagona ro'yxat
+      const allValidMusassasalar = Object.values(APP_CONFIG.MUASSASALAR).flat();
       const aliasLookup = (s) => {
-        const n = norm(s);
-        for (const [alias, correct] of Object.entries(ALIAS_MAP)) {
-          if (norm(alias) === n) return correct;
+        const n = normKey(s);
+        for (const [alias, info] of Object.entries(ALIAS_MAP)) {
+          if (normKey(alias) === n) return info;
         }
         return null;
       };
@@ -608,10 +642,14 @@ const AdminPage = {
           continue;
         }
 
-        const aliasMatch = aliasLookup(r.muassasa);
-        if (aliasMatch && validList.includes(aliasMatch)) {
-          autoFixes.push({ kt_no: r.kt_no, _type: r._type, correct: aliasMatch });
-          continue;
+        const aliasInfo = aliasLookup(r.muassasa);
+        if (aliasInfo) {
+          const inCurrent = validList.includes(aliasInfo.correct);
+          const inAny = aliasInfo.anyViloyat && allValidMusassasalar.includes(aliasInfo.correct);
+          if (inCurrent || inAny) {
+            autoFixes.push({ kt_no: r.kt_no, _type: r._type, correct: aliasInfo.correct });
+            continue;
+          }
         }
 
         if (r.muassasa !== 'Boshqa') {
