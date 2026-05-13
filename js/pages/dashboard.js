@@ -104,12 +104,13 @@ const DashboardPage = {
           class="px-3 py-1.5 rounded-xl text-[11px] font-bold border transition-all ${!viewViloyat ? 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-200' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'}">
           Barcha viloyatlar
         </button>
-        ${viloyatlarList.map(v => `
-          <button onclick="DashboardPage.setViewViloyat('${v}')"
-            class="px-3 py-1.5 rounded-xl text-[11px] font-bold border transition-all ${viewViloyat === v ? 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-200' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'}">
-            ${v.replace(' viloyati','').replace(' Respublikasi','')}
-          </button>
-        `).join('')}
+        ${viloyatlarList.map(v => {
+          const safeV = v.replace(/'/g, "\\'");
+          const isActive = viewViloyat === v;
+          const cls = isActive ? 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-200' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100';
+          const label = v.replace(' viloyati','').replace(' Respublikasi','');
+          return `<button onclick="DashboardPage.setViewViloyat('${safeV}')" class="px-3 py-1.5 rounded-xl text-[11px] font-bold border transition-all ${cls}">${label}</button>`;
+        }).join('')}
       </div>
       ` : ''}
 
