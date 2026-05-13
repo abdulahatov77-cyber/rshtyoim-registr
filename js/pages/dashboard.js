@@ -306,22 +306,22 @@ const DashboardPage = {
       <!-- ROW: RISK FACTORS DONUT CHARTS -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
         <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
-          <h3 class="text-sm font-bold text-slate-800 uppercase tracking-wider mb-6 flex items-center gap-2">
+          <h3 class="text-sm font-bold text-slate-800 uppercase tracking-wider mb-5 flex items-center gap-2">
             ${icon('heart', 16, 'text-red-500')} Infarkt — xavf omillari
           </h3>
-          <div class="flex items-center gap-4">
-            <div style="width:180px;height:180px;flex-shrink:0"><canvas id="riskInfarktChart"></canvas></div>
-            <div id="riskInfarktLegend" class="flex-1 text-xs"></div>
+          <div class="flex justify-center mb-4" style="height:220px">
+            <canvas id="riskInfarktChart"></canvas>
           </div>
+          <div id="riskInfarktLegend" class="text-xs space-y-1"></div>
         </div>
         <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
-          <h3 class="text-sm font-bold text-slate-800 uppercase tracking-wider mb-6 flex items-center gap-2">
+          <h3 class="text-sm font-bold text-slate-800 uppercase tracking-wider mb-5 flex items-center gap-2">
             ${icon('brain', 16, 'text-blue-500')} Insult — xavf omillari
           </h3>
-          <div class="flex items-center gap-4">
-            <div style="width:180px;height:180px;flex-shrink:0"><canvas id="riskInsultChart"></canvas></div>
-            <div id="riskInsultLegend" class="flex-1 text-xs"></div>
+          <div class="flex justify-center mb-4" style="height:220px">
+            <canvas id="riskInsultChart"></canvas>
           </div>
+          <div id="riskInsultLegend" class="text-xs space-y-1"></div>
         </div>
       </div>
 
@@ -717,14 +717,15 @@ const DashboardPage = {
         }]
       },
       options: {
-        responsive: false,
-        cutout: '60%',
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: '62%',
         plugins: {
           legend: { display: false },
           datalabels: { display: false },
           tooltip: {
             callbacks: {
-              label: ctx => ` ${ctx.label}: ${ctx.parsed} ta (${((ctx.parsed/total)*100).toFixed(1)}%)`
+              label: item => ` ${item.label}: ${item.parsed} ta (${((item.parsed/total)*100).toFixed(1)}%)`
             }
           }
         }
