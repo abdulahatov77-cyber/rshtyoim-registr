@@ -526,15 +526,16 @@ const HisobotPage = {
       <!-- Shifokorlar bo'yicha statistika -->
       ${(() => {
         const shifokorMap = {};
-        [...infs, ...ins].forEach(p => {
+        const add = (p, turi) => {
           const sh = p.shifokor_fio?.trim();
           if (!sh) return;
           if (!shifokorMap[sh]) shifokorMap[sh] = { fio: sh, infarkt: 0, insult: 0, vafot: 0, chiqarildi: 0 };
-          if (p.infarkt_turi) shifokorMap[sh].infarkt++;
-          else shifokorMap[sh].insult++;
+          shifokorMap[sh][turi]++;
           if (p.status === 'vafot') shifokorMap[sh].vafot++;
           if (p.status === 'chiqarildi') shifokorMap[sh].chiqarildi++;
-        });
+        };
+        infs.forEach(p => add(p, 'infarkt'));
+        ins.forEach(p => add(p, 'insult'));
         const shifokorlar = Object.values(shifokorMap).sort((a,b) => (b.infarkt+b.insult) - (a.infarkt+a.insult));
         if (!shifokorlar.length) return '';
         return `
