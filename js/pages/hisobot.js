@@ -438,15 +438,17 @@ const HisobotPage = {
         });
         const otkazilganMuassasalar = Object.values(otkazilganMap).sort((a,b) => (b.infarkt+b.insult)-(a.infarkt+a.insult));
 
-        // 3. Shifokorlar
+        // 3. Shifokorlar — katta-kichik harf va qo'shimcha bo'shliqlarni normallashtirish
+        const normFio = s => s?.trim().toLowerCase().replace(/\s+/g, ' ') || '';
         const shifokorMap = {};
         const addShifokor = (p, isInf) => {
-          const sh = p.shifokor_fio?.trim();
-          if (!sh) return;
-          if (!shifokorMap[sh]) shifokorMap[sh] = { fio: sh, infarkt: 0, insult: 0, vafot: 0, chiqarildi: 0 };
-          isInf ? shifokorMap[sh].infarkt++ : shifokorMap[sh].insult++;
-          if (p.status === 'vafot') shifokorMap[sh].vafot++;
-          if (p.status === 'chiqarildi') shifokorMap[sh].chiqarildi++;
+          const raw = p.shifokor_fio?.trim();
+          if (!raw) return;
+          const key = normFio(raw);
+          if (!shifokorMap[key]) shifokorMap[key] = { fio: raw, infarkt: 0, insult: 0, vafot: 0, chiqarildi: 0 };
+          isInf ? shifokorMap[key].infarkt++ : shifokorMap[key].insult++;
+          if (p.status === 'vafot') shifokorMap[key].vafot++;
+          if (p.status === 'chiqarildi') shifokorMap[key].chiqarildi++;
         };
         infs.forEach(p => addShifokor(p, true));
         ins.forEach(p => addShifokor(p, false));
