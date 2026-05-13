@@ -566,40 +566,47 @@ const AdminPage = {
         const codes = {0x2018:1,0x2019:1,0x02BC:1,0x00B4:1,0x02B9:1,0x2032:1,0x60:1,0x27:1};
         return Array.from(s).map(c => codes[c.charCodeAt(0)] ? String.fromCharCode(0x27) : c).join("").toLowerCase().trim();
       };
-      // Kirill -> Lotin transliteratsiya (oddiy)
-      const cyrToLat = (s) => s
-        .replace(/К/g,'K').replace(/к/g,'k')
-        .replace(/Ҳ/g,'Q').replace(/ҳ/g,'q')
-        .replace(/У/g,'U').replace(/у/g,'u')
-        .replace(/Ӯ/g,'U').replace(/ӯ/g,'u')
-        .replace(/О/g,'O').replace(/о/g,'o')
-        .replace(/Ў/g,"O'").replace(/ў/g,"o'")
-        .replace(/ғ/g,"G'").replace(/Ғ/g,"G'")
-        .replace(/Н/g,'N').replace(/н/g,'n')
-        .replace(/Ш/g,'Sh').replace(/ш/g,'sh')
-        .replace(/А/g,'A').replace(/а/g,'a')
-        .replace(/Ҳ/g,'H').replace(/ҳ/g,'h')
-        .replace(/Һ/g,'H').replace(/һ/g,'h')
-        .replace(/Р/g,'R').replace(/р/g,'r')
-        .replace(/Т/g,'T').replace(/т/g,'t')
-        .replace(/И/g,'I').replace(/и/g,'i')
-        .replace(/Б/g,'B').replace(/б/g,'b')
-        .replace(/Й/g,'Y').replace(/й/g,'y')
-        .replace(/Ё/g,'Yo').replace(/ё/g,'yo')
-        .replace(/Д/g,'D').replace(/д/g,'d')
-        .replace(/Ф/g,'F').replace(/ф/g,'f')
-        .replace(/М/g,'M').replace(/м/g,'m')
-        .replace(/Х/g,'X').replace(/х/g,'x')
-        .replace(/Л/g,'L').replace(/л/g,'l')
-        .replace(/Ч/g,'Ch').replace(/ч/g,'ch')
-        .replace(/С/g,'S').replace(/с/g,'s')
-        .replace(/Ц/g,'S').replace(/ц/g,'s')
-        .replace(/В/g,'V').replace(/в/g,'v')
-        .replace(/Г/g,'G').replace(/г/g,'g')
-        .replace(/П/g,'P').replace(/п/g,'p')
-        .replace(/Ж/g,'J').replace(/ж/g,'j')
-        .replace(/З/g,'Z').replace(/з/g,'z')
-        .replace(/Ъ/g,"'").replace(/ъ/g,"'");
+      // Kirill -> Lotin transliteratsiya
+      const cyrToLat = (s) => {
+        const map = {
+          'Қ':'Q','қ':'q',  // Қ қ
+          'Ҳ':'H','ҳ':'h',  // Ҳ ҳ
+          'Ғ':"G'",'ғ':"g'", // Ғ ғ
+          'Ў':"O'",'ў':"o'", // Ў ў
+          'Ӯ':'U','ӯ':'u',  // Ӯ ӯ
+          'Ш':'Sh','ш':'sh', // Ш ш
+          'Ч':'Ch','ч':'ch', // Ч ч
+          'Ю':'Yu','ю':'yu', // Ю ю
+          'Я':'Ya','я':'ya', // Я я
+          'Ё':'Yo','ё':'yo', // Ё ё
+          'Ъ':"'",'ъ':"'",  // Ъ ъ
+          'А':'A','а':'a',
+          'Б':'B','б':'b',
+          'В':'V','в':'v',
+          'Г':'G','г':'g',
+          'Д':'D','д':'d',
+          'Е':'E','е':'e',
+          'Ж':'J','ж':'j',
+          'З':'Z','з':'z',
+          'И':'I','и':'i',
+          'Й':'Y','й':'y',
+          'К':'K','к':'k',
+          'Л':'L','л':'l',
+          'М':'M','м':'m',
+          'Н':'N','н':'n',
+          'О':'O','о':'o',
+          'П':'P','п':'p',
+          'Р':'R','р':'r',
+          'С':'S','с':'s',
+          'Т':'T','т':'t',
+          'У':'U','у':'u',
+          'Ф':'F','ф':'f',
+          'Х':'X','х':'x',
+          'Ц':'S','ц':'s',
+          'Ь':"'",'ь':"'",
+        };
+        return Array.from(s).map(c => map[c] !== undefined ? map[c] : c).join('');
+      };
       const normKey = (s) => norm(cyrToLat(s));
       // Qisqartma va noto'g'ri yozuvlarni standart nomga moslashtirish
       // { normKey(alias): { correct, anyViloyat } }
@@ -608,6 +615,7 @@ const AdminPage = {
         "yshtb": { correct: "Yangiyer ShTB" },
         "dttb": { correct: "Dehqonobod TTB" },
         "kukon shahar shoshilinch tibbiy yordam shifoxonasi": { correct: "Qo'qon politravma markazi" },
+        "kuqon shahar shoshilinch tibbiy yordam shifoxonasi": { correct: "Qo'qon politravma markazi" },
         "qo'qon shahar shoshilinch tibbiy yordam shifoxonasi": { correct: "Qo'qon politravma markazi" },
         "respublika shoshilinch tibbiy yordam ilmiy markazi": { correct: "Respublika Shoshilinch Tibbiy Yordam Ilmiy Markazi", anyViloyat: true },
       };
