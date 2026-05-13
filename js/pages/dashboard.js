@@ -911,6 +911,25 @@ const DashboardPage = {
       }
     };
 
+    const centerTextPlugin = {
+      id: 'centerText_' + canvasId,
+      afterDraw(chart) {
+        const { ctx: c, chartArea: { top, left, width, height } } = chart;
+        const cx = left + width / 2;
+        const cy = top + height / 2;
+        c.save();
+        c.textAlign = 'center';
+        c.textBaseline = 'middle';
+        c.fillStyle = '#94a3b8';
+        c.font = '500 11px Inter, system-ui, sans-serif';
+        c.fillText('Jami', cx, cy - 11);
+        c.fillStyle = '#0f172a';
+        c.font = '700 22px Inter, system-ui, sans-serif';
+        c.fillText(total.toLocaleString(), cx, cy + 10);
+        c.restore();
+      }
+    };
+
     new Chart(ctx, {
       type: 'doughnut',
       data: {
@@ -923,7 +942,7 @@ const DashboardPage = {
           hoverOffset: 6
         }]
       },
-      plugins: [outsideLabelsPlugin],
+      plugins: [outsideLabelsPlugin, centerTextPlugin],
       options: {
         responsive: true,
         maintainAspectRatio: false,
