@@ -574,10 +574,15 @@ const AdminPage = {
         const exactMatch = validList.includes(r.muassasa);
         const normMatch = validList.find(m => norm(m) === norm(r.muassasa));
         if (!exactMatch && !normMatch && r.muassasa !== 'Boshqa') {
-          // Eng yaqin nomni topib suggest qilamiz
+          // Apostrof normalizatsiya bilan eng yaqin nomni topamiz
+          const nr = norm(r.muassasa);
+          const words = nr.split(' ').filter(w => w.length > 2);
           const suggested = validList.find(m => {
-            const nm = norm(m), nr = norm(r.muassasa);
-            return nm.includes(nr.split(' ')[0]) || nr.includes(nm.split(' ')[0]);
+            const nm = norm(m);
+            return nm === nr || words.every(w => nm.includes(w)) || words.some(w => nm.includes(w) && nm.split(' ').length <= nr.split(' ').length + 2);
+          }) || validList.find(m => {
+            const nm = norm(m);
+            return words.slice(0,2).every(w => nm.includes(w));
           }) || null;
           issues.push({ ...r, _issue: 'mismatch', _suggested: suggested });
         }
