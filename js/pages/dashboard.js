@@ -28,15 +28,17 @@ const DashboardPage = {
   async loadData() {
     try {
       const profile = await Profile.getCurrent();
-      const [stats, trend, recent, viloyat, demo] = await Promise.all([
+      const [stats, trend, trend12, recent, viloyat, demo, riskFactors] = await Promise.all([
         DB.getDashboardStats(),
         DB.getTrend30(),
+        DB.getTrend12Month(),
         DB.getRecentPatients(10),
         DB.getViloyatStats(),
-        DB.getDemographics()
+        DB.getDemographics(),
+        DB.getRiskFactors()
       ]);
       DashboardPage._recentPatients = recent;
-      DashboardPage.renderContent(stats, trend, recent, viloyat, profile, demo);
+      DashboardPage.renderContent(stats, trend, trend12, recent, viloyat, profile, demo, riskFactors);
     } catch (err) {
       const inner = document.getElementById('dashboard-inner');
       if (inner) {
@@ -52,7 +54,7 @@ const DashboardPage = {
     }
   },
 
-  renderContent(stats, trend, recent, viloyat, profile, demo) {
+  renderContent(stats, trend, trend12, recent, viloyat, profile, demo, riskFactors) {
     const inner = document.getElementById('dashboard-inner');
     if (!inner) return;
 
@@ -209,6 +211,18 @@ const DashboardPage = {
         <div class="h-80"><canvas id="dynamicsChart"></canvas></div>
       </div>
 
+      <!-- ROW 2b: MONTHLY TREND CHART -->
+      <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm mb-8">
+        <div class="flex items-center justify-between mb-8">
+          <h3 class="text-sm font-bold text-slate-800 uppercase tracking-wider">Oylik qabul dinamikasi (so'nggi 12 oy)</h3>
+          <div class="flex gap-4">
+            <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-sm bg-red-500"></span> <span class="text-[10px] font-bold text-slate-500 uppercase">Infarkt</span></div>
+            <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-sm bg-blue-500"></span> <span class="text-[10px] font-bold text-slate-500 uppercase">Insult</span></div>
+          </div>
+        </div>
+        <div class="h-72"><canvas id="monthlyChart"></canvas></div>
+      </div>
+
       <!-- ROW 3: REGIONAL DISTRIBUTION CHART -->
       <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm mb-8">
         <div class="flex items-center justify-between mb-8">
@@ -286,6 +300,28 @@ const DashboardPage = {
             </div>
           </div>
           <div class="p-4 pb-6" style="min-height:300px;position:relative"><canvas id="ageChart"></canvas></div>
+        </div>
+      </div>
+
+      <!-- ROW: RISK FACTORS DONUT CHARTS -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+        <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
+          <h3 class="text-sm font-bold text-slate-800 uppercase tracking-wider mb-6 flex items-center gap-2">
+            ${icon('heart', 16, 'text-red-500')} Infarkt — xavf omillari
+          </h3>
+          <div class="flex items-center gap-4">
+            <div style="width:180px;height:180px;flex-shrink:0"><canvas id="riskInfarktChart"></canvas></div>
+            <div id="riskInfarktLegend" class="flex-1 text-xs"></div>
+          </div>
+        </div>
+        <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
+          <h3 class="text-sm font-bold text-slate-800 uppercase tracking-wider mb-6 flex items-center gap-2">
+            ${icon('brain', 16, 'text-blue-500')} Insult — xavf omillari
+          </h3>
+          <div class="flex items-center gap-4">
+            <div style="width:180px;height:180px;flex-shrink:0"><canvas id="riskInsultChart"></canvas></div>
+            <div id="riskInsultLegend" class="flex-1 text-xs"></div>
+          </div>
         </div>
       </div>
 
@@ -401,7 +437,7 @@ const DashboardPage = {
     requestAnimationFrame(() => {
       initIcons();
       setTimeout(() => {
-        DashboardPage.drawNewCharts(trend, stats, viloyat, demo, profile);
+        DashboardPage.drawNewCharts(trend, trend12, stats, viloyat, demo, profile, riskFactors);
       }, 300);
     });
   },
@@ -469,7 +505,7 @@ const DashboardPage = {
     `;
   },
 
-  drawNewCharts(trend, stats, viloyat, demo, profile) {
+  drawNewCharts(trend, trend12, stats, viloyat, demo, profile, riskFactors) {
     if (window.ChartDataLabels) {
       Chart.register(window.ChartDataLabels);
     }
@@ -556,6 +592,45 @@ const DashboardPage = {
       });
     }
 
+    // 4. Risk Factors Donut Charts
+    if (riskFactors) {
+      DashboardPage._drawDonut('riskInfarktChart', 'riskInfarktLegend', riskFactors.infarkt, '#ef4444');
+      DashboardPage._drawDonut('riskInsultChart',  'riskInsultLegend',  riskFactors.insult,  '#3b82f6');
+    }
+
+    // 2b. Monthly Trend Chart
+    const ctxM = document.getElementById('monthlyChart')?.getContext('2d');
+    if (ctxM && trend12) {
+      new Chart(ctxM, {
+        type: 'bar',
+        data: {
+          labels: trend12.labels,
+          datasets: [
+            { label: 'Infarkt', data: trend12.infData, backgroundColor: 'rgba(239,68,68,0.85)', borderRadius: 5, borderSkipped: false },
+            { label: 'Insult',  data: trend12.insData, backgroundColor: 'rgba(59,130,246,0.85)', borderRadius: 5, borderSkipped: false }
+          ]
+        },
+        plugins: window.ChartDataLabels ? [window.ChartDataLabels] : [],
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            datalabels: window.ChartDataLabels ? {
+              anchor: 'end', align: 'top',
+              display: ctx => ctx.dataset.data[ctx.dataIndex] > 0,
+              color: ctx => ctx.datasetIndex === 0 ? '#dc2626' : '#2563eb',
+              font: { weight: 'bold', size: 11 },
+              formatter: v => v > 0 ? v : ''
+            } : { display: false }
+          },
+          scales: {
+            x: { grid: { display: false }, ticks: { font: { size: 11, weight: '600' }, color: '#475569' } },
+            y: { grid: { borderDash: [5,5], color: '#f1f5f9' }, ticks: { font: { size: 11 } }, beginAtZero: true }
+          }
+        }
+      });
+    }
+
     // 3. Age Groups Chart
     const ctxA = document.getElementById('ageChart')?.getContext('2d');
     if (ctxA && demo) {
@@ -622,6 +697,56 @@ const DashboardPage = {
           }
         }
       });
+    }
+  },
+
+  _drawDonut(canvasId, legendId, data, baseColor) {
+    const ctx = document.getElementById(canvasId)?.getContext('2d');
+    if (!ctx || !data || !data.length) return;
+
+    const COLORS = [
+      '#3b82f6','#ef4444','#10b981','#f59e0b','#8b5cf6',
+      '#06b6d4','#f97316','#ec4899'
+    ];
+    const total = data.reduce((s, [, v]) => s + v, 0);
+
+    new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: data.map(([k]) => k),
+        datasets: [{
+          data: data.map(([, v]) => v),
+          backgroundColor: COLORS.slice(0, data.length),
+          borderWidth: 2,
+          borderColor: '#fff',
+          hoverOffset: 6
+        }]
+      },
+      options: {
+        responsive: false,
+        cutout: '60%',
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: ctx => ` ${ctx.label}: ${ctx.parsed} ta (${((ctx.parsed/total)*100).toFixed(1)}%)`
+            }
+          }
+        }
+      }
+    });
+
+    const legendEl = document.getElementById(legendId);
+    if (legendEl) {
+      legendEl.innerHTML = data.map(([k, v], i) => `
+        <div class="flex items-center justify-between gap-2 py-1 border-b border-slate-50 last:border-0">
+          <div class="flex items-center gap-1.5 min-w-0">
+            <span class="w-2.5 h-2.5 rounded-full flex-shrink-0" style="background:${COLORS[i]}"></span>
+            <span class="text-slate-600 truncate" title="${k}">${k}</span>
+          </div>
+          <span class="font-bold text-slate-800 flex-shrink-0">${v}</span>
+        </div>
+      `).join('');
     }
   },
 

@@ -384,15 +384,13 @@ const DB = {
     const p = await Profile.getCurrent();
     const viloyat = p?.role === 'super_admin' ? null : p?.viloyat;
     const eqViloyat = (q) => viloyat ? q.eq('viloyat', viloyat) : q;
-    // Kasalxona ish kuni 07:00 dan boshlanadi (Telegram bot bilan mos)
-    const now = new Date();
-    const cutoff = new Date();
-    cutoff.setHours(7, 0, 0, 0);
-    if (now < cutoff) cutoff.setDate(cutoff.getDate() - 1);
-    const todayISO = cutoff.toISOString();
-    const cutoffEnd = new Date(cutoff);
-    cutoffEnd.setDate(cutoffEnd.getDate() + 1); // Ertaga 07:00 — yuqori chegara
-    const todayEndISO = cutoffEnd.toISOString();
+    // Bugungi sana: UTC da bugunning 00:00 dan ertangi 00:00 gacha
+    const nowUtc = new Date();
+    const todayUtcStr = nowUtc.toISOString().slice(0, 10); // "YYYY-MM-DD"
+    const todayISO = todayUtcStr + 'T00:00:00.000Z';
+    const tomorrow = new Date(nowUtc);
+    tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
+    const todayEndISO = tomorrow.toISOString().slice(0, 10) + 'T00:00:00.000Z';
 
     const [
       { count: infAll },
@@ -543,6 +541,91 @@ const DB = {
       insData.push(ins.filter(r => r.qabul_vaqt?.startsWith(ds)).length);
     }
     return { labels, infData, insData };
+  },
+
+  // Last 12 months trend
+  async getTrend12Month() {
+    const p = await Profile.getCurrent();
+    const viloyat = p?.role === 'super_admin' ? null : p?.viloyat;
+    const eqViloyat = (q) => viloyat ? q.eq('viloyat', viloyat) : q;
+    const now = new Date();
+    const from = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 11, 1));
+    const fromISO = from.toISOString();
+
+    const fetchAll = async (table) => {
+      let all = [], offset = 0;
+      while (true) {
+        const { data, error } = await eqViloyat(
+          getSupabase().from(table).select('qabul_vaqt').gte('qabul_vaqt', fromISO)
+        ).range(offset, offset + 999);
+        if (error) { if (error.code === 'PGRST103') break; throw error; }
+        if (!data || data.length === 0) break;
+        all = all.concat(data);
+        if (data.length < 1000) break;
+        offset += 1000;
+      }
+      return all;
+    };
+
+    const [inf, ins] = await Promise.all([
+      fetchAll('infarkt_qabul'),
+      fetchAll('insult_qabul')
+    ]);
+
+    const labels = [], infData = [], insData = [];
+    const monthNames = ['Yan','Fev','Mar','Apr','May','Iyn','Iyl','Avg','Sen','Okt','Noy','Dek'];
+    for (let i = 0; i < 12; i++) {
+      const d = new Date(Date.UTC(from.getUTCFullYear(), from.getUTCMonth() + i, 1));
+      const yr = d.getUTCFullYear();
+      const mo = d.getUTCMonth();
+      const prefix = `${yr}-${String(mo + 1).padStart(2, '0')}`;
+      labels.push(`${monthNames[mo]} ${yr}`);
+      infData.push(inf.filter(r => r.qabul_vaqt?.startsWith(prefix)).length);
+      insData.push(ins.filter(r => r.qabul_vaqt?.startsWith(prefix)).length);
+    }
+    return { labels, infData, insData };
+  },
+
+  // Risk factors distribution
+  async getRiskFactors() {
+    const p = await Profile.getCurrent();
+    const viloyat = p?.role === 'super_admin' ? null : p?.viloyat;
+    const eqViloyat = (q) => viloyat ? q.eq('viloyat', viloyat) : q;
+
+    const fetchAll = async (table) => {
+      let all = [], offset = 0;
+      while (true) {
+        const { data, error } = await eqViloyat(
+          getSupabase().from(table).select('xavf_omil')
+        ).range(offset, offset + 999);
+        if (error) { if (error.code === 'PGRST103') break; throw error; }
+        if (!data || data.length === 0) break;
+        all = all.concat(data);
+        if (data.length < 1000) break;
+        offset += 1000;
+      }
+      return all;
+    };
+
+    const [inf, ins] = await Promise.all([
+      fetchAll('infarkt_qabul'),
+      fetchAll('insult_qabul')
+    ]);
+
+    const count = (rows) => {
+      const map = {};
+      rows.forEach(r => {
+        const arr = Array.isArray(r.xavf_omil) ? r.xavf_omil : (r.xavf_omil ? [r.xavf_omil] : []);
+        arr.forEach(v => {
+          if (!v || !v.trim()) return;
+          const k = v.trim();
+          map[k] = (map[k] || 0) + 1;
+        });
+      });
+      return Object.entries(map).sort((a, b) => b[1] - a[1]).slice(0, 8);
+    };
+
+    return { infarkt: count(inf), insult: count(ins) };
   },
 
   // Recent patients
