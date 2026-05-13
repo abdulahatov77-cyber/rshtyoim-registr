@@ -260,6 +260,9 @@ const AdminPage = {
             ${isSA?'disabled':''}>
             ${vilOpts}
           </select>
+          <button onclick="AdminPage.sendPasswordReset('${(p.email||'').replace(/'/g,"\\'")}')"
+            title="Parol tiklash emaili yuborish"
+            style="background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.2);border-radius:8px;padding:5px 8px;color:#60a5fa;font-size:11px;cursor:pointer">${icon('key',13)}</button>
           <button onclick="AdminPage.deleteUser('${p.id}','${(p.email||'').replace(/'/g,"\\'")}','${p.role||''}')"
             style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.2);border-radius:8px;padding:5px 8px;color:#f87171;font-size:11px;cursor:pointer"
             ${isMain?'disabled':''}>${icon('trash-2',13)}</button>
@@ -284,6 +287,17 @@ const AdminPage = {
       showToast(`✅ Viloyat o'zgartirildi`, 'success');
       const idx = AdminPage._profiles.findIndex(p => p.id === userId);
       if (idx !== -1) AdminPage._profiles[idx].viloyat = viloyat;
+    } catch (err) { showToast('❌ ' + err.message, 'error'); }
+  },
+
+  async sendPasswordReset(email) {
+    if (!confirm(`"${email}" manziliga parol tiklash havolasi yuborilsinmi?`)) return;
+    try {
+      const { error } = await getSupabase().auth.resetPasswordForEmail(email, {
+        redirectTo: window.location.origin + '/'
+      });
+      if (error) throw error;
+      showToast(`✅ Parol tiklash havolasi yuborildi: ${email}`, 'success');
     } catch (err) { showToast('❌ ' + err.message, 'error'); }
   },
 
