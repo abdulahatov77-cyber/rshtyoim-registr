@@ -538,7 +538,12 @@ const AdminPage = {
                   <td>${r._issue === 'mismatch'
                     ? '<span style="color:#fbbf24;font-size:12px">Viloyatga mos kelmaydi</span>'
                     : '<span style="color:#f87171;font-size:12px">Bo\'sh maydon</span>'}</td>
-                  <td>
+                  <td style="display:flex;gap:6px;flex-wrap:wrap">
+                    ${r._issue === 'mismatch' && r._suggested ? `
+                    <button onclick="AdminPage.fixAuditRecord('${r.kt_no}','${r._type}','${r._suggested.replace(/'/g,"\\'")}','${(r.muassasa||'').replace(/'/g,"\\'")}')"
+                      style="background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.2);border-radius:8px;padding:5px 10px;color:#4ade80;font-size:12px;cursor:pointer;white-space:nowrap">
+                      ✓ ${r._suggested}
+                    </button>` : ''}
                     <button onclick="AdminPage.deleteAuditRecord('${r.kt_no}','${r._type}')"
                       style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.2);border-radius:8px;padding:5px 10px;color:#f87171;font-size:12px;cursor:pointer">
                       O'chirish
@@ -557,6 +562,7 @@ const AdminPage = {
     AdminPage._renderTabContent();
     try {
       const all = await MuassasaDB.fetchAllRecords();
+      const norm = (s) => s.replace(/[''ʼ`´]/g, "'").toLowerCase().trim();
       const issues = [];
       for (const r of all) {
         if (!r.viloyat || !r.muassasa) {
@@ -565,8 +571,15 @@ const AdminPage = {
         }
         const validList = APP_CONFIG.MUASSASALAR[r.viloyat];
         if (!validList) continue;
-        if (!validList.includes(r.muassasa) && r.muassasa !== 'Boshqa') {
-          issues.push({ ...r, _issue: 'mismatch' });
+        const exactMatch = validList.includes(r.muassasa);
+        const normMatch = validList.find(m => norm(m) === norm(r.muassasa));
+        if (!exactMatch && !normMatch && r.muassasa !== 'Boshqa') {
+          // Eng yaqin nomni topib suggest qilamiz
+          const suggested = validList.find(m => {
+            const nm = norm(m), nr = norm(r.muassasa);
+            return nm.includes(nr.split(' ')[0]) || nr.includes(nm.split(' ')[0]);
+          }) || null;
+          issues.push({ ...r, _issue: 'mismatch', _suggested: suggested });
         }
       }
       AdminPage._auditData = issues;
@@ -577,6 +590,20 @@ const AdminPage = {
       AdminPage._auditLoading = false;
       AdminPage._renderTabContent();
     }
+  },
+
+  async fixAuditRecord(kt_no, type, newMuassasa, oldMuassasa) {
+    if (!confirm(`K/T No: ${kt_no}\n"${oldMuassasa}" → "${newMuassasa}"\nTuzatilsinmi?`)) return;
+    try {
+      const table = type === 'infarkt' ? 'infarkt_qabul' : 'insult_qabul';
+      const { error } = await getSupabase().from(table).update({ muassasa: newMuassasa }).eq('kt_no', kt_no);
+      if (error) throw error;
+      showToast(`✅ Tuzatildi: ${kt_no}`, 'success');
+      if (AdminPage._auditData) {
+        AdminPage._auditData = AdminPage._auditData.filter(r => !(r.kt_no == kt_no && r._type === type));
+        AdminPage._renderTabContent();
+      }
+    } catch(err) { showToast('❌ ' + err.message, 'error'); }
   },
 
   async deleteAuditRecord(kt_no, type) {
