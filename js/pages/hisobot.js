@@ -407,10 +407,99 @@ const HisobotPage = {
         </div>
       </div>
 
+      <!-- Boshqa muassasaga o'tkazilgan bemorlar -->
+      ${(() => {
+        const otkazilgan = [...infs.filter(p => p.otkazilgan_muassasa), ...ins.filter(p => p.otkazilgan_muassasa)]
+          .sort((a,b) => new Date(b.qabul_vaqt) - new Date(a.qabul_vaqt));
+        if (!otkazilgan.length) return '';
+        return `
+        <div class="h-card !p-0 overflow-hidden mt-6">
+          <div class="bg-orange-50 p-5 border-b border-orange-100 flex items-center justify-between">
+            <h3 class="h-title !mb-0 text-orange-900">${icon('log-out', 20)} Boshqa muassasaga o'tkazilgan bemorlar (${otkazilgan.length} ta)</h3>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="bg-slate-50 text-[11px] font-bold text-slate-500 uppercase">
+                  <th class="p-3 text-left border-b border-slate-100">K/T No</th>
+                  <th class="p-3 text-left border-b border-slate-100">F.I.Sh</th>
+                  <th class="p-3 text-left border-b border-slate-100">Turi</th>
+                  <th class="p-3 text-left border-b border-slate-100">Qabul vaqti</th>
+                  <th class="p-3 text-left border-b border-slate-100">O'tkazilgan muassasa</th>
+                  <th class="p-3 text-left border-b border-slate-100">Viloyat</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${otkazilgan.map((p, i) => {
+                  const isInf = !!p.infarkt_turi;
+                  return `<tr class="${i%2===0?'bg-white':'bg-slate-50/50'} hover:bg-orange-50 transition-colors">
+                    <td class="p-3 font-mono text-xs text-slate-500">${esc(p.kt_no)}</td>
+                    <td class="p-3 font-semibold text-slate-800">${esc(p.fio||'—')}</td>
+                    <td class="p-3"><span class="px-2 py-0.5 rounded-full text-[11px] font-bold ${isInf?'bg-red-100 text-red-700':'bg-purple-100 text-purple-700'}">${isInf?'Infarkt':'Insult'}</span></td>
+                    <td class="p-3 text-slate-600">${Utils.formatDate(p.qabul_vaqt)}</td>
+                    <td class="p-3 font-semibold text-orange-700">${esc(p.otkazilgan_muassasa||'—')}</td>
+                    <td class="p-3 text-slate-600">${esc(p.viloyat||'—')}</td>
+                  </tr>`;
+                }).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>`;
+      })()}
+
+      <!-- Shifokorlar bo'yicha statistika -->
+      ${(() => {
+        const shifokorMap = {};
+        [...infs, ...ins].forEach(p => {
+          const sh = p.shifokor_fio?.trim();
+          if (!sh) return;
+          if (!shifokorMap[sh]) shifokorMap[sh] = { fio: sh, infarkt: 0, insult: 0, vafot: 0, chiqarildi: 0 };
+          if (p.infarkt_turi) shifokorMap[sh].infarkt++;
+          else shifokorMap[sh].insult++;
+          if (p.status === 'vafot') shifokorMap[sh].vafot++;
+          if (p.status === 'chiqarildi') shifokorMap[sh].chiqarildi++;
+        });
+        const shifokorlar = Object.values(shifokorMap).sort((a,b) => (b.infarkt+b.insult) - (a.infarkt+a.insult));
+        if (!shifokorlar.length) return '';
+        return `
+        <div class="h-card !p-0 overflow-hidden mt-6">
+          <div class="bg-teal-50 p-5 border-b border-teal-100 flex items-center justify-between">
+            <h3 class="h-title !mb-0 text-teal-900">${icon('stethoscope', 20)} Shifokorlar bo'yicha statistika (${shifokorlar.length} ta)</h3>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="bg-slate-50 text-[11px] font-bold text-slate-500 uppercase">
+                  <th class="p-3 text-left border-b border-slate-100">#</th>
+                  <th class="p-3 text-left border-b border-slate-100">Shifokor F.I.Sh</th>
+                  <th class="p-3 text-center border-b border-slate-100">Infarkt</th>
+                  <th class="p-3 text-center border-b border-slate-100">Insult</th>
+                  <th class="p-3 text-center border-b border-slate-100">Jami</th>
+                  <th class="p-3 text-center border-b border-slate-100">Davolandi</th>
+                  <th class="p-3 text-center border-b border-slate-100">Vafot</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${shifokorlar.map((s, i) => `
+                  <tr class="${i%2===0?'bg-white':'bg-slate-50/50'} hover:bg-teal-50 transition-colors">
+                    <td class="p-3 text-slate-400 font-bold">${i+1}</td>
+                    <td class="p-3 font-semibold text-slate-800">${esc(s.fio)}</td>
+                    <td class="p-3 text-center"><span class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-red-100 text-red-700">${s.infarkt}</span></td>
+                    <td class="p-3 text-center"><span class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-purple-100 text-purple-700">${s.insult}</span></td>
+                    <td class="p-3 text-center font-black text-slate-800">${s.infarkt+s.insult}</td>
+                    <td class="p-3 text-center"><span class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-green-100 text-green-700">${s.chiqarildi}</span></td>
+                    <td class="p-3 text-center"><span class="px-2 py-0.5 rounded-full text-[11px] font-bold ${s.vafot>0?'bg-red-100 text-red-700':'bg-slate-100 text-slate-500'}">${s.vafot}</span></td>
+                  </tr>`).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>`;
+      })()}
+
       <div class="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-2xl text-sm font-semibold text-blue-900 text-center shadow-sm flex items-center justify-center gap-2">
-        ${icon('calendar', 18)} 
-        Hisobot davri: <span class="bg-white px-2 py-1 rounded border border-blue-200">${from}</span> dan 
-        <span class="bg-white px-2 py-1 rounded border border-blue-200">${to}</span> gacha · 
+        ${icon('calendar', 18)}
+        Hisobot davri: <span class="bg-white px-2 py-1 rounded border border-blue-200">${from}</span> dan
+        <span class="bg-white px-2 py-1 rounded border border-blue-200">${to}</span> gacha ·
         Jami: <span class="text-blue-600">${infs.length+ins.length}</span> ta bemor
       </div>
     `;
