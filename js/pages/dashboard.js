@@ -522,11 +522,19 @@ const DashboardPage = {
             { label: 'Insult',  data: trend.insData, borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.05)', fill: true, tension: 0.4, pointRadius: 3, borderWidth: 3 }
           ]
         },
+        plugins: window.ChartDataLabels ? [window.ChartDataLabels] : [],
         options: {
           responsive: true, maintainAspectRatio: false,
           plugins: {
             legend: { display: false },
-            datalabels: { display: false }
+            datalabels: window.ChartDataLabels ? {
+              display: ctx => ctx.dataset.data[ctx.dataIndex] > 0,
+              align: 'top',
+              anchor: 'end',
+              color: ctx => ctx.datasetIndex === 0 ? '#ef4444' : '#3b82f6',
+              font: { weight: 'bold', size: 11 },
+              formatter: v => v > 0 ? v : ''
+            } : { display: false }
           },
           scales: {
             x: { grid: { borderDash: [5,5], color: '#f1f5f9' }, ticks: { font: { size: 12, weight: '600' } } },
