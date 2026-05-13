@@ -445,13 +445,15 @@ const HisobotPage = {
           const raw = p.shifokor_fio?.trim();
           if (!raw) return;
           const key = normFio(raw);
-          if (!shifokorMap[key]) shifokorMap[key] = { fio: raw, infarkt: 0, insult: 0, vafot: 0, chiqarildi: 0 };
+          if (!shifokorMap[key]) shifokorMap[key] = { fio: raw, viloyat: p.viloyat||'', infarkt: 0, insult: 0, vafot: 0, chiqarildi: 0, bemorlar: [] };
           isInf ? shifokorMap[key].infarkt++ : shifokorMap[key].insult++;
           if (p.status === 'vafot') shifokorMap[key].vafot++;
           if (p.status === 'chiqarildi') shifokorMap[key].chiqarildi++;
+          shifokorMap[key].bemorlar.push({ ...p, _isInf: isInf });
         };
         infs.forEach(p => addShifokor(p, true));
         ins.forEach(p => addShifokor(p, false));
+        HisobotPage._shifokorData = shifokorMap;
         const shifokorlar = Object.values(shifokorMap).sort((a,b) => (b.infarkt+b.insult)-(a.infarkt+a.insult));
 
         const tableHead = (cols) => `<thead><tr class="bg-slate-50 text-[11px] font-bold text-slate-500 uppercase">${cols.map(c=>`<th class="p-3 text-${c.align||'left'} border-b border-slate-100">${c.label}</th>`).join('')}</tr></thead>`;
@@ -539,17 +541,29 @@ const HisobotPage = {
         <div class="h-card !p-0 overflow-hidden mt-6">
           <div class="bg-teal-50 p-5 border-b border-teal-100">
             <h3 class="h-title !mb-0 text-teal-900">${icon('stethoscope', 20)} Shifokorlar bo'yicha — ${shifokorlar.length} ta</h3>
+            <p class="text-xs text-teal-600 mt-1">Raqam ustiga bosing — o'sha shifokor kiritgan bemorlar ro'yxatini ko'rish uchun</p>
           </div>
           <div class="overflow-x-auto">
             <table class="w-full text-sm">
-              ${tableHead([{label:'#'},{label:'Shifokor F.I.Sh'},{label:'Infarkt',align:'center'},{label:'Insult',align:'center'},{label:'Jami',align:'center'},{label:'Davolandi',align:'center'},{label:'Vafot',align:'center'}])}
+              ${tableHead([{label:'#'},{label:'Viloyat'},{label:'Shifokor F.I.Sh'},{label:'Infarkt',align:'center'},{label:'Insult',align:'center'},{label:'Jami',align:'center'},{label:'Davolandi',align:'center'},{label:'Vafot',align:'center'}])}
               <tbody>${shifokorlar.map((s,i)=>`
                 <tr class="${i%2===0?'bg-white':'bg-slate-50/50'} hover:bg-teal-50">
                   <td class="p-3 text-slate-400 font-bold text-center">${i+1}</td>
+                  <td class="p-3 text-slate-500 text-xs">${esc(s.viloyat||'—')}</td>
                   <td class="p-3 font-semibold text-slate-800">${esc(s.fio)}</td>
-                  <td class="p-3 text-center">${badge(s.infarkt,'bg-red-100 text-red-700')}</td>
-                  <td class="p-3 text-center">${badge(s.insult,'bg-purple-100 text-purple-700')}</td>
-                  <td class="p-3 text-center font-black text-slate-800">${s.infarkt+s.insult}</td>
+                  <td class="p-3 text-center">
+                    ${s.infarkt > 0
+                      ? `<button class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-red-100 text-red-700 hover:bg-red-200 cursor-pointer transition-colors" onclick="HisobotPage.showShifokorBemorlar('${esc(s.fio).replace(/'/g,"\\'")}','infarkt')">${s.infarkt}</button>`
+                      : badge(0,'bg-slate-100 text-slate-400')}
+                  </td>
+                  <td class="p-3 text-center">
+                    ${s.insult > 0
+                      ? `<button class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-purple-100 text-purple-700 hover:bg-purple-200 cursor-pointer transition-colors" onclick="HisobotPage.showShifokorBemorlar('${esc(s.fio).replace(/'/g,"\\'")}','insult')">${s.insult}</button>`
+                      : badge(0,'bg-slate-100 text-slate-400')}
+                  </td>
+                  <td class="p-3 text-center">
+                    <button class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-teal-100 text-teal-700 hover:bg-teal-200 cursor-pointer transition-colors" onclick="HisobotPage.showShifokorBemorlar('${esc(s.fio).replace(/'/g,"\\'")}','jami')">${s.infarkt+s.insult}</button>
+                  </td>
                   <td class="p-3 text-center">${badge(s.chiqarildi,'bg-green-100 text-green-700')}</td>
                   <td class="p-3 text-center">${badge(s.vafot, s.vafot>0?'bg-red-100 text-red-700':'bg-slate-100 text-slate-400')}</td>
                 </tr>`).join('')}
@@ -693,6 +707,73 @@ const HisobotPage = {
       </div>`;
     modal.addEventListener('click', e => { if (e.target === modal) { HisobotPage._lastListType = null; modal.remove(); } });
     document.body.appendChild(modal);
+  },
+
+  showShifokorBemorlar(fio, turi) {
+    const normFio = s => s?.trim().toLowerCase().replace(/\s+/g, ' ') || '';
+    const key = normFio(fio);
+    const sh = HisobotPage._shifokorData?.[key];
+    if (!sh) return;
+
+    let bemorlar = sh.bemorlar;
+    if (turi === 'infarkt') bemorlar = bemorlar.filter(p => p._isInf);
+    else if (turi === 'insult') bemorlar = bemorlar.filter(p => !p._isInf);
+
+    const title = turi === 'jami' ? 'Jami bemorlar' : turi === 'infarkt' ? 'Infarkt bemorlari' : 'Insult bemorlari';
+    const color = turi === 'infarkt' ? 'text-red-700' : turi === 'insult' ? 'text-purple-700' : 'text-teal-700';
+
+    const rows = bemorlar.map((p, i) => {
+      const tashxis = p._isInf
+        ? (p.infarkt_turi || '—')
+        : (p.insult_turi || '—');
+      const muolaja = p.muolaja_turi || '—';
+      const status = p.status === 'active' ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-green-100 text-green-700">Aktiv</span>`
+        : p.status === 'vafot' ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-100 text-red-700">Vafot</span>`
+        : p.status === 'chiqarildi' ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-700">Davolandi</span>`
+        : `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-500">${esc(p.status||'—')}</span>`;
+      return `<tr class="${i%2===0?'bg-white':'bg-slate-50'}">
+        <td class="p-3 text-slate-400 text-xs">${i+1}</td>
+        <td class="p-3 font-mono text-xs text-slate-400">${esc(p.kt_no||'')}</td>
+        <td class="p-3 font-semibold text-slate-800">${esc(p.fio||'—')}</td>
+        <td class="p-3 text-xs text-slate-600">${esc(tashxis)}</td>
+        <td class="p-3 text-xs text-slate-600">${esc(muolaja)}</td>
+        <td class="p-3 text-xs text-slate-500">${Utils.formatDate(p.qabul_vaqt)}</td>
+        <td class="p-3">${status}</td>
+      </tr>`;
+    }).join('');
+
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 z-50 flex items-center justify-center p-4';
+    modal.style.background = 'rgba(0,0,0,0.5)';
+    modal.innerHTML = `
+      <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[85vh] flex flex-col overflow-hidden">
+        <div class="bg-teal-50 p-5 border-b border-teal-100 flex items-center justify-between flex-shrink-0">
+          <div>
+            <h3 class="font-bold text-slate-800 flex items-center gap-2">${icon('stethoscope',20)} ${esc(sh.fio)}</h3>
+            <p class="text-xs text-slate-500 mt-0.5">${esc(sh.viloyat)} · <span class="${color} font-semibold">${title} — ${bemorlar.length} ta</span></p>
+          </div>
+          <button onclick="this.closest('.fixed').remove()" class="p-2 hover:bg-teal-100 rounded-xl transition-colors">${icon('x',20)}</button>
+        </div>
+        <div class="overflow-auto flex-1">
+          <table class="w-full text-sm">
+            <thead class="sticky top-0 bg-slate-50 z-10">
+              <tr class="text-[11px] font-bold text-slate-500 uppercase">
+                <th class="p-3 text-left border-b border-slate-100">#</th>
+                <th class="p-3 text-left border-b border-slate-100">K/T No</th>
+                <th class="p-3 text-left border-b border-slate-100">F.I.Sh</th>
+                <th class="p-3 text-left border-b border-slate-100">Tashxis</th>
+                <th class="p-3 text-left border-b border-slate-100">Muolaja</th>
+                <th class="p-3 text-left border-b border-slate-100">Qabul</th>
+                <th class="p-3 text-left border-b border-slate-100">Holat</th>
+              </tr>
+            </thead>
+            <tbody>${rows || '<tr><td colspan="7" class="p-8 text-center text-slate-400">Ma\'lumot topilmadi</td></tr>'}</tbody>
+          </table>
+        </div>
+      </div>`;
+    modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+    document.body.appendChild(modal);
+    initIcons();
   },
 
   printReport() {
