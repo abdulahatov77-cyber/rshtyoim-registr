@@ -407,6 +407,82 @@ const HisobotPage = {
         </div>
       </div>
 
+      <!-- Boshqa muassasadan kelgan bemorlar -->
+      ${(() => {
+        const kelgan = [...infs.filter(p => p.yuborgan_muassasa), ...ins.filter(p => p.yuborgan_muassasa)]
+          .sort((a,b) => new Date(b.qabul_vaqt) - new Date(a.qabul_vaqt));
+        if (!kelgan.length) return '';
+        // Muassasa bo'yicha guruhlab sanash
+        const muassasaMap = {};
+        kelgan.forEach(p => {
+          const m = p.yuborgan_muassasa;
+          if (!muassasaMap[m]) muassasaMap[m] = { nomi: m, jami: 0, infarkt: 0, insult: 0 };
+          muassasaMap[m].jami++;
+          if (p.infarkt_turi) muassasaMap[m].infarkt++; else muassasaMap[m].insult++;
+        });
+        const muassasalar = Object.values(muassasaMap).sort((a,b) => b.jami - a.jami);
+        return `
+        <div class="h-card !p-0 overflow-hidden mt-6">
+          <div class="bg-green-50 p-5 border-b border-green-100 flex items-center justify-between">
+            <h3 class="h-title !mb-0 text-green-900">${icon('building-2', 20)} Boshqa muassasadan kelgan bemorlar (${kelgan.length} ta)</h3>
+          </div>
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-0">
+            <!-- Chap: muassasa bo'yicha yig'ma -->
+            <div class="border-r border-slate-100">
+              <div class="p-3 bg-slate-50 border-b border-slate-100 text-[11px] font-bold text-slate-500 uppercase">Yuborgan muassasa bo'yicha</div>
+              <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                  <thead>
+                    <tr class="text-[11px] font-bold text-slate-400 uppercase">
+                      <th class="p-3 text-left border-b border-slate-100">Muassasa</th>
+                      <th class="p-3 text-center border-b border-slate-100">Infarkt</th>
+                      <th class="p-3 text-center border-b border-slate-100">Insult</th>
+                      <th class="p-3 text-center border-b border-slate-100">Jami</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${muassasalar.map((m, i) => `
+                      <tr class="${i%2===0?'bg-white':'bg-slate-50/50'} hover:bg-green-50 transition-colors">
+                        <td class="p-3 font-semibold text-slate-700">${esc(m.nomi)}</td>
+                        <td class="p-3 text-center"><span class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-red-100 text-red-700">${m.infarkt}</span></td>
+                        <td class="p-3 text-center"><span class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-purple-100 text-purple-700">${m.insult}</span></td>
+                        <td class="p-3 text-center font-black text-slate-800">${m.jami}</td>
+                      </tr>`).join('')}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <!-- O'ng: bemorlar ro'yxati -->
+            <div>
+              <div class="p-3 bg-slate-50 border-b border-slate-100 text-[11px] font-bold text-slate-500 uppercase">Bemorlar ro'yxati</div>
+              <div class="overflow-x-auto" style="max-height:340px;overflow-y:auto">
+                <table class="w-full text-sm">
+                  <thead class="sticky top-0 bg-white z-10">
+                    <tr class="text-[11px] font-bold text-slate-400 uppercase">
+                      <th class="p-3 text-left border-b border-slate-100">F.I.Sh</th>
+                      <th class="p-3 text-left border-b border-slate-100">Turi</th>
+                      <th class="p-3 text-left border-b border-slate-100">Qabul</th>
+                      <th class="p-3 text-left border-b border-slate-100">Yuborgan muassasa</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${kelgan.map((p, i) => {
+                      const isInf = !!p.infarkt_turi;
+                      return `<tr class="${i%2===0?'bg-white':'bg-slate-50/50'} hover:bg-green-50 transition-colors">
+                        <td class="p-3 font-semibold text-slate-800">${esc(p.fio||'—')}</td>
+                        <td class="p-3"><span class="px-2 py-0.5 rounded-full text-[11px] font-bold ${isInf?'bg-red-100 text-red-700':'bg-purple-100 text-purple-700'}">${isInf?'Infarkt':'Insult'}</span></td>
+                        <td class="p-3 text-slate-500 text-xs">${Utils.formatDate(p.qabul_vaqt)}</td>
+                        <td class="p-3 text-green-700 font-medium text-xs">${esc(p.yuborgan_muassasa||'—')}</td>
+                      </tr>`;
+                    }).join('')}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>`;
+      })()}
+
       <!-- Boshqa muassasaga o'tkazilgan bemorlar -->
       ${(() => {
         const otkazilgan = [...infs.filter(p => p.otkazilgan_muassasa), ...ins.filter(p => p.otkazilgan_muassasa)]
