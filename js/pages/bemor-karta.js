@@ -1367,18 +1367,20 @@ const BemorKartaPage = {
       const kt_no = BemorKartaPage._patient.kt_no;
       const chiqish_sana = `${sana}T${vaqt || '00:00'}`;
 
+      const otkazilganMuassasa = natija === "Boshqa shifoxonaga o'tkazildi" ? boshqaShifoxona : null;
+
       if (type === 'infarkt') {
-        await DB.infarktUpdate(kt_no, { status });
+        await DB.infarktUpdate(kt_no, { status, otkazilgan_muassasa: otkazilganMuassasa });
         await DB.infarktChiqarish({
           kt_no, chiqish_sana,
           chiqish_holat: natija,
-          asoratlar: asoratlar, // Massiv holida yuboramiz
+          asoratlar: asoratlar,
           boshqa_shifoxona: boshqaShifoxona,
           reabil_markaz: reabilMarkaz,
           olim_sababi: natija === 'Vafot etdi' ? 'Vafot etdi' : null
         });
       } else {
-        await DB.insultUpdate(kt_no, { status });
+        await DB.insultUpdate(kt_no, { status, otkazilgan_muassasa: otkazilganMuassasa });
         await DB.insultChiqarish({
           kt_no, chiqish_sana,
           natija,
