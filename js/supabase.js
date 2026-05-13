@@ -767,7 +767,7 @@ const DB = {
       else if (r.status === 'otkazildi') stats[key].otkazildi++;
     });
     
-    return Object.values(stats).filter(s => s.jami > 0).sort((a, b) => b.jami - a.jami || a.name.localeCompare(b.name));
+    return Object.values(stats).sort((a, b) => b.jami - a.jami || a.name.localeCompare(b.name));
   },
 
   async fixInstitutionNames() {
