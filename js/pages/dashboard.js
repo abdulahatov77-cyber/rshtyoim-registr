@@ -732,8 +732,8 @@ const DashboardPage = {
 
     // 4. Risk Factors Donut Charts
     if (riskFactors) {
-      DashboardPage._drawDonut('riskInfarktChart', 'riskInfarktLegend', riskFactors.infarkt, '#ef4444');
-      DashboardPage._drawDonut('riskInsultChart',  'riskInsultLegend',  riskFactors.insult,  '#3b82f6');
+      DashboardPage._drawDonut('riskInfarktChart', 'riskInfarktLegend', riskFactors.infarkt, '#ef4444', stats?.jamiInfarkt);
+      DashboardPage._drawDonut('riskInsultChart',  'riskInsultLegend',  riskFactors.insult,  '#3b82f6', stats?.jamiInsult);
     }
 
     // 2b. Monthly Trend Chart
@@ -838,7 +838,7 @@ const DashboardPage = {
     }
   },
 
-  _drawDonut(canvasId, legendId, data, baseColor) {
+  _drawDonut(canvasId, legendId, data, baseColor, patientCount) {
     const ctx = document.getElementById(canvasId)?.getContext('2d');
     if (!ctx || !data || !data.length) return;
 
@@ -911,6 +911,7 @@ const DashboardPage = {
       }
     };
 
+    const displayCount = (patientCount != null && patientCount > 0) ? patientCount : total;
     const centerTextPlugin = {
       id: 'centerText_' + canvasId,
       afterDraw(chart) {
@@ -922,10 +923,10 @@ const DashboardPage = {
         c.textBaseline = 'middle';
         c.fillStyle = '#94a3b8';
         c.font = '500 11px Inter, system-ui, sans-serif';
-        c.fillText('Jami', cx, cy - 11);
+        c.fillText('Jami bemor', cx, cy - 11);
         c.fillStyle = '#0f172a';
         c.font = '700 22px Inter, system-ui, sans-serif';
-        c.fillText(total.toLocaleString(), cx, cy + 10);
+        c.fillText(displayCount.toLocaleString(), cx, cy + 10);
         c.restore();
       }
     };
