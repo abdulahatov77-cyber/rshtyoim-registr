@@ -748,12 +748,12 @@ const DB = {
       let key = viloyat ? r.muassasa : r.viloyat;
       if (!key) return;
 
-      const clean = (s) => s.toLowerCase().replace(/ttb|shtb|emergency department|politravma markazi|filiali|shoshilinch tibbiy yordam/g, '').trim();
+      const norm = (s) => s.replace(/[‘’ʼ`´]/g, "'").toLowerCase().replace(/ttb|shtb|emergency department|politravma markazi|filiali|shoshilinch tibbiy yordam/g, '').trim();
 
       // Agar nom configda bo'lmasa, o'xshashini qidirib ko'ramiz
       if (viloyat && !stats[key]) {
-        const cKey = clean(key);
-        const match = Object.keys(stats).find(name => clean(name) === cKey || clean(name).includes(cKey) || cKey.includes(clean(name)));
+        const nKey = norm(key);
+        const match = Object.keys(stats).find(name => norm(name) === nKey || norm(name).includes(nKey) || nKey.includes(norm(name)));
         if (match) key = match;
       }
 
