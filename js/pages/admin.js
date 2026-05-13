@@ -566,10 +566,30 @@ const AdminPage = {
         const codes = {0x2018:1,0x2019:1,0x02BC:1,0x00B4:1,0x02B9:1,0x2032:1,0x60:1,0x27:1};
         return Array.from(s).map(c => codes[c.charCodeAt(0)] ? String.fromCharCode(0x27) : c).join("").toLowerCase().trim();
       };
+      // Qisqartma va noto'g'ri yozuvlarni standart nomga moslashtirish
+      const ALIAS_MAP = {
+        "rshtyimff": "RSHTYOIM Farg'ona filiali",
+        "rshtyimff farg'ona filiali": "RSHTYOIM Farg'ona filiali",
+        "rshtyoim farg'ona filiali": "RSHTYOIM Farg'ona filiali",
+        "yshtb": "Yangiyer ShTB",
+        "yangiyer shtb": "Yangiyer ShTB",
+        "dttb": "Dehqonobod TTB",
+        "dehqonobod tttb": "Dehqonobod TTB",
+        "kukon shahar shoshilinch tibbiy yordam shifoxonasi": "Qo'qon politravma markazi",
+        "qo'qon shahar shoshilinch tibbiy yordam shifoxonasi": "Qo'qon politravma markazi",
+        "respublika shoshilinch tibbiy yordam ilmiy markazi": "Respublika Shoshilinch Tibbiy Yordam Ilmiy Markazi",
+      };
+      const aliasLookup = (s) => {
+        const n = norm(s);
+        for (const [alias, correct] of Object.entries(ALIAS_MAP)) {
+          if (norm(alias) === n) return correct;
+        }
+        return null;
+      };
       const issues = [];
       const sb = getSupabase();
 
-      // normMatch topilgan yozuvlarni avtomatik tuzat
+      // normMatch/aliasMatch topilgan yozuvlarni avtomatik tuzat
       const autoFixes = [];
 
       for (const r of all) {
@@ -584,8 +604,13 @@ const AdminPage = {
 
         const normMatch = validList.find(m => norm(m) === norm(r.muassasa));
         if (normMatch) {
-          // Apostrof turi farqi — avtomatik tuzatiladi
           autoFixes.push({ kt_no: r.kt_no, _type: r._type, correct: normMatch });
+          continue;
+        }
+
+        const aliasMatch = aliasLookup(r.muassasa);
+        if (aliasMatch && validList.includes(aliasMatch)) {
+          autoFixes.push({ kt_no: r.kt_no, _type: r._type, correct: aliasMatch });
           continue;
         }
 
