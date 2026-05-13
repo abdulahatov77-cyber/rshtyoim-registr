@@ -306,22 +306,20 @@ const DashboardPage = {
       <!-- ROW: RISK FACTORS DONUT CHARTS -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
         <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
-          <h3 class="text-sm font-bold text-slate-800 uppercase tracking-wider mb-5 flex items-center gap-2">
+          <h3 class="text-sm font-bold text-slate-800 uppercase tracking-wider mb-4 flex items-center gap-2">
             ${icon('heart', 16, 'text-red-500')} Infarkt — xavf omillari
           </h3>
-          <div class="flex justify-center mb-4" style="height:220px">
+          <div style="position:relative;height:380px">
             <canvas id="riskInfarktChart"></canvas>
           </div>
-          <div id="riskInfarktLegend" class="text-xs space-y-1"></div>
         </div>
         <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
-          <h3 class="text-sm font-bold text-slate-800 uppercase tracking-wider mb-5 flex items-center gap-2">
+          <h3 class="text-sm font-bold text-slate-800 uppercase tracking-wider mb-4 flex items-center gap-2">
             ${icon('brain', 16, 'text-blue-500')} Insult — xavf omillari
           </h3>
-          <div class="flex justify-center mb-4" style="height:220px">
+          <div style="position:relative;height:380px">
             <canvas id="riskInsultChart"></canvas>
           </div>
-          <div id="riskInsultLegend" class="text-xs space-y-1"></div>
         </div>
       </div>
 
@@ -712,6 +710,69 @@ const DashboardPage = {
     ];
     const total = data.reduce((s, [, v]) => s + v, 0);
 
+    // Outside pointer labels via custom plugin
+    const outsideLabelsPlugin = {
+      id: 'outsideLabels_' + canvasId,
+      afterDraw(chart) {
+        const { ctx: c, chartArea: { top, left, width, height } } = chart;
+        const cx = left + width / 2;
+        const cy = top + height / 2;
+        const meta = chart.getDatasetMeta(0);
+        const outerR = meta.data[0]?.outerRadius || (Math.min(width, height) / 2 * 0.62);
+        const lineLen = 18;
+        const extLen = 10;
+
+        c.save();
+        c.font = '600 11px Inter, system-ui, sans-serif';
+        c.textBaseline = 'middle';
+
+        meta.data.forEach((arc, i) => {
+          const [label, val] = data[i];
+          const pct = ((val / total) * 100).toFixed(1);
+          if (val === 0) return;
+
+          const midAngle = (arc.startAngle + arc.endAngle) / 2;
+          const cos = Math.cos(midAngle);
+          const sin = Math.sin(midAngle);
+
+          // Line start (on outer edge)
+          const x1 = cx + cos * outerR;
+          const y1 = cy + sin * outerR;
+          // Line elbow
+          const x2 = cx + cos * (outerR + lineLen);
+          const y2 = cy + sin * (outerR + lineLen);
+          // Text anchor
+          const isRight = cos >= 0;
+          const x3 = x2 + (isRight ? extLen : -extLen);
+          const y3 = y2;
+
+          // Draw leader line
+          c.beginPath();
+          c.moveTo(x1, y1);
+          c.lineTo(x2, y2);
+          c.lineTo(x3, y3);
+          c.strokeStyle = COLORS[i];
+          c.lineWidth = 1.5;
+          c.stroke();
+
+          // Dot at elbow
+          c.beginPath();
+          c.arc(x2, y2, 2.5, 0, Math.PI * 2);
+          c.fillStyle = COLORS[i];
+          c.fill();
+
+          // Label text
+          const shortLabel = label.length > 28 ? label.slice(0, 26) + '…' : label;
+          const text = `${shortLabel}  ${val}`;
+          c.fillStyle = '#1e293b';
+          c.textAlign = isRight ? 'left' : 'right';
+          c.fillText(text, x3 + (isRight ? 4 : -4), y3);
+        });
+
+        c.restore();
+      }
+    };
+
     new Chart(ctx, {
       type: 'doughnut',
       data: {
@@ -724,10 +785,12 @@ const DashboardPage = {
           hoverOffset: 6
         }]
       },
+      plugins: [outsideLabelsPlugin],
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        cutout: '62%',
+        cutout: '55%',
+        layout: { padding: 70 },
         plugins: {
           legend: { display: false },
           datalabels: { display: false },
@@ -739,19 +802,6 @@ const DashboardPage = {
         }
       }
     });
-
-    const legendEl = document.getElementById(legendId);
-    if (legendEl) {
-      legendEl.innerHTML = data.map(([k, v], i) => `
-        <div class="flex items-center justify-between gap-2 py-1 border-b border-slate-50 last:border-0">
-          <div class="flex items-center gap-1.5 min-w-0">
-            <span class="w-2.5 h-2.5 rounded-full flex-shrink-0" style="background:${COLORS[i]}"></span>
-            <span class="text-slate-600 truncate" title="${k}">${k}</span>
-          </div>
-          <span class="font-bold text-slate-800 flex-shrink-0">${v}</span>
-        </div>
-      `).join('');
-    }
   },
 
   exportExcel() {
