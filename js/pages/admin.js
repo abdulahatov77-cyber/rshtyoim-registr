@@ -608,23 +608,25 @@ const AdminPage = {
         return Array.from(s).map(c => map[c] !== undefined ? map[c] : c).join('');
       };
       const normKey = (s) => norm(cyrToLat(s));
-      // Qisqartma va noto'g'ri yozuvlarni standart nomga moslashtirish
-      // { normKey(alias): { correct, anyViloyat } }
-      const ALIAS_MAP = {
-        "rshtyimff": { correct: "RSHTYOIM Farg'ona filiali" },
-        "yshtb": { correct: "Yangiyer ShTB" },
-        "dttb": { correct: "Dehqonobod TTB" },
-        "kukon shahar shoshilinch tibbiy yordam shifoxonasi": { correct: "Qo'qon politravma markazi" },
-        "kuqon shahar shoshilinch tibbiy yordam shifoxonasi": { correct: "Qo'qon politravma markazi" },
-        "qo'qon shahar shoshilinch tibbiy yordam shifoxonasi": { correct: "Qo'qon politravma markazi" },
-        "respublika shoshilinch tibbiy yordam ilmiy markazi": { correct: "Respublika Shoshilinch Tibbiy Yordam Ilmiy Markazi", anyViloyat: true },
-      };
+      // Kalit so'zlar asosida muassasa nomini moslashtirish
+      // keywords: ro'yxat ichidagi BARCHA so'zlar mos kelishi shart
+      const ALIAS_RULES = [
+        { keywords: ['rshtyimff'], correct: "RSHTYOIM Farg'ona filiali" },
+        { keywords: ['yshtb'], correct: "Yangiyer ShTB" },
+        { keywords: ['dttb'], correct: "Dehqonobod TTB" },
+        // Kukon/Quqon shahar shoshilinch — har qanday yozuvda
+        { keywords: ['kukon', 'shoshilinch'], correct: "Qo'qon politravma markazi" },
+        { keywords: ['kuqon', 'shoshilinch'], correct: "Qo'qon politravma markazi" },
+        { keywords: ['quqon', 'shoshilinch'], correct: "Qo'qon politravma markazi" },
+        { keywords: ['qoqon', 'shoshilinch'], correct: "Qo'qon politravma markazi" },
+        { keywords: ['respublika', 'shoshilinch', 'ilmiy'], correct: "Respublika Shoshilinch Tibbiy Yordam Ilmiy Markazi", anyViloyat: true },
+      ];
       // Barcha viloyatlardagi muassasalar uchun yagona ro'yxat
       const allValidMusassasalar = Object.values(APP_CONFIG.MUASSASALAR).flat();
       const aliasLookup = (s) => {
         const n = normKey(s);
-        for (const [alias, info] of Object.entries(ALIAS_MAP)) {
-          if (normKey(alias) === n) return info;
+        for (const rule of ALIAS_RULES) {
+          if (rule.keywords.every(kw => n.includes(kw))) return rule;
         }
         return null;
       };
