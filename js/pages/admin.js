@@ -562,10 +562,10 @@ const AdminPage = {
     AdminPage._renderTabContent();
     try {
       const all = await MuassasaDB.fetchAllRecords();
-      const norm = (s) => s.split(‘’).map(c => {
-        const code = c.charCodeAt(0);
-        return (code===0x2018||code===0x2019||code===0x02BC||code===0x00B4||code===0x02B9||code===0x2032||code===0x60) ? "’" : c;
-      }).join(‘’).toLowerCase().trim();
+      const norm = (s) => {
+        const codes = {0x2018:1,0x2019:1,0x02BC:1,0x00B4:1,0x02B9:1,0x2032:1,0x60:1,0x27:1};
+        return Array.from(s).map(c => codes[c.charCodeAt(0)] ? String.fromCharCode(0x27) : c).join("").toLowerCase().trim();
+      };
       const issues = [];
       const sb = getSupabase();
 
@@ -574,7 +574,7 @@ const AdminPage = {
 
       for (const r of all) {
         if (!r.viloyat || !r.muassasa) {
-          issues.push({ ...r, _issue: ‘empty’ });
+          issues.push({ ...r, _issue: 'empty' });
           continue;
         }
         const validList = APP_CONFIG.MUASSASALAR[r.viloyat];
@@ -589,24 +589,24 @@ const AdminPage = {
           continue;
         }
 
-        if (r.muassasa !== ‘Boshqa’) {
+        if (r.muassasa !== 'Boshqa') {
           const nr = norm(r.muassasa);
-          const words = nr.split(‘ ‘).filter(w => w.length > 3);
+          const words = nr.split(' ').filter(w => w.length > 3);
           const suggested = words.length >= 2
             ? validList.find(m => { const nm = norm(m); return words.every(w => nm.includes(w)); }) || null
             : null;
-          issues.push({ ...r, _issue: ‘mismatch’, _suggested: suggested });
+          issues.push({ ...r, _issue: 'mismatch', _suggested: suggested });
         }
       }
 
       // Avtomatik tuzatishlarni bajarish
       let autoFixed = 0;
       for (const fix of autoFixes) {
-        const table = fix._type === ‘infarkt’ ? ‘infarkt_qabul’ : ‘insult_qabul’;
-        const { error } = await sb.from(table).update({ muassasa: fix.correct }).eq(‘kt_no’, fix.kt_no);
+        const table = fix._type === 'infarkt' ? 'infarkt_qabul' : 'insult_qabul';
+        const { error } = await sb.from(table).update({ muassasa: fix.correct }).eq('kt_no', fix.kt_no);
         if (!error) autoFixed++;
       }
-      if (autoFixed > 0) showToast(`✅ ${autoFixed} ta yozuv avtomatik tuzatildi`, ‘success’);
+      if (autoFixed > 0) showToast(`✅ ${autoFixed} ta yozuv avtomatik tuzatildi`, 'success');
 
       AdminPage._auditData = issues;
     } catch(err) {
