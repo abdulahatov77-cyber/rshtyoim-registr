@@ -72,9 +72,9 @@ const APP_CONFIG = {
     ],
     "Namangan viloyati": [
       "RSHTYOIM Namangan filiali", "Namangan ShTB", "Chust TTB",
-      "Norin TTB", "Chortoq TTB", "To'raqo'rg'on TTB",
+      "Norin TTB", "Chortoq TTB", "To’raqo’rg’on TTB",
       "Kosonsoy TTB", "Uychi TTB", "Mingbuloq TTB",
-      "Pop politravma markazi", "Uchqo'rg'on politravma markazi", "Yangiqo'rg'on politravma markazi"
+      "Pop politravma markazi", "Uchqo’rg’on politravma markazi", "Yangiqo’rg’on politravma markazi"
     ],
     "Samarqand viloyati": [
       "RSHTYOIM Samarqand filiali", "Oqdaryo TTB", "Jomboy TTB",
@@ -116,7 +116,7 @@ const APP_CONFIG = {
       "Yozyovon politravma markazi", "Quva politravma markazi"
     ],
     "Xorazm viloyati": [
-      "RSHTYOIM Xorazm filiali", "Urganch ShTB", "Tuproqqal'a TTB",
+      "RSHTYOIM Xorazm filiali", "Urganch ShTB", "Tuproqqal'a TTB", "Tuproqqa'la TTB",
       "Bog'ot TTB", "Qo'shko'pir TTB", "Xonqa TTB",
       "Xiva ShTB", "Shovot TTB", "Yangiariq TTB",
       "Yangibozor TTB", "Gurlan politravma markazi", "Xazorasp politravma markazi",

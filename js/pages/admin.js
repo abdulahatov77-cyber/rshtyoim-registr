@@ -562,30 +562,49 @@ const AdminPage = {
     AdminPage._renderTabContent();
     try {
       const all = await MuassasaDB.fetchAllRecords();
-      const norm = (s) => s.replace(/[''ʼ`´]/g, "'").toLowerCase().trim();
+      const norm = (s) => s.replace(/[‘’ʼ`´’ʹ′’‘ʼ]/g, "’").toLowerCase().trim();
       const issues = [];
+      const sb = getSupabase();
+
+      // normMatch topilgan yozuvlarni avtomatik tuzat
+      const autoFixes = [];
+
       for (const r of all) {
         if (!r.viloyat || !r.muassasa) {
-          issues.push({ ...r, _issue: 'empty' });
+          issues.push({ ...r, _issue: ‘empty’ });
           continue;
         }
         const validList = APP_CONFIG.MUASSASALAR[r.viloyat];
         if (!validList) continue;
         const exactMatch = validList.includes(r.muassasa);
+        if (exactMatch) continue;
+
         const normMatch = validList.find(m => norm(m) === norm(r.muassasa));
-        if (!exactMatch && !normMatch && r.muassasa !== 'Boshqa') {
-          // Faqat barcha so'zlari mos kelgan taqdirda taklif qilamiz
+        if (normMatch) {
+          // Apostrof turi farqi — avtomatik tuzatiladi
+          autoFixes.push({ kt_no: r.kt_no, _type: r._type, correct: normMatch });
+          continue;
+        }
+
+        if (r.muassasa !== ‘Boshqa’) {
           const nr = norm(r.muassasa);
-          const words = nr.split(' ').filter(w => w.length > 3);
+          const words = nr.split(‘ ‘).filter(w => w.length > 3);
           const suggested = words.length >= 2
-            ? validList.find(m => {
-                const nm = norm(m);
-                return words.every(w => nm.includes(w));
-              }) || null
+            ? validList.find(m => { const nm = norm(m); return words.every(w => nm.includes(w)); }) || null
             : null;
-          issues.push({ ...r, _issue: 'mismatch', _suggested: suggested });
+          issues.push({ ...r, _issue: ‘mismatch’, _suggested: suggested });
         }
       }
+
+      // Avtomatik tuzatishlarni bajarish
+      let autoFixed = 0;
+      for (const fix of autoFixes) {
+        const table = fix._type === ‘infarkt’ ? ‘infarkt_qabul’ : ‘insult_qabul’;
+        const { error } = await sb.from(table).update({ muassasa: fix.correct }).eq(‘kt_no’, fix.kt_no);
+        if (!error) autoFixed++;
+      }
+      if (autoFixed > 0) showToast(`✅ ${autoFixed} ta yozuv avtomatik tuzatildi`, ‘success’);
+
       AdminPage._auditData = issues;
     } catch(err) {
       showToast('❌ Audit xatosi: ' + err.message, 'error');
