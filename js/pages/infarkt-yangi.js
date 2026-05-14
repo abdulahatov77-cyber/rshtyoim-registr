@@ -500,7 +500,8 @@ const InfarktYangiPage = {
       }
 
       const saved = await DB.infarktQabul(payload);
-      Telegram.notify(saved, 'infarkt').catch(() => {});
+      // payload.qabul_vaqt — foydalanuvchi kiritgan original vaqt (timezone konversiyasisiz)
+      Telegram.notify({ ...saved, qabul_vaqt: payload.qabul_vaqt }, 'infarkt').catch(() => {});
       const isOtk = payload.status === 'otkazildi';
       showToast(isOtk ? `✅ Bemor ${payload.otkazilgan_muassasa || 'boshqa muassasa'}ga o'tkazildi!` : '🎉 Bemor muvaffaqiyatli saqlandi!', 'success');
       setTimeout(() => Router.go('dashboard'), 1500);
