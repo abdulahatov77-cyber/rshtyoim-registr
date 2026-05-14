@@ -233,9 +233,6 @@ const InfarktYangiPage = {
         <div id="tez-yordam-div" style="display:${d.murojaat_yoli==='Tez tibbiy yordam bilan'?'block':'none'}">
           ${this.field('tez_yordam_kelgan_vaqt','Tez yordam yetib keldi (vaqt)',`<input id="tez_yordam_kelgan_vaqt" type="datetime-local" class="form-input" value="${d.tez_yordam_kelgan_vaqt||''}"/>`,true)}
         </div>
-        <div id="birinchi-murojaat-div" style="display:${d.murojaat_yoli==='Tez tibbiy yordam bilan'||d.murojaat_yoli==="O'z murojaati bilan"?'block':'none'}">
-          ${this.field('birinchi_murojaat_vaqti','Birinchi tibbiy murojaat vaqti',`<input id="birinchi_murojaat_vaqti" type="datetime-local" class="form-input" value="${d.birinchi_murojaat_vaqti||''}"/>`)}
-        </div>
       </div>
     `;
   },
@@ -246,8 +243,6 @@ const InfarktYangiPage = {
     if (yuborgan) yuborgan.style.display = val === 'Boshqa muassasadan' ? 'block' : 'none';
     const tezYordam = document.getElementById('tez-yordam-div');
     if (tezYordam) tezYordam.style.display = val === 'Tez tibbiy yordam bilan' ? 'block' : 'none';
-    const birinchi = document.getElementById('birinchi-murojaat-div');
-    if (birinchi) birinchi.style.display = (val === 'Tez tibbiy yordam bilan' || val === "O'z murojaati bilan") ? 'block' : 'none';
   },
 
   onMuassasaChange(val) {
