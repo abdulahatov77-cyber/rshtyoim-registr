@@ -1403,13 +1403,19 @@ const BemorKartaPage = {
       const sb = getSupabase();
       const kt = BemorKartaPage._patient.kt_no;
       if (BemorKartaPage._type === 'infarkt') {
-        const { error: ce } = await sb.from('infarkt_chiqarish').delete().eq('kt_no', kt);
-        if (ce) throw ce;
+        // Child jadvallarni avval o'chirish (FK constraint)
+        await sb.from('infarkt_chiqarish').delete().eq('kt_no', kt);
+        await sb.from('infarkt_holat').delete().eq('kt_no', kt);
+        await sb.from('infarkt_davolash').delete().eq('kt_no', kt);
+        await sb.from('infarkt_kuzatuv').delete().eq('kt_no', kt);
         const { error } = await sb.from('infarkt_qabul').delete().eq('kt_no', kt);
         if (error) throw error;
       } else {
-        const { error: ce } = await sb.from('insult_chiqarish').delete().eq('kt_no', kt);
-        if (ce) throw ce;
+        // Child jadvallarni avval o'chirish (FK constraint)
+        await sb.from('insult_chiqarish').delete().eq('kt_no', kt);
+        await sb.from('insult_holat').delete().eq('kt_no', kt);
+        await sb.from('insult_davolash').delete().eq('kt_no', kt);
+        await sb.from('insult_kuzatuv').delete().eq('kt_no', kt);
         const { error } = await sb.from('insult_qabul').delete().eq('kt_no', kt);
         if (error) throw error;
       }
