@@ -916,13 +916,13 @@ const Telegram = {
 
     const qabul = patient.qabul_vaqt
       ? (() => {
-          // UTC+5 (O'zbekiston vaqti)
-          const d = new Date(new Date(patient.qabul_vaqt).getTime() + 5 * 3600000);
-          const dd = String(d.getUTCDate()).padStart(2, '0');
-          const mm = String(d.getUTCMonth() + 1).padStart(2, '0');
-          const yyyy = d.getUTCFullYear();
-          const hh = String(d.getUTCHours()).padStart(2, '0');
-          const mi = String(d.getUTCMinutes()).padStart(2, '0');
+          // qabul_vaqt bazada mahalliy vaqt (O'zbekiston) sifatida saqlangan
+          const d = new Date(patient.qabul_vaqt);
+          const dd = String(d.getDate()).padStart(2, '0');
+          const mm = String(d.getMonth() + 1).padStart(2, '0');
+          const yyyy = d.getFullYear();
+          const hh = String(d.getHours()).padStart(2, '0');
+          const mi = String(d.getMinutes()).padStart(2, '0');
           return `${dd}.${mm}.${yyyy} ${hh}:${mi}`;
         })()
       : '—';
