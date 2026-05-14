@@ -206,6 +206,13 @@ const BemorKartaPage = {
         </div>
       </div>
 
+      <!-- Status-muolaja nomuvofiqlik ogohlantirishi -->
+      ${(p.status === 'vafot' && p.muolaja_turi?.includes("o'tkazildi")) || (p.status === 'otkazildi' && p.muolaja_turi?.toLowerCase().includes('vafot')) ? `
+      <div style="background:#fef3c7;border:1px solid #f59e0b;border-radius:12px;padding:12px 16px;margin-bottom:16px;color:#92400e;display:flex;gap:10px;align-items:center">
+        <span style="font-size:20px">⚠️</span>
+        <span><b>Diqqat:</b> Bemor holati (<b>${p.status === 'vafot' ? 'Vafot' : "O'tkazildi"}</b>) va muolaja (<b>${esc(p.muolaja_turi||'')}</b>) mos kelmaydi — Tahrirlash orqali to'g'irlang</span>
+      </div>` : ''}
+
       <!-- Tabs Navigation -->
       <div class="flex items-center gap-2 mb-6 overflow-x-auto pb-2 border-b border-gray-200">
         ${['Umumiy', 'Davolash', 'Holat', 'Multimedia', 'Navbatchi', 'Chiqarish', 'Kuzatuv'].map((t, i) => `
@@ -1198,22 +1205,82 @@ const BemorKartaPage = {
     const p = BemorKartaPage._patient;
     const type = BemorKartaPage._type;
     const isInf = type === 'infarkt';
+    const viloyatlar = Object.keys(APP_CONFIG.MUASSASALAR);
+    const muassasalar = APP_CONFIG.MUASSASALAR[p.viloyat] || [];
+
+    // Status-muolaja nomuvofiqlik tekshiruvi
+    const mismatch = (p.status === 'vafot' && p.muolaja_turi?.toLowerCase().includes('o\'tkazildi')) ||
+                     (p.status === 'otkazildi' && p.muolaja_turi?.toLowerCase().includes('vafot'));
+    const mismatchWarn = mismatch ? `<div style="background:#fef3c7;border:1px solid #f59e0b;border-radius:10px;padding:10px 14px;margin-bottom:12px;color:#92400e;font-size:13px;display:flex;gap:8px;align-items:center">
+      <span style="font-size:18px">⚠️</span>
+      <span><b>Diqqat:</b> Status va muolaja mos kelmaydi — iltimos to'g'rilang</span>
+    </div>` : '';
+
     showModal({
       title: 'Bemor ma\'lumotlarini tahrirlash',
       size: 'lg',
       body: `
+        ${mismatchWarn}
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div class="form-group col-span-2">
             <label class="form-label required">F.I.O</label>
-            <input id="edit-fio" class="form-input" value="${p.fio||''}"/>
+            <input id="edit-fio" class="form-input" value="${esc(p.fio||'')}"/>
           </div>
           <div class="form-group">
             <label class="form-label">Tug'ilgan sanasi</label>
             <input id="edit-tugilgan" type="date" class="form-input" value="${p.tugilgan_sana||p.tugilgan_yil||''}"/>
           </div>
           <div class="form-group">
+            <label class="form-label">Jinsi</label>
+            <select id="edit-jins" class="form-select">
+              <option value="Erkak" ${p.jins==='Erkak'?'selected':''}>Erkak</option>
+              <option value="Ayol" ${p.jins==='Ayol'?'selected':''}>Ayol</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Viloyat</label>
+            <select id="edit-viloyat" class="form-select" onchange="BemorKartaPage._updateMuassasaOptions()">
+              ${viloyatlar.map(v => `<option value="${v}" ${p.viloyat===v?'selected':''}>${v}</option>`).join('')}
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Muassasa</label>
+            <select id="edit-muassasa" class="form-select">
+              ${muassasalar.map(m => `<option value="${esc(m)}" ${p.muassasa===m?'selected':''}>${esc(m)}</option>`).join('')}
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Murojaat yo'li</label>
+            <select id="edit-murojaat" class="form-select">
+              ${APP_CONFIG.MUROJAAT_YOLLARI.map(m => `<option value="${m}" ${p.murojaat_yoli===m?'selected':''}>${m}</option>`).join('')}
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Holat (status)</label>
+            <select id="edit-status" class="form-select">
+              <option value="active" ${p.status==='active'?'selected':''}>Aktiv (davolanmoqda)</option>
+              <option value="chiqarildi" ${p.status==='chiqarildi'?'selected':''}>Chiqarildi</option>
+              <option value="otkazildi" ${p.status==='otkazildi'?'selected':''}>O'tkazildi</option>
+              <option value="vafot" ${p.status==='vafot'?'selected':''}>Vafot</option>
+            </select>
+          </div>
+          <div class="form-group">
             <label class="form-label">Qon bosimi</label>
             <input id="edit-qb" class="form-input font-mono" value="${p.qon_bosimi||''}" placeholder="120/80"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Puls (ur/min)</label>
+            <input id="edit-puls" type="number" class="form-input" value="${p.puls||''}" min="20" max="300"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">AHA bali</label>
+            <input id="edit-aha" type="number" class="form-input" value="${p.aha_bali??''}" min="0"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Simptom vaqti</label>
+            <select id="edit-simptom" class="form-select">
+              ${(isInf ? APP_CONFIG.SIMPTOM_VAQTLAR : APP_CONFIG.SIMPTOM_VAQTLAR_INSULT).map(s => `<option value="${s}" ${p.simptom_vaqt===s?'selected':''}>${s}</option>`).join('')}
+            </select>
           </div>
           <div class="form-group">
             <label class="form-label">${isInf ? 'Infarkt turi' : 'Insult turi'}</label>
@@ -1229,14 +1296,26 @@ const BemorKartaPage = {
           </div>
           ${isInf ? `
           <div class="form-group">
-            <label class="form-label">Killip</label>
+            <label class="form-label">Killip klassifikatsiyasi</label>
             <select id="edit-killip" class="form-select">
               ${APP_CONFIG.KILLIP_KLASSLAR.map(k => `<option value="${k}" ${p.killip===k?'selected':''}>${k}</option>`).join('')}
             </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Troponin</label>
+            <input id="edit-troponin" class="form-input" value="${p.troponin||''}" placeholder="O'lchanmagan"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">KFK-MB</label>
+            <input id="edit-kkfmb" class="form-input" value="${p.kkfmb||''}" placeholder="O'lchanmagan"/>
           </div>` : `
           <div class="form-group">
             <label class="form-label">NIHSS (qabul)</label>
             <input id="edit-nihss" type="number" class="form-input" value="${p.nihss_qabul||''}" min="0" max="42"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">GCS bali</label>
+            <input id="edit-gcs" type="number" class="form-input" value="${p.gcs_bali||p.gcs_qabul||''}" min="3" max="15"/>
           </div>`}
         </div>`,
       footer: `
@@ -1248,6 +1327,14 @@ const BemorKartaPage = {
     initIcons();
   },
 
+  _updateMuassasaOptions() {
+    const vil = document.getElementById('edit-viloyat')?.value;
+    const sel = document.getElementById('edit-muassasa');
+    if (!vil || !sel) return;
+    const list = APP_CONFIG.MUASSASALAR[vil] || [];
+    sel.innerHTML = list.map(m => `<option value="${esc(m)}">${esc(m)}</option>`).join('');
+  },
+
   async saveEdit() {
     const p = BemorKartaPage._patient;
     const type = BemorKartaPage._type;
@@ -1256,19 +1343,31 @@ const BemorKartaPage = {
     if (!fio) { showToast('F.I.O ni kiriting', 'warning'); return; }
     const btn = document.getElementById('btn-edit-save');
     setLoading(btn, true);
+    const g = id => document.getElementById(id);
     const updates = {
       fio,
-      tugilgan_sana: document.getElementById('edit-tugilgan')?.value || null,
-      tugilgan_yil:  document.getElementById('edit-tugilgan')?.value || null,
-      qon_bosimi:    document.getElementById('edit-qb')?.value || null,
-      muolaja_turi:  document.getElementById('edit-muolaja')?.value || null,
+      jins:          g('edit-jins')?.value || null,
+      viloyat:       g('edit-viloyat')?.value || null,
+      muassasa:      g('edit-muassasa')?.value || null,
+      murojaat_yoli: g('edit-murojaat')?.value || null,
+      status:        g('edit-status')?.value || null,
+      tugilgan_sana: g('edit-tugilgan')?.value || null,
+      tugilgan_yil:  g('edit-tugilgan')?.value || null,
+      qon_bosimi:    g('edit-qb')?.value || null,
+      puls:          g('edit-puls')?.value ? parseInt(g('edit-puls').value) : null,
+      aha_bali:      g('edit-aha')?.value !== '' ? parseInt(g('edit-aha').value) : null,
+      simptom_vaqt:  g('edit-simptom')?.value || null,
+      muolaja_turi:  g('edit-muolaja')?.value || null,
     };
     if (isInf) {
-      updates.infarkt_turi = document.getElementById('edit-turi')?.value || null;
-      updates.killip       = document.getElementById('edit-killip')?.value || null;
+      updates.infarkt_turi = g('edit-turi')?.value || null;
+      updates.killip       = g('edit-killip')?.value || null;
+      updates.troponin     = g('edit-troponin')?.value || null;
+      updates.kkfmb        = g('edit-kkfmb')?.value || null;
     } else {
-      updates.insult_turi  = document.getElementById('edit-turi')?.value || null;
-      updates.nihss_qabul  = document.getElementById('edit-nihss')?.value ? parseInt(document.getElementById('edit-nihss').value) : null;
+      updates.insult_turi  = g('edit-turi')?.value || null;
+      updates.nihss_qabul  = g('edit-nihss')?.value ? parseInt(g('edit-nihss').value) : null;
+      updates.gcs_bali     = g('edit-gcs')?.value ? parseInt(g('edit-gcs').value) : null;
     }
     try {
       const result = isInf
