@@ -916,13 +916,14 @@ const Telegram = {
 
     const qabul = patient.qabul_vaqt
       ? (() => {
-          // qabul_vaqt bazada mahalliy vaqt (O'zbekiston) sifatida saqlangan
-          const d = new Date(patient.qabul_vaqt);
-          const dd = String(d.getDate()).padStart(2, '0');
-          const mm = String(d.getMonth() + 1).padStart(2, '0');
-          const yyyy = d.getFullYear();
-          const hh = String(d.getHours()).padStart(2, '0');
-          const mi = String(d.getMinutes()).padStart(2, '0');
+          // qabul_vaqt "YYYY-MM-DD HH:MM:SS" yoki "YYYY-MM-DDTHH:MM:SS" formatida
+          // new Date() ishlatmasdan to'g'ridan-to'g'ri stringdan ajratamiz
+          // (new Date() timezone konversiyasi qilishi mumkin)
+          const s = String(patient.qabul_vaqt).replace('T', ' ');
+          const [datePart, timePart] = s.split(' ');
+          const [yyyy, mm, dd] = (datePart || '').split('-');
+          const [hh, mi] = (timePart || '').split(':');
+          if (!yyyy || !dd || !hh) return s;
           return `${dd}.${mm}.${yyyy} ${hh}:${mi}`;
         })()
       : '—';
