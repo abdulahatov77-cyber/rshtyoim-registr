@@ -175,8 +175,12 @@ const BemorKartaPage = {
             <div>
               <div class="flex items-center gap-3 mb-1 flex-wrap">
                 <h2 class="text-2xl font-bold m-0">${p.fio||'Ism kiritilmagan'}</h2>
-                ${p.status==='active' ? '<span class="bg-green-500/20 text-green-100 border border-green-400/50 px-2 py-0.5 rounded text-xs font-bold tracking-wide">AKTIV</span>'
-                  : p.status==='chiqarildi' ? '<span class="bg-blue-500/20 text-blue-100 border border-blue-400/50 px-2 py-0.5 rounded text-xs font-bold tracking-wide">CHIQARILGAN</span>'
+                ${p.status==='active'
+                  ? '<span class="bg-green-500/20 text-green-100 border border-green-400/50 px-2 py-0.5 rounded text-xs font-bold tracking-wide">AKTIV</span>'
+                  : p.status==='chiqarildi'
+                  ? '<span class="bg-blue-500/20 text-blue-100 border border-blue-400/50 px-2 py-0.5 rounded text-xs font-bold tracking-wide">CHIQARILGAN</span>'
+                  : p.status==='otkazildi'
+                  ? '<span class="bg-orange-500/30 text-orange-100 border border-orange-400/50 px-2 py-0.5 rounded text-xs font-bold tracking-wide">O\'TKAZILGAN</span>'
                   : '<span class="bg-gray-500/50 text-gray-100 border border-gray-400/50 px-2 py-0.5 rounded text-xs font-bold tracking-wide">VAFOT</span>'}
               </div>
               <p class="text-white/80 text-sm font-medium mb-1">
@@ -1054,13 +1058,19 @@ const BemorKartaPage = {
 
   renderChiqarish(el, p, type) {
     if (p.status !== 'active') {
+      const statusLabels = {
+        chiqarildi: { icon: 'log-out', color: 'blue',   label: 'Bemor chiqarilgan',              desc: 'Bemor shifoxonadan muvaffaqiyatli chiqarilgan.' },
+        otkazildi:  { icon: 'share-2', color: 'orange', label: "Bemor boshqa muassasaga o'tkazilgan", desc: "Bemor boshqa tibbiyot muassasasiga o'tkazilgan." },
+        vafot:      { icon: 'x-circle', color: 'red',   label: 'Bemor vafot etgan',              desc: 'Bemor vafot etgan. Qayta chiqarish mumkin emas.' },
+      };
+      const s = statusLabels[p.status] || { icon: 'info', color: 'gray', label: p.status, desc: '' };
       el.innerHTML = `
         <div class="card p-10 text-center">
-          <div class="w-16 h-16 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center mx-auto mb-4">
-            ${icon('info', 32)}
+          <div class="w-16 h-16 rounded-full bg-${s.color}-100 text-${s.color}-500 flex items-center justify-center mx-auto mb-4">
+            ${icon(s.icon, 32)}
           </div>
-          <h3 class="text-xl font-bold text-gray-900 mb-2">Bemor chiqarilgan yoki vafot etgan</h3>
-          <p class="text-gray-500">Ushbu bemorni qayta chiqarish mumkin emas. Joriy holati: <b>${p.status}</b></p>
+          <h3 class="text-xl font-bold text-gray-900 mb-2">${s.label}</h3>
+          <p class="text-gray-500">${s.desc}</p>
         </div>
       `;
       return;
