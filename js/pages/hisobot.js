@@ -117,6 +117,9 @@ const HisobotPage = {
             <button class="btn btn-secondary shadow-md hover:shadow-lg flex items-center justify-center px-3 rounded-xl" onclick="HisobotPage.printReport()" title="Chop etish">
               ${icon('printer', 18)}
             </button>
+            <button class="shadow-md hover:shadow-lg flex items-center justify-center gap-1 px-3 rounded-xl text-xs font-bold text-white" style="background:#2481cc" onclick="HisobotPage.sendDailyTelegramReport()" title="Sutkalik hisobot Telegramga">
+              ${icon('send', 16)} Telegram
+            </button>
           </div>
         </div>
       </div>
@@ -885,6 +888,135 @@ const HisobotPage = {
 <script>window.onload=()=>{window.print()}<\/script>
 </body></html>`);
     w.document.close();
+  },
+
+  async sendDailyTelegramReport() {
+    // Sutkalik davr: bugun 07:00 dan ertangi 07:00 gacha (yoki kecha 07:00 — bugun 07:00)
+    const now = new Date();
+    const todayAt7 = new Date(now);
+    todayAt7.setHours(7, 0, 0, 0);
+    const periodEnd = now >= todayAt7 ? todayAt7 : (() => { const d = new Date(todayAt7); d.setDate(d.getDate()-1); return d; })();
+    const periodStart = new Date(periodEnd);
+    periodStart.setDate(periodStart.getDate() - 1);
+
+    const fmt = d => `${String(d.getDate()).padStart(2,'0')}.${String(d.getMonth()+1).padStart(2,'0')}.${d.getFullYear()} 07:00`;
+
+    showToast('📊 Hisobot tayyorlanmoqda...', 'info', 3000);
+
+    try {
+      const sb = getSupabase();
+      const fromISO = periodStart.toISOString();
+      const toISO = periodEnd.toISOString();
+
+      // Yangi qabul qilinganlar (shu davrda qabul_vaqt)
+      const [infNew, insNew] = await Promise.all([
+        sb.from('infarkt_qabul').select('kt_no,fio,viloyat,status,infarkt_turi,muolaja_turi').gte('qabul_vaqt', fromISO).lt('qabul_vaqt', toISO),
+        sb.from('insult_qabul').select('kt_no,fio,viloyat,status,insult_turi,muolaja_turi').gte('qabul_vaqt', fromISO).lt('qabul_vaqt', toISO)
+      ]);
+      const infs = infNew.data || [];
+      const ins  = insNew.data || [];
+
+      // Hozir shifoxonada (status = active, barcha vaqt)
+      const [infActive, insActive] = await Promise.all([
+        sb.from('infarkt_qabul').select('id', { count: 'exact', head: true }).eq('status', 'active'),
+        sb.from('insult_qabul').select('id', { count: 'exact', head: true }).eq('status', 'active')
+      ]);
+      const infActiveCount = infActive.count || 0;
+      const insActiveCount = insActive.count || 0;
+
+      // Infarkt hisobot
+      const infChiqarildi = infs.filter(p => p.status === 'chiqarildi').length;
+      const infOtkazildi  = infs.filter(p => p.status === 'otkazildi').length;
+      const infVafot      = infs.filter(p => p.status === 'vafot').length;
+      const stemi  = infs.filter(p => p.infarkt_turi?.toUpperCase().includes('STEMI') && !p.infarkt_turi?.toUpperCase().includes('NSTEMI')).length;
+      const nstemi = infs.filter(p => p.infarkt_turi?.toUpperCase().includes('NSTEMI')).length;
+      const ami    = infs.filter(p => p.infarkt_turi?.toLowerCase().includes('miokard')).length;
+      const infViloyat = {};
+      infs.forEach(p => { if (p.viloyat) infViloyat[p.viloyat] = (infViloyat[p.viloyat]||0)+1; });
+      const infMuolaja = {};
+      infs.forEach(p => { if (p.muolaja_turi) infMuolaja[p.muolaja_turi] = (infMuolaja[p.muolaja_turi]||0)+1; });
+
+      // Insult hisobot
+      const insChiqarildi = ins.filter(p => p.status === 'chiqarildi').length;
+      const insOtkazildi  = ins.filter(p => p.status === 'otkazildi').length;
+      const insVafot      = ins.filter(p => p.status === 'vafot').length;
+      const ishemik   = ins.filter(p => p.insult_turi?.toLowerCase().includes('ishemik')).length;
+      const gemorragik= ins.filter(p => p.insult_turi?.toLowerCase().includes('gemorragik')).length;
+      const tia       = ins.filter(p => p.insult_turi?.toLowerCase().includes('tia')).length;
+      const insViloyat = {};
+      ins.forEach(p => { if (p.viloyat) insViloyat[p.viloyat] = (insViloyat[p.viloyat]||0)+1; });
+      const insMuolaja = {};
+      ins.forEach(p => { if (p.muolaja_turi) insMuolaja[p.muolaja_turi] = (insMuolaja[p.muolaja_turi]||0)+1; });
+
+      const vilStr = (obj) => Object.entries(obj).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`  • ${k}: ${v} ta`).join('\n') || '  —';
+      const muolajaStr = (obj) => Object.entries(obj).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`  • ${k}: ${v} ta`).join('\n') || '  —';
+
+      const infMsg = `🫀 INFARKT SUTKALIK HISOBOT
+━━━━━━━━━━━━━━━━━━━━━━
+📅 Davr: ${fmt(periodStart)} — ${fmt(periodEnd)}
+━━━━━━━━━━━━━━━━━━━━━━
+👥 Jami yangi qabul: ${infs.length} ta
+🟢 Davolanib chiqarildi: ${infChiqarildi} ta
+🔄 Boshqa muassasaga o'tkazildi: ${infOtkazildi} ta
+⚫ Vafot etdi: ${infVafot} ta
+🏥 Hozir shifoxonada: ${infActiveCount} ta
+━━━━━━━━━━━━━━━━━━━━━━
+📊 Tashxis turi:
+  • STEMI: ${stemi} ta
+  • NSTEMI: ${nstemi} ta
+  • O'tkir miokard infarkti (AMI): ${ami} ta
+━━━━━━━━━━━━━━━━━━━━━━
+🗺 Viloyatlar kesimida:
+${vilStr(infViloyat)}
+━━━━━━━━━━━━━━━━━━━━━━
+💊 Davolash turlari:
+${muolajaStr(infMuolaja)}
+━━━━━━━━━━━━━━━━━━━━━━`;
+
+      const insMsg = `🧠 INSULT SUTKALIK HISOBOT
+━━━━━━━━━━━━━━━━━━━━━━
+📅 Davr: ${fmt(periodStart)} — ${fmt(periodEnd)}
+━━━━━━━━━━━━━━━━━━━━━━
+👥 Jami yangi qabul: ${ins.length} ta
+🟢 Davolanib chiqarildi: ${insChiqarildi} ta
+🔄 Boshqa muassasaga o'tkazildi: ${insOtkazildi} ta
+⚫ Vafot etdi: ${insVafot} ta
+🏥 Hozir shifoxonada: ${insActiveCount} ta
+━━━━━━━━━━━━━━━━━━━━━━
+📊 Tashxis turi:
+  • Ishemik insult: ${ishemik} ta
+  • Gemorragik insult: ${gemorragik} ta
+  • TIA (Tranzitor ishemik ataka): ${tia} ta
+━━━━━━━━━━━━━━━━━━━━━━
+🗺 Viloyatlar kesimida:
+${vilStr(insViloyat)}
+━━━━━━━━━━━━━━━━━━━━━━
+💊 Davolash turlari:
+${muolajaStr(insMuolaja)}
+━━━━━━━━━━━━━━━━━━━━━━`;
+
+      const send = async (token, chatId, text) => {
+        const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ chat_id: parseInt(chatId), text, parse_mode: 'HTML' })
+        });
+        return res.json();
+      };
+
+      const [r1, r2] = await Promise.all([
+        send(APP_CONFIG.TELEGRAM_INFARKT_TOKEN, APP_CONFIG.TELEGRAM_INFARKT_CHAT, infMsg),
+        send(APP_CONFIG.TELEGRAM_INSULT_TOKEN,  APP_CONFIG.TELEGRAM_INSULT_CHAT,  insMsg)
+      ]);
+
+      if (r1.ok && r2.ok) {
+        showToast('✅ Sutkalik hisobot Telegramga yuborildi!', 'success', 5000);
+      } else {
+        showToast('⚠️ Telegram xato: ' + (r1.description || r2.description || 'Noma\'lum'), 'error', 6000);
+      }
+    } catch(err) {
+      showToast('❌ Xato: ' + err.message, 'error');
+    }
   },
 
   exportReport() {
