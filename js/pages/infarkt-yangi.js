@@ -230,14 +230,24 @@ const InfarktYangiPage = {
         <div class="col-span-1 sm:col-span-2" id="yuborgan-div" style="display:${d.murojaat_yoli==='Boshqa muassasadan'?'block':'none'}">
           ${this.field('yuborgan_muassasa','Yuborgan muassasa nomi',`<input id="yuborgan_muassasa" class="form-input" value="${d.yuborgan_muassasa||''}" placeholder="Muassasa nomini kiriting"/>`)}
         </div>
+        <div id="tez-yordam-div" style="display:${d.murojaat_yoli==='Tez tibbiy yordam bilan'?'block':'none'}">
+          ${this.field('tez_yordam_kelgan_vaqt','Tez yordam yetib keldi (vaqt)',`<input id="tez_yordam_kelgan_vaqt" type="datetime-local" class="form-input" value="${d.tez_yordam_kelgan_vaqt||''}"/>`,true)}
+        </div>
+        <div id="birinchi-murojaat-div" style="display:${d.murojaat_yoli==='Tez tibbiy yordam bilan'||d.murojaat_yoli==="O'z murojaati bilan"?'block':'none'}">
+          ${this.field('birinchi_murojaat_vaqti','Birinchi tibbiy murojaat vaqti',`<input id="birinchi_murojaat_vaqti" type="datetime-local" class="form-input" value="${d.birinchi_murojaat_vaqti||''}"/>`)}
+        </div>
       </div>
     `;
   },
 
   onMurojaatChange(val) {
     InfarktYangiPage._data.murojaat_yoli = val;
-    const div = document.getElementById('yuborgan-div');
-    if (div) div.style.display = val === 'Boshqa muassasadan' ? 'block' : 'none';
+    const yuborgan = document.getElementById('yuborgan-div');
+    if (yuborgan) yuborgan.style.display = val === 'Boshqa muassasadan' ? 'block' : 'none';
+    const tezYordam = document.getElementById('tez-yordam-div');
+    if (tezYordam) tezYordam.style.display = val === 'Tez tibbiy yordam bilan' ? 'block' : 'none';
+    const birinchi = document.getElementById('birinchi-murojaat-div');
+    if (birinchi) birinchi.style.display = (val === 'Tez tibbiy yordam bilan' || val === "O'z murojaati bilan") ? 'block' : 'none';
   },
 
   onMuassasaChange(val) {
@@ -398,6 +408,7 @@ const InfarktYangiPage = {
     if (!wrap) return;
 
     ['viloyat','muassasa','boshqa_muassasa','kt_no','qabul_vaqt','murojaat_yoli','yuborgan_muassasa',
+     'tez_yordam_kelgan_vaqt','birinchi_murojaat_vaqti',
      'fio','aha_bali','simptom_vaqt','birlamchi_yoki_takroriy',
      'infarkt_turi','killip','qon_bosimi','puls','ekg_vaqti','troponin','kkfmb',
      'muolaja_turi','angio_natija','otkazilgan_muassasa','shifokor_fio']
@@ -434,6 +445,7 @@ const InfarktYangiPage = {
       required = ['viloyat','muassasa','kt_no','qabul_vaqt','murojaat_yoli'];
       if (this._data.muassasa === 'Boshqa') required.push('boshqa_muassasa');
       if (this._data.murojaat_yoli === 'Boshqa muassasadan') required.push('yuborgan_muassasa');
+      if (this._data.murojaat_yoli === 'Tez tibbiy yordam bilan') required.push('tez_yordam_kelgan_vaqt');
     }
     if (this._step === 1) required = ['fio','tugilgan_sana','jins'];
     if (this._step === 2) required = ['aha_bali','simptom_vaqt','birlamchi_yoki_takroriy','infarkt_turi','killip','qon_bosimi','puls','ekg_vaqti','troponin','kkfmb','ekg_natija'];
