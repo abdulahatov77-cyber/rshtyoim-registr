@@ -1364,12 +1364,12 @@ const BemorKartaPage = {
       tugilgan_sana: g('edit-tugilgan')?.value || null,
       tugilgan_yil:  g('edit-tugilgan')?.value || null,
       qon_bosimi:    g('edit-qb')?.value || null,
-      puls:          g('edit-puls')?.value ? parseInt(g('edit-puls').value) : null,
       aha_bali:      g('edit-aha')?.value !== '' ? parseInt(g('edit-aha').value) : null,
       simptom_vaqt:  g('edit-simptom')?.value || null,
       muolaja_turi:  g('edit-muolaja')?.value || null,
     };
     if (isInf) {
+      updates.puls         = g('edit-puls')?.value ? parseInt(g('edit-puls').value) : null;
       updates.infarkt_turi = g('edit-turi')?.value || null;
       updates.killip       = g('edit-killip')?.value || null;
       updates.troponin     = g('edit-troponin')?.value || null;
@@ -1400,11 +1400,17 @@ const BemorKartaPage = {
     }
     if (!confirm("Rostdan ham ushbu bemor ma'lumotlarini o'chirmoqchimisiz? Bu amalni ortga qaytarib bo'lmaydi!")) return;
     try {
+      const sb = getSupabase();
+      const kt = BemorKartaPage._patient.kt_no;
       if (BemorKartaPage._type === 'infarkt') {
-        const { error } = await getSupabase().from('infarkt_qabul').delete().eq('kt_no', BemorKartaPage._patient.kt_no);
+        const { error: ce } = await sb.from('infarkt_chiqarish').delete().eq('kt_no', kt);
+        if (ce) throw ce;
+        const { error } = await sb.from('infarkt_qabul').delete().eq('kt_no', kt);
         if (error) throw error;
       } else {
-        const { error } = await getSupabase().from('insult_qabul').delete().eq('kt_no', BemorKartaPage._patient.kt_no);
+        const { error: ce } = await sb.from('insult_chiqarish').delete().eq('kt_no', kt);
+        if (ce) throw ce;
+        const { error } = await sb.from('insult_qabul').delete().eq('kt_no', kt);
         if (error) throw error;
       }
       showToast("Bemor muvaffaqiyatli o'chirildi", 'success');
