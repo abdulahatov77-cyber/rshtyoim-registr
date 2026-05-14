@@ -12,7 +12,7 @@ const HisobotPage = {
       `<div id="hisobot-inner" class="animate-fadein"></div>`, user
     );
     Components.startClock();
-    HisobotPage.renderUI();
+    HisobotPage.renderUI(user);
 
     // Oldingi hisobot holatini tiklash
     if (HisobotPage._lastData) {
@@ -29,7 +29,7 @@ const HisobotPage = {
     }
   },
 
-  renderUI() {
+  renderUI(user) {
     const today = new Date().toISOString().split('T')[0];
     const monthAgo = new Date(Date.now()-30*864e5).toISOString().split('T')[0];
     const inner = document.getElementById('hisobot-inner');
@@ -117,9 +117,9 @@ const HisobotPage = {
             <button class="btn btn-secondary shadow-md hover:shadow-lg flex items-center justify-center px-3 rounded-xl" onclick="HisobotPage.printReport()" title="Chop etish">
               ${icon('printer', 18)}
             </button>
-            <button class="shadow-md hover:shadow-lg flex items-center justify-center gap-1 px-3 rounded-xl text-xs font-bold text-white" style="background:#2481cc" onclick="HisobotPage.sendDailyTelegramReport()" title="Sutkalik hisobot Telegramga">
+            ${user?.role === 'super_admin' ? `<button class="shadow-md hover:shadow-lg flex items-center justify-center gap-1 px-3 rounded-xl text-xs font-bold text-white" style="background:#2481cc" onclick="HisobotPage.sendDailyTelegramReport()" title="Sutkalik hisobot Telegramga">
               ${icon('send', 16)} Telegram
-            </button>
+            </button>` : ''}
           </div>
         </div>
       </div>
