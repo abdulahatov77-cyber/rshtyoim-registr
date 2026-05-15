@@ -176,16 +176,16 @@ const AdminPage = {
         </div>
       </div>
 
-      <div style="display:grid;grid-template-columns:1fr auto;gap:20px;align-items:start">
-        <div class="card">
-          <div class="card-header">
+      <div style="display:grid;grid-template-columns:1fr 240px;gap:20px;align-items:start">
+        <div class="card" style="min-width:0;overflow:hidden">
+          <div class="card-header" style="flex-wrap:wrap;gap:8px">
             <span class="card-title">${icon('users',16)} Foydalanuvchilar ro'yxati</span>
-            <div style="display:flex;gap:8px;align-items:center">
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
               <input id="admin-search" type="text" placeholder="Qidirish..." value="${AdminPage._search}"
                 oninput="AdminPage._search=this.value;AdminPage._renderTable()"
-                class="form-input" style="width:180px;padding:6px 12px;font-size:12px"/>
+                class="form-input" style="width:160px;padding:6px 12px;font-size:12px"/>
               <select id="admin-role-filter" onchange="AdminPage._filterRole=this.value;AdminPage._renderTable()"
-                class="form-input" style="width:150px;padding:6px 10px;font-size:12px">
+                class="form-input" style="width:140px;padding:6px 10px;font-size:12px">
                 <option value="" ${!AdminPage._filterRole?'selected':''}>Barcha rol</option>
                 <option value="super_admin" ${AdminPage._filterRole==='super_admin'?'selected':''}>👑 Super Admin</option>
                 <option value="admin" ${AdminPage._filterRole==='admin'?'selected':''}>🛡 Viloyat Admin</option>
@@ -196,13 +196,13 @@ const AdminPage = {
           </div>
           <div style="overflow-x:auto" id="admin-table-wrap">${AdminPage._buildTable(filtered)}</div>
         </div>
-        <div class="card" style="min-width:220px">
+        <div class="card" style="width:240px;position:sticky;top:16px">
           <div class="card-header"><span class="card-title">${icon('map',14)} Viloyatlar bo'yicha</span></div>
-          <div style="padding:4px 0;max-height:500px;overflow-y:auto">
+          <div style="padding:4px 0;max-height:70vh;overflow-y:auto">
             ${topVil.length ? topVil.map(([v,cnt]) => `
-              <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid rgba(99,118,158,0.1)">
-                <span style="font-size:12px;color:#cbd5e1">${v}</span>
-                <span style="font-size:12px;font-weight:700;color:#60a5fa;background:rgba(59,130,246,0.12);padding:2px 8px;border-radius:20px">${cnt}</span>
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 4px;border-bottom:1px solid rgba(99,118,158,0.1)">
+                <span style="font-size:12px;color:#cbd5e1;flex:1;margin-right:8px">${v}</span>
+                <span style="font-size:12px;font-weight:700;color:#60a5fa;background:rgba(59,130,246,0.12);padding:2px 8px;border-radius:20px;white-space:nowrap">${cnt}</span>
               </div>`).join('')
             : '<p style="color:#64748b;font-size:12px;text-align:center;padding:16px">Viloyatlar yo\'q</p>'}
           </div>
