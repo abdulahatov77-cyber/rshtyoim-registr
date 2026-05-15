@@ -204,7 +204,7 @@ const DashboardPage = {
         </div>
 
         <!-- 5. Jami Vafot Etganlar -->
-        <div class="bg-slate-900 p-7 rounded-[32px] border border-slate-800 shadow-2xl hover:shadow-rose-500/20 hover:-translate-y-2 transition-all duration-500 group cursor-pointer relative overflow-hidden">
+        <div class="bg-slate-900 p-7 rounded-[32px] border border-slate-800 shadow-2xl hover:shadow-rose-500/20 hover:-translate-y-2 transition-all duration-500 group cursor-pointer relative overflow-hidden" onclick="DashboardPage.showVafotDetail()">
           <div class="absolute -right-10 -top-10 w-32 h-32 bg-rose-600/5 rounded-full blur-3xl"></div>
           <div class="flex items-center justify-between mb-6 relative z-10">
             <div class="w-14 h-14 bg-rose-500/10 text-rose-400 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-all duration-500">${icon('user-x', 32)}</div>
@@ -960,6 +960,70 @@ const DashboardPage = {
         }
       }
     });
+  },
+
+  async showVafotDetail() {
+    showModal(`<div class="flex justify-center py-10"><div class="w-8 h-8 border-4 border-rose-500 border-t-transparent rounded-full animate-spin"></div></div>`, 'Vafot etgan bemorlar');
+    try {
+      const sb = getSupabase();
+      const vil = DashboardPage._viewViloyat;
+      const eqV = q => vil ? q.eq('viloyat', vil) : q;
+      const [infRes, insRes] = await Promise.all([
+        eqV(sb.from('infarkt_qabul').select('kt_no,fio,tugilgan_yil,viloyat,muassasa,qabul_vaqt,infarkt_turi').eq('status','vafot')).order('qabul_vaqt',{ascending:false}),
+        eqV(sb.from('insult_qabul').select('kt_no,fio,tugilgan_yil,viloyat,muassasa,qabul_vaqt,insult_turi').eq('status','vafot')).order('qabul_vaqt',{ascending:false})
+      ]);
+      const all = [
+        ...(infRes.data||[]).map(p=>({...p,_type:'infarkt',kasallik:p.infarkt_turi||'—'})),
+        ...(insRes.data||[]).map(p=>({...p,_type:'insult',kasallik:p.insult_turi||'—'}))
+      ].sort((a,b)=>new Date(b.qabul_vaqt)-new Date(a.qabul_vaqt));
+
+      // Viloyat kesimida hisoblash
+      const vilMap = {};
+      all.forEach(p=>{ const v=p.viloyat||'Noma\'lum'; vilMap[v]=(vilMap[v]||0)+1; });
+      const vilRows = Object.entries(vilMap).sort((a,b)=>b[1]-a[1])
+        .map(([v,c])=>`<div class="flex justify-between items-center py-1.5 border-b border-slate-100 last:border-0">
+          <span class="text-sm text-slate-700 font-medium">${esc(v)}</span>
+          <span class="text-sm font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded-lg">${c} ta</span>
+        </div>`).join('');
+
+      const tableRows = all.map(p=>`
+        <tr class="border-b border-slate-50 hover:bg-rose-50/30 cursor-pointer transition-colors" onclick="closeModal();Router.go('bemor-karta',{kt_no:'${p.kt_no}',type:'${p._type}'})">
+          <td class="p-2 text-xs font-mono text-slate-500">${esc(p.kt_no)}</td>
+          <td class="p-2 text-sm font-semibold text-slate-800">${esc(p.fio||'—')}</td>
+          <td class="p-2 text-xs">${p._type==='infarkt'?'<span class="text-red-600 font-bold">Infarkt</span>':'<span class="text-blue-600 font-bold">Insult</span>'}</td>
+          <td class="p-2 text-xs text-slate-600">${esc(p.viloyat||'—')}</td>
+          <td class="p-2 text-xs text-slate-600">${esc(p.muassasa||'—')}</td>
+          <td class="p-2 text-xs text-slate-500">${Utils.formatDateTime(p.qabul_vaqt)}</td>
+          <td class="p-2 text-xs text-slate-600">${esc(p.kasallik)}</td>
+        </tr>`).join('');
+
+      showModal(`
+        <div class="flex gap-4" style="min-width:min(900px,90vw)">
+          <div style="width:220px;flex-shrink:0">
+            <div class="font-bold text-slate-700 mb-3 text-sm uppercase tracking-wide">Viloyat kesimida</div>
+            <div class="bg-slate-50 rounded-xl p-3">${vilRows||'<p class="text-slate-400 text-sm">Ma\'lumot yo\'q</p>'}</div>
+          </div>
+          <div class="flex-1 overflow-auto" style="max-height:65vh">
+            <div class="font-bold text-slate-700 mb-3 text-sm uppercase tracking-wide">Jami ${all.length} ta bemor</div>
+            <table class="w-full text-left">
+              <thead class="bg-rose-50 sticky top-0">
+                <tr>
+                  <th class="p-2 text-xs font-bold text-slate-500">K/T No</th>
+                  <th class="p-2 text-xs font-bold text-slate-500">F.I.O</th>
+                  <th class="p-2 text-xs font-bold text-slate-500">Turi</th>
+                  <th class="p-2 text-xs font-bold text-slate-500">Viloyat</th>
+                  <th class="p-2 text-xs font-bold text-slate-500">Muassasa</th>
+                  <th class="p-2 text-xs font-bold text-slate-500">Qabul vaqti</th>
+                  <th class="p-2 text-xs font-bold text-slate-500">Kasallik</th>
+                </tr>
+              </thead>
+              <tbody>${tableRows||'<tr><td colspan="7" class="p-4 text-center text-slate-400">Ma\'lumot yo\'q</td></tr>'}</tbody>
+            </table>
+          </div>
+        </div>`, `Vafot etgan bemorlar — ${all.length} ta`);
+    } catch(err) {
+      showModal(`<p class="text-red-500 p-4">${err.message}</p>`, 'Xatolik');
+    }
   },
 
   exportExcel() {
