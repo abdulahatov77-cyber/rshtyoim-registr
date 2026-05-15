@@ -7,12 +7,13 @@ const HisobotPage = {
 
   async render() {
     const user = await Auth.getUser();
+    const profile = await Profile.getCurrent();
     document.getElementById('app').innerHTML = Components.renderLayout(
       'hisobot', 'Hisobotlar', 'Statistik tahlil va hisobotlar',
       `<div id="hisobot-inner" class="animate-fadein"></div>`, user
     );
     Components.startClock();
-    HisobotPage.renderUI(user);
+    HisobotPage.renderUI(profile);
 
     // Oldingi hisobot holatini tiklash
     if (HisobotPage._lastData) {
