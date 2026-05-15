@@ -137,19 +137,21 @@ const Utils = {
   // Export to CSV (Excel/Google Sheets friendly, UTF-8 BOM, RFC 4180)
   exportCSV(data, filename = 'bemorlar.csv') {
     if (!data || !data.length) return;
+    const SEP = ';';
     const escape = v => {
       if (v === null || v === undefined) v = '';
       if (Array.isArray(v)) v = v.join(', ');
       v = String(v);
-      if (v.includes('"') || v.includes(',') || v.includes('\n') || v.includes('\r')) {
+      if (v.includes('"') || v.includes(';') || v.includes(',') || v.includes('\n') || v.includes('\r')) {
         return '"' + v.replace(/"/g, '""') + '"';
       }
       return v;
     };
     const headers = Object.keys(data[0]);
     const lines = [
-      headers.map(escape).join(','),
-      ...data.map(r => headers.map(h => escape(r[h])).join(','))
+      'sep=;',
+      headers.map(escape).join(SEP),
+      ...data.map(r => headers.map(h => escape(r[h])).join(SEP))
     ];
     const blob = new Blob(['\uFEFF' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
