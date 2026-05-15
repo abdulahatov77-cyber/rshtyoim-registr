@@ -136,30 +136,50 @@ const Utils = {
 
   // Export to CSV (Excel/Google Sheets friendly, UTF-8 BOM, RFC 4180)
   exportCSV(data, filename = 'bemorlar.csv') {
+    // XLSX formatida eksport (encoding va ustun kengligi muammosi yo'q)
+    const xlsxName = filename.replace(/\.csv$/i, '.xlsx');
+    Utils.exportXLSX(data, xlsxName);
+  },
+
+  exportXLSX(data, filename = 'bemorlar.xlsx') {
     if (!data || !data.length) return;
-    const SEP = ';';
-    const escape = v => {
-      if (v === null || v === undefined) v = '';
-      if (Array.isArray(v)) v = v.join(', ');
-      v = String(v);
-      if (v.includes('"') || v.includes(';') || v.includes(',') || v.includes('\n') || v.includes('\r')) {
-        return '"' + v.replace(/"/g, '""') + '"';
-      }
-      return v;
+    const clean = v => {
+      if (v === null || v === undefined) return '';
+      if (Array.isArray(v)) return v.join(', ');
+      return String(v);
     };
     const headers = Object.keys(data[0]);
-    const lines = [
-      'sep=;',
-      headers.map(escape).join(SEP),
-      ...data.map(r => headers.map(h => escape(r[h])).join(SEP))
+    const rows = [
+      headers,
+      ...data.map(r => headers.map(h => clean(r[h])))
     ];
-    const blob = new Blob(['\uFEFF' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    a.click();
-    URL.revokeObjectURL(url);
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+
+    // Har bir ustun kengligini mazmuniga qarab avtomatik sozlash
+    const colWidths = headers.map((h, i) => {
+      const maxLen = Math.max(
+        h.length,
+        ...data.map(r => clean(r[h]).length)
+      );
+      return { wch: Math.min(maxLen + 2, 50) };
+    });
+    ws['!cols'] = colWidths;
+
+    // 1-qator (sarlavha) qalin va ko'k rang
+    headers.forEach((_, i) => {
+      const cell = ws[XLSX.utils.encode_cell({ r: 0, c: i })];
+      if (cell) {
+        cell.s = {
+          font: { bold: true, color: { rgb: 'FFFFFF' } },
+          fill: { fgColor: { rgb: '1D4ED8' } },
+          alignment: { horizontal: 'center', vertical: 'center', wrapText: false }
+        };
+      }
+    });
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Hisobot');
+    XLSX.writeFile(wb, filename);
   },
 
   // Set element HTML safely
