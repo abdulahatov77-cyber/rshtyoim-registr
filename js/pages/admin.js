@@ -198,7 +198,7 @@ const AdminPage = {
         </div>
         <div class="card" style="min-width:220px">
           <div class="card-header"><span class="card-title">${icon('map',14)} Viloyatlar bo'yicha</span></div>
-          <div style="padding:4px 0">
+          <div style="padding:4px 0;max-height:500px;overflow-y:auto">
             ${topVil.length ? topVil.map(([v,cnt]) => `
               <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid rgba(99,118,158,0.1)">
                 <span style="font-size:12px;color:#cbd5e1">${v}</span>
