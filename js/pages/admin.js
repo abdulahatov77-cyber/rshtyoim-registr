@@ -124,7 +124,7 @@ const AdminPage = {
     const userCnt  = all.filter(p => p.role === 'user').length;
     const vilMap = {};
     all.forEach(p => { if (p.viloyat) vilMap[p.viloyat] = (vilMap[p.viloyat]||0) + 1; });
-    const topVil = Object.entries(vilMap).sort((a,b)=>b[1]-a[1]).slice(0,8);
+    const topVil = Object.entries(vilMap).sort((a,b)=>b[1]-a[1]);
 
     return `
       <div class="stat-grid" style="margin-bottom:20px;grid-template-columns:repeat(4,1fr)">
