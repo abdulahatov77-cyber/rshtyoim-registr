@@ -891,22 +891,59 @@ const HisobotPage = {
   },
 
   async sendDailyTelegramReport() {
-    // Sutkalik davr: bugun 07:00 dan ertangi 07:00 gacha (yoki kecha 07:00 — bugun 07:00)
-    const now = new Date();
-    const todayAt7 = new Date(now);
-    todayAt7.setHours(7, 0, 0, 0);
-    const periodEnd = now >= todayAt7 ? todayAt7 : (() => { const d = new Date(todayAt7); d.setDate(d.getDate()-1); return d; })();
-    const periodStart = new Date(periodEnd);
-    periodStart.setDate(periodStart.getDate() - 1);
+    // Toshkent UTC+5: new Date() UTC beradi, +5 soat qo'shamiz
+    const nowUTC = new Date();
+    const nowTZ = new Date(nowUTC.getTime() + 5 * 60 * 60 * 1000);
 
-    const fmt = d => `${String(d.getDate()).padStart(2,'0')}.${String(d.getMonth()+1).padStart(2,'0')}.${d.getFullYear()} 07:00`;
+    // Sutkalik davr: bugun 07:00 dan kecha 07:00 gacha (Toshkent vaqtida)
+    const pad = n => String(n).padStart(2, '0');
+    // Toshkent sana/vaqt komponentlari
+    const tzY = nowTZ.getUTCFullYear();
+    const tzM = nowTZ.getUTCMonth();
+    const tzD = nowTZ.getUTCDate();
+    const tzH = nowTZ.getUTCHours();
+
+    // Agar hozir 07:00 dan keyin bo'lsa: davr = bugun 07:00 — ertaga 07:00
+    // Agar hozir 07:00 dan oldin bo'lsa: davr = kecha 07:00 — bugun 07:00
+    let endY = tzY, endM = tzM, endD = tzD;
+    if (tzH < 7) {
+      // Kecha 07:00 — bugun 07:00
+      // endD = bugun, startD = kecha
+    } else {
+      // Bugun 07:00 — kecha hisobot (ya'ni kecha 07:00 dan bugun 07:00 gacha)
+      // Bu hisobot tugallangan kun uchun
+    }
+
+    // periodEnd = bugungi 07:00 (agar hozir > 07:00) yoki bugungi 07:00 (agar < 07:00 esa kecha 07:00)
+    const endDate = new Date(Date.UTC(tzY, tzM, tzD, 2, 0, 0)); // UTC 02:00 = Toshkent 07:00
+    if (tzH >= 7) {
+      // hozir bugun 07:00 dan keyin — end = bugun 07:00 (UTC 02:00)
+      // start = kecha 07:00 (UTC 02:00)
+    } else {
+      // hozir bugun 07:00 dan oldin — end = bugun 07:00, start = kecha 07:00
+      // endDate allaqachon bugungi 07:00 (UTC)
+    }
+    const startDate = new Date(endDate.getTime() - 24 * 60 * 60 * 1000);
+
+    // qabul_vaqt bazada timezone yo'q (mahalliy vaqt) saqlanadi
+    // Shuning uchun timezone belgi yo'q formatda beramiz
+    const toLocalStr = (d) => {
+      const tz = new Date(d.getTime() + 5 * 60 * 60 * 1000);
+      return `${tz.getUTCFullYear()}-${pad(tz.getUTCMonth()+1)}-${pad(tz.getUTCDate())}T${pad(tz.getUTCHours())}:00:00`;
+    };
+    const fromISO = toLocalStr(startDate);
+    const toISO   = toLocalStr(endDate);
+
+    const fmtLabel = (isoStr) => {
+      const [d] = isoStr.split('T');
+      const [y, m, dd] = d.split('-');
+      return `${dd}.${m}.${y} 07:00`;
+    };
 
     showToast('📊 Hisobot tayyorlanmoqda...', 'info', 3000);
 
     try {
       const sb = getSupabase();
-      const fromISO = periodStart.toISOString();
-      const toISO = periodEnd.toISOString();
 
       // Yangi qabul qilinganlar (shu davrda qabul_vaqt)
       const [infNew, insNew] = await Promise.all([
@@ -953,7 +990,7 @@ const HisobotPage = {
 
       const infMsg = `🫀 INFARKT SUTKALIK HISOBOT
 ━━━━━━━━━━━━━━━━━━━━━━
-📅 Davr: ${fmt(periodStart)} — ${fmt(periodEnd)}
+📅 Davr: ${fmtLabel(fromISO)} — ${fmtLabel(toISO)}
 ━━━━━━━━━━━━━━━━━━━━━━
 👥 Jami yangi qabul: ${infs.length} ta
 🟢 Davolanib chiqarildi: ${infChiqarildi} ta
@@ -975,7 +1012,7 @@ ${muolajaStr(infMuolaja)}
 
       const insMsg = `🧠 INSULT SUTKALIK HISOBOT
 ━━━━━━━━━━━━━━━━━━━━━━
-📅 Davr: ${fmt(periodStart)} — ${fmt(periodEnd)}
+📅 Davr: ${fmtLabel(fromISO)} — ${fmtLabel(toISO)}
 ━━━━━━━━━━━━━━━━━━━━━━
 👥 Jami yangi qabul: ${ins.length} ta
 🟢 Davolanib chiqarildi: ${insChiqarildi} ta
