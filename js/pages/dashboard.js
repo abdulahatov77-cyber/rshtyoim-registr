@@ -963,7 +963,7 @@ const DashboardPage = {
   },
 
   async showVafotDetail() {
-    showModal(`<div class="flex justify-center py-10"><div class="w-8 h-8 border-4 border-rose-500 border-t-transparent rounded-full animate-spin"></div></div>`, 'Vafot etgan bemorlar');
+    showModal({ title: 'Vafot etgan bemorlar', body: `<div class="flex justify-center py-10"><div class="w-8 h-8 border-4 border-rose-500 border-t-transparent rounded-full animate-spin"></div></div>` });
     try {
       const sb = getSupabase();
       const vil = DashboardPage._viewViloyat;
@@ -997,32 +997,34 @@ const DashboardPage = {
           <td class="p-2 text-xs text-slate-600">${esc(p.kasallik)}</td>
         </tr>`).join('');
 
-      showModal(`
-        <div class="flex gap-4" style="min-width:min(900px,90vw)">
-          <div style="width:220px;flex-shrink:0">
-            <div class="font-bold text-slate-700 mb-3 text-sm uppercase tracking-wide">Viloyat kesimida</div>
-            <div class="bg-slate-50 rounded-xl p-3">${vilRows||'<p class="text-slate-400 text-sm">Ma\'lumot yo\'q</p>'}</div>
-          </div>
-          <div class="flex-1 overflow-auto" style="max-height:65vh">
-            <div class="font-bold text-slate-700 mb-3 text-sm uppercase tracking-wide">Jami ${all.length} ta bemor</div>
-            <table class="w-full text-left">
-              <thead class="bg-rose-50 sticky top-0">
-                <tr>
-                  <th class="p-2 text-xs font-bold text-slate-500">K/T No</th>
-                  <th class="p-2 text-xs font-bold text-slate-500">F.I.O</th>
-                  <th class="p-2 text-xs font-bold text-slate-500">Turi</th>
-                  <th class="p-2 text-xs font-bold text-slate-500">Viloyat</th>
-                  <th class="p-2 text-xs font-bold text-slate-500">Muassasa</th>
-                  <th class="p-2 text-xs font-bold text-slate-500">Qabul vaqti</th>
-                  <th class="p-2 text-xs font-bold text-slate-500">Kasallik</th>
-                </tr>
-              </thead>
-              <tbody>${tableRows||'<tr><td colspan="7" class="p-4 text-center text-slate-400">Ma\'lumot yo\'q</td></tr>'}</tbody>
-            </table>
-          </div>
-        </div>`, `Vafot etgan bemorlar — ${all.length} ta`);
+      showModal({
+        title: `Vafot etgan bemorlar — ${all.length} ta`,
+        body: `
+          <div class="flex gap-4" style="min-width:min(860px,88vw)">
+            <div style="width:210px;flex-shrink:0">
+              <div class="font-bold text-slate-600 mb-2 text-xs uppercase tracking-wide">Viloyat kesimida</div>
+              <div class="bg-slate-50 rounded-xl p-3">${vilRows||'<p class="text-slate-400 text-sm">Ma\'lumot yo\'q</p>'}</div>
+            </div>
+            <div class="flex-1 overflow-auto" style="max-height:60vh">
+              <table class="w-full text-left">
+                <thead class="bg-rose-50 sticky top-0">
+                  <tr>
+                    <th class="p-2 text-xs font-bold text-slate-500">K/T No</th>
+                    <th class="p-2 text-xs font-bold text-slate-500">F.I.O</th>
+                    <th class="p-2 text-xs font-bold text-slate-500">Turi</th>
+                    <th class="p-2 text-xs font-bold text-slate-500">Viloyat</th>
+                    <th class="p-2 text-xs font-bold text-slate-500">Muassasa</th>
+                    <th class="p-2 text-xs font-bold text-slate-500">Qabul vaqti</th>
+                    <th class="p-2 text-xs font-bold text-slate-500">Kasallik</th>
+                  </tr>
+                </thead>
+                <tbody>${tableRows||'<tr><td colspan="7" class="p-4 text-center text-slate-400">Ma\'lumot yo\'q</td></tr>'}</tbody>
+              </table>
+            </div>
+          </div>`
+      });
     } catch(err) {
-      showModal(`<p class="text-red-500 p-4">${err.message}</p>`, 'Xatolik');
+      showModal({ title: 'Xatolik', body: `<p class="text-red-500 p-4">${err.message}</p>` });
     }
   },
 
