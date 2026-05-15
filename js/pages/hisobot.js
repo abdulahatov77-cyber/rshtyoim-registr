@@ -79,7 +79,7 @@ const HisobotPage = {
 
       <!-- Filter -->
       <div class="h-card">
-        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 items-end">
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 items-end mb-4">
           <div>
             <label class="form-label !text-blue-900 font-semibold mb-1 block">Davr turi</label>
             <select id="h-period" class="form-select bg-slate-50 text-blue-900 border-blue-200 focus:border-blue-500 font-medium" onchange="HisobotPage.onPeriodChange()">
@@ -108,20 +108,21 @@ const HisobotPage = {
             <input id="h-age-to" type="number" min="0" max="120" placeholder="120"
               class="form-input bg-slate-50 text-blue-900 border-blue-200 font-medium"/>
           </div>
-          <div class="flex gap-2">
-            <button class="btn btn-primary flex-1 shadow-md hover:shadow-lg flex items-center justify-center gap-2 rounded-xl" onclick="HisobotPage.loadReport()">
-              ${icon('bar-chart-2', 18)} Ko'rish
-            </button>
-            <button class="btn btn-success shadow-md hover:shadow-lg flex items-center justify-center px-3 rounded-xl" onclick="HisobotPage.exportReport()" title="Eksport">
-              ${icon('download', 18)}
-            </button>
-            <button class="btn btn-secondary shadow-md hover:shadow-lg flex items-center justify-center px-3 rounded-xl" onclick="HisobotPage.printReport()" title="Chop etish">
-              ${icon('printer', 18)}
-            </button>
-            ${user?.role === 'super_admin' ? `<button class="shadow-md hover:shadow-lg flex items-center justify-center gap-1 px-3 rounded-xl text-xs font-bold text-white" style="background:#2481cc" onclick="HisobotPage.sendDailyTelegramReport()" title="Sutkalik hisobot Telegramga">
-              ${icon('send', 16)} Telegram
-            </button>` : ''}
-          </div>
+        </div>
+        <div class="flex flex-wrap gap-2">
+          <button class="btn btn-primary shadow-md hover:shadow-lg flex items-center justify-center gap-2 px-5 rounded-xl" onclick="HisobotPage.loadReport()">
+            ${icon('bar-chart-2', 18)} Ko'rish
+          </button>
+          <button class="btn btn-success shadow-md hover:shadow-lg flex items-center justify-center gap-2 px-4 rounded-xl" onclick="HisobotPage.exportReport()" title="Eksport (CSV)">
+            ${icon('download', 16)} Eksport
+          </button>
+          <button class="btn btn-secondary shadow-md hover:shadow-lg flex items-center justify-center gap-2 px-4 rounded-xl" onclick="HisobotPage.printReport()" title="Chop etish">
+            ${icon('printer', 16)} Chop etish
+          </button>
+          ${user?.role === 'super_admin' ? `
+          <button class="shadow-md hover:shadow-lg flex items-center justify-center gap-2 px-4 rounded-xl font-bold text-white text-sm" style="background:#2481cc;padding-top:8px;padding-bottom:8px" onclick="HisobotPage.sendDailyTelegramReport()" title="Sutkalik hisobot Telegramga">
+            ${icon('send', 16)} Telegram hisobot
+          </button>` : ''}
         </div>
       </div>
 
