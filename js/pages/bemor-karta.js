@@ -1237,6 +1237,10 @@ const BemorKartaPage = {
             <input id="edit-fio" class="form-input" value="${esc(p.fio||'')}"/>
           </div>
           <div class="form-group">
+            <label class="form-label">Kasalxonaga yotgan sana/vaqt</label>
+            <input id="edit-qabul-vaqt" type="datetime-local" class="form-input" value="${Utils.formatDateInput(p.qabul_vaqt)||''}"/>
+          </div>
+          <div class="form-group">
             <label class="form-label">Tug'ilgan sanasi</label>
             <input id="edit-tugilgan" type="date" class="form-input" value="${p.tugilgan_sana||p.tugilgan_yil||''}"/>
           </div>
@@ -1354,6 +1358,10 @@ const BemorKartaPage = {
     const btn = document.getElementById('btn-edit-save');
     setLoading(btn, true);
     const g = id => document.getElementById(id);
+    const qabulVaqtRaw = g('edit-qabul-vaqt')?.value;
+    const qabulVaqt = qabulVaqtRaw
+      ? new Date(qabulVaqtRaw + ':00+05:00').toISOString()
+      : null;
     const updates = {
       fio,
       jins:          g('edit-jins')?.value || null,
@@ -1363,6 +1371,7 @@ const BemorKartaPage = {
       status:        g('edit-status')?.value || null,
       tugilgan_sana: g('edit-tugilgan')?.value || null,
       tugilgan_yil:  g('edit-tugilgan')?.value || null,
+      qabul_vaqt:    qabulVaqt,
       qon_bosimi:    g('edit-qb')?.value || null,
       aha_bali:      g('edit-aha')?.value !== '' ? parseInt(g('edit-aha').value) : null,
       simptom_vaqt:  g('edit-simptom')?.value || null,

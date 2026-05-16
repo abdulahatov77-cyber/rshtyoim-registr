@@ -171,7 +171,10 @@ const HisobotPage = {
       
     try {
       const profile = await Profile.getCurrent();
-      const filters = { from: from+'T00:00:00', to: to+'T23:59:59' };
+      // Toshkent (UTC+5) sanasini UTC ISO ga o'tkazamiz — timestamptz bilan to'g'ri solishtirish uchun
+      const fromUTC = new Date(from + 'T00:00:00+05:00').toISOString();
+      const toUTC   = new Date(to   + 'T23:59:59+05:00').toISOString();
+      const filters = { from: fromUTC, to: toUTC };
       if (profile?.role !== 'admin' && profile?.viloyat) {
         filters.viloyat = profile.viloyat;
       }
