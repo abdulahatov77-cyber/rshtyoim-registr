@@ -893,54 +893,35 @@ const HisobotPage = {
   },
 
   async sendDailyTelegramReport() {
-    // Toshkent UTC+5: new Date() UTC beradi, +5 soat qo'shamiz
+    const pad = n => String(n).padStart(2, '0');
+
+    // Toshkent UTC+5: hozirgi vaqtni Toshkent vaqtiga o'giramiz
     const nowUTC = new Date();
     const nowTZ = new Date(nowUTC.getTime() + 5 * 60 * 60 * 1000);
-
-    // Sutkalik davr: bugun 07:00 dan kecha 07:00 gacha (Toshkent vaqtida)
-    const pad = n => String(n).padStart(2, '0');
-    // Toshkent sana/vaqt komponentlari
+    const tzH = nowTZ.getUTCHours();
     const tzY = nowTZ.getUTCFullYear();
     const tzM = nowTZ.getUTCMonth();
     const tzD = nowTZ.getUTCDate();
-    const tzH = nowTZ.getUTCHours();
 
-    // Agar hozir 07:00 dan keyin bo'lsa: davr = bugun 07:00 — ertaga 07:00
-    // Agar hozir 07:00 dan oldin bo'lsa: davr = kecha 07:00 — bugun 07:00
-    let endY = tzY, endM = tzM, endD = tzD;
-    if (tzH < 7) {
-      // Kecha 07:00 — bugun 07:00
-      // endD = bugun, startD = kecha
-    } else {
-      // Bugun 07:00 — kecha hisobot (ya'ni kecha 07:00 dan bugun 07:00 gacha)
-      // Bu hisobot tugallangan kun uchun
-    }
-
-    // periodEnd = bugungi 07:00 (agar hozir > 07:00) yoki bugungi 07:00 (agar < 07:00 esa kecha 07:00)
-    const endDate = new Date(Date.UTC(tzY, tzM, tzD, 2, 0, 0)); // UTC 02:00 = Toshkent 07:00
-    if (tzH >= 7) {
-      // hozir bugun 07:00 dan keyin — end = bugun 07:00 (UTC 02:00)
-      // start = kecha 07:00 (UTC 02:00)
-    } else {
-      // hozir bugun 07:00 dan oldin — end = bugun 07:00, start = kecha 07:00
-      // endDate allaqachon bugungi 07:00 (UTC)
-    }
+    // Toshkent 07:00 = UTC 02:00
+    // Davr: kecha 07:00 TZ → bugun 07:00 TZ
+    // endDate = bugun 07:00 TZ = UTC bugun 02:00
+    // Agar hozir TZ < 07:00 bo'lsa, "bugun 07:00" hali kelmagan
+    // → end = bugun 07:00 TZ (UTC 02:00), start = kecha 07:00 TZ (UTC yesterday 02:00)
+    const endDate   = new Date(Date.UTC(tzY, tzM, tzD, 2, 0, 0)); // UTC 02:00 = TZ 07:00
     const startDate = new Date(endDate.getTime() - 24 * 60 * 60 * 1000);
 
-    // qabul_vaqt bazada timezone yo'q (mahalliy vaqt) saqlanadi
-    // Shuning uchun timezone belgi yo'q formatda beramiz
-    const toLocalStr = (d) => {
-      const tz = new Date(d.getTime() + 5 * 60 * 60 * 1000);
-      return `${tz.getUTCFullYear()}-${pad(tz.getUTCMonth()+1)}-${pad(tz.getUTCDate())}T${pad(tz.getUTCHours())}:00:00`;
-    };
-    const fromISO = toLocalStr(startDate);
-    const toISO   = toLocalStr(endDate);
+    // Supabase timestamptz uchun UTC ISO string beramiz
+    const fromISO = startDate.toISOString(); // e.g. "2026-05-15T02:00:00.000Z"
+    const toISO   = endDate.toISOString();   // e.g. "2026-05-16T02:00:00.000Z"
 
-    const fmtLabel = (isoStr) => {
-      const [d] = isoStr.split('T');
-      const [y, m, dd] = d.split('-');
-      return `${dd}.${m}.${y} 07:00`;
-    };
+    // Label uchun Toshkent sana
+    const startLabel = fmtTZ(startDate);
+    const endLabel   = fmtTZ(endDate);
+    function fmtTZ(utcDate) {
+      const tz = new Date(utcDate.getTime() + 5 * 60 * 60 * 1000);
+      return `${pad(tz.getUTCDate())}.${pad(tz.getUTCMonth()+1)}.${tz.getUTCFullYear()} 07:00`;
+    }
 
     showToast('📊 Hisobot tayyorlanmoqda...', 'info', 3000);
 
@@ -992,7 +973,7 @@ const HisobotPage = {
 
       const infMsg = `🫀 INFARKT SUTKALIK HISOBOT
 ━━━━━━━━━━━━━━━━━━━━━━
-📅 Davr: ${fmtLabel(fromISO)} — ${fmtLabel(toISO)}
+📅 Davr: ${startLabel} — ${endLabel}
 ━━━━━━━━━━━━━━━━━━━━━━
 👥 Jami yangi qabul: ${infs.length} ta
 🟢 Davolanib chiqarildi: ${infChiqarildi} ta
@@ -1014,7 +995,7 @@ ${muolajaStr(infMuolaja)}
 
       const insMsg = `🧠 INSULT SUTKALIK HISOBOT
 ━━━━━━━━━━━━━━━━━━━━━━
-📅 Davr: ${fmtLabel(fromISO)} — ${fmtLabel(toISO)}
+📅 Davr: ${startLabel} — ${endLabel}
 ━━━━━━━━━━━━━━━━━━━━━━
 👥 Jami yangi qabul: ${ins.length} ta
 🟢 Davolanib chiqarildi: ${insChiqarildi} ta
