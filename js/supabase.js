@@ -128,7 +128,7 @@ const DB = {
   },
 
   // Ro'yxat uchun faqat kerakli ustunlar (select * emas)
-  _LIST_COLS_INF: 'kt_no,fio,tugilgan_sana,tugilgan_yil,jins,viloyat,muassasa,qabul_vaqt,status,infarkt_turi,muolaja_turi,killip,created_at',
+  _LIST_COLS_INF: 'kt_no,fio,tugilgan_sana,tugilgan_yil,jins,viloyat,muassasa,qabul_vaqt,status,infarkt_turi,muolaja_turi,killip,otkazilgan_muassasa,created_at',
 
   async infarktList(filters = {}) {
     const cols = filters.allCols ? '*' : DB._LIST_COLS_INF;
@@ -218,7 +218,7 @@ const DB = {
     return result;
   },
 
-  _LIST_COLS_INS: 'kt_no,fio,tugilgan_sana,tugilgan_yil,jins,viloyat,muassasa,qabul_vaqt,status,insult_turi,muolaja_turi,nihss_qabul,created_at',
+  _LIST_COLS_INS: 'kt_no,fio,tugilgan_sana,tugilgan_yil,jins,viloyat,muassasa,qabul_vaqt,status,insult_turi,muolaja_turi,nihss_qabul,otkazilgan_muassasa,created_at',
 
   async insultList(filters = {}) {
     const cols = filters.allCols ? '*' : DB._LIST_COLS_INS;

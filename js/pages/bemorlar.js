@@ -263,7 +263,12 @@ const BemorlarPage = {
                     <span class="text-xs text-gray-500">${Utils.formatDateTime(p.qabul_vaqt).split(', ')[1] || ''}</span>
                   </div>
                 </td>
-                <td>${Utils.statusBadge(p.status)}</td>
+                <td>
+                  <div class="flex flex-col gap-1">
+                    ${Utils.statusBadge(p.status)}
+                    ${p.status === 'otkazildi' && p.otkazilgan_muassasa ? `<span class="text-xs text-orange-600 font-medium truncate max-w-[140px]" title="${esc(p.otkazilgan_muassasa)}">→ ${esc(p.otkazilgan_muassasa)}</span>` : ''}
+                  </div>
+                </td>
                 <td class="text-right text-gray-400">${icon('chevron-right', 20)}</td>
               </tr>`;
           }).join('')}
