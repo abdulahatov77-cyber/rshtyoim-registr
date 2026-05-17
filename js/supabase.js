@@ -67,6 +67,37 @@ const Auth = {
   }
 };
 
+// ==================== USER ACTIVITY LOG ====================
+const UserLog = {
+  async write(action) {
+    try {
+      const profile = await Profile.getCurrent();
+      if (!profile) return;
+      await getSupabase().from('user_logs').insert({
+        user_id:   profile.id,
+        email:     profile.email,
+        full_name: profile.full_name,
+        role:      profile.role,
+        viloyat:   profile.viloyat,
+        action,
+        user_agent: navigator.userAgent.slice(0, 200)
+      });
+    } catch(_) { /* log yozish muvaffaqiyatsiz bo'lsa dastur ishini to'xtatmasin */ }
+  },
+
+  async list({ limit = 200, userId } = {}) {
+    let q = getSupabase()
+      .from('user_logs')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(limit);
+    if (userId) q = q.eq('user_id', userId);
+    const { data, error } = await q;
+    if (error) throw error;
+    return data || [];
+  }
+};
+
 // ==================== DATABASE ====================
 const DB = {
   // Infarkt CRUD

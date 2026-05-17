@@ -64,7 +64,8 @@ const AdminPage = {
           ${[
             ['users', '👥 Foydalanuvchilar'],
             ['muassasalar', '🏥 Muassasalar'],
-            ['audit', '🔍 Ma\'lumot sifati']
+            ['audit', '🔍 Ma\'lumot sifati'],
+            ['logs', '📋 Kirish tarixi']
           ].map(([t, label]) => `
             <button onclick="AdminPage.switchTab('${t}')" id="tab-btn-${t}"
               style="padding:9px 20px;border-radius:10px;border:none;cursor:pointer;font-size:13px;font-weight:700;transition:all 0.2s;
@@ -80,7 +81,7 @@ const AdminPage = {
 
   switchTab(tab) {
     AdminPage._activeTab = tab;
-    ['users','muassasalar','audit'].forEach(t => {
+    ['users','muassasalar','audit','logs'].forEach(t => {
       const btn = document.getElementById(`tab-btn-${t}`);
       if (!btn) return;
       btn.style.background = t === tab ? '#1e293b' : 'transparent';
@@ -96,6 +97,7 @@ const AdminPage = {
     if (AdminPage._activeTab === 'users') el.innerHTML = AdminPage._buildUsersTab();
     else if (AdminPage._activeTab === 'muassasalar') el.innerHTML = AdminPage._buildMuassasaTab();
     else if (AdminPage._activeTab === 'audit') el.innerHTML = AdminPage._buildAuditTab();
+    else if (AdminPage._activeTab === 'logs') { el.innerHTML = '<div style="color:#94a3b8;padding:32px;text-align:center">Yuklanmoqda...</div>'; AdminPage._loadLogs(); }
     initIcons();
   },
 
@@ -717,6 +719,100 @@ const AdminPage = {
         AdminPage._renderTabContent();
       }
     } catch(err) { showToast('❌ ' + err.message, 'error'); }
+  },
+
+  // ==================== KIRISH TARIXI TAB ====================
+
+  async _loadLogs() {
+    try {
+      const logs = await UserLog.list({ limit: 300 });
+      const el = document.getElementById('admin-tab-content');
+      if (el) { el.innerHTML = AdminPage._buildLogsTab(logs); initIcons(); }
+    } catch(err) {
+      const el = document.getElementById('admin-tab-content');
+      if (el) el.innerHTML = `<div class="card" style="color:#f87171;padding:32px;text-align:center">❌ ${err.message}</div>`;
+    }
+  },
+
+  _buildLogsTab(logs) {
+    if (!logs.length) return `
+      <div class="card" style="text-align:center;padding:60px">
+        <div style="font-size:48px;margin-bottom:16px">📋</div>
+        <h3 style="color:#e2e8f0;font-size:18px;font-weight:700">Kirish tarixi bo'sh</h3>
+        <p style="color:#64748b;font-size:14px;margin-top:8px">Hali hech kim tizimga kirmagan</p>
+      </div>`;
+
+    const actionBadge = a => a === 'login'
+      ? `<span style="background:#dcfce7;color:#166534;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700">✅ Kirdi</span>`
+      : `<span style="background:#fee2e2;color:#991b1b;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700">🚪 Chiqdi</span>`;
+
+    const roleBadge = r => {
+      if (r === 'super_admin') return `<span style="background:#ede9fe;color:#6d28d9;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700">Super Admin</span>`;
+      if (r === 'admin') return `<span style="background:#dbeafe;color:#1e40af;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700">Admin</span>`;
+      return `<span style="background:#f1f5f9;color:#475569;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700">Foydalanuvchi</span>`;
+    };
+
+    const fmtDate = dt => {
+      if (!dt) return '—';
+      const d = new Date(dt);
+      const pad = n => String(n).padStart(2,'0');
+      const tz = new Date(d.getTime() + 5*60*60*1000);
+      return `${pad(tz.getUTCDate())}.${pad(tz.getUTCMonth()+1)}.${tz.getUTCFullYear()} ${pad(tz.getUTCHours())}:${pad(tz.getUTCMinutes())}`;
+    };
+
+    // Statistika
+    const total = logs.length;
+    const logins = logs.filter(l => l.action === 'login').length;
+    const logouts = logs.filter(l => l.action === 'logout').length;
+    const uniqueUsers = new Set(logs.map(l => l.user_id)).size;
+
+    return `
+      <div class="card" style="margin-bottom:16px">
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px">
+          ${[
+            ['📊', 'Jami yozuvlar', total, '#3b82f6'],
+            ['✅', 'Kirish', logins, '#22c55e'],
+            ['🚪', 'Chiqish', logouts, '#ef4444'],
+            ['👤', 'Faol foydalanuvchilar', uniqueUsers, '#8b5cf6']
+          ].map(([ic,lbl,val,clr]) => `
+            <div style="background:#0f172a;border:1px solid #1e293b;border-radius:12px;padding:16px;text-align:center">
+              <div style="font-size:24px">${ic}</div>
+              <div style="font-size:22px;font-weight:800;color:${clr};margin:4px 0">${val}</div>
+              <div style="font-size:11px;color:#64748b;font-weight:600">${lbl}</div>
+            </div>`).join('')}
+        </div>
+      </div>
+      <div class="card" style="padding:0;overflow:hidden">
+        <div style="padding:16px 20px;border-bottom:1px solid #1e293b;display:flex;justify-content:space-between;align-items:center">
+          <h3 style="color:#e2e8f0;font-weight:700;font-size:15px">📋 Kirish / Chiqish tarixi</h3>
+          <span style="color:#64748b;font-size:12px">Oxirgi ${logs.length} ta yozuv</span>
+        </div>
+        <div style="overflow-x:auto">
+          <table style="width:100%;border-collapse:collapse;font-size:13px">
+            <thead>
+              <tr style="background:#0f172a;color:#64748b;font-size:11px;text-transform:uppercase;letter-spacing:0.05em">
+                <th style="padding:10px 16px;text-align:left;font-weight:600">Sana/Vaqt</th>
+                <th style="padding:10px 16px;text-align:left;font-weight:600">F.I.O</th>
+                <th style="padding:10px 16px;text-align:left;font-weight:600">Email</th>
+                <th style="padding:10px 16px;text-align:left;font-weight:600">Viloyat</th>
+                <th style="padding:10px 16px;text-align:left;font-weight:600">Rol</th>
+                <th style="padding:10px 16px;text-align:left;font-weight:600">Amal</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${logs.map((l,i) => `
+                <tr style="border-top:1px solid #1e293b;${i%2===0?'background:rgba(30,41,59,0.3)':''}">
+                  <td style="padding:10px 16px;color:#94a3b8;white-space:nowrap">${fmtDate(l.created_at)}</td>
+                  <td style="padding:10px 16px;color:#e2e8f0;font-weight:600">${esc(l.full_name||'—')}</td>
+                  <td style="padding:10px 16px;color:#94a3b8">${esc(l.email||'—')}</td>
+                  <td style="padding:10px 16px;color:#94a3b8">${esc(l.viloyat||'—')}</td>
+                  <td style="padding:10px 16px">${roleBadge(l.role)}</td>
+                  <td style="padding:10px 16px">${actionBadge(l.action)}</td>
+                </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>`;
   },
 
   async deleteAuditRecord(kt_no, type) {

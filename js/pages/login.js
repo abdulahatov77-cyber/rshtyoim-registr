@@ -155,6 +155,7 @@ const LoginPage = {
     
     try {
       await Auth.signIn(email, password);
+      UserLog.write('login');
       showToast('Muvaffaqiyatli kirdingiz!', 'success');
       Router.go('dashboard');
     } catch (err) {
