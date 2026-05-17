@@ -75,9 +75,8 @@ function statusBlock(jami: number, chiqarildi: number, otkazildi: number, vafot:
 }
 
 // ── INFARKT HISOBOT ──────────────────────────────────────────
-function buildInfarktReport(rows: any[], fromDate: Date, toDate: Date): string {
+function buildInfarktReport(rows: any[], fromDate: Date, toDate: Date, aktiv: number): string {
   const jami       = rows.length;
-  const aktiv      = rows.filter(r => r.status === 'active').length;
   const chiqarildi = rows.filter(r => r.status === 'chiqarildi').length;
   const otkazildi  = rows.filter(r => r.status === 'otkazildi').length;
   const vafot      = rows.filter(r => r.status === 'vafot').length;
@@ -114,9 +113,8 @@ ${topItems(muolajaMap)}
 }
 
 // ── INSULT HISOBOT ───────────────────────────────────────────
-function buildInsultReport(rows: any[], fromDate: Date, toDate: Date): string {
+function buildInsultReport(rows: any[], fromDate: Date, toDate: Date, aktiv: number): string {
   const jami       = rows.length;
-  const aktiv      = rows.filter(r => r.status === 'active').length;
   const chiqarildi = rows.filter(r => r.status === 'chiqarildi').length;
   const otkazildi  = rows.filter(r => r.status === 'otkazildi').length;
   const vafot      = rows.filter(r => r.status === 'vafot').length;
@@ -174,15 +172,22 @@ Deno.serve(async (req) => {
     console.log(`Hisobot davri: ${from} → ${to}`);
 
     // Parallel so'rovlar
-    const [{ data: infs }, { data: ins }] = await Promise.all([
+    const [
+      { data: infs },
+      { data: ins },
+      { count: infAktivCount },
+      { count: insAktivCount },
+    ] = await Promise.all([
       sb.from('infarkt_qabul').select('status,infarkt_turi,muolaja_turi,viloyat')
         .gte('qabul_vaqt', from).lte('qabul_vaqt', to),
       sb.from('insult_qabul').select('status,insult_turi,muolaja_turi,viloyat')
         .gte('qabul_vaqt', from).lte('qabul_vaqt', to),
+      sb.from('infarkt_qabul').select('*', { count: 'exact', head: true }).eq('status', 'active'),
+      sb.from('insult_qabul').select('*', { count: 'exact', head: true }).eq('status', 'active'),
     ]);
 
-    const infarktMsg = buildInfarktReport(infs || [], fromDate, toDate);
-    const insultMsg  = buildInsultReport(ins  || [], fromDate, toDate);
+    const infarktMsg = buildInfarktReport(infs || [], fromDate, toDate, infAktivCount ?? 0);
+    const insultMsg  = buildInsultReport(ins  || [], fromDate, toDate, insAktivCount ?? 0);
 
     // Har ikki kanalga yuborish
     await Promise.all([
