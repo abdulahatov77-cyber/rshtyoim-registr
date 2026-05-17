@@ -941,11 +941,12 @@ const HisobotPage = {
 
       // Hozir shifoxonada (status = active, barcha vaqt)
       const [infActive, insActive] = await Promise.all([
-        sb.from('infarkt_qabul').select('id', { count: 'exact', head: true }).eq('status', 'active'),
-        sb.from('insult_qabul').select('id', { count: 'exact', head: true }).eq('status', 'active')
+        sb.from('infarkt_qabul').select('*', { count: 'exact', head: true }).eq('status', 'active'),
+        sb.from('insult_qabul').select('*', { count: 'exact', head: true }).eq('status', 'active')
       ]);
-      const infActiveCount = infActive.count || 0;
-      const insActiveCount = insActive.count || 0;
+      const infActiveCount = infActive.count ?? 0;
+      const insActiveCount = insActive.count ?? 0;
+      console.log('[Hisobot] infActive:', infActive.count, 'insActive:', insActive.count, 'infs:', infs.length, 'ins:', ins.length);
 
       // Infarkt hisobot
       const infChiqarildi = infs.filter(p => p.status === 'chiqarildi').length;
