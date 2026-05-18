@@ -461,6 +461,18 @@ const InfarktYangiPage = {
       const errEl = document.getElementById('err-'+key);
       if (errEl) { errEl.textContent = msg; errEl.classList.remove('hidden'); }
     }
+    // Qabul vaqti kelajakda bo'lmasligi kerak
+    if (this._step === 0 && this._data.qabul_vaqt) {
+      const qv = new Date(this._data.qabul_vaqt);
+      if (qv > new Date()) {
+        valid = false;
+        const el = document.getElementById('qabul_vaqt');
+        if (el) { el.classList.add('border-red-500'); el.focus(); }
+        showToast('⚠️ Qabul vaqti kelajakda bo\'lishi mumkin emas!', 'error', 5000);
+        const errEl = document.getElementById('err-qabul_vaqt');
+        if (errEl) { errEl.textContent = 'Kelajak sana kiritilgan — iltimos to\'g\'irlang'; errEl.classList.remove('hidden'); }
+      }
+    }
     if (this._step === 2 && valid) {
       if (!this._data.xavf_omil || this._data.xavf_omil.length === 0) {
         valid = false;
