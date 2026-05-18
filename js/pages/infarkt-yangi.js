@@ -510,6 +510,10 @@ const InfarktYangiPage = {
       if (payload.muolaja_turi === "Boshqa muassasaga o'tkazildi") {
         payload.status = 'otkazildi';
       }
+      // datetime-local qiymati Toshkent vaqti (UTC+5) — bazaga UTC ISO sifatida yuboramiz
+      if (payload.qabul_vaqt) {
+        payload.qabul_vaqt = new Date(payload.qabul_vaqt + ':00+05:00').toISOString();
+      }
 
       const saved = await DB.infarktQabul(payload);
       Telegram.notify(saved, 'infarkt').catch(() => {});
