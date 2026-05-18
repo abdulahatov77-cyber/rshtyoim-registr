@@ -947,15 +947,12 @@ const Telegram = {
 
     const qabul = patient.qabul_vaqt
       ? (() => {
-          // qabul_vaqt "YYYY-MM-DD HH:MM:SS" yoki "YYYY-MM-DDTHH:MM:SS" formatida
-          // new Date() ishlatmasdan to'g'ridan-to'g'ri stringdan ajratamiz
-          // (new Date() timezone konversiyasi qilishi mumkin)
-          const s = String(patient.qabul_vaqt).replace('T', ' ');
-          const [datePart, timePart] = s.split(' ');
-          const [yyyy, mm, dd] = (datePart || '').split('-');
-          const [hh, mi] = (timePart || '').split(':');
-          if (!yyyy || !dd || !hh) return s;
-          return `${dd}.${mm}.${yyyy} ${hh}:${mi}`;
+          const d = new Date(patient.qabul_vaqt);
+          if (isNaN(d)) return String(patient.qabul_vaqt);
+          // UTC+5 Toshkent vaqtiga o'girish
+          const tz = new Date(d.getTime() + 5 * 60 * 60 * 1000);
+          const pad = n => String(n).padStart(2, '0');
+          return `${pad(tz.getUTCDate())}.${pad(tz.getUTCMonth()+1)}.${tz.getUTCFullYear()} ${pad(tz.getUTCHours())}:${pad(tz.getUTCMinutes())}`;
         })()
       : '—';
 
