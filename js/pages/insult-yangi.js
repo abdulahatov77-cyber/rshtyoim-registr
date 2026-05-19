@@ -406,6 +406,29 @@ const InsultYangiPage = {
       const errEl = document.getElementById('err-'+key);
       if (errEl) { errEl.textContent = msg; errEl.classList.remove('hidden'); }
     }
+    // Tug'ilgan sana tekshiruvi
+    if (this._step === 1 && this._data.tugilgan_sana) {
+      const birth = new Date(this._data.tugilgan_sana);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const age = today.getFullYear() - birth.getFullYear();
+      if (birth >= today) {
+        valid = false;
+        const el = document.getElementById('tugilgan_sana');
+        if (el) { el.classList.add('border-red-500'); el.focus(); }
+        showToast('⚠️ Tug\'ilgan sana bugun yoki kelajakda bo\'lishi mumkin emas!', 'error', 5000);
+      } else if (age < 1) {
+        valid = false;
+        const el = document.getElementById('tugilgan_sana');
+        if (el) { el.classList.add('border-red-500'); el.focus(); }
+        showToast('⚠️ Bemor yoshi 1 yoshdan kichik bo\'lishi mumkin emas!', 'error', 5000);
+      } else if (age > 120) {
+        valid = false;
+        const el = document.getElementById('tugilgan_sana');
+        if (el) { el.classList.add('border-red-500'); el.focus(); }
+        showToast('⚠️ Tug\'ilgan sana noto\'g\'ri kiritilgan!', 'error', 5000);
+      }
+    }
     // Qabul vaqti kelajakda bo'lmasligi kerak
     if (this._step === 0 && this._data.qabul_vaqt) {
       const qv = new Date(this._data.qabul_vaqt);
