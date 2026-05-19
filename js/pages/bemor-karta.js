@@ -1322,6 +1322,18 @@ const BemorKartaPage = {
           <div class="form-group">
             <label class="form-label">KFK-MB</label>
             <input id="edit-kkfmb" class="form-input" value="${p.kkfmb||''}" placeholder="O'lchanmagan"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">EKG vaqti</label>
+            <input id="edit-ekg-vaqti" type="time" class="form-input" value="${p.ekg_vaqti||''}"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">TLT vaqti (datetime)</label>
+            <input id="edit-tlt-vaqt" type="datetime-local" class="form-input" value="${Utils.formatDateInput(p.tlt_vaqt)||''}"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">PCI/Groin vaqti (datetime)</label>
+            <input id="edit-pci-vaqt" type="datetime-local" class="form-input" value="${Utils.formatDateInput(p.pci_vaqt)||''}"/>
           </div>` : `
           <div class="form-group">
             <label class="form-label">NIHSS (qabul)</label>
@@ -1330,6 +1342,18 @@ const BemorKartaPage = {
           <div class="form-group">
             <label class="form-label">GCS bali</label>
             <input id="edit-gcs" type="number" class="form-input" value="${p.gcs_bali||p.gcs_qabul||''}" min="3" max="15"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">KT/MSKT vaqti (datetime)</label>
+            <input id="edit-kt-vaqti" type="datetime-local" class="form-input" value="${Utils.formatDateInput(p.kt_vaqti)||''}"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Trombolizis vaqti (datetime)</label>
+            <input id="edit-trombolizis-vaqti" type="datetime-local" class="form-input" value="${Utils.formatDateInput(p.trombolizis_vaqti)||''}"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Trombektomiya vaqti (datetime)</label>
+            <input id="edit-trombektomiya-vaqti" type="datetime-local" class="form-input" value="${Utils.formatDateInput(p.trombektomiya_vaqti)||''}"/>
           </div>`}
         </div>`,
       footer: `
@@ -1377,16 +1401,23 @@ const BemorKartaPage = {
       simptom_vaqt:  g('edit-simptom')?.value || null,
       muolaja_turi:  g('edit-muolaja')?.value || null,
     };
+    const toUTC = raw => raw ? new Date(raw + ':00+05:00').toISOString() : null;
     if (isInf) {
       updates.puls         = g('edit-puls')?.value ? parseInt(g('edit-puls').value) : null;
       updates.infarkt_turi = g('edit-turi')?.value || null;
       updates.killip       = g('edit-killip')?.value || null;
       updates.troponin     = g('edit-troponin')?.value || null;
       updates.kkfmb        = g('edit-kkfmb')?.value || null;
+      updates.ekg_vaqti    = g('edit-ekg-vaqti')?.value || null;
+      updates.tlt_vaqt     = toUTC(g('edit-tlt-vaqt')?.value);
+      updates.pci_vaqt     = toUTC(g('edit-pci-vaqt')?.value);
     } else {
-      updates.insult_turi  = g('edit-turi')?.value || null;
-      updates.nihss_qabul  = g('edit-nihss')?.value ? parseInt(g('edit-nihss').value) : null;
-      updates.gcs_bali     = g('edit-gcs')?.value ? parseInt(g('edit-gcs').value) : null;
+      updates.insult_turi       = g('edit-turi')?.value || null;
+      updates.nihss_qabul       = g('edit-nihss')?.value ? parseInt(g('edit-nihss').value) : null;
+      updates.gcs_bali          = g('edit-gcs')?.value ? parseInt(g('edit-gcs').value) : null;
+      updates.kt_vaqti          = toUTC(g('edit-kt-vaqti')?.value);
+      updates.trombolizis_vaqti = toUTC(g('edit-trombolizis-vaqti')?.value);
+      updates.trombektomiya_vaqti = toUTC(g('edit-trombektomiya-vaqti')?.value);
     }
     try {
       const result = isInf

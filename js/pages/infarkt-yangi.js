@@ -325,17 +325,34 @@ const InfarktYangiPage = {
   },
 
   // ============ 4-BO'LIM: Muolaja ============
+  _isTLT(val) {
+    return val && (val.includes('TLT') || val.includes('trombolitik'));
+  },
+  _isPCI(val) {
+    return val && (val.includes('PCI') || val.includes('stentlash') || val.includes('TLBAP') || val.includes('ballon'));
+  },
+
   renderStep3() {
     const d = InfarktYangiPage._data;
     const muolaja = d.muolaja_turi || '';
     const showAngio = muolaja === 'Faqat KAG (diagnostik koronar angiografiya)';
     const showOtkazilgan = muolaja === 'Boshqa muassasaga o\'tkazildi';
+    const showTLT = InfarktYangiPage._isTLT(muolaja);
+    const showPCI = InfarktYangiPage._isPCI(muolaja);
 
     return `
       <div class="grid grid-cols-1 gap-x-6">
         ${this.field('muolaja_turi','Bajarilgan muolaja turi',`<select id="muolaja_turi" class="form-select border-blue-300 focus:border-blue-500" onchange="InfarktYangiPage.onMuolajaChange(this.value)">
           ${this.selectOptions(APP_CONFIG.INFARKT_MUOLAJALARI, muolaja)}</select>`,true)}
-        
+
+        <div id="tlt-vaqt-div" style="display:${showTLT?'block':'none'}">
+          ${this.field('tlt_vaqt','TLT (trombolitik terapiya) o\'tkazilgan vaqt',`<input id="tlt_vaqt" type="datetime-local" class="form-input" value="${d.tlt_vaqt||''}"/>`,false,'Door-to-needle mezonini hisoblash uchun')}
+        </div>
+
+        <div id="pci-vaqt-div" style="display:${showPCI?'block':'none'}">
+          ${this.field('pci_vaqt','PCI/TLBAP (kateter kiritilgan vaqt — Groin time)',`<input id="pci_vaqt" type="datetime-local" class="form-input" value="${d.pci_vaqt||''}"/>`,false,'Door-to-groin mezonini hisoblash uchun')}
+        </div>
+
         <div id="angio-div" style="display:${showAngio?'block':'none'}">
           ${this.field('angio_natija','Diagnostik koronar angiografiya natijasi',`<select id="angio_natija" class="form-select" onchange="InfarktYangiPage.onAngioChange(this.value)">
             ${this.selectOptions(APP_CONFIG.ANGIO_NATIJALARI, d.angio_natija||'')}</select>`)}
@@ -370,6 +387,10 @@ const InfarktYangiPage = {
     const isOtk = val === "Boshqa muassasaga o'tkazildi";
     const angioDiv = document.getElementById('angio-div');
     const otkazDiv = document.getElementById('otkazilgan-div');
+    const tltDiv = document.getElementById('tlt-vaqt-div');
+    const pciDiv = document.getElementById('pci-vaqt-div');
+    if (tltDiv) tltDiv.style.display = InfarktYangiPage._isTLT(val) ? 'block' : 'none';
+    if (pciDiv) pciDiv.style.display = InfarktYangiPage._isPCI(val) ? 'block' : 'none';
     if (angioDiv) {
       const isAngio = val === 'Faqat KAG (diagnostik koronar angiografiya)';
       angioDiv.style.display = isAngio ? 'block' : 'none';
@@ -406,7 +427,7 @@ const InfarktYangiPage = {
      'tez_yordam_kelgan_vaqt','birinchi_murojaat_vaqti',
      'fio','aha_bali','simptom_vaqt','birlamchi_yoki_takroriy',
      'infarkt_turi','killip','qon_bosimi','puls','ekg_vaqti','troponin','kkfmb',
-     'muolaja_turi','angio_natija','otkazilgan_muassasa','shifokor_fio']
+     'muolaja_turi','angio_natija','tlt_vaqt','pci_vaqt','otkazilgan_muassasa','shifokor_fio']
     .forEach(id => {
       const el = document.getElementById(id);
       if (el) InfarktYangiPage._data[id] = el.value;
@@ -533,9 +554,9 @@ const InfarktYangiPage = {
       if (payload.muolaja_turi === "Boshqa muassasaga o'tkazildi") {
         payload.status = 'otkazildi';
       }
-      // datetime-local qiymati Toshkent vaqti (UTC+5) — bazaga UTC ISO sifatida yuboramiz
-      if (payload.qabul_vaqt) {
-        payload.qabul_vaqt = new Date(payload.qabul_vaqt + ':00+05:00').toISOString();
+      // datetime-local qiymatlari Toshkent vaqti (UTC+5) — bazaga UTC ISO sifatida yuboramiz
+      for (const f of ['qabul_vaqt', 'tlt_vaqt', 'pci_vaqt', 'tez_yordam_kelgan_vaqt']) {
+        if (payload[f]) payload[f] = new Date(payload[f] + ':00+05:00').toISOString();
       }
 
       const saved = await DB.infarktQabul(payload);

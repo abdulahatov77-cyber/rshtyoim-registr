@@ -178,6 +178,22 @@ CREATE POLICY "nj_delete" ON navbatchi_jurnal FOR DELETE TO authenticated USING 
 -- CREATE POLICY "Auth Delete" ON storage.objects FOR DELETE TO authenticated USING (bucket_id = 'multimedia');
 
 -- ============================================================
+-- VAQT MEZONLARI USTUNLARI QO'SHISH
+-- Supabase Dashboard → SQL Editor da ishga tushiring
+-- ============================================================
+
+-- Infarkt jadvaliga TLT va PCI vaqt ustunlari
+ALTER TABLE infarkt_qabul ADD COLUMN IF NOT EXISTS tlt_vaqt TIMESTAMPTZ;
+ALTER TABLE infarkt_qabul ADD COLUMN IF NOT EXISTS pci_vaqt TIMESTAMPTZ;
+
+-- Insult jadvaliga KT vaqti ustuni (trombolizis_vaqti va trombektomiya_vaqti allaqachon bor)
+ALTER TABLE insult_qabul ADD COLUMN IF NOT EXISTS kt_vaqti TIMESTAMPTZ;
+
+-- Mavjud TEXT ustunlarini TIMESTAMPTZ ga o'zgartirish (agar kerak bo'lsa)
+-- trombolizis_vaqti va trombektomiya_vaqti TEXT edi — kelajakdagi ma'lumotlar TIMESTAMPTZ saqlanadi
+-- Eski TEXT ma'lumotlar o'qilganda null bo'ladi — bu OK chunki vaqt mezonlari faqat yangi ma'lumotlar uchun
+
+-- ============================================================
 -- SUPER ADMIN TAYINLASH
 -- Supabase Dashboard → SQL Editor da ishga tushiring
 -- ============================================================

@@ -239,11 +239,18 @@ const InsultYangiPage = {
     const d = InsultYangiPage._data;
     const muolaja = d.muolaja_turi || '';
     const showOtkazilgan = muolaja === "Boshqa muassasaga o'tkazildi — angiografiya va endovaskulyar muolaja uchun";
+    const showTLT = muolaja.toLowerCase().includes('trombolizis') || muolaja.toLowerCase().includes('tlt');
+    const showTrombektomiya = muolaja.toLowerCase().includes('trombektomiya') || muolaja.toLowerCase().includes('tromboekstraksiya') || muolaja.toLowerCase().includes('tromboaspiratsiya') || muolaja.toLowerCase().includes('kombinatsiya');
+    const showMsktVaqt = d.mskt === 'Ha – o\'tkazildi';
 
     return `
       <div class="grid grid-cols-1 gap-x-6">
-        ${this.field('mskt','MSKT o\'tkazilganmi?',`<select id="mskt" class="form-select">
+        ${this.field('mskt','MSKT o\'tkazilganmi?',`<select id="mskt" class="form-select" onchange="InsultYangiPage.onMsktChange(this.value)">
           ${this.selectOptions(['Ha – o\'tkazildi', 'Yo\'q – boshqa sabab'], d.mskt||'')}</select>`,true)}
+
+        <div id="mskt-vaqt-div" style="display:${showMsktVaqt?'block':'none'}">
+          ${this.field('kt_vaqti','KT/MSKT o\'tkazilgan vaqt',`<input id="kt_vaqti" type="datetime-local" class="form-input" value="${d.kt_vaqti||''}"/>`,false,'Door-to-CT mezonini hisoblash uchun')}
+        </div>
 
         ${this.field('muolaja_turi','Muolaja turi',`
           <div class="grid grid-cols-1 gap-2 mt-2">
@@ -258,6 +265,14 @@ const InsultYangiPage = {
             }).join('')}
           </div>
         `,true)}
+
+        <div id="trombolizis-vaqt-div" style="display:${showTLT?'block':'none'}">
+          ${this.field('trombolizis_vaqti','Trombolizis (TLT) o\'tkazilgan vaqt',`<input id="trombolizis_vaqti" type="datetime-local" class="form-input" value="${d.trombolizis_vaqti||''}"/>`,false,'Door-to-needle mezonini hisoblash uchun')}
+        </div>
+
+        <div id="trombektomiya-vaqt-div" style="display:${showTrombektomiya?'block':'none'}">
+          ${this.field('trombektomiya_vaqti','Trombektomiya (Groin time)',`<input id="trombektomiya_vaqti" type="datetime-local" class="form-input" value="${d.trombektomiya_vaqti||''}"/>`,false,'Door-to-groin mezonini hisoblash uchun')}
+        </div>
 
         <div id="otkazilgan-div" style="display:${showOtkazilgan?'block':'none'}">
           ${this.field('otkazilgan_muassasa','O\'tkazilgan muassasa nomi',`<select id="otkazilgan_muassasa" class="form-select">
@@ -328,11 +343,23 @@ const InsultYangiPage = {
     }, 700);
   },
 
+  onMsktChange(val) {
+    InsultYangiPage._data.mskt = val;
+    const div = document.getElementById('mskt-vaqt-div');
+    if (div) div.style.display = val === "Ha – o'tkazildi" ? 'block' : 'none';
+  },
+
   onMuolajaChange(val) {
     InsultYangiPage._data.muolaja_turi = val;
     const isOtk = val === "Boshqa muassasaga o'tkazildi — angiografiya va endovaskulyar muolaja uchun";
+    const isTLT = val.toLowerCase().includes('trombolizis') || val.toLowerCase().includes('tlt');
+    const isTrombektomiya = val.toLowerCase().includes('trombektomiya') || val.toLowerCase().includes('tromboekstraksiya') || val.toLowerCase().includes('tromboaspiratsiya') || val.toLowerCase().includes('kombinatsiya');
     const otkazDiv = document.getElementById('otkazilgan-div');
+    const tltDiv = document.getElementById('trombolizis-vaqt-div');
+    const trombDiv = document.getElementById('trombektomiya-vaqt-div');
     if (otkazDiv) otkazDiv.style.display = isOtk ? 'block' : 'none';
+    if (tltDiv) tltDiv.style.display = isTLT ? 'block' : 'none';
+    if (trombDiv) trombDiv.style.display = isTrombektomiya ? 'block' : 'none';
     const btn = document.getElementById('save-btn');
     if (btn) {
       btn.className = `flex items-center gap-2 px-10 py-3 ${isOtk ? 'bg-orange-500 hover:bg-orange-600 shadow-orange-200' : 'bg-green-600 hover:bg-green-700 shadow-green-200'} text-white rounded-xl font-bold text-sm shadow-lg transition-all active:scale-95`;
@@ -348,7 +375,7 @@ const InsultYangiPage = {
     ['viloyat','muassasa','boshqa_muassasa','kt_no','qabul_vaqt','murojaat_yoli','yuborgan_muassasa',
      'tez_yordam_kelgan_vaqt','birinchi_murojaat_vaqti',
      'fio','simptom_vaqt','gcs_bali','insult_turi','qon_bosimi','aha_bali','nihss_qabul',
-     'mskt','otkazilgan_muassasa','shifokor_fio']
+     'mskt','kt_vaqti','trombolizis_vaqti','trombektomiya_vaqti','otkazilgan_muassasa','shifokor_fio']
     .forEach(id => {
       const el = document.getElementById(id);
       if (el) InsultYangiPage._data[id] = el.value;
@@ -478,9 +505,9 @@ const InsultYangiPage = {
       if (payload.muolaja_turi === "Boshqa muassasaga o'tkazildi — angiografiya va endovaskulyar muolaja uchun") {
         payload.status = 'otkazildi';
       }
-      // datetime-local qiymati Toshkent vaqti (UTC+5) — bazaga UTC ISO sifatida yuboramiz
-      if (payload.qabul_vaqt) {
-        payload.qabul_vaqt = new Date(payload.qabul_vaqt + ':00+05:00').toISOString();
+      // datetime-local qiymatlari Toshkent vaqti (UTC+5) — bazaga UTC ISO sifatida yuboramiz
+      for (const f of ['qabul_vaqt', 'kt_vaqti', 'trombolizis_vaqti', 'trombektomiya_vaqti', 'tez_yordam_kelgan_vaqt']) {
+        if (payload[f]) payload[f] = new Date(payload[f] + ':00+05:00').toISOString();
       }
 
       const saved = await DB.insultQabul(payload);

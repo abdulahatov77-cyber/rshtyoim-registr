@@ -258,26 +258,47 @@ const HisobotPage = {
     const vafot_inf = infs.filter(p=>p.status==='vafot').length;
     const vafot_ins = ins.filter(p=>p.status==='vafot').length;
 
-    // Timing metrics
+    // Timing metrics — timestamptz vs timestamptz
     const calcAvgTime = (items, startField, endField) => {
       const diffs = items.map(p => {
         if (!p[startField] || !p[endField]) return null;
         const d1 = new Date(p[startField]);
         const d2 = new Date(p[endField]);
         if (isNaN(d1) || isNaN(d2)) return null;
-        return (d2 - d1) / 60000; // minutes
+        return (d2 - d1) / 60000;
       }).filter(d => d !== null && d > 0);
-      if (diffs.length === 0) return 0;
+      if (diffs.length === 0) return null;
+      return Math.round(diffs.reduce((a, b) => a + b, 0) / diffs.length);
+    };
+
+    // ekg_vaqti — time type ("HH:MM:SS"), qabul_vaqt — timestamptz
+    // Sana qabul_vaqt dan olinib, ekg_vaqti vaqti qo'shiladi
+    const calcAvgTimeMixed = (items, tsField, timeField) => {
+      const diffs = items.map(p => {
+        if (!p[tsField] || !p[timeField]) return null;
+        const d1 = new Date(p[tsField]);
+        if (isNaN(d1)) return null;
+        // timeField: "HH:MM:SS" yoki "HH:MM" — bazaga UTC saqlanadi, shuning uchun UTC sana bilan birlashtir
+        const dateStr = d1.toISOString().split('T')[0]; // UTC sana
+        const d2 = new Date(dateStr + 'T' + p[timeField] + (p[timeField].length === 5 ? ':00Z' : 'Z'));
+        if (isNaN(d2)) return null;
+        let diff = (d2 - d1) / 60000;
+        // EKG keyingi kunda bo'lishi mumkin (midnight crossover)
+        if (diff < 0) diff += 24 * 60;
+        if (diff <= 0 || diff > 480) return null; // 8 soatdan oshsa noto'g'ri deb hisobla
+        return diff;
+      }).filter(d => d !== null);
+      if (diffs.length === 0) return null;
       return Math.round(diffs.reduce((a, b) => a + b, 0) / diffs.length);
     };
 
     // Vaqt mezonlari
-    const avgDoorToEKG          = calcAvgTime(infs.filter(p=>p.ekg_vaqti), 'qabul_vaqt', 'ekg_vaqti');
+    const avgDoorToEKG          = calcAvgTimeMixed(infs.filter(p=>p.ekg_vaqti), 'qabul_vaqt', 'ekg_vaqti');
     const avgDoorToTLT_ins      = calcAvgTime(ins.filter(p=>p.trombolizis_vaqti), 'qabul_vaqt', 'trombolizis_vaqti');
     const avgDoorToTLT_inf      = calcAvgTime(infs.filter(p=>p.tlt_vaqt), 'qabul_vaqt', 'tlt_vaqt');
     const avgDoorToPCI          = calcAvgTime(infs.filter(p=>p.pci_vaqt), 'qabul_vaqt', 'pci_vaqt');
     const avgDoorToTrombektomiya= calcAvgTime(ins.filter(p=>p.trombektomiya_vaqti), 'qabul_vaqt', 'trombektomiya_vaqti');
-    const avgDoorToCT           = calcAvgTime(ins.filter(p=>p.trombolizis_vaqti||p.trombektomiya_vaqti), 'qabul_vaqt', 'trombolizis_vaqti');
+    const avgDoorToCT           = calcAvgTime(ins.filter(p=>p.kt_vaqti), 'qabul_vaqt', 'kt_vaqti');
 
     // Vaqt rangi: maqsaddan oshsa qizil, aks holda yashil
     const timeColor = (val, target) => {
@@ -387,8 +408,8 @@ const HisobotPage = {
         <!-- Timing Analytics -->
         <div class="h-card !p-0 overflow-hidden lg:col-span-2">
           <div class="p-5 border-b border-blue-100" style="background:linear-gradient(135deg,#1e3a8a,#1d4ed8)">
-            <h3 class="h-title !mb-0 text-white flex items-center gap-2">${icon('clock', 20)} Vaqt mezonlari — O'rtacha ko'rsatkichlar</h3>
-            <p class="text-blue-200 text-xs mt-1">"Vaqt = miokard yoki miya". Har daqiqa muhim qoidasi!</p>
+            <h3 style="color:#ffffff;font-weight:800;font-size:18px;margin-bottom:0;display:flex;align-items:center;gap:8px">${icon('clock', 20)} Vaqt mezonlari — O'rtacha ko'rsatkichlar</h3>
+            <p style="color:#bfdbfe;font-size:12px;margin-top:4px">"Vaqt = miokard yoki miya". Har daqiqa muhim qoidasi!</p>
           </div>
           <div class="p-4">
             <!-- Infarkt mezonlari -->
@@ -402,8 +423,8 @@ const HisobotPage = {
                 ].map(([label, val, target, clr]) => `
                   <div class="p-3 bg-slate-50 rounded-xl border border-slate-100 text-center">
                     <div class="text-[10px] font-bold text-slate-500 uppercase mb-1">${label}</div>
-                    <div class="text-xl font-black" style="color:${val ? timeColor(val, target) : '#94a3b8'}">${val || '—'} <span class="text-xs font-normal text-slate-400">min</span></div>
-                    <div class="text-[10px] mt-1" style="color:${val ? timeColor(val, target) : '#94a3b8'}">Maqsad: ≤ ${target} min</div>
+                    <div class="text-xl font-black" style="color:${val !== null ? timeColor(val, target) : '#94a3b8'}">${val !== null ? val : '—'} <span class="text-xs font-normal text-slate-400">${val !== null ? 'min' : ''}</span></div>
+                    <div class="text-[10px] mt-1" style="color:${val !== null ? timeColor(val, target) : '#94a3b8'}">${val !== null ? (val <= target ? '✓ Maqsadda' : '✗ Maqsad: ≤'+target+' min') : 'Ma\'lumot yo\'q'}</div>
                   </div>`).join('')}
               </div>
             </div>
@@ -418,8 +439,8 @@ const HisobotPage = {
                 ].map(([label, val, target, clr]) => `
                   <div class="p-3 bg-slate-50 rounded-xl border border-slate-100 text-center">
                     <div class="text-[10px] font-bold text-slate-500 uppercase mb-1">${label}</div>
-                    <div class="text-xl font-black" style="color:${val ? timeColor(val, target) : '#94a3b8'}">${val || '—'} <span class="text-xs font-normal text-slate-400">min</span></div>
-                    <div class="text-[10px] mt-1" style="color:${val ? timeColor(val, target) : '#94a3b8'}">Maqsad: ≤ ${target} min</div>
+                    <div class="text-xl font-black" style="color:${val !== null ? timeColor(val, target) : '#94a3b8'}">${val !== null ? val : '—'} <span class="text-xs font-normal text-slate-400">${val !== null ? 'min' : ''}</span></div>
+                    <div class="text-[10px] mt-1" style="color:${val !== null ? timeColor(val, target) : '#94a3b8'}">${val !== null ? (val <= target ? '✓ Maqsadda' : '✗ Maqsad: ≤'+target+' min') : 'Ma\'lumot yo\'q'}</div>
                   </div>`).join('')}
               </div>
             </div>
