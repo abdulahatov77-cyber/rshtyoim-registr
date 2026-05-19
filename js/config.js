@@ -71,7 +71,7 @@ const APP_CONFIG = {
       "Xatirchi politravma markazi"
     ],
     "Namangan viloyati": [
-      "RSHTYOIM Namangan filiali", "Namangan ShTB", "Chust TTB",
+      "RSHTYOIM Namangan filiali", "Namangan ShTB", "Namangan TTB", "Chust TTB",
       "Norin TTB", "Chortoq TTB", "To’raqo’rg’on TTB",
       "Kosonsoy TTB", "Uychi TTB", "Mingbuloq TTB",
       "Pop politravma markazi", "Uchqo’rg’on politravma markazi", "Yangiqo’rg’on politravma markazi"
