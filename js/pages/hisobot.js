@@ -259,52 +259,65 @@ const HisobotPage = {
     const vafot_ins = ins.filter(p=>p.status==='vafot').length;
 
     // Timing metrics — timestamptz vs timestamptz
-    const calcAvgTime = (items, startField, endField) => {
+    // Median va IQR hisoblash (skewed ED times uchun median to'g'riroq)
+    const calcMedianStats = (diffs) => {
+      if (diffs.length === 0) return null;
+      const sorted = [...diffs].sort((a, b) => a - b);
+      const n = sorted.length;
+      const median = n % 2 === 0
+        ? Math.round((sorted[n/2-1] + sorted[n/2]) / 2)
+        : Math.round(sorted[Math.floor(n/2)]);
+      const q1 = Math.round(sorted[Math.floor(n * 0.25)]);
+      const q3 = Math.round(sorted[Math.floor(n * 0.75)]);
+      return { median, q1, q3, n };
+    };
+
+    const calcTimeStats = (items, startField, endField) => {
       const diffs = items.map(p => {
         if (!p[startField] || !p[endField]) return null;
         const d1 = new Date(p[startField]);
         const d2 = new Date(p[endField]);
         if (isNaN(d1) || isNaN(d2)) return null;
         return (d2 - d1) / 60000;
-      }).filter(d => d !== null && d > 0);
-      if (diffs.length === 0) return null;
-      return Math.round(diffs.reduce((a, b) => a + b, 0) / diffs.length);
+      }).filter(d => d !== null && d > 0 && d < 1440);
+      return calcMedianStats(diffs);
     };
 
-    // ekg_vaqti — time type ("HH:MM:SS"), qabul_vaqt — timestamptz
-    // Sana qabul_vaqt dan olinib, ekg_vaqti vaqti qo'shiladi
-    const calcAvgTimeMixed = (items, tsField, timeField) => {
+    // ekg_vaqti — time type ("HH:MM"), qabul_vaqt — timestamptz
+    const calcTimeStatsMixed = (items, tsField, timeField) => {
       const diffs = items.map(p => {
         if (!p[tsField] || !p[timeField]) return null;
         const d1 = new Date(p[tsField]);
         if (isNaN(d1)) return null;
-        // timeField: "HH:MM:SS" yoki "HH:MM" — bazaga UTC saqlanadi, shuning uchun UTC sana bilan birlashtir
-        const dateStr = d1.toISOString().split('T')[0]; // UTC sana
+        const dateStr = d1.toISOString().split('T')[0];
         const d2 = new Date(dateStr + 'T' + p[timeField] + (p[timeField].length === 5 ? ':00Z' : 'Z'));
         if (isNaN(d2)) return null;
         let diff = (d2 - d1) / 60000;
-        // EKG keyingi kunda bo'lishi mumkin (midnight crossover)
         if (diff < 0) diff += 24 * 60;
-        if (diff <= 0 || diff > 480) return null; // 8 soatdan oshsa noto'g'ri deb hisobla
+        if (diff <= 0 || diff > 480) return null;
         return diff;
       }).filter(d => d !== null);
-      if (diffs.length === 0) return null;
-      return Math.round(diffs.reduce((a, b) => a + b, 0) / diffs.length);
+      return calcMedianStats(diffs);
     };
 
-    // Vaqt mezonlari
-    const avgDoorToEKG          = calcAvgTimeMixed(infs.filter(p=>p.ekg_vaqti), 'qabul_vaqt', 'ekg_vaqti');
-    const avgDoorToTLT_ins      = calcAvgTime(ins.filter(p=>p.trombolizis_vaqti), 'qabul_vaqt', 'trombolizis_vaqti');
-    const avgDoorToTLT_inf      = calcAvgTime(infs.filter(p=>p.tlt_vaqt), 'qabul_vaqt', 'tlt_vaqt');
-    const avgDoorToPCI          = calcAvgTime(infs.filter(p=>p.pci_vaqt), 'qabul_vaqt', 'pci_vaqt');
-    const avgDoorToTrombektomiya= calcAvgTime(ins.filter(p=>p.trombektomiya_vaqti), 'qabul_vaqt', 'trombektomiya_vaqti');
-    const avgDoorToCT           = calcAvgTime(ins.filter(p=>p.kt_vaqti), 'qabul_vaqt', 'kt_vaqti');
+    // Vaqt mezonlari (stats: { median, q1, q3, n } yoki null)
+    const statsEKG          = calcTimeStatsMixed(infs.filter(p=>p.ekg_vaqti), 'qabul_vaqt', 'ekg_vaqti');
+    const statsTLT_ins      = calcTimeStats(ins.filter(p=>p.trombolizis_vaqti), 'qabul_vaqt', 'trombolizis_vaqti');
+    const statsTLT_inf      = calcTimeStats(infs.filter(p=>p.tlt_vaqt), 'qabul_vaqt', 'tlt_vaqt');
+    const statsPCI          = calcTimeStats(infs.filter(p=>p.pci_vaqt), 'qabul_vaqt', 'pci_vaqt');
+    const statsTrombektomiya= calcTimeStats(ins.filter(p=>p.trombektomiya_vaqti), 'qabul_vaqt', 'trombektomiya_vaqti');
+    const statsCT           = calcTimeStats(ins.filter(p=>p.kt_vaqti), 'qabul_vaqt', 'kt_vaqti');
 
-    // Vaqt rangi: maqsaddan oshsa qizil, aks holda yashil
-    const timeColor = (val, target) => {
-      if (!val) return '#64748b';
-      return val <= target ? '#16a34a' : '#dc2626';
-    };
+    // n — vaqt to'ldirilmagan bemorlar soni (qanchasida bu maydon bo'sh)
+    const nEKG_total = infs.length;
+    const nTLT_inf_total = infs.filter(p=>p.muolaja_turi?.includes('TLT')||p.muolaja_turi?.includes('trombolitik')).length;
+    const nPCI_total = infs.filter(p=>p.muolaja_turi?.includes('PCI')||p.muolaja_turi?.includes('stentlash')||p.muolaja_turi?.includes('TLBAP')).length;
+    const nTLT_ins_total = ins.filter(p=>p.muolaja_turi?.toLowerCase().includes('trombolizis')||p.muolaja_turi?.toLowerCase().includes('tlt')).length;
+    const nTromb_total = ins.filter(p=>p.muolaja_turi?.toLowerCase().includes('trombektomiya')||p.muolaja_turi?.toLowerCase().includes('tromboekstraksiya')).length;
+    const nCT_total = ins.filter(p=>p.mskt==='Ha – o\'tkazildi').length;
+
+    const now = new Date();
+    const nowStr = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')} ${String(now.getDate()).padStart(2,'0')}.${String(now.getMonth()+1).padStart(2,'0')}.${now.getFullYear()}`;
 
     // Readmission (30 days)
     const readm30 = (kuzatuv || []).filter(k => k.kuzatuv_davri==='30 kunlik' && (k.holati?.includes('Qayta') || k.qayta_xuruj)).length;
@@ -407,41 +420,110 @@ const HisobotPage = {
         </div>
         <!-- Timing Analytics -->
         <div class="h-card !p-0 overflow-hidden lg:col-span-2">
-          <div class="p-5 border-b border-blue-100" style="background:linear-gradient(135deg,#1e3a8a,#1d4ed8)">
-            <h3 style="color:#ffffff;font-weight:800;font-size:18px;margin-bottom:0;display:flex;align-items:center;gap:8px">${icon('clock', 20)} Vaqt mezonlari — O'rtacha ko'rsatkichlar</h3>
-            <p style="color:#bfdbfe;font-size:12px;margin-top:4px">"Vaqt = miokard yoki miya". Har daqiqa muhim qoidasi!</p>
+          <div class="p-5" style="background:linear-gradient(135deg,#1e3a8a,#1d4ed8)">
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap">
+              <div>
+                <h3 style="color:#ffffff;font-weight:800;font-size:18px;margin:0;display:flex;align-items:center;gap:8px">${icon('clock', 20)} Vaqt mezonlari — Median ko'rsatkichlar</h3>
+                <p style="color:#bfdbfe;font-size:12px;margin-top:4px">"Vaqt = miokard yoki miya". Har daqiqa muhim qoidasi!</p>
+              </div>
+              <div style="color:#93c5fd;font-size:11px;text-align:right;white-space:nowrap">
+                <div style="font-weight:700">Yangilangan</div>
+                <div>${nowStr}</div>
+                <div style="margin-top:2px">${from} — ${to}</div>
+              </div>
+            </div>
           </div>
           <div class="p-4">
             <!-- Infarkt mezonlari -->
-            <div class="mb-3">
-              <div class="text-xs font-black text-red-700 uppercase tracking-wider mb-2 flex items-center gap-1">${icon('heart', 14)} Infarkt vaqt mezonlari</div>
+            <div class="mb-4">
+              <div style="font-size:11px;font-weight:900;color:#b91c1c;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:10px;display:flex;align-items:center;gap:4px">
+                ♥ Infarkt vaqt mezonlari
+              </div>
               <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 ${[
-                  ['Door-to-EKG', avgDoorToEKG, 10, '#ef4444'],
-                  ['Door-to-TLT', avgDoorToTLT_inf, 60, '#f97316'],
-                  ['Door-to-PCI (Groin)', avgDoorToPCI, 90, '#dc2626'],
-                ].map(([label, val, target, clr]) => `
-                  <div class="p-3 bg-slate-50 rounded-xl border border-slate-100 text-center">
-                    <div class="text-[10px] font-bold text-slate-500 uppercase mb-1">${label}</div>
-                    <div class="text-xl font-black" style="color:${val !== null ? timeColor(val, target) : '#94a3b8'}">${val !== null ? val : '—'} <span class="text-xs font-normal text-slate-400">${val !== null ? 'min' : ''}</span></div>
-                    <div class="text-[10px] mt-1" style="color:${val !== null ? timeColor(val, target) : '#94a3b8'}">${val !== null ? (val <= target ? '✓ Maqsadda' : '✗ Maqsad: ≤'+target+' min') : 'Ma\'lumot yo\'q'}</div>
-                  </div>`).join('')}
+                  ['Door-to-EKG', statsEKG, 10, nEKG_total],
+                  ['Door-to-TLT', statsTLT_inf, 60, nTLT_inf_total],
+                  ['Door-to-PCI (Groin)', statsPCI, 90, nPCI_total],
+                ].map(([label, stats, target, nTotal]) => {
+                  if (!stats) {
+                    const badge = nTotal === 0
+                      ? `<span style="display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;background:#f1f5f9;color:#94a3b8">N/A</span>`
+                      : `<span style="display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;background:#fef3c7;color:#92400e">TO'LDIRILMAGAN</span>`;
+                    return `<div style="padding:12px;background:#f8fafc;border-radius:14px;border:1px solid #e2e8f0;text-align:center">
+                      <div style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;margin-bottom:6px">${label}</div>
+                      <div style="font-size:22px;font-weight:900;color:#cbd5e1;margin:4px 0">—</div>
+                      <div style="margin:6px 0">${badge}</div>
+                      ${nTotal > 0 ? `<div style="font-size:10px;color:#94a3b8">n=${nTotal} bemor, vaqt kiritilmagan</div>` : `<div style="font-size:10px;color:#94a3b8">Bu muolaja bajarilmagan</div>`}
+                    </div>`;
+                  }
+                  const pct = Math.min(100, Math.round((stats.median / target) * 100));
+                  const ok = stats.median <= target;
+                  const clr = ok ? '#16a34a' : (stats.median <= target * 1.5 ? '#d97706' : '#dc2626');
+                  const bgClr = ok ? '#f0fdf4' : (stats.median <= target * 1.5 ? '#fffbeb' : '#fef2f2');
+                  const borderClr = ok ? '#bbf7d0' : (stats.median <= target * 1.5 ? '#fde68a' : '#fecaca');
+                  const badge = ok
+                    ? `<span style="display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;background:#dcfce7;color:#15803d">✓ MAQSADDA</span>`
+                    : `<span style="display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;background:#fee2e2;color:#b91c1c">✗ KRITIK</span>`;
+                  const barFill = ok ? '#22c55e' : (stats.median <= target * 1.5 ? '#f59e0b' : '#ef4444');
+                  return `<div style="padding:12px;background:${bgClr};border-radius:14px;border:1px solid ${borderClr};text-align:center">
+                    <div style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;margin-bottom:4px">${label}</div>
+                    <div style="font-size:24px;font-weight:900;color:${clr};line-height:1.1">${stats.median}<span style="font-size:11px;font-weight:500;color:#94a3b8"> min</span></div>
+                    <div style="font-size:10px;color:#94a3b8;margin:2px 0">IQR: ${stats.q1}–${stats.q3} min · n=${stats.n}</div>
+                    <div style="margin:6px 0;background:#e2e8f0;border-radius:99px;height:6px;overflow:hidden">
+                      <div style="height:100%;width:${pct}%;background:${barFill};border-radius:99px;transition:width 0.5s"></div>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px">
+                      ${badge}
+                      <span style="font-size:10px;color:#94a3b8">Maqsad ≤${target} min</span>
+                    </div>
+                  </div>`;
+                }).join('')}
               </div>
             </div>
             <!-- Insult mezonlari -->
             <div>
-              <div class="text-xs font-black text-blue-700 uppercase tracking-wider mb-2 flex items-center gap-1">${icon('brain', 14)} Insult vaqt mezonlari</div>
+              <div style="font-size:11px;font-weight:900;color:#1d4ed8;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:10px;display:flex;align-items:center;gap:4px">
+                ◎ Insult vaqt mezonlari
+              </div>
               <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 ${[
-                  ['Door-to-needle (TLT)', avgDoorToTLT_ins, 60, '#2563eb'],
-                  ['Door-to-groin (Trombektomiya)', avgDoorToTrombektomiya, 90, '#7c3aed'],
-                  ['Door-to-CT', avgDoorToCT, 25, '#0891b2'],
-                ].map(([label, val, target, clr]) => `
-                  <div class="p-3 bg-slate-50 rounded-xl border border-slate-100 text-center">
-                    <div class="text-[10px] font-bold text-slate-500 uppercase mb-1">${label}</div>
-                    <div class="text-xl font-black" style="color:${val !== null ? timeColor(val, target) : '#94a3b8'}">${val !== null ? val : '—'} <span class="text-xs font-normal text-slate-400">${val !== null ? 'min' : ''}</span></div>
-                    <div class="text-[10px] mt-1" style="color:${val !== null ? timeColor(val, target) : '#94a3b8'}">${val !== null ? (val <= target ? '✓ Maqsadda' : '✗ Maqsad: ≤'+target+' min') : 'Ma\'lumot yo\'q'}</div>
-                  </div>`).join('')}
+                  ['Door-to-needle (TLT)', statsTLT_ins, 60, nTLT_ins_total],
+                  ['Door-to-groin (Trombektomiya)', statsTrombektomiya, 90, nTromb_total],
+                  ['Door-to-CT', statsCT, 25, nCT_total],
+                ].map(([label, stats, target, nTotal]) => {
+                  if (!stats) {
+                    const badge = nTotal === 0
+                      ? `<span style="display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;background:#f1f5f9;color:#94a3b8">N/A</span>`
+                      : `<span style="display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;background:#fef3c7;color:#92400e">TO'LDIRILMAGAN</span>`;
+                    return `<div style="padding:12px;background:#f8fafc;border-radius:14px;border:1px solid #e2e8f0;text-align:center">
+                      <div style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;margin-bottom:6px">${label}</div>
+                      <div style="font-size:22px;font-weight:900;color:#cbd5e1;margin:4px 0">—</div>
+                      <div style="margin:6px 0">${badge}</div>
+                      ${nTotal > 0 ? `<div style="font-size:10px;color:#94a3b8">n=${nTotal} bemor, vaqt kiritilmagan</div>` : `<div style="font-size:10px;color:#94a3b8">Bu muolaja bajarilmagan</div>`}
+                    </div>`;
+                  }
+                  const pct = Math.min(100, Math.round((stats.median / target) * 100));
+                  const ok = stats.median <= target;
+                  const clr = ok ? '#16a34a' : (stats.median <= target * 1.5 ? '#d97706' : '#dc2626');
+                  const bgClr = ok ? '#f0fdf4' : (stats.median <= target * 1.5 ? '#fffbeb' : '#fef2f2');
+                  const borderClr = ok ? '#bbf7d0' : (stats.median <= target * 1.5 ? '#fde68a' : '#fecaca');
+                  const badge = ok
+                    ? `<span style="display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;background:#dcfce7;color:#15803d">✓ MAQSADDA</span>`
+                    : `<span style="display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;background:#fee2e2;color:#b91c1c">✗ KRITIK</span>`;
+                  const barFill = ok ? '#22c55e' : (stats.median <= target * 1.5 ? '#f59e0b' : '#ef4444');
+                  return `<div style="padding:12px;background:${bgClr};border-radius:14px;border:1px solid ${borderClr};text-align:center">
+                    <div style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;margin-bottom:4px">${label}</div>
+                    <div style="font-size:24px;font-weight:900;color:${clr};line-height:1.1">${stats.median}<span style="font-size:11px;font-weight:500;color:#94a3b8"> min</span></div>
+                    <div style="font-size:10px;color:#94a3b8;margin:2px 0">IQR: ${stats.q1}–${stats.q3} min · n=${stats.n}</div>
+                    <div style="margin:6px 0;background:#e2e8f0;border-radius:99px;height:6px;overflow:hidden">
+                      <div style="height:100%;width:${pct}%;background:${barFill};border-radius:99px;transition:width 0.5s"></div>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px">
+                      ${badge}
+                      <span style="font-size:10px;color:#94a3b8">Maqsad ≤${target} min</span>
+                    </div>
+                  </div>`;
+                }).join('')}
               </div>
             </div>
           </div>
