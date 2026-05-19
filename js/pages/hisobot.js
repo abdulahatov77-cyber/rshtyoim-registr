@@ -271,9 +271,19 @@ const HisobotPage = {
       return Math.round(diffs.reduce((a, b) => a + b, 0) / diffs.length);
     };
 
-    const avgDoorToCT = calcAvgTime(ins, 'qabul_vaqt', 'created_at'); // Simplification: using created_at as proxy for early processing if explicit field not used
-    const avgDoorToTLT = calcAvgTime(ins.filter(p=>p.trombolizis_vaqti), 'qabul_vaqt', 'trombolizis_vaqti');
-    const avgDoorToPCI = calcAvgTime(infs.filter(p=>p.pci_vaqt), 'qabul_vaqt', 'pci_vaqt');
+    // Vaqt mezonlari
+    const avgDoorToEKG          = calcAvgTime(infs.filter(p=>p.ekg_vaqti), 'qabul_vaqt', 'ekg_vaqti');
+    const avgDoorToTLT_ins      = calcAvgTime(ins.filter(p=>p.trombolizis_vaqti), 'qabul_vaqt', 'trombolizis_vaqti');
+    const avgDoorToTLT_inf      = calcAvgTime(infs.filter(p=>p.tlt_vaqt), 'qabul_vaqt', 'tlt_vaqt');
+    const avgDoorToPCI          = calcAvgTime(infs.filter(p=>p.pci_vaqt), 'qabul_vaqt', 'pci_vaqt');
+    const avgDoorToTrombektomiya= calcAvgTime(ins.filter(p=>p.trombektomiya_vaqti), 'qabul_vaqt', 'trombektomiya_vaqti');
+    const avgDoorToCT           = calcAvgTime(ins.filter(p=>p.trombolizis_vaqti||p.trombektomiya_vaqti), 'qabul_vaqt', 'trombolizis_vaqti');
+
+    // Vaqt rangi: maqsaddan oshsa qizil, aks holda yashil
+    const timeColor = (val, target) => {
+      if (!val) return '#64748b';
+      return val <= target ? '#16a34a' : '#dc2626';
+    };
 
     // Readmission (30 days)
     const readm30 = (kuzatuv || []).filter(k => k.kuzatuv_davri==='30 kunlik' && (k.holati?.includes('Qayta') || k.qayta_xuruj)).length;
@@ -376,24 +386,42 @@ const HisobotPage = {
         </div>
         <!-- Timing Analytics -->
         <div class="h-card !p-0 overflow-hidden lg:col-span-2">
-          <div class="bg-blue-900 p-5 border-b border-blue-800">
-            <h3 class="h-title !mb-0 text-white">${icon('clock', 24)} Vaqt tahlili (Average Time Metrics)</h3>
+          <div class="p-5 border-b border-blue-100" style="background:linear-gradient(135deg,#1e3a8a,#1d4ed8)">
+            <h3 class="h-title !mb-0 text-white flex items-center gap-2">${icon('clock', 20)} Vaqt mezonlari — O'rtacha ko'rsatkichlar</h3>
+            <p class="text-blue-200 text-xs mt-1">"Vaqt = miokard yoki miya". Har daqiqa muhim qoidasi!</p>
           </div>
-          <div class="p-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div class="p-4 bg-slate-50 rounded-2xl border border-slate-100 text-center">
-              <div class="text-xs font-bold text-slate-500 uppercase mb-1">Door-to-TLT (Insult)</div>
-              <div class="text-2xl font-black text-blue-700">${avgDoorToTLT || '—'} <span class="text-xs font-normal">min</span></div>
-              <div class="text-[10px] text-slate-400 mt-1">Maqsad: < 60 min</div>
+          <div class="p-4">
+            <!-- Infarkt mezonlari -->
+            <div class="mb-3">
+              <div class="text-xs font-black text-red-700 uppercase tracking-wider mb-2 flex items-center gap-1">${icon('heart', 14)} Infarkt vaqt mezonlari</div>
+              <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                ${[
+                  ['Door-to-EKG', avgDoorToEKG, 10, '#ef4444'],
+                  ['Door-to-TLT', avgDoorToTLT_inf, 60, '#f97316'],
+                  ['Door-to-PCI (Groin)', avgDoorToPCI, 90, '#dc2626'],
+                ].map(([label, val, target, clr]) => `
+                  <div class="p-3 bg-slate-50 rounded-xl border border-slate-100 text-center">
+                    <div class="text-[10px] font-bold text-slate-500 uppercase mb-1">${label}</div>
+                    <div class="text-xl font-black" style="color:${val ? timeColor(val, target) : '#94a3b8'}">${val || '—'} <span class="text-xs font-normal text-slate-400">min</span></div>
+                    <div class="text-[10px] mt-1" style="color:${val ? timeColor(val, target) : '#94a3b8'}">Maqsad: ≤ ${target} min</div>
+                  </div>`).join('')}
+              </div>
             </div>
-            <div class="p-4 bg-slate-50 rounded-2xl border border-slate-100 text-center">
-              <div class="text-xs font-bold text-slate-500 uppercase mb-1">Door-to-PCI (Infarkt)</div>
-              <div class="text-2xl font-black text-red-700">${avgDoorToPCI || '—'} <span class="text-xs font-normal">min</span></div>
-              <div class="text-[10px] text-slate-400 mt-1">Maqsad: < 90 min</div>
-            </div>
-            <div class="p-4 bg-slate-50 rounded-2xl border border-slate-100 text-center">
-              <div class="text-xs font-bold text-slate-500 uppercase mb-1">Door-to-CT (Insult)</div>
-              <div class="text-2xl font-black text-purple-700">${avgDoorToCT || '—'} <span class="text-xs font-normal">min</span></div>
-              <div class="text-[10px] text-slate-400 mt-1">Maqsad: < 25 min</div>
+            <!-- Insult mezonlari -->
+            <div>
+              <div class="text-xs font-black text-blue-700 uppercase tracking-wider mb-2 flex items-center gap-1">${icon('brain', 14)} Insult vaqt mezonlari</div>
+              <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                ${[
+                  ['Door-to-needle (TLT)', avgDoorToTLT_ins, 60, '#2563eb'],
+                  ['Door-to-groin (Trombektomiya)', avgDoorToTrombektomiya, 90, '#7c3aed'],
+                  ['Door-to-CT', avgDoorToCT, 25, '#0891b2'],
+                ].map(([label, val, target, clr]) => `
+                  <div class="p-3 bg-slate-50 rounded-xl border border-slate-100 text-center">
+                    <div class="text-[10px] font-bold text-slate-500 uppercase mb-1">${label}</div>
+                    <div class="text-xl font-black" style="color:${val ? timeColor(val, target) : '#94a3b8'}">${val || '—'} <span class="text-xs font-normal text-slate-400">min</span></div>
+                    <div class="text-[10px] mt-1" style="color:${val ? timeColor(val, target) : '#94a3b8'}">Maqsad: ≤ ${target} min</div>
+                  </div>`).join('')}
+              </div>
             </div>
           </div>
         </div>
