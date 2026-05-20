@@ -78,7 +78,7 @@ const APP_CONFIG = {
     ],
     "Samarqand viloyati": [
       "RSHTYOIM Samarqand filiali", "Oqdaryo TTB", "Jomboy TTB",
-      "Kattaqo'rg'on ShTB", "Qo'shrabot TTB", "Narpay TTB",
+      "Qo'shrabot TTB", "Narpay TTB",
       "Nurobod TTB", "Payariq TTB", "Pastdarg'om TTB",
       "Samarqand TTB", "Toyloq TTB", "Chelak TTB",
       "Bulung'ur politravma markazi", "Urgut politravma markazi", "Ishtixon politravma markazi",

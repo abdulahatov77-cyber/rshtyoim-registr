@@ -194,6 +194,18 @@ ALTER TABLE insult_qabul ADD COLUMN IF NOT EXISTS kt_vaqti TIMESTAMPTZ;
 -- Eski TEXT ma'lumotlar o'qilganda null bo'ladi — bu OK chunki vaqt mezonlari faqat yangi ma'lumotlar uchun
 
 -- ============================================================
+-- Kattaqo'rg'on ShTB → Kattaqo'rg'on politravma markazi
+-- Supabase Dashboard → SQL Editor da ishga tushiring
+-- ============================================================
+UPDATE infarkt_qabul
+SET muassasa = 'Kattaqo''rg''on politravma markazi'
+WHERE muassasa = 'Kattaqo''rg''on ShTB' AND viloyat = 'Samarqand viloyati';
+
+UPDATE insult_qabul
+SET muassasa = 'Kattaqo''rg''on politravma markazi'
+WHERE muassasa = 'Kattaqo''rg''on ShTB' AND viloyat = 'Samarqand viloyati';
+
+-- ============================================================
 -- SUPER ADMIN TAYINLASH
 -- Supabase Dashboard → SQL Editor da ishga tushiring
 -- ============================================================
