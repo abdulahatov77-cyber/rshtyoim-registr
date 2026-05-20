@@ -440,7 +440,7 @@ const DashboardPage = {
               </tr>
             </thead>
             <tbody class="text-sm divide-y divide-slate-50">
-              ${longStay.map(g => {
+              ${longStay.map((g, idx) => {
                 const inf = g.bemorlar.filter(b=>b._type==='infarkt').length;
                 const ins = g.bemorlar.filter(b=>b._type==='insult').length;
                 const maxDays = Math.max(...g.bemorlar.map(b=>b.kunlar));
@@ -465,7 +465,7 @@ const DashboardPage = {
                     </div>
                   </td>
                   <td class="p-4 text-right">
-                    <button class="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-[10px] font-bold text-slate-600 hover:bg-slate-100 transition-all" onclick="DashboardPage.showLongStayDetail('${esc(g.muassasa)}')">
+                    <button class="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-[10px] font-bold text-slate-600 hover:bg-slate-100 transition-all" onclick="DashboardPage.showLongStayDetail(${idx})">
                       Ko'rish
                     </button>
                   </td>
@@ -564,8 +564,8 @@ const DashboardPage = {
     DashboardPage.loadData();
   },
 
-  showLongStayDetail(muassasa) {
-    const group = (DashboardPage._longStayData || []).find(g => g.muassasa === muassasa);
+  showLongStayDetail(idx) {
+    const group = (DashboardPage._longStayData || [])[idx];
     if (!group) return;
     const rows = group.bemorlar.sort((a, b) => b.kunlar - a.kunlar).map(b => `
       <tr class="border-b border-slate-50 hover:bg-slate-50/50 cursor-pointer" onclick="closeModal(); Router.go('bemor-karta',{kt_no:'${b.kt_no}', type:'${b._type}'})">
