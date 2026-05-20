@@ -157,20 +157,22 @@ const DashboardPage = {
           <p class="text-slate-400 text-[11px] font-bold uppercase tracking-wider mb-1 relative z-10">Jami Qabul Qilingan</p>
           <h3 class="text-5xl font-black text-white relative z-10 tracking-tight">${jami.toLocaleString()}</h3>
           ${weekTrend ? `<div class="mt-1 relative z-10"><span class="text-xs font-bold ${weekTrendColor}">${weekTrend} o'tgan hafta</span></div>` : '<div class="mt-1"></div>'}
-          ${per100k !== null ? `
-          <div class="mt-3 relative z-10 bg-indigo-500/15 rounded-xl px-3 py-2 border border-indigo-400/20">
-            <div class="text-[10px] text-indigo-300/70 font-semibold uppercase tracking-wide mb-0.5">Kasallik darajasi</div>
-            <div class="text-lg font-black text-indigo-200">${per100k} <span class="text-sm font-semibold text-indigo-300/70">/ 100 000</span></div>
-            <div class="text-[10px] text-slate-500 mt-0.5">18+ aholi: ${(jamiAholi/1000000).toFixed(2)} mln</div>
-          </div>` : ''}
-          <div class="mt-auto pt-3 flex flex-col gap-2 relative z-10">
-            <div class="flex items-center justify-between h-9 px-3 bg-slate-600/50 rounded-xl border border-slate-500/50">
-              <div class="flex items-center gap-2"><span class="w-2 h-2 bg-red-400 rounded-full"></span><span class="text-[12px] font-bold text-slate-300">Infarkt</span></div>
-              <span class="text-base font-black text-white">${jamiInfarkt}</span>
+          ${jamiAholi > 0 ? `
+          <div class="mt-2 relative z-10 flex items-center gap-2">
+            <span class="text-base font-black text-indigo-200">${per100k}</span>
+            <span class="text-xs text-slate-400 font-semibold">/100 000 aholi</span>
+            <span class="text-[10px] text-slate-500 ml-auto">${(jamiAholi/1000000).toFixed(2)} mln 18+</span>
+          </div>` : '<div class="mt-2"></div>'}
+          <div class="mt-auto pt-3 flex gap-2 relative z-10">
+            <div class="flex-1 bg-red-500/10 border border-red-500/20 rounded-xl px-3 py-2.5">
+              <div class="flex items-center gap-1.5 mb-1"><span class="w-2 h-2 bg-red-400 rounded-full"></span><span class="text-[11px] font-bold text-red-300">Infarkt</span></div>
+              <div class="text-xl font-black text-white">${jamiInfarkt}</div>
+              ${jamiAholi > 0 ? `<div class="text-[10px] text-red-400 font-semibold mt-0.5">${+((jamiInfarkt/jamiAholi)*100000).toFixed(1)}/100k</div>` : ''}
             </div>
-            <div class="flex items-center justify-between h-9 px-3 bg-slate-600/50 rounded-xl border border-slate-500/50">
-              <div class="flex items-center gap-2"><span class="w-2 h-2 bg-blue-400 rounded-full"></span><span class="text-[12px] font-bold text-slate-300">Insult</span></div>
-              <span class="text-base font-black text-white">${jamiInsult}</span>
+            <div class="flex-1 bg-blue-500/10 border border-blue-500/20 rounded-xl px-3 py-2.5">
+              <div class="flex items-center gap-1.5 mb-1"><span class="w-2 h-2 bg-blue-400 rounded-full"></span><span class="text-[11px] font-bold text-blue-300">Insult</span></div>
+              <div class="text-xl font-black text-white">${jamiInsult}</div>
+              ${jamiAholi > 0 ? `<div class="text-[10px] text-blue-400 font-semibold mt-0.5">${+((jamiInsult/jamiAholi)*100000).toFixed(1)}/100k</div>` : ''}
             </div>
           </div>
         </div>
