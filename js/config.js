@@ -43,7 +43,7 @@ const APP_CONFIG = {
       "Shahrixon politravma markazi", "Asaka politravma markazi"
     ],
     "Buxoro viloyati": [
-      "RSHTYOIM Buxoro filiali", "Buxoro ShTB", "Olot TTB",
+      "RSHTYOIM Buxoro filiali", "Buxoro TTB", "Olot TTB",
       "Jondor TTB", "Qorovulbozor TTB", "Kogon ShTB",
       "G'ijduvon TTB", "Shofirkon TTB", "Peshku TTB",
       "Qorako'l politravma markazi", "Vobkent politravma markazi", "Romitan politravma markazi"
@@ -82,7 +82,8 @@ const APP_CONFIG = {
       "Nurobod TTB", "Payariq TTB", "Pastdarg'om TTB",
       "Samarqand TTB", "Toyloq TTB", "Chelak TTB",
       "Bulung'ur politravma markazi", "Urgut politravma markazi", "Ishtixon politravma markazi",
-      "Paxtachi politravma markazi", "Kattaqo'rg'on politravma markazi"
+      "Paxtachi politravma markazi", "Kattaqo'rg'on politravma markazi",
+      "Kattaqo'rg'on TTB"
     ],
     "Surxondaryo viloyati": [
       "RSHTYOIM Surxondaryo filiali", "Termiz ShTB", "Angor TTB",
@@ -142,6 +143,24 @@ const APP_CONFIG = {
       "TDTU 2-sonli klinikasi",
       "TDTU 3-sonli klinikasi"
     ]
+  },
+
+  // 18+ aholi soni (2026 yil 1 may, ming kishi → kishiga aylantirilib saqlangan)
+  AHOLI_18PLUS: {
+    "Andijon viloyati":            2407000,
+    "Buxoro viloyati":             1443000,
+    "Jizzax viloyati":             1070000,
+    "Qashqadaryo viloyati":        2540000,
+    "Navoiy viloyati":              760000,
+    "Namangan viloyati":           2181000,
+    "Samarqand viloyati":          2993000,
+    "Surxondaryo viloyati":        2058000,
+    "Sirdaryo viloyati":            647000,
+    "Toshkent viloyati":           2160000,
+    "Farg'ona viloyati":           2887000,
+    "Xorazm viloyati":             1413000,
+    "Qoraqalpog'iston Respublikasi": 1410000,
+    "Toshkent shahri":             2172000
   },
 
   BIRLAMCHI_TAKROIRIY: [

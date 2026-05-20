@@ -206,6 +206,30 @@ SET muassasa = 'Kattaqo''rg''on politravma markazi'
 WHERE muassasa = 'Kattaqo''rg''on ShTB' AND viloyat = 'Samarqand viloyati';
 
 -- ============================================================
+-- Kattaqo'rg'on TSSB → Kattaqo'rg'on TTB
+-- Supabase Dashboard → SQL Editor da ishga tushiring
+-- ============================================================
+UPDATE infarkt_qabul
+SET muassasa = 'Kattaqo''rg''on TTB'
+WHERE muassasa = 'Kattaqo''rg''on TSSB' AND viloyat = 'Samarqand viloyati';
+
+UPDATE insult_qabul
+SET muassasa = 'Kattaqo''rg''on TTB'
+WHERE muassasa = 'Kattaqo''rg''on TSSB' AND viloyat = 'Samarqand viloyati';
+
+-- ============================================================
+-- Buxoro ShTB → Buxoro TTB
+-- Supabase Dashboard → SQL Editor da ishga tushiring
+-- ============================================================
+UPDATE infarkt_qabul
+SET muassasa = 'Buxoro TTB'
+WHERE muassasa IN ('Buxoro ShTB', 'BuxTTB') AND viloyat = 'Buxoro viloyati';
+
+UPDATE insult_qabul
+SET muassasa = 'Buxoro TTB'
+WHERE muassasa IN ('Buxoro ShTB', 'BuxTTB') AND viloyat = 'Buxoro viloyati';
+
+-- ============================================================
 -- SUPER ADMIN TAYINLASH
 -- Supabase Dashboard → SQL Editor da ishga tushiring
 -- ============================================================

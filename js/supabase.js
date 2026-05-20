@@ -705,6 +705,42 @@ const DB = {
     return Object.values(map).sort((a, b) => b.bemorlar.length - a.bemorlar.length);
   },
 
+  // Jins bo'yicha vafot foizi
+  async getGenderMortality(overrideViloyat) {
+    const p = await Profile.getCurrent();
+    const viloyat = overrideViloyat !== undefined ? overrideViloyat : (p?.role === 'super_admin' ? null : p?.viloyat);
+    const eqV = (q) => viloyat ? q.eq('viloyat', viloyat) : q;
+    const sb = getSupabase();
+    const norm = (s) => {
+      const v = (s||'').toLowerCase();
+      if (['erkak','e','m','male'].includes(v)) return 'male';
+      if (['ayol','a','f','female'].includes(v)) return 'female';
+      return null;
+    };
+    const fetchAll = async (table) => {
+      let all = [], offset = 0;
+      while (true) {
+        const { data, error } = await eqV(sb.from(table).select('jins,status')).range(offset, offset + 999);
+        if (error || !data || data.length === 0) break;
+        all = all.concat(data);
+        if (data.length < 1000) break;
+        offset += 1000;
+      }
+      return all;
+    };
+    const [inf, ins] = await Promise.all([fetchAll('infarkt_qabul'), fetchAll('insult_qabul')]);
+    const calc = (rows) => {
+      const r = { male: 0, female: 0, maleDeath: 0, femaleDeath: 0 };
+      rows.forEach(row => {
+        const g = norm(row.jins);
+        if (g === 'male') { r.male++; if (row.status === 'vafot') r.maleDeath++; }
+        else if (g === 'female') { r.female++; if (row.status === 'vafot') r.femaleDeath++; }
+      });
+      return r;
+    };
+    return { infarkt: calc(inf), insult: calc(ins) };
+  },
+
   // Demographics
   async getDemographics(overrideViloyat) {
     const p = await Profile.getCurrent();

@@ -30,3 +30,5 @@ supabase/functions/.deploy
 dist/
 build/
 .vercel/
+
+.vercel

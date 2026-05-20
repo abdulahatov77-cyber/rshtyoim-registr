@@ -2,7 +2,10 @@
 const DashboardPage = {
   _charts: {},
   _realtimeSub: null,
-  _viewViloyat: undefined, // super_admin uchun viloyat filter
+  _viewViloyat: undefined,
+  _chartMode: 'abs', // 'abs' | '100k'
+  _regionData: [],
+  _regionProfile: null,
 
   async render() {
     const user = await Auth.getUser();
@@ -30,7 +33,7 @@ const DashboardPage = {
     try {
       const profile = await Profile.getCurrent();
       const ov = DashboardPage._viewViloyat;
-      const [stats, trend, trend12, recent, viloyat, demo, riskFactors, longStay] = await Promise.all([
+      const [stats, trend, trend12, recent, viloyat, demo, riskFactors, longStay, genderMort] = await Promise.all([
         DB.getDashboardStats(ov),
         DB.getTrend30(ov),
         DB.getTrend12Month(ov),
@@ -38,10 +41,11 @@ const DashboardPage = {
         DB.getViloyatStats(ov),
         DB.getDemographics(ov),
         DB.getRiskFactors(ov),
-        DB.getLongStayPatients(ov)
+        DB.getLongStayPatients(ov),
+        DB.getGenderMortality(ov)
       ]);
       DashboardPage._recentPatients = recent;
-      DashboardPage.renderContent(stats, trend, trend12, recent, viloyat, profile, demo, riskFactors, longStay);
+      DashboardPage.renderContent(stats, trend, trend12, recent, viloyat, profile, demo, riskFactors, longStay, genderMort);
     } catch (err) {
       const inner = document.getElementById('dashboard-inner');
       if (inner) {
@@ -57,7 +61,7 @@ const DashboardPage = {
     }
   },
 
-  renderContent(stats, trend, trend12, recent, viloyat, profile, demo, riskFactors, longStay = []) {
+  renderContent(stats, trend, trend12, recent, viloyat, profile, demo, riskFactors, longStay = [], genderMort = null) {
     const inner = document.getElementById('dashboard-inner');
     if (!inner) return;
 
@@ -278,11 +282,17 @@ const DashboardPage = {
 
       <!-- ROW 3: REGIONAL DISTRIBUTION CHART -->
       <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm mb-8">
-        <div class="flex items-center justify-between mb-8">
+        <div class="flex items-center justify-between mb-6 flex-wrap gap-3">
            <h3 class="text-sm font-bold text-slate-800 uppercase tracking-wider">${distTitle}</h3>
-           <div class="flex gap-4">
-             <div class="flex items-center gap-1.5"><span class="w-3 h-3 bg-[#dc2626]"></span> <span class="text-[10px] font-bold text-slate-500 uppercase">Infarkt</span></div>
-             <div class="flex items-center gap-1.5"><span class="w-3 h-3 bg-[#2563eb]"></span> <span class="text-[10px] font-bold text-slate-500 uppercase">Insult</span></div>
+           <div class="flex items-center gap-3">
+             <div class="flex rounded-xl overflow-hidden border border-slate-200 text-xs font-bold">
+               <button id="toggleAbs" onclick="DashboardPage.setChartMode('abs')" class="px-3 py-1.5 bg-blue-600 text-white transition-all">Mutlaq son</button>
+               <button id="toggle100k" onclick="DashboardPage.setChartMode('100k')" class="px-3 py-1.5 bg-white text-slate-500 hover:bg-slate-50 transition-all">/ 100 000</button>
+             </div>
+             <div class="flex gap-3">
+               <div class="flex items-center gap-1.5"><span class="w-3 h-3 bg-[#dc2626]"></span> <span class="text-[10px] font-bold text-slate-500 uppercase">Infarkt</span></div>
+               <div class="flex items-center gap-1.5"><span class="w-3 h-3 bg-[#2563eb]"></span> <span class="text-[10px] font-bold text-slate-500 uppercase">Insult</span></div>
+             </div>
            </div>
         </div>
         <div class="w-full" style="height:480px"><canvas id="regionChart"></canvas></div>
@@ -294,7 +304,6 @@ const DashboardPage = {
         <!-- Gender -->
         <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between">
           <h3 class="text-base font-bold text-slate-800 mb-2 text-center tracking-wide uppercase">Jins bo'yicha taqsimot</h3>
-
           <div class="flex flex-col gap-6 w-full h-full justify-center mt-2">
             <!-- Infarkt -->
             <div class="relative flex flex-col items-center">
@@ -314,6 +323,18 @@ const DashboardPage = {
                    <span class="text-sm font-bold text-slate-500 mt-1">${infF} ta</span>
                 </div>
               </div>
+              ${genderMort ? (() => {
+                const gm = genderMort.infarkt;
+                const mDeathP = gm.male > 0 ? ((gm.maleDeath / gm.male) * 100).toFixed(1) : '0.0';
+                const fDeathP = gm.female > 0 ? ((gm.femaleDeath / gm.female) * 100).toFixed(1) : '0.0';
+                const fHigher = parseFloat(fDeathP) > parseFloat(mDeathP);
+                return `<div class="mt-3 w-full flex items-center justify-center gap-3 text-xs">
+                  <span class="flex items-center gap-1 px-2 py-1 rounded-lg bg-sky-50 text-sky-700 font-bold">Erkak vafot: ${mDeathP}%</span>
+                  <span class="flex items-center gap-1 px-2 py-1 rounded-lg font-bold ${fHigher ? 'bg-red-50 text-red-600' : 'bg-pink-50 text-pink-700'}">
+                    ${fHigher ? '⚠️ ' : ''}Ayol vafot: ${fDeathP}%
+                  </span>
+                </div>`;
+              })() : ''}
             </div>
 
             <!-- Insult -->
@@ -334,6 +355,18 @@ const DashboardPage = {
                    <span class="text-sm font-bold text-slate-500 mt-1">${insF} ta</span>
                 </div>
               </div>
+              ${genderMort ? (() => {
+                const gm = genderMort.insult;
+                const mDeathP = gm.male > 0 ? ((gm.maleDeath / gm.male) * 100).toFixed(1) : '0.0';
+                const fDeathP = gm.female > 0 ? ((gm.femaleDeath / gm.female) * 100).toFixed(1) : '0.0';
+                const fHigher = parseFloat(fDeathP) > parseFloat(mDeathP);
+                return `<div class="mt-3 w-full flex items-center justify-center gap-3 text-xs">
+                  <span class="flex items-center gap-1 px-2 py-1 rounded-lg bg-sky-50 text-sky-700 font-bold">Erkak vafot: ${mDeathP}%</span>
+                  <span class="flex items-center gap-1 px-2 py-1 rounded-lg font-bold ${fHigher ? 'bg-red-50 text-red-600' : 'bg-pink-50 text-pink-700'}">
+                    ${fHigher ? '⚠️ ' : ''}Ayol vafot: ${fDeathP}%
+                  </span>
+                </div>`;
+              })() : ''}
             </div>
           </div>
         </div>
@@ -564,6 +597,15 @@ const DashboardPage = {
     DashboardPage.loadData();
   },
 
+  setChartMode(mode) {
+    DashboardPage._chartMode = mode;
+    const btnAbs  = document.getElementById('toggleAbs');
+    const btn100k = document.getElementById('toggle100k');
+    if (btnAbs)  { btnAbs.className  = mode === 'abs'  ? 'px-3 py-1.5 bg-blue-600 text-white transition-all text-xs font-bold' : 'px-3 py-1.5 bg-white text-slate-500 hover:bg-slate-50 transition-all text-xs font-bold'; }
+    if (btn100k) { btn100k.className = mode === '100k' ? 'px-3 py-1.5 bg-blue-600 text-white transition-all text-xs font-bold' : 'px-3 py-1.5 bg-white text-slate-500 hover:bg-slate-50 transition-all text-xs font-bold'; }
+    if (DashboardPage._buildRegionChart) DashboardPage._buildRegionChart(mode);
+  },
+
   showLongStayDetail(idx) {
     const group = (DashboardPage._longStayData || [])[idx];
     if (!group) return;
@@ -715,47 +757,95 @@ const DashboardPage = {
         ? (APP_CONFIG.VILOYATLAR || []).map(rName => {
             const found = (viloyat || []).find(v => v[0] === rName);
             return found ? { name: rName, total: found[1], inf: found[2]||0, ins: found[3]||0 } : { name: rName, total: 0, inf: 0, ins: 0 };
-          })
-        : (viloyat || []).map(v => Array.isArray(v) ? { name: v[0], total: v[1], inf: v[2]||0, ins: v[3]||0 } : v)
-      ).filter(v => v.total > 0).sort((a, b) => b.total - a.total);
+          }).filter(v => v.total > 0)
+        : (() => {
+            const fromDb = (viloyat || []).map(v => Array.isArray(v) ? { name: v[0], total: v[1], inf: v[2]||0, ins: v[3]||0 } : v);
+            const dbNames = new Set(fromDb.map(v => v.name));
+            const configNames = APP_CONFIG.MUASSASALAR[DashboardPage._viewViloyat || profile?.viloyat] || [];
+            const extra = configNames.filter(n => !dbNames.has(n)).map(n => ({ name: n, total: 0, inf: 0, ins: 0 }));
+            return [...fromDb, ...extra];
+          })()
+      ).sort((a, b) => b.total - a.total);
 
-      new Chart(ctxR, {
-        type: 'bar',
-        data: {
-          labels: regionData.map(v => v.name),
-          datasets: [
-            { label: 'Infarkt', data: regionData.map(v => v.inf), backgroundColor: '#dc2626', borderRadius: 4, borderSkipped: false },
-            { label: 'Insult',  data: regionData.map(v => v.ins), backgroundColor: '#2563eb', borderRadius: 4, borderSkipped: false }
-          ]
-        },
-        plugins: window.ChartDataLabels ? [window.ChartDataLabels] : [],
-        options: {
-          responsive: true, maintainAspectRatio: false,
-          layout: { padding: { top: 24, bottom: 10 } },
-          plugins: {
-            legend: {
-              display: true,
-              position: 'top',
-              align: 'end',
-              labels: { usePointStyle: true, pointStyle: 'rect', font: { weight: '700', size: 12 }, color: '#475569', padding: 20 }
-            },
-            datalabels: window.ChartDataLabels ? {
-              anchor: 'end', align: 'top',
-              display: ctx => ctx.dataset.data[ctx.dataIndex] > 0,
-              color: ctx => ctx.datasetIndex === 0 ? '#dc2626' : '#2563eb',
-              font: { weight: 'bold', size: 11 },
-              formatter: v => v > 0 ? v : ''
-            } : { display: false }
-          },
-          scales: {
-            x: {
-              grid: { display: false },
-              ticks: { font: { size: 12, weight: '600' }, maxRotation: 45, minRotation: 45, autoSkip: false, color: '#475569' }
-            },
-            y: { grid: { borderDash: [5,5], color: '#e2e8f0' }, ticks: { font: { size: 12, weight: '600' } }, beginAtZero: true }
-          }
+      DashboardPage._regionData = regionData;
+      DashboardPage._regionProfile = profile;
+
+      const aholi = APP_CONFIG.AHOLI_18PLUS || {};
+      const getChartData = (mode) => {
+        if (mode === '100k') {
+          return regionData.map(v => {
+            const pop = aholi[v.name] || 0;
+            return {
+              inf: pop > 0 ? +((v.inf / pop) * 100000).toFixed(2) : 0,
+              ins: pop > 0 ? +((v.ins / pop) * 100000).toFixed(2) : 0
+            };
+          });
         }
-      });
+        return regionData.map(v => ({ inf: v.inf, ins: v.ins }));
+      };
+
+      const buildRegionChart = (mode) => {
+        if (DashboardPage._charts.region) {
+          DashboardPage._charts.region.destroy();
+          delete DashboardPage._charts.region;
+        }
+        const d = getChartData(mode);
+        const is100k = mode === '100k';
+        DashboardPage._charts.region = new Chart(ctxR, {
+          type: 'bar',
+          data: {
+            labels: regionData.map(v => v.name),
+            datasets: [
+              { label: 'Infarkt', data: d.map(v => v.inf), backgroundColor: '#dc2626', borderRadius: 4, borderSkipped: false },
+              { label: 'Insult',  data: d.map(v => v.ins), backgroundColor: '#2563eb', borderRadius: 4, borderSkipped: false }
+            ]
+          },
+          plugins: window.ChartDataLabels ? [window.ChartDataLabels] : [],
+          options: {
+            responsive: true, maintainAspectRatio: false,
+            layout: { padding: { top: 24, bottom: 10 } },
+            plugins: {
+              legend: {
+                display: true, position: 'top', align: 'end',
+                labels: { usePointStyle: true, pointStyle: 'rect', font: { weight: '700', size: 12 }, color: '#475569', padding: 20 }
+              },
+              tooltip: {
+                callbacks: {
+                  afterBody: (items) => {
+                    if (!is100k) return [];
+                    const idx = items[0]?.dataIndex;
+                    const v = regionData[idx];
+                    const pop = aholi[v?.name];
+                    return pop ? [`Aholi 18+: ${(pop/1000).toFixed(0)} ming`] : [];
+                  }
+                }
+              },
+              datalabels: window.ChartDataLabels ? {
+                anchor: 'end', align: 'top',
+                display: ctx => ctx.dataset.data[ctx.dataIndex] > 0,
+                color: ctx => ctx.datasetIndex === 0 ? '#dc2626' : '#2563eb',
+                font: { weight: 'bold', size: 11 },
+                formatter: v => v > 0 ? v : ''
+              } : { display: false }
+            },
+            scales: {
+              x: {
+                grid: { display: false },
+                ticks: { font: { size: 12, weight: '600' }, maxRotation: 45, minRotation: 45, autoSkip: false, color: '#475569' }
+              },
+              y: {
+                grid: { borderDash: [5,5], color: '#e2e8f0' },
+                ticks: { font: { size: 12, weight: '600' } },
+                beginAtZero: true,
+                title: { display: is100k, text: '100 000 aholiga nisbatan', font: { size: 11 }, color: '#64748b' }
+              }
+            }
+          }
+        });
+      };
+
+      buildRegionChart(DashboardPage._chartMode);
+      DashboardPage._buildRegionChart = buildRegionChart;
     }
 
     // 4. Risk Factors Donut Charts
