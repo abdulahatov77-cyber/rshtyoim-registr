@@ -47,6 +47,12 @@ const BemorKartaPage = {
       const profile = await Profile.getCurrent();
       BemorKartaPage._profile = profile;
       const patient = type === 'infarkt' ? await DB.infarktByKtNo(kt_no) : await DB.insultByKtNo(kt_no);
+      // O'tkazilgan sana uchun chiqarish jadvalidan yuklaymiz
+      try {
+        const tbl = type === 'infarkt' ? 'infarkt_chiqarish' : 'insult_chiqarish';
+        const { data: chiq } = await getSupabase().from(tbl).select('chiqish_sana,chiqish_holat,natija').eq('kt_no', kt_no).order('chiqish_sana', { ascending: false }).limit(1);
+        if (chiq && chiq.length > 0) patient._chiqarish = chiq[0];
+      } catch(e) { /* ignore */ }
       BemorKartaPage._patient = patient;
       BemorKartaPage.renderContent(patient, type);
 
@@ -393,7 +399,7 @@ const BemorKartaPage = {
                 <div class="relative">
                   <div class="absolute -left-[31px] top-1 w-4 h-4 bg-orange-500 rounded-full border-2 border-white shadow-sm"></div>
                   <div class="font-bold text-gray-900 text-sm">Yo'naltirildi</div>
-                  <div class="text-xs text-gray-500">${p.otkazilgan_muassasa}</div>
+                  <div class="text-xs text-gray-500">${p.otkazilgan_muassasa}${p._chiqarish?.chiqish_sana ? ` (${Utils.formatDateTime(p._chiqarish.chiqish_sana)})` : ''}</div>
                 </div>
               </div>
             </div>
