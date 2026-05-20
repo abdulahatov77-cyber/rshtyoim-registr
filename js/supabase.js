@@ -451,8 +451,8 @@ const DB = {
       eqViloyat(getSupabase().from('insult_qabul').select('id', { count: 'exact', head: true }).gte('qabul_vaqt', todayISO).lt('qabul_vaqt', todayEndISO)),
       eqViloyat(getSupabase().from('infarkt_qabul').select('id', { count: 'exact', head: true }).eq('status', 'active')).in('killip', ['Killip III — o\'pka shishi', 'Killip IV — kardiogen shok']),
       eqViloyat(getSupabase().from('insult_qabul').select('id', { count: 'exact', head: true }).eq('status', 'active')).gte('nihss_qabul', 15),
-      eqViloyat(getSupabase().from('infarkt_qabul').select('id', { count: 'exact', head: true }).not('otkazilgan_muassasa', 'is', null)),
-      eqViloyat(getSupabase().from('insult_qabul').select('id', { count: 'exact', head: true }).not('otkazilgan_muassasa', 'is', null))
+      eqViloyat(getSupabase().from('infarkt_qabul').select('id', { count: 'exact', head: true }).eq('status', 'otkazildi')),
+      eqViloyat(getSupabase().from('insult_qabul').select('id', { count: 'exact', head: true }).eq('status', 'otkazildi'))
     ]);
 
     // Klinik turlari va muolajalar breakdown (paginated)
@@ -490,6 +490,8 @@ const DB = {
       insultBugun: insultBugun || 0,
       kritikInfarkt: kritikInfarkt || 0,
       kritikInsult: kritikInsult || 0,
+      otkazilganInfarkt: infOtkaz || 0,
+      otkazilganInsult: insOtkaz || 0,
       otkazildi: (infOtkaz || 0) + (insOtkaz || 0),
       // Infarkt klinik
       stemi:              iT.filter(p => p.infarkt_turi?.toUpperCase().includes('STEMI') && !p.infarkt_turi?.toUpperCase().includes('NSTEMI')).length,

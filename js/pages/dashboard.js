@@ -84,6 +84,8 @@ const DashboardPage = {
 
     const chiqarilganInfarkt = stats.chiqarilganInfarkt || 0;
     const chiqarilganInsult = stats.chiqarilganInsult || 0;
+    const otkazilganInfarkt = stats.otkazilganInfarkt || 0;
+    const otkazilganInsult = stats.otkazilganInsult || 0;
 
     const bugunInfarkt = stats.infarktBugun || 0;
     const bugunInsult = stats.insultBugun || 0;
@@ -114,8 +116,8 @@ const DashboardPage = {
       </div>
       ` : ''}
 
-      <!-- ROW 1: KPI CARDS (TOP 5) -->
-      <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6 mb-10">
+      <!-- ROW 1: KPI CARDS (TOP 6) -->
+      <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-6 mb-10">
         <!-- 1. Jami Qabul Qilingan Bemorlar -->
         <div class="bg-slate-900 p-7 rounded-[32px] border border-slate-800 shadow-2xl hover:shadow-indigo-500/20 hover:-translate-y-2 transition-all duration-500 group cursor-pointer relative overflow-hidden">
           <div class="absolute -right-10 -top-10 w-32 h-32 bg-indigo-600/10 rounded-full blur-3xl group-hover:bg-indigo-600/20 transition-all"></div>
@@ -222,6 +224,29 @@ const DashboardPage = {
             <div class="flex items-center justify-between py-2 px-3 bg-slate-800/50 rounded-xl border border-slate-700/50">
               <div class="flex items-center gap-2"><span class="w-2 h-2 bg-blue-500 rounded-full shadow-[0_0_10px_rgba(59,130,246,0.6)]"></span> <span class="text-[13px] font-bold text-slate-300">Insult</span></div>
               <span class="text-lg font-black text-white">${vafotInsult}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 6. O'tkazilgan Bemorlar -->
+        <div class="bg-slate-900 p-7 rounded-[32px] border border-slate-800 shadow-2xl hover:shadow-amber-500/20 hover:-translate-y-2 transition-all duration-500 group cursor-pointer relative overflow-hidden">
+          <div class="absolute -left-10 -bottom-10 w-32 h-32 bg-amber-500/5 rounded-full blur-3xl"></div>
+          <div class="flex items-center justify-between mb-6 relative z-10">
+            <div class="w-14 h-14 bg-amber-500/10 text-amber-400 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-all duration-500">${icon('arrow-right-circle', 32)}</div>
+            <div class="px-3 py-1 bg-amber-500/10 rounded-xl border border-amber-500/20">
+              <span class="text-sm font-black text-amber-500">${jami > 0 ? ((otkazilganInfarkt + otkazilganInsult) / jami * 100).toFixed(1) : 0}%</span>
+            </div>
+          </div>
+          <p class="text-slate-400 text-[11px] font-bold uppercase tracking-wider mb-2 relative z-10">Boshqa muassasaga</p>
+          <h3 class="text-5xl font-black text-white relative z-10 tracking-tight">${(otkazilganInfarkt + otkazilganInsult).toLocaleString()}</h3>
+          <div class="mt-6 flex flex-col gap-3 relative z-10">
+            <div class="flex items-center justify-between py-2 px-3 bg-slate-800/50 rounded-xl border border-slate-700/50">
+              <div class="flex items-center gap-2"><span class="w-2 h-2 bg-red-500 rounded-full shadow-[0_0_10px_rgba(239,68,68,0.6)]"></span> <span class="text-[13px] font-bold text-slate-300">Infarkt</span></div>
+              <span class="text-lg font-black text-white">${otkazilganInfarkt}</span>
+            </div>
+            <div class="flex items-center justify-between py-2 px-3 bg-slate-800/50 rounded-xl border border-slate-700/50">
+              <div class="flex items-center gap-2"><span class="w-2 h-2 bg-blue-500 rounded-full shadow-[0_0_10px_rgba(59,130,246,0.6)]"></span> <span class="text-[13px] font-bold text-slate-300">Insult</span></div>
+              <span class="text-lg font-black text-white">${otkazilganInsult}</span>
             </div>
           </div>
         </div>
