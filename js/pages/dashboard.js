@@ -150,11 +150,11 @@ const DashboardPage = {
           <h3 class="text-5xl font-black text-white relative z-10 tracking-tight">${jami.toLocaleString()}</h3>
           ${weekTrend ? `<div class="mt-2 relative z-10"><span class="text-xs font-bold ${weekTrendColor}">${weekTrend} o'tgan haftaga nisbatan</span></div>` : ''}
           <div class="mt-4 flex flex-col gap-2 relative z-10">
-            <div class="flex items-center justify-between py-2 px-3 bg-slate-600/50 rounded-xl border border-slate-500/50">
+            <div class="flex items-center justify-between h-9 px-3 bg-slate-600/50 rounded-xl border border-slate-500/50">
               <div class="flex items-center gap-2"><span class="w-2 h-2 bg-red-400 rounded-full"></span><span class="text-[12px] font-bold text-slate-300">Infarkt</span></div>
               <span class="text-base font-black text-white">${jamiInfarkt}</span>
             </div>
-            <div class="flex items-center justify-between py-2 px-3 bg-slate-600/50 rounded-xl border border-slate-500/50">
+            <div class="flex items-center justify-between h-9 px-3 bg-slate-600/50 rounded-xl border border-slate-500/50">
               <div class="flex items-center gap-2"><span class="w-2 h-2 bg-blue-400 rounded-full"></span><span class="text-[12px] font-bold text-slate-300">Insult</span></div>
               <span class="text-base font-black text-white">${jamiInsult}</span>
             </div>
@@ -175,11 +175,11 @@ const DashboardPage = {
             <span class="text-[10px] text-blue-200 font-semibold">7 kun</span>
           </div>
           <div class="mt-3 flex flex-col gap-2 relative z-10">
-            <div class="flex items-center justify-between py-2 px-3 bg-white/10 rounded-xl border border-white/10">
+            <div class="flex items-center justify-between h-9 px-3 bg-white/10 rounded-xl border border-white/10">
               <div class="flex items-center gap-2"><span class="w-2 h-2 bg-white rounded-full"></span><span class="text-[12px] font-bold text-white">Infarkt</span></div>
               <span class="text-base font-black text-white">${bugunInfarkt}</span>
             </div>
-            <div class="flex items-center justify-between py-2 px-3 bg-white/10 rounded-xl border border-white/10">
+            <div class="flex items-center justify-between h-9 px-3 bg-white/10 rounded-xl border border-white/10">
               <div class="flex items-center gap-2"><span class="w-2 h-2 bg-white/50 rounded-full"></span><span class="text-[12px] font-bold text-blue-100">Insult</span></div>
               <span class="text-base font-black text-white">${bugunInsult}</span>
             </div>
@@ -196,11 +196,11 @@ const DashboardPage = {
           <p class="text-emerald-500/60 text-[11px] font-bold uppercase tracking-wider mb-2 relative z-10">Uyga javob berilgan</p>
           <h3 class="text-5xl font-black text-white relative z-10 tracking-tight">${(chiqarilganInfarkt + chiqarilganInsult).toLocaleString()}</h3>
           <div class="mt-6 flex flex-col gap-3 relative z-10">
-            <div class="flex items-center justify-between py-2 px-3 bg-emerald-800/50 rounded-xl border border-emerald-700/50">
+            <div class="flex items-center justify-between h-9 px-3 bg-emerald-800/50 rounded-xl border border-emerald-700/50">
               <div class="flex items-center gap-2"><span class="w-2 h-2 bg-red-400 rounded-full shadow-[0_0_10px_rgba(239,68,68,0.6)]"></span> <span class="text-[13px] font-bold text-emerald-100">Infarkt</span></div>
               <span class="text-lg font-black text-white">${chiqarilganInfarkt}</span>
             </div>
-            <div class="flex items-center justify-between py-2 px-3 bg-emerald-800/50 rounded-xl border border-emerald-700/50">
+            <div class="flex items-center justify-between h-9 px-3 bg-emerald-800/50 rounded-xl border border-emerald-700/50">
               <div class="flex items-center gap-2"><span class="w-2 h-2 bg-blue-400 rounded-full shadow-[0_0_10px_rgba(59,130,246,0.6)]"></span> <span class="text-[13px] font-bold text-emerald-100">Insult</span></div>
               <span class="text-lg font-black text-white">${chiqarilganInsult}</span>
             </div>
@@ -217,11 +217,11 @@ const DashboardPage = {
           <p class="text-sky-300/70 text-[11px] font-bold uppercase tracking-wider mb-1 relative z-10">Hozir Statsionarda</p>
           <h3 class="text-5xl font-black text-white relative z-10 tracking-tight">${(aktivInfarkt + aktivInsult).toLocaleString()}</h3>
           <div class="mt-4 flex flex-col gap-2 relative z-10">
-            <div class="flex items-center justify-between py-2 px-3 bg-sky-700/50 rounded-xl border border-sky-600/50">
+            <div class="flex items-center justify-between h-9 px-3 bg-sky-700/50 rounded-xl border border-sky-600/50">
               <div class="flex items-center gap-2"><span class="w-2 h-2 bg-red-400 rounded-full"></span><span class="text-[12px] font-bold text-sky-100">Infarkt</span></div>
               <span class="text-base font-black text-white">${aktivInfarkt}</span>
             </div>
-            <div class="flex items-center justify-between py-2 px-3 bg-sky-700/50 rounded-xl border border-sky-600/50">
+            <div class="flex items-center justify-between h-9 px-3 bg-sky-700/50 rounded-xl border border-sky-600/50">
               <div class="flex items-center gap-2"><span class="w-2 h-2 bg-blue-300 rounded-full"></span><span class="text-[12px] font-bold text-sky-100">Insult</span></div>
               <span class="text-base font-black text-white">${aktivInsult}</span>
             </div>
@@ -240,11 +240,11 @@ const DashboardPage = {
           <p class="text-slate-400 text-[11px] font-bold uppercase tracking-wider mb-2 relative z-10">Vafot etganlar</p>
           <h3 class="text-5xl font-black text-white relative z-10 tracking-tight">${(vafotInfarkt + vafotInsult).toLocaleString()}</h3>
           <div class="mt-6 flex flex-col gap-3 relative z-10">
-            <div class="flex items-center justify-between py-2 px-3 bg-slate-800/50 rounded-xl border border-slate-700/50">
+            <div class="flex items-center justify-between h-9 px-3 bg-slate-800/50 rounded-xl border border-slate-700/50">
               <div class="flex items-center gap-2"><span class="w-2 h-2 bg-red-500 rounded-full shadow-[0_0_10px_rgba(239,68,68,0.6)]"></span> <span class="text-[13px] font-bold text-slate-300">Infarkt</span></div>
               <span class="text-lg font-black text-white">${vafotInfarkt}</span>
             </div>
-            <div class="flex items-center justify-between py-2 px-3 bg-slate-800/50 rounded-xl border border-slate-700/50">
+            <div class="flex items-center justify-between h-9 px-3 bg-slate-800/50 rounded-xl border border-slate-700/50">
               <div class="flex items-center gap-2"><span class="w-2 h-2 bg-blue-500 rounded-full shadow-[0_0_10px_rgba(59,130,246,0.6)]"></span> <span class="text-[13px] font-bold text-slate-300">Insult</span></div>
               <span class="text-lg font-black text-white">${vafotInsult}</span>
             </div>
@@ -263,11 +263,11 @@ const DashboardPage = {
           <p class="text-slate-400 text-[11px] font-bold uppercase tracking-wider mb-2 relative z-10">Boshqa muassasaga</p>
           <h3 class="text-5xl font-black text-white relative z-10 tracking-tight">${(otkazilganInfarkt + otkazilganInsult).toLocaleString()}</h3>
           <div class="mt-6 flex flex-col gap-3 relative z-10">
-            <div class="flex items-center justify-between py-2 px-3 bg-slate-800/50 rounded-xl border border-slate-700/50">
+            <div class="flex items-center justify-between h-9 px-3 bg-slate-800/50 rounded-xl border border-slate-700/50">
               <div class="flex items-center gap-2"><span class="w-2 h-2 bg-red-500 rounded-full shadow-[0_0_10px_rgba(239,68,68,0.6)]"></span> <span class="text-[13px] font-bold text-slate-300">Infarkt</span></div>
               <span class="text-lg font-black text-white">${otkazilganInfarkt}</span>
             </div>
-            <div class="flex items-center justify-between py-2 px-3 bg-slate-800/50 rounded-xl border border-slate-700/50">
+            <div class="flex items-center justify-between h-9 px-3 bg-slate-800/50 rounded-xl border border-slate-700/50">
               <div class="flex items-center gap-2"><span class="w-2 h-2 bg-blue-500 rounded-full shadow-[0_0_10px_rgba(59,130,246,0.6)]"></span> <span class="text-[13px] font-bold text-slate-300">Insult</span></div>
               <span class="text-lg font-black text-white">${otkazilganInsult}</span>
             </div>
