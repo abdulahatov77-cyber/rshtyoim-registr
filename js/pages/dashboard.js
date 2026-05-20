@@ -995,59 +995,74 @@ const DashboardPage = {
     const outsideLabelsPlugin = {
       id: 'outsideLabels_' + canvasId,
       afterDraw(chart) {
-        const { ctx: c, chartArea: { top, left, width, height } } = chart;
+        const { ctx: c, width: canvasW, height: canvasH } = chart;
+        const { top, left, width, height } = chart.chartArea;
         const cx = left + width / 2;
         const cy = top + height / 2;
         const meta = chart.getDatasetMeta(0);
         const outerR = meta.data[0]?.outerRadius || (Math.min(width, height) / 2 * 0.62);
-        const lineLen = 18;
-        const extLen = 10;
+        const lineLen = 14;
+        const extLen = 8;
+        const MARGIN = 4; // canvas chetidan minimal masofa
+        const MAX_LABEL = 22; // maksimal harf soni
 
         c.save();
-        c.font = '600 11px Inter, system-ui, sans-serif';
+        c.font = '600 10.5px Inter, system-ui, sans-serif';
         c.textBaseline = 'middle';
 
         meta.data.forEach((arc, i) => {
           const [label, val] = data[i];
-          const pct = ((val / total) * 100).toFixed(1);
           if (val === 0) return;
 
           const midAngle = (arc.startAngle + arc.endAngle) / 2;
           const cos = Math.cos(midAngle);
           const sin = Math.sin(midAngle);
 
-          // Line start (on outer edge)
           const x1 = cx + cos * outerR;
           const y1 = cy + sin * outerR;
-          // Line elbow
           const x2 = cx + cos * (outerR + lineLen);
           const y2 = cy + sin * (outerR + lineLen);
-          // Text anchor
           const isRight = cos >= 0;
           const x3 = x2 + (isRight ? extLen : -extLen);
           const y3 = y2;
 
-          // Draw leader line
+          // Matn
+          const shortLabel = label.length > MAX_LABEL ? label.slice(0, MAX_LABEL) + '…' : label;
+          const text = `${shortLabel}  ${val}`;
+
+          // Matn kengligi va canvas cheklovini hisoblaymiz
+          c.textAlign = isRight ? 'left' : 'right';
+          const textX = x3 + (isRight ? 4 : -4);
+          const textW = c.measureText(text).width;
+
+          // Canvas chegarasidan chiqib ketmaslik uchun clipping
+          const clipX = isRight ? MARGIN : MARGIN;
+          const clipW = canvasW - MARGIN * 2;
+          c.save();
+          c.beginPath();
+          c.rect(clipX, 0, clipW, canvasH);
+          c.clip();
+
+          // Leader line
           c.beginPath();
           c.moveTo(x1, y1);
           c.lineTo(x2, y2);
           c.lineTo(x3, y3);
-          c.strokeStyle = COLORS[i];
+          c.strokeStyle = COLORS[i % COLORS.length];
           c.lineWidth = 1.5;
           c.stroke();
 
-          // Dot at elbow
+          // Dot
           c.beginPath();
-          c.arc(x2, y2, 2.5, 0, Math.PI * 2);
-          c.fillStyle = COLORS[i];
+          c.arc(x2, y2, 2, 0, Math.PI * 2);
+          c.fillStyle = COLORS[i % COLORS.length];
           c.fill();
 
-          // Label text
-          const shortLabel = label.length > 28 ? label.slice(0, 26) + '…' : label;
-          const text = `${shortLabel}  ${val}`;
+          // Text
           c.fillStyle = '#1e293b';
-          c.textAlign = isRight ? 'left' : 'right';
-          c.fillText(text, x3 + (isRight ? 4 : -4), y3);
+          c.fillText(text, textX, y3);
+
+          c.restore();
         });
 
         c.restore();
@@ -1091,7 +1106,7 @@ const DashboardPage = {
         responsive: true,
         maintainAspectRatio: false,
         cutout: '55%',
-        layout: { padding: 70 },
+        layout: { padding: { top: 50, bottom: 50, left: 110, right: 110 } },
         plugins: {
           legend: { display: false },
           datalabels: { display: false },
