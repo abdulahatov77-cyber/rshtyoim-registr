@@ -708,13 +708,16 @@ const DashboardPage = {
     // 2. Region/Facility Distribution Chart
     const ctxR = document.getElementById('regionChart')?.getContext('2d');
     if (ctxR) {
-      const isFiltered = profile?.role !== 'admin';
+      // super_admin bo'lmasa — muassasalar bo'yicha ko'rsatish (viloyat[] dan keladi)
+      const isSuperAdminView = profile?.role === 'super_admin' && !DashboardPage._viewViloyat;
 
-      const regionData = (isFiltered ? (viloyat || []) : (APP_CONFIG.VILOYATLAR || []).map(rName => {
-        const found = (viloyat || []).find(v => v[0] === rName);
-        return found ? { name: rName, total: found[1], inf: found[2]||0, ins: found[3]||0 } : { name: rName, total: 0, inf: 0, ins: 0 };
-      })).map(v => Array.isArray(v) ? { name: v[0], total: v[1], inf: v[2], ins: v[3] } : v)
-         .sort((a, b) => b.total - a.total);
+      const regionData = (isSuperAdminView
+        ? (APP_CONFIG.VILOYATLAR || []).map(rName => {
+            const found = (viloyat || []).find(v => v[0] === rName);
+            return found ? { name: rName, total: found[1], inf: found[2]||0, ins: found[3]||0 } : { name: rName, total: 0, inf: 0, ins: 0 };
+          })
+        : (viloyat || []).map(v => Array.isArray(v) ? { name: v[0], total: v[1], inf: v[2]||0, ins: v[3]||0 } : v)
+      ).filter(v => v.total > 0).sort((a, b) => b.total - a.total);
 
       new Chart(ctxR, {
         type: 'bar',
