@@ -146,9 +146,9 @@ const DashboardPage = {
             <div class="w-12 h-12 bg-slate-500/20 text-slate-300 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-all duration-500">${icon('database', 26)}</div>
             <span class="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">JAMI BAZA</span>
           </div>
-          <p class="text-slate-400 text-[11px] font-bold uppercase tracking-wider mb-1 relative z-10">Jami Qabul Qilingan</p>
+          <p class="text-slate-400 text-[10px] font-bold uppercase tracking-wide mb-1 relative z-10 whitespace-nowrap">Jami Qabul Qilingan</p>
           <h3 class="text-5xl font-black text-white relative z-10 tracking-tight">${jami.toLocaleString()}</h3>
-          ${weekTrend ? `<div class="mt-2 relative z-10"><span class="text-xs font-bold ${weekTrendColor}">${weekTrend} o'tgan haftaga nisbatan</span></div>` : ''}
+          ${weekTrend ? `<div class="mt-2 relative z-10"><span class="text-xs font-bold ${weekTrendColor} whitespace-nowrap">${weekTrend} o'tgan hafta</span></div>` : ''}
           <div class="mt-4 flex flex-col gap-2 relative z-10">
             <div class="flex items-center justify-between py-2 px-3 bg-slate-600/50 rounded-xl border border-slate-500/50">
               <div class="flex items-center gap-2"><span class="w-2 h-2 bg-red-400 rounded-full"></span><span class="text-[12px] font-bold text-slate-300">Infarkt</span></div>
@@ -168,7 +168,7 @@ const DashboardPage = {
             <div class="w-12 h-12 bg-white/20 text-white rounded-2xl flex items-center justify-center group-hover:rotate-12 transition-all duration-500">${icon('activity', 26)}</div>
             <span class="text-[11px] font-black text-blue-100 uppercase tracking-[0.2em]">BUGUN</span>
           </div>
-          <p class="text-blue-100/80 text-[11px] font-bold uppercase tracking-wider mb-1 relative z-10">Yangi Qabullar</p>
+          <p class="text-blue-100/80 text-[10px] font-bold uppercase tracking-wide mb-1 relative z-10 whitespace-nowrap">Yangi Qabullar</p>
           <h3 class="text-6xl font-black text-white tracking-tighter relative z-10">${bugunJami}</h3>
           <div class="mt-2 relative z-10 flex items-center gap-2">
             ${renderSparkline(spark7, 'rgba(255,255,255,0.8)')}
@@ -193,7 +193,7 @@ const DashboardPage = {
             <div class="w-14 h-14 bg-emerald-500/10 text-emerald-400 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-all duration-500">${icon('log-out', 32)}</div>
             <span class="text-[12px] font-black text-emerald-500 uppercase tracking-[0.2em]">CHIQARILGAN</span>
           </div>
-          <p class="text-emerald-500/60 text-[11px] font-bold uppercase tracking-wider mb-2 relative z-10">Uyga javob berilgan</p>
+          <p class="text-emerald-500/60 text-[10px] font-bold uppercase tracking-wide mb-1 relative z-10 whitespace-nowrap">Uyga javob berilgan</p>
           <h3 class="text-5xl font-black text-white relative z-10 tracking-tight">${(chiqarilganInfarkt + chiqarilganInsult).toLocaleString()}</h3>
           <div class="mt-6 flex flex-col gap-3 relative z-10">
             <div class="flex items-center justify-between py-2 px-3 bg-emerald-800/50 rounded-xl border border-emerald-700/50">
@@ -214,7 +214,7 @@ const DashboardPage = {
             <div class="w-12 h-12 bg-sky-500/20 text-sky-300 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-all duration-500">${icon('bed-double', 26)}</div>
             <span class="text-[11px] font-black text-sky-300 uppercase tracking-[0.2em]">AKTIV</span>
           </div>
-          <p class="text-sky-300/70 text-[11px] font-bold uppercase tracking-wider mb-1 relative z-10">Hozir Statsionarda</p>
+          <p class="text-sky-300/70 text-[10px] font-bold uppercase tracking-wide mb-1 relative z-10 whitespace-nowrap">Hozir Statsionarda</p>
           <h3 class="text-5xl font-black text-white relative z-10 tracking-tight">${(aktivInfarkt + aktivInsult).toLocaleString()}</h3>
           <div class="mt-4 flex flex-col gap-2 relative z-10">
             <div class="flex items-center justify-between py-2 px-3 bg-sky-700/50 rounded-xl border border-sky-600/50">
@@ -237,7 +237,7 @@ const DashboardPage = {
               <span class="text-sm font-black text-rose-500">${jami > 0 ? ((vafotInfarkt + vafotInsult) / jami * 100).toFixed(1) : 0}%</span>
             </div>
           </div>
-          <p class="text-slate-400 text-[11px] font-bold uppercase tracking-wider mb-2 relative z-10">Vafot etganlar</p>
+          <p class="text-slate-400 text-[10px] font-bold uppercase tracking-wide mb-1 relative z-10 whitespace-nowrap">Vafot etganlar</p>
           <h3 class="text-5xl font-black text-white relative z-10 tracking-tight">${(vafotInfarkt + vafotInsult).toLocaleString()}</h3>
           <div class="mt-6 flex flex-col gap-3 relative z-10">
             <div class="flex items-center justify-between py-2 px-3 bg-slate-800/50 rounded-xl border border-slate-700/50">
@@ -260,7 +260,7 @@ const DashboardPage = {
               <span class="text-sm font-black text-amber-500">${jami > 0 ? ((otkazilganInfarkt + otkazilganInsult) / jami * 100).toFixed(1) : 0}%</span>
             </div>
           </div>
-          <p class="text-slate-400 text-[11px] font-bold uppercase tracking-wider mb-2 relative z-10">Boshqa muassasaga</p>
+          <p class="text-slate-400 text-[10px] font-bold uppercase tracking-wide mb-1 relative z-10 whitespace-nowrap">Boshqa muassasaga</p>
           <h3 class="text-5xl font-black text-white relative z-10 tracking-tight">${(otkazilganInfarkt + otkazilganInsult).toLocaleString()}</h3>
           <div class="mt-6 flex flex-col gap-3 relative z-10">
             <div class="flex items-center justify-between py-2 px-3 bg-slate-800/50 rounded-xl border border-slate-700/50">
