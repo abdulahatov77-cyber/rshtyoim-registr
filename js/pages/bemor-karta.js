@@ -47,11 +47,27 @@ const BemorKartaPage = {
       const profile = await Profile.getCurrent();
       BemorKartaPage._profile = profile;
       const patient = type === 'infarkt' ? await DB.infarktByKtNo(kt_no) : await DB.insultByKtNo(kt_no);
-      // O'tkazilgan sana uchun chiqarish jadvalidan yuklaymiz
+      // O'tkazilgan sana — avval chiqarish jadvalidan, bo'lmasa dinamika jadvalidan
       try {
         const tbl = type === 'infarkt' ? 'infarkt_chiqarish' : 'insult_chiqarish';
         const { data: chiq } = await getSupabase().from(tbl).select('chiqish_sana,chiqish_holat,natija').eq('kt_no', kt_no).order('chiqish_sana', { ascending: false }).limit(1);
-        if (chiq && chiq.length > 0) patient._chiqarish = chiq[0];
+        if (chiq && chiq.length > 0) {
+          patient._chiqarish = chiq[0];
+        } else if (patient.otkazilgan_muassasa) {
+          // Dinamika jadvalidan o'tkazilgan yozuvni topamiz
+          const { data: din } = await getSupabase()
+            .from('dinamika_muolajalar')
+            .select('created_at,muolaja_turi')
+            .eq('kt_no', kt_no)
+            .ilike('muolaja_turi', "%o'tkazildi%")
+            .order('created_at', { ascending: false })
+            .limit(1);
+          if (din && din.length > 0) {
+            patient._chiqarish = { chiqish_sana: din[0].created_at };
+          } else if (patient.updated_at) {
+            patient._chiqarish = { chiqish_sana: patient.updated_at };
+          }
+        }
       } catch(e) { /* ignore */ }
       BemorKartaPage._patient = patient;
       BemorKartaPage.renderContent(patient, type);
