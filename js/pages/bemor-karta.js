@@ -1305,8 +1305,8 @@ const BemorKartaPage = {
             <input id="edit-qb" class="form-input font-mono" value="${p.qon_bosimi||''}" placeholder="120/80"/>
           </div>
           <div class="form-group">
-            <label class="form-label">Puls (ur/min)</label>
-            <input id="edit-puls" type="number" class="form-input" value="${p.puls||''}" min="20" max="300"/>
+            <label class="form-label">Puls</label>
+            <input id="edit-puls" type="number" class="form-input" value="${p.puls||''}" min="20" max="300" oninput="this.value=this.value.replace(/[^0-9]/g,'')"/>
           </div>
           <div class="form-group">
             <label class="form-label">AHA bali</label>

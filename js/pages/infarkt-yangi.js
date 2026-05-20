@@ -306,7 +306,7 @@ const InfarktYangiPage = {
         ${this.field('killip','Killip klassifikatsiyasi',`<select id="killip" class="form-select">
           ${this.selectOptions(APP_CONFIG.KILLIP_KLASSLAR, d.killip||'')}</select>`,true)}
         ${this.field('qon_bosimi','Qon bosimi (qabul paytida)',`<input id="qon_bosimi" class="form-input font-mono" value="${d.qon_bosimi||''}" placeholder="140/90"/>`,true)}
-        ${this.field('puls','Puls (qabul paytida)',`<input id="puls" class="form-input" value="${d.puls||''}" placeholder="Masalan: 76"/>`,true)}
+        ${this.field('puls','Puls (qabul paytida)',`<input id="puls" type="number" min="20" max="300" class="form-input" value="${d.puls||''}" placeholder="76" oninput="this.value=this.value.replace(/[^0-9]/g,'')"/>`,true)}
         ${this.field('ekg_vaqti','EKG o\'tkazilgan vaqt',`<input id="ekg_vaqti" type="time" class="form-input" value="${d.ekg_vaqti||''}"/>`,true)}
         ${this.field('troponin','Troponin natijasi',`<select id="troponin" class="form-select">
           ${this.selectOptions(['Normal','Yuqori','O\'lchanmagan'], d.troponin||'')}</select>`,true)}
