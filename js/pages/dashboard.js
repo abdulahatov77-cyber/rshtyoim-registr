@@ -148,31 +148,47 @@ const DashboardPage = {
       <!-- ROW 1: KPI CARDS (TOP 6) -->
       <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-6 mb-10" style="align-items:stretch">
         <!-- 1. Jami Qabul Qilingan Bemorlar -->
-        <div class="bg-slate-700 p-7 rounded-[32px] border border-slate-600 shadow-2xl hover:shadow-slate-500/20 hover:-translate-y-2 transition-all duration-500 group cursor-pointer relative overflow-hidden flex flex-col">
+        <div class="bg-slate-700 p-6 rounded-[32px] border border-slate-600 shadow-2xl hover:shadow-slate-500/20 hover:-translate-y-2 transition-all duration-500 group cursor-pointer relative overflow-hidden flex flex-col">
           <div class="absolute -right-10 -top-10 w-32 h-32 bg-slate-500/10 rounded-full blur-3xl group-hover:bg-slate-500/20 transition-all"></div>
-          <div class="flex items-center justify-between mb-4 relative z-10">
-            <div class="w-12 h-12 bg-slate-500/20 text-slate-300 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-all duration-500">${icon('database', 26)}</div>
+          <!-- Header -->
+          <div class="flex items-center justify-between mb-3 relative z-10">
+            <p class="text-slate-400 text-[11px] font-bold uppercase tracking-wider">Jami qabul qilingan</p>
             <span class="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">JAMI BAZA</span>
           </div>
-          <p class="text-slate-400 text-[11px] font-bold uppercase tracking-wider mb-1 relative z-10">Jami Qabul Qilingan</p>
-          <h3 class="text-5xl font-black text-white relative z-10 tracking-tight">${jami.toLocaleString()}</h3>
-          ${weekDiff !== null ? `<div class="mt-1 relative z-10"><span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold ${weekDiff > 0 ? 'bg-red-500/20 text-red-300' : weekDiff < 0 ? 'bg-emerald-500/20 text-emerald-300' : 'bg-slate-500/20 text-slate-400'}">${weekDiff > 0 ? '▲' : weekDiff < 0 ? '▼' : '→'} ${Math.abs(weekDiff)}% hafta</span></div>` : '<div class="mt-1"></div>'}
+          <!-- Raqam + sparkline -->
+          <div class="flex items-end justify-between relative z-10">
+            <h3 class="text-5xl font-black text-white tracking-tight leading-none">${jami.toLocaleString()}</h3>
+            ${renderSparkline(spark7, '#4ade80')}
+          </div>
+          <!-- Badge -->
+          ${weekDiff !== null ? `
+          <div class="mt-2 relative z-10">
+            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold ${weekDiff > 0 ? 'bg-emerald-500/20 text-emerald-400' : weekDiff < 0 ? 'bg-red-500/20 text-red-400' : 'bg-slate-500/20 text-slate-400'}">
+              ${weekDiff > 0 ? '↗' : weekDiff < 0 ? '↘' : '→'} ${Math.abs(weekDiff)}% hafta
+            </span>
+          </div>` : '<div class="mt-2"></div>'}
+          <!-- /100k qator -->
           ${jamiAholi > 0 ? `
-          <div class="mt-2 relative z-10 flex items-center gap-2">
-            <span class="text-base font-black text-indigo-200">${per100k}</span>
-            <span class="text-xs text-slate-400 font-semibold">/100 000 aholi</span>
+          <div class="mt-2 relative z-10 flex items-baseline gap-1.5">
+            <span class="text-xl font-black text-white">${per100k}</span>
+            <span class="text-xs text-slate-400 font-semibold">/ 100 000 aholi</span>
             <span class="text-[10px] text-slate-500 ml-auto">${(jamiAholi/1000000).toFixed(2)} mln 18+</span>
           </div>` : '<div class="mt-2"></div>'}
+          <!-- Infarkt / Insult -->
           <div class="mt-auto pt-3 flex gap-2 relative z-10">
-            <div class="flex-1 bg-red-500/10 border border-red-500/20 rounded-xl px-3 py-2.5">
-              <div class="flex items-center gap-1.5 mb-1"><span class="w-2 h-2 bg-red-400 rounded-full"></span><span class="text-[11px] font-bold text-red-300">Infarkt</span></div>
-              <div class="text-xl font-black text-white">${jamiInfarkt}</div>
-              ${jamiAholi > 0 ? `<div class="text-[10px] text-red-400 font-semibold mt-0.5">${+((jamiInfarkt/jamiAholi)*100000).toFixed(1)}/100k</div>` : ''}
+            <div class="flex-1 bg-red-500/10 border border-red-500/20 rounded-xl px-3 py-2">
+              <div class="flex items-center gap-1.5 mb-0.5"><span class="w-2 h-2 bg-red-400 rounded-full"></span><span class="text-[11px] font-bold text-red-300">Infarkt</span></div>
+              <div class="flex items-baseline gap-1">
+                <span class="text-lg font-black text-white">${jamiInfarkt.toLocaleString()}</span>
+                ${jamiAholi > 0 ? `<span class="text-[10px] text-red-400 font-semibold">${+((jamiInfarkt/jamiAholi)*100000).toFixed(1)}/100k</span>` : ''}
+              </div>
             </div>
-            <div class="flex-1 bg-blue-500/10 border border-blue-500/20 rounded-xl px-3 py-2.5">
-              <div class="flex items-center gap-1.5 mb-1"><span class="w-2 h-2 bg-blue-400 rounded-full"></span><span class="text-[11px] font-bold text-blue-300">Insult</span></div>
-              <div class="text-xl font-black text-white">${jamiInsult}</div>
-              ${jamiAholi > 0 ? `<div class="text-[10px] text-blue-400 font-semibold mt-0.5">${+((jamiInsult/jamiAholi)*100000).toFixed(1)}/100k</div>` : ''}
+            <div class="flex-1 bg-blue-500/10 border border-blue-500/20 rounded-xl px-3 py-2">
+              <div class="flex items-center gap-1.5 mb-0.5"><span class="w-2 h-2 bg-blue-400 rounded-full"></span><span class="text-[11px] font-bold text-blue-300">Insult</span></div>
+              <div class="flex items-baseline gap-1">
+                <span class="text-lg font-black text-white">${jamiInsult.toLocaleString()}</span>
+                ${jamiAholi > 0 ? `<span class="text-[10px] text-blue-400 font-semibold">${+((jamiInsult/jamiAholi)*100000).toFixed(1)}/100k</span>` : ''}
+              </div>
             </div>
           </div>
         </div>
