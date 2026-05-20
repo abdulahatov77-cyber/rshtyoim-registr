@@ -347,7 +347,7 @@ const BemorKartaPage = {
               ${row('Troponin', p.troponin)}
               ${row('KFK-MB', p.kkfmb)}
               ${row('EKG vaqti', p.ekg_vaqti)}
-              ${row('Puls', p.puls ? p.puls + ' ur/min' : null)}
+              ${row('Puls', p.puls || null)}
               ${row('AHA bali', p.aha_bali ? p.aha_bali + ' ball' : null)}
             `: `
               ${row('Insult turi', p.insult_turi)}
