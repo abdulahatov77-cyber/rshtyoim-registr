@@ -1328,11 +1328,11 @@ const BemorKartaPage = {
             <input id="edit-ekg-vaqti" type="time" class="form-input" value="${p.ekg_vaqti||''}"/>
           </div>
           <div class="form-group">
-            <label class="form-label">TLT vaqti (datetime)</label>
+            <label class="form-label">TLT vaqti</label>
             <input id="edit-tlt-vaqt" type="datetime-local" class="form-input" value="${Utils.formatDateInput(p.tlt_vaqt)||''}"/>
           </div>
           <div class="form-group">
-            <label class="form-label">PCI/Groin vaqti (datetime)</label>
+            <label class="form-label">PCI/Groin vaqti</label>
             <input id="edit-pci-vaqt" type="datetime-local" class="form-input" value="${Utils.formatDateInput(p.pci_vaqt)||''}"/>
           </div>` : `
           <div class="form-group">
@@ -1344,15 +1344,15 @@ const BemorKartaPage = {
             <input id="edit-gcs" type="number" class="form-input" value="${p.gcs_bali||p.gcs_qabul||''}" min="3" max="15"/>
           </div>
           <div class="form-group">
-            <label class="form-label">KT/MSKT vaqti (datetime)</label>
+            <label class="form-label">KT/MSKT vaqti</label>
             <input id="edit-kt-vaqti" type="datetime-local" class="form-input" value="${Utils.formatDateInput(p.kt_vaqti)||''}"/>
           </div>
           <div class="form-group">
-            <label class="form-label">Trombolizis vaqti (datetime)</label>
+            <label class="form-label">Trombolizis vaqti</label>
             <input id="edit-trombolizis-vaqti" type="datetime-local" class="form-input" value="${Utils.formatDateInput(p.trombolizis_vaqti)||''}"/>
           </div>
           <div class="form-group">
-            <label class="form-label">Trombektomiya vaqti (datetime)</label>
+            <label class="form-label">Trombektomiya vaqti</label>
             <input id="edit-trombektomiya-vaqti" type="datetime-local" class="form-input" value="${Utils.formatDateInput(p.trombektomiya_vaqti)||''}"/>
           </div>`}
         </div>`,
