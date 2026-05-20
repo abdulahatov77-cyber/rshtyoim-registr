@@ -156,7 +156,7 @@ const DashboardPage = {
           </div>
           <p class="text-slate-400 text-[11px] font-bold uppercase tracking-wider mb-1 relative z-10">Jami Qabul Qilingan</p>
           <h3 class="text-5xl font-black text-white relative z-10 tracking-tight">${jami.toLocaleString()}</h3>
-          ${weekTrend ? `<div class="mt-1 relative z-10"><span class="text-xs font-bold ${weekTrendColor}">${weekTrend} o'tgan hafta</span></div>` : '<div class="mt-1"></div>'}
+          ${weekDiff !== null ? `<div class="mt-1 relative z-10"><span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold ${weekDiff > 0 ? 'bg-red-500/20 text-red-300' : weekDiff < 0 ? 'bg-emerald-500/20 text-emerald-300' : 'bg-slate-500/20 text-slate-400'}">${weekDiff > 0 ? '▲' : weekDiff < 0 ? '▼' : '→'} ${Math.abs(weekDiff)}% hafta</span></div>` : '<div class="mt-1"></div>'}
           ${jamiAholi > 0 ? `
           <div class="mt-2 relative z-10 flex items-center gap-2">
             <span class="text-base font-black text-indigo-200">${per100k}</span>
