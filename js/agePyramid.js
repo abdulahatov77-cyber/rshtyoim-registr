@@ -6,7 +6,7 @@ const AgePyramid = {
   CENTER_W: 68,
   LABEL_AREA: 56,  // label uchun rezerv (har ikki tomonda)
   COLOR_MALE: '#3B82F6',    // yorqin ko'k
-  COLOR_FEMALE: '#F472B6',  // yorqin pushti
+  COLOR_FEMALE: '#EF4444',  // yorqin qizil
   COLOR_DEATH: 'rgba(0,0,0,0.38)',
 
   render(containerId, pyramidData, title, dotColor) {
@@ -114,7 +114,7 @@ const AgePyramid = {
     const colHeaders = `
       <text x="${mStart - barAreaW/2}" y="${TOP_PAD - 12}" text-anchor="middle" font-size="11" font-weight="700" fill="#3B82F6" letter-spacing="0.08em">ERKAK</text>
       <text x="${cx}" y="${TOP_PAD - 12}" text-anchor="middle" font-size="11" font-weight="700" fill="#64748b" letter-spacing="0.08em">YOSH</text>
-      <text x="${fStart + barAreaW/2}" y="${TOP_PAD - 12}" text-anchor="middle" font-size="11" font-weight="700" fill="#F472B6" letter-spacing="0.08em">AYOL</text>
+      <text x="${fStart + barAreaW/2}" y="${TOP_PAD - 12}" text-anchor="middle" font-size="11" font-weight="700" fill="#EF4444" letter-spacing="0.08em">AYOL</text>
       <line x1="${cx - CENTER_W/2}" y1="${TOP_PAD - 18}" x2="${cx - CENTER_W/2}" y2="${totalH}" stroke="#e2e8f0" stroke-width="0.5"/>
       <line x1="${cx + CENTER_W/2}" y1="${TOP_PAD - 18}" x2="${cx + CENTER_W/2}" y2="${totalH}" stroke="#e2e8f0" stroke-width="0.5"/>
     `;
