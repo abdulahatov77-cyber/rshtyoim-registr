@@ -138,9 +138,9 @@ const DashboardPage = {
       ` : ''}
 
       <!-- ROW 1: KPI CARDS (TOP 6) -->
-      <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-6 mb-10">
+      <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-6 mb-10" style="align-items:stretch">
         <!-- 1. Jami Qabul Qilingan Bemorlar -->
-        <div class="bg-slate-700 p-7 rounded-[32px] border border-slate-600 shadow-2xl hover:shadow-slate-500/20 hover:-translate-y-2 transition-all duration-500 group cursor-pointer relative overflow-hidden">
+        <div class="bg-slate-700 p-7 rounded-[32px] border border-slate-600 shadow-2xl hover:shadow-slate-500/20 hover:-translate-y-2 transition-all duration-500 group cursor-pointer relative overflow-hidden flex flex-col">
           <div class="absolute -right-10 -top-10 w-32 h-32 bg-slate-500/10 rounded-full blur-3xl group-hover:bg-slate-500/20 transition-all"></div>
           <div class="flex items-center justify-between mb-4 relative z-10">
             <div class="w-12 h-12 bg-slate-500/20 text-slate-300 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-all duration-500">${icon('database', 26)}</div>
@@ -148,8 +148,8 @@ const DashboardPage = {
           </div>
           <p class="text-slate-400 text-[11px] font-bold uppercase tracking-wider mb-1 relative z-10">Jami Qabul Qilingan</p>
           <h3 class="text-5xl font-black text-white relative z-10 tracking-tight">${jami.toLocaleString()}</h3>
-          ${weekTrend ? `<div class="mt-2 relative z-10"><span class="text-xs font-bold ${weekTrendColor}">${weekTrend} o'tgan haftaga nisbatan</span></div>` : ''}
-          <div class="mt-4 flex flex-col gap-2 relative z-10">
+          ${weekTrend ? `<div class="mt-2 relative z-10"><span class="text-xs font-bold ${weekTrendColor}">${weekTrend} o'tgan hafta</span></div>` : '<div class="mt-2"></div>'}
+          <div class="mt-auto pt-3 flex flex-col gap-2 relative z-10">
             <div class="flex items-center justify-between h-9 px-3 bg-slate-600/50 rounded-xl border border-slate-500/50">
               <div class="flex items-center gap-2"><span class="w-2 h-2 bg-red-400 rounded-full"></span><span class="text-[12px] font-bold text-slate-300">Infarkt</span></div>
               <span class="text-base font-black text-white">${jamiInfarkt}</span>
@@ -162,7 +162,7 @@ const DashboardPage = {
         </div>
 
         <!-- 2. Bugungi Yangi Bemorlar -->
-        <div class="bg-blue-600 p-7 rounded-[32px] shadow-2xl shadow-blue-900/30 hover:shadow-blue-500/40 hover:-translate-y-2 transition-all duration-500 group cursor-pointer relative overflow-hidden">
+        <div class="bg-blue-600 p-7 rounded-[32px] shadow-2xl shadow-blue-900/30 hover:shadow-blue-500/40 hover:-translate-y-2 transition-all duration-500 group cursor-pointer relative overflow-hidden flex flex-col">
           <div class="absolute -right-16 -bottom-16 w-56 h-56 bg-white/10 rounded-full blur-3xl group-hover:bg-white/20 transition-all duration-700"></div>
           <div class="flex items-center justify-between mb-4 relative z-10">
             <div class="w-12 h-12 bg-white/20 text-white rounded-2xl flex items-center justify-center group-hover:rotate-12 transition-all duration-500">${icon('activity', 26)}</div>
@@ -174,7 +174,7 @@ const DashboardPage = {
             ${renderSparkline(spark7, 'rgba(255,255,255,0.8)')}
             <span class="text-[10px] text-blue-200 font-semibold">7 kun</span>
           </div>
-          <div class="mt-3 flex flex-col gap-2 relative z-10">
+          <div class="mt-auto pt-3 flex flex-col gap-2 relative z-10">
             <div class="flex items-center justify-between h-9 px-3 bg-white/10 rounded-xl border border-white/10">
               <div class="flex items-center gap-2"><span class="w-2 h-2 bg-white rounded-full"></span><span class="text-[12px] font-bold text-white">Infarkt</span></div>
               <span class="text-base font-black text-white">${bugunInfarkt}</span>
@@ -187,28 +187,28 @@ const DashboardPage = {
         </div>
 
         <!-- 3. Jami Chiqarilgan Bemorlar -->
-        <div class="bg-emerald-900 p-7 rounded-[32px] border border-emerald-800 shadow-2xl hover:shadow-emerald-500/20 hover:-translate-y-2 transition-all duration-500 group cursor-pointer relative overflow-hidden">
+        <div class="bg-emerald-900 p-7 rounded-[32px] border border-emerald-800 shadow-2xl hover:shadow-emerald-500/20 hover:-translate-y-2 transition-all duration-500 group cursor-pointer relative overflow-hidden flex flex-col">
           <div class="absolute -left-10 -bottom-10 w-32 h-32 bg-emerald-500/10 rounded-full blur-3xl"></div>
-          <div class="flex items-center justify-between mb-6 relative z-10">
-            <div class="w-14 h-14 bg-emerald-500/10 text-emerald-400 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-all duration-500">${icon('log-out', 32)}</div>
-            <span class="text-[12px] font-black text-emerald-500 uppercase tracking-[0.2em]">CHIQARILGAN</span>
+          <div class="flex items-center justify-between mb-4 relative z-10">
+            <div class="w-12 h-12 bg-emerald-500/10 text-emerald-400 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-all duration-500">${icon('log-out', 26)}</div>
+            <span class="text-[11px] font-black text-emerald-500 uppercase tracking-[0.2em]">CHIQARILGAN</span>
           </div>
-          <p class="text-emerald-500/60 text-[11px] font-bold uppercase tracking-wider mb-2 relative z-10">Uyga javob berilgan</p>
+          <p class="text-emerald-500/60 text-[11px] font-bold uppercase tracking-wider mb-1 relative z-10">Uyga javob berilgan</p>
           <h3 class="text-5xl font-black text-white relative z-10 tracking-tight">${(chiqarilganInfarkt + chiqarilganInsult).toLocaleString()}</h3>
-          <div class="mt-6 flex flex-col gap-3 relative z-10">
+          <div class="mt-auto pt-3 flex flex-col gap-2 relative z-10">
             <div class="flex items-center justify-between h-9 px-3 bg-emerald-800/50 rounded-xl border border-emerald-700/50">
-              <div class="flex items-center gap-2"><span class="w-2 h-2 bg-red-400 rounded-full shadow-[0_0_10px_rgba(239,68,68,0.6)]"></span> <span class="text-[13px] font-bold text-emerald-100">Infarkt</span></div>
-              <span class="text-lg font-black text-white">${chiqarilganInfarkt}</span>
+              <div class="flex items-center gap-2"><span class="w-2 h-2 bg-red-400 rounded-full"></span><span class="text-[12px] font-bold text-emerald-100">Infarkt</span></div>
+              <span class="text-base font-black text-white">${chiqarilganInfarkt}</span>
             </div>
             <div class="flex items-center justify-between h-9 px-3 bg-emerald-800/50 rounded-xl border border-emerald-700/50">
-              <div class="flex items-center gap-2"><span class="w-2 h-2 bg-blue-400 rounded-full shadow-[0_0_10px_rgba(59,130,246,0.6)]"></span> <span class="text-[13px] font-bold text-emerald-100">Insult</span></div>
-              <span class="text-lg font-black text-white">${chiqarilganInsult}</span>
+              <div class="flex items-center gap-2"><span class="w-2 h-2 bg-blue-400 rounded-full"></span><span class="text-[12px] font-bold text-emerald-100">Insult</span></div>
+              <span class="text-base font-black text-white">${chiqarilganInsult}</span>
             </div>
           </div>
         </div>
 
         <!-- 4. Statsionarda Davolanayotganlar -->
-        <div class="bg-sky-800 p-7 rounded-[32px] border border-sky-700 shadow-2xl hover:shadow-sky-500/30 hover:-translate-y-2 transition-all duration-500 group cursor-pointer relative overflow-hidden">
+        <div class="bg-sky-800 p-7 rounded-[32px] border border-sky-700 shadow-2xl hover:shadow-sky-500/30 hover:-translate-y-2 transition-all duration-500 group cursor-pointer relative overflow-hidden flex flex-col">
           <div class="absolute right-0 bottom-0 w-40 h-40 bg-sky-400/10 rounded-full blur-3xl"></div>
           <div class="flex items-center justify-between mb-4 relative z-10">
             <div class="w-12 h-12 bg-sky-500/20 text-sky-300 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-all duration-500">${icon('bed-double', 26)}</div>
@@ -216,7 +216,7 @@ const DashboardPage = {
           </div>
           <p class="text-sky-300/70 text-[11px] font-bold uppercase tracking-wider mb-1 relative z-10">Hozir Statsionarda</p>
           <h3 class="text-5xl font-black text-white relative z-10 tracking-tight">${(aktivInfarkt + aktivInsult).toLocaleString()}</h3>
-          <div class="mt-4 flex flex-col gap-2 relative z-10">
+          <div class="mt-auto pt-3 flex flex-col gap-2 relative z-10">
             <div class="flex items-center justify-between h-9 px-3 bg-sky-700/50 rounded-xl border border-sky-600/50">
               <div class="flex items-center gap-2"><span class="w-2 h-2 bg-red-400 rounded-full"></span><span class="text-[12px] font-bold text-sky-100">Infarkt</span></div>
               <span class="text-base font-black text-white">${aktivInfarkt}</span>
@@ -229,47 +229,47 @@ const DashboardPage = {
         </div>
 
         <!-- 5. Jami Vafot Etganlar -->
-        <div class="bg-slate-900 p-7 rounded-[32px] border border-slate-800 shadow-2xl hover:shadow-rose-500/20 hover:-translate-y-2 transition-all duration-500 group cursor-pointer relative overflow-hidden" onclick="DashboardPage.showVafotDetail()">
+        <div class="bg-slate-900 p-7 rounded-[32px] border border-slate-800 shadow-2xl hover:shadow-rose-500/20 hover:-translate-y-2 transition-all duration-500 group cursor-pointer relative overflow-hidden flex flex-col" onclick="DashboardPage.showVafotDetail()">
           <div class="absolute -right-10 -top-10 w-32 h-32 bg-rose-600/5 rounded-full blur-3xl"></div>
-          <div class="flex items-center justify-between mb-6 relative z-10">
-            <div class="w-14 h-14 bg-rose-500/10 text-rose-400 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-all duration-500">${icon('user-x', 32)}</div>
+          <div class="flex items-center justify-between mb-4 relative z-10">
+            <div class="w-12 h-12 bg-rose-500/10 text-rose-400 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-all duration-500">${icon('user-x', 26)}</div>
             <div class="px-3 py-1 bg-rose-500/10 rounded-xl border border-rose-500/20">
               <span class="text-sm font-black text-rose-500">${jami > 0 ? ((vafotInfarkt + vafotInsult) / jami * 100).toFixed(1) : 0}%</span>
             </div>
           </div>
-          <p class="text-slate-400 text-[11px] font-bold uppercase tracking-wider mb-2 relative z-10">Vafot etganlar</p>
+          <p class="text-slate-400 text-[11px] font-bold uppercase tracking-wider mb-1 relative z-10">Vafot etganlar</p>
           <h3 class="text-5xl font-black text-white relative z-10 tracking-tight">${(vafotInfarkt + vafotInsult).toLocaleString()}</h3>
-          <div class="mt-6 flex flex-col gap-3 relative z-10">
+          <div class="mt-auto pt-3 flex flex-col gap-2 relative z-10">
             <div class="flex items-center justify-between h-9 px-3 bg-slate-800/50 rounded-xl border border-slate-700/50">
-              <div class="flex items-center gap-2"><span class="w-2 h-2 bg-red-500 rounded-full shadow-[0_0_10px_rgba(239,68,68,0.6)]"></span> <span class="text-[13px] font-bold text-slate-300">Infarkt</span></div>
-              <span class="text-lg font-black text-white">${vafotInfarkt}</span>
+              <div class="flex items-center gap-2"><span class="w-2 h-2 bg-red-500 rounded-full"></span><span class="text-[12px] font-bold text-slate-300">Infarkt</span></div>
+              <span class="text-base font-black text-white">${vafotInfarkt}</span>
             </div>
             <div class="flex items-center justify-between h-9 px-3 bg-slate-800/50 rounded-xl border border-slate-700/50">
-              <div class="flex items-center gap-2"><span class="w-2 h-2 bg-blue-500 rounded-full shadow-[0_0_10px_rgba(59,130,246,0.6)]"></span> <span class="text-[13px] font-bold text-slate-300">Insult</span></div>
-              <span class="text-lg font-black text-white">${vafotInsult}</span>
+              <div class="flex items-center gap-2"><span class="w-2 h-2 bg-blue-500 rounded-full"></span><span class="text-[12px] font-bold text-slate-300">Insult</span></div>
+              <span class="text-base font-black text-white">${vafotInsult}</span>
             </div>
           </div>
         </div>
 
         <!-- 6. O'tkazilgan Bemorlar -->
-        <div class="bg-slate-900 p-7 rounded-[32px] border border-slate-800 shadow-2xl hover:shadow-amber-500/20 hover:-translate-y-2 transition-all duration-500 group cursor-pointer relative overflow-hidden">
+        <div class="bg-slate-900 p-7 rounded-[32px] border border-slate-800 shadow-2xl hover:shadow-amber-500/20 hover:-translate-y-2 transition-all duration-500 group cursor-pointer relative overflow-hidden flex flex-col">
           <div class="absolute -left-10 -bottom-10 w-32 h-32 bg-amber-500/5 rounded-full blur-3xl"></div>
-          <div class="flex items-center justify-between mb-6 relative z-10">
-            <div class="w-14 h-14 bg-amber-500/10 text-amber-400 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-all duration-500">${icon('arrow-right-circle', 32)}</div>
+          <div class="flex items-center justify-between mb-4 relative z-10">
+            <div class="w-12 h-12 bg-amber-500/10 text-amber-400 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-all duration-500">${icon('arrow-right-circle', 26)}</div>
             <div class="px-3 py-1 bg-amber-500/10 rounded-xl border border-amber-500/20">
               <span class="text-sm font-black text-amber-500">${jami > 0 ? ((otkazilganInfarkt + otkazilganInsult) / jami * 100).toFixed(1) : 0}%</span>
             </div>
           </div>
-          <p class="text-slate-400 text-[11px] font-bold uppercase tracking-wider mb-2 relative z-10">Boshqa muassasaga</p>
+          <p class="text-slate-400 text-[11px] font-bold uppercase tracking-wider mb-1 relative z-10">Boshqa muassasaga</p>
           <h3 class="text-5xl font-black text-white relative z-10 tracking-tight">${(otkazilganInfarkt + otkazilganInsult).toLocaleString()}</h3>
-          <div class="mt-6 flex flex-col gap-3 relative z-10">
+          <div class="mt-auto pt-3 flex flex-col gap-2 relative z-10">
             <div class="flex items-center justify-between h-9 px-3 bg-slate-800/50 rounded-xl border border-slate-700/50">
-              <div class="flex items-center gap-2"><span class="w-2 h-2 bg-red-500 rounded-full shadow-[0_0_10px_rgba(239,68,68,0.6)]"></span> <span class="text-[13px] font-bold text-slate-300">Infarkt</span></div>
-              <span class="text-lg font-black text-white">${otkazilganInfarkt}</span>
+              <div class="flex items-center gap-2"><span class="w-2 h-2 bg-red-500 rounded-full"></span><span class="text-[12px] font-bold text-slate-300">Infarkt</span></div>
+              <span class="text-base font-black text-white">${otkazilganInfarkt}</span>
             </div>
             <div class="flex items-center justify-between h-9 px-3 bg-slate-800/50 rounded-xl border border-slate-700/50">
-              <div class="flex items-center gap-2"><span class="w-2 h-2 bg-blue-500 rounded-full shadow-[0_0_10px_rgba(59,130,246,0.6)]"></span> <span class="text-[13px] font-bold text-slate-300">Insult</span></div>
-              <span class="text-lg font-black text-white">${otkazilganInsult}</span>
+              <div class="flex items-center gap-2"><span class="w-2 h-2 bg-blue-500 rounded-full"></span><span class="text-[12px] font-bold text-slate-300">Insult</span></div>
+              <span class="text-base font-black text-white">${otkazilganInsult}</span>
             </div>
           </div>
         </div>
