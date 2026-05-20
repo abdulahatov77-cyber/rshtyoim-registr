@@ -335,24 +335,6 @@ const DashboardPage = {
         <div class="w-full" style="height:480px"><canvas id="regionChart"></canvas></div>
       </div>
 
-      <!-- ROW 4: BUTTERFLY CHART — Oylar bo'yicha Infarkt vs Insult -->
-      <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden mb-8">
-        <div class="px-6 pt-5 pb-3 border-b border-slate-100">
-          <h3 class="text-sm font-bold text-slate-700 uppercase tracking-wider text-center">Oylar bo'yicha holat — Infarkt va Insult</h3>
-          <div class="flex justify-center gap-8 mt-2">
-            <div class="flex items-center gap-2">
-              <span class="w-4 h-3 rounded-sm inline-block" style="background:#1e3a8a"></span>
-              <span class="text-xs font-semibold text-slate-600">Infarkt — <b>${trend12 ? trend12.infData.reduce((a,b)=>a+b,0) : 0} ta</b></span>
-            </div>
-            <div class="flex items-center gap-2">
-              <span class="w-4 h-3 rounded-sm inline-block" style="background:#dc2626"></span>
-              <span class="text-xs font-semibold text-slate-600">Insult — <b>${trend12 ? trend12.insData.reduce((a,b)=>a+b,0) : 0} ta</b></span>
-            </div>
-          </div>
-        </div>
-        <div class="p-4" style="height:420px;position:relative"><canvas id="butterflyChart"></canvas></div>
-      </div>
-
       <!-- ROW 5: AGE-SEX PYRAMID -->
       <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-8">
         <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-4">
