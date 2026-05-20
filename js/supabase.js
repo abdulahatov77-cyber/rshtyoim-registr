@@ -753,7 +753,7 @@ const DB = {
         if (!map[r.muassasa]) map[r.muassasa] = { total: 0, inf: 0, ins: 0 };
         map[r.muassasa].total++; map[r.muassasa].ins++;
       });
-      return Object.entries(map).map(([name, s]) => [name, s.total, s.inf, s.ins]).sort((a, b) => b[1] - a[1]).slice(0, 14);
+      return Object.entries(map).map(([name, s]) => [name, s.total, s.inf, s.ins]).sort((a, b) => b[1] - a[1]);
     }
 
     // Admin: har viloyat uchun server-side count (qator limiti muammosi yo'q)
