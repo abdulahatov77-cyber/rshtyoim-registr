@@ -582,7 +582,7 @@ const DashboardPage = {
       </tr>
     `).join('');
     showModal({
-      title: `${esc(muassasa)} — 15+ kun bemorlar`,
+      title: `${esc(group.muassasa)} — 15+ kun bemorlar`,
       size: 'lg',
       body: `
         <div class="overflow-x-auto">
