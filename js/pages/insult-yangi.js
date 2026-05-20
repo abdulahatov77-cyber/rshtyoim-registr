@@ -474,6 +474,78 @@ const InsultYangiPage = {
         showToast('Xavf omillarini belgilang (kamida bittasini)', 'warning');
       }
     }
+    // Step 3: vaqt mezonlari validatsiyasi
+    if (this._step === 3) {
+      const now = new Date();
+      const qv = this._data.qabul_vaqt ? new Date(this._data.qabul_vaqt + (this._data.qabul_vaqt.includes('T') ? ':00+05:00' : '')) : null;
+      const muolaja = this._data.muolaja_turi || '';
+      const isTLT = muolaja.toLowerCase().includes('trombolizis') || muolaja.toLowerCase().includes('tlt');
+      const isTrombektomiya = muolaja.toLowerCase().includes('trombektomiya') || muolaja.toLowerCase().includes('tromboekstraksiya') || muolaja.toLowerCase().includes('tromboaspiratsiya') || muolaja.toLowerCase().includes('kombinatsiya');
+      const isMskt = this._data.mskt === 'Ha – o\'tkazildi';
+
+      // KT/MSKT vaqti majburiy (MSKT o'tkazilganda)
+      if (isMskt && !this._data.kt_vaqti) {
+        valid = false;
+        const el = document.getElementById('kt_vaqti');
+        if (el) { el.classList.add('border-red-500'); el.focus(); }
+        showToast('⚠️ KT/MSKT vaqtini kiriting!', 'error', 5000);
+      } else if (this._data.kt_vaqti) {
+        const kv = new Date(this._data.kt_vaqti + ':00+05:00');
+        if (kv > now) {
+          valid = false;
+          const el = document.getElementById('kt_vaqti');
+          if (el) { el.classList.add('border-red-500'); el.focus(); }
+          showToast('⚠️ KT/MSKT vaqti kelajakda bo\'lishi mumkin emas!', 'error', 5000);
+        } else if (qv && kv < qv) {
+          valid = false;
+          const el = document.getElementById('kt_vaqti');
+          if (el) { el.classList.add('border-red-500'); el.focus(); }
+          showToast('⚠️ KT/MSKT vaqti bemor qabul vaqtidan oldin bo\'lishi mumkin emas!', 'error', 5000);
+        }
+      }
+
+      // Trombolizis vaqti majburiy (TLT muolajasi tanlanganda)
+      if (isTLT && !this._data.trombolizis_vaqti) {
+        valid = false;
+        const el = document.getElementById('trombolizis_vaqti');
+        if (el) { el.classList.add('border-red-500'); el.focus(); }
+        showToast('⚠️ Trombolizis vaqtini kiriting!', 'error', 5000);
+      } else if (this._data.trombolizis_vaqti) {
+        const tv = new Date(this._data.trombolizis_vaqti + ':00+05:00');
+        if (tv > now) {
+          valid = false;
+          const el = document.getElementById('trombolizis_vaqti');
+          if (el) { el.classList.add('border-red-500'); el.focus(); }
+          showToast('⚠️ Trombolizis vaqti kelajakda bo\'lishi mumkin emas!', 'error', 5000);
+        } else if (qv && tv < qv) {
+          valid = false;
+          const el = document.getElementById('trombolizis_vaqti');
+          if (el) { el.classList.add('border-red-500'); el.focus(); }
+          showToast('⚠️ Trombolizis vaqti bemor qabul vaqtidan oldin bo\'lishi mumkin emas!', 'error', 5000);
+        }
+      }
+
+      // Trombektomiya vaqti majburiy (trombektomiya muolajasi tanlanganda)
+      if (isTrombektomiya && !this._data.trombektomiya_vaqti) {
+        valid = false;
+        const el = document.getElementById('trombektomiya_vaqti');
+        if (el) { el.classList.add('border-red-500'); el.focus(); }
+        showToast('⚠️ Trombektomiya vaqtini kiriting!', 'error', 5000);
+      } else if (this._data.trombektomiya_vaqti) {
+        const trv = new Date(this._data.trombektomiya_vaqti + ':00+05:00');
+        if (trv > now) {
+          valid = false;
+          const el = document.getElementById('trombektomiya_vaqti');
+          if (el) { el.classList.add('border-red-500'); el.focus(); }
+          showToast('⚠️ Trombektomiya vaqti kelajakda bo\'lishi mumkin emas!', 'error', 5000);
+        } else if (qv && trv < qv) {
+          valid = false;
+          const el = document.getElementById('trombektomiya_vaqti');
+          if (el) { el.classList.add('border-red-500'); el.focus(); }
+          showToast('⚠️ Trombektomiya vaqti bemor qabul vaqtidan oldin bo\'lishi mumkin emas!', 'error', 5000);
+        }
+      }
+    }
     return valid;
   },
 

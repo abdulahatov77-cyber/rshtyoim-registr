@@ -523,6 +523,56 @@ const InfarktYangiPage = {
         showToast('Xavf omillarini belgilang (kamida bittasini)', 'warning');
       }
     }
+    // Step 3: vaqt mezonlari validatsiyasi
+    if (this._step === 3) {
+      const now = new Date();
+      const qv = this._data.qabul_vaqt ? new Date(this._data.qabul_vaqt + (this._data.qabul_vaqt.includes('T') ? ':00+05:00' : '')) : null;
+      const muolaja = this._data.muolaja_turi || '';
+      const isTLT = muolaja.toLowerCase().includes('tlt') || muolaja.toLowerCase().includes('trombolit');
+      const isPCI = muolaja.toLowerCase().includes('pci') || muolaja.toLowerCase().includes('angioplast') || muolaja.toLowerCase().includes('stent') || muolaja.toLowerCase().includes('groin') || muolaja.toLowerCase().includes('kag');
+
+      // TLT vaqti majburiy (TLT muolajasi tanlanganda)
+      if (isTLT && !this._data.tlt_vaqt) {
+        valid = false;
+        const el = document.getElementById('tlt_vaqt');
+        if (el) { el.classList.add('border-red-500'); el.focus(); }
+        showToast('⚠️ TLT vaqtini kiriting!', 'error', 5000);
+      } else if (this._data.tlt_vaqt) {
+        const tv = new Date(this._data.tlt_vaqt + ':00+05:00');
+        if (tv > now) {
+          valid = false;
+          const el = document.getElementById('tlt_vaqt');
+          if (el) { el.classList.add('border-red-500'); el.focus(); }
+          showToast('⚠️ TLT vaqti kelajakda bo\'lishi mumkin emas!', 'error', 5000);
+        } else if (qv && tv < qv) {
+          valid = false;
+          const el = document.getElementById('tlt_vaqt');
+          if (el) { el.classList.add('border-red-500'); el.focus(); }
+          showToast('⚠️ TLT vaqti bemor qabul vaqtidan oldin bo\'lishi mumkin emas!', 'error', 5000);
+        }
+      }
+
+      // PCI vaqti majburiy (PCI/KAG muolajasi tanlanganda)
+      if (isPCI && !this._data.pci_vaqt) {
+        valid = false;
+        const el = document.getElementById('pci_vaqt');
+        if (el) { el.classList.add('border-red-500'); el.focus(); }
+        showToast('⚠️ PCI/Groin vaqtini kiriting!', 'error', 5000);
+      } else if (this._data.pci_vaqt) {
+        const pv = new Date(this._data.pci_vaqt + ':00+05:00');
+        if (pv > now) {
+          valid = false;
+          const el = document.getElementById('pci_vaqt');
+          if (el) { el.classList.add('border-red-500'); el.focus(); }
+          showToast('⚠️ PCI vaqti kelajakda bo\'lishi mumkin emas!', 'error', 5000);
+        } else if (qv && pv < qv) {
+          valid = false;
+          const el = document.getElementById('pci_vaqt');
+          if (el) { el.classList.add('border-red-500'); el.focus(); }
+          showToast('⚠️ PCI vaqti bemor qabul vaqtidan oldin bo\'lishi mumkin emas!', 'error', 5000);
+        }
+      }
+    }
     return valid;
   },
 

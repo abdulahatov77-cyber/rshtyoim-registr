@@ -1379,13 +1379,38 @@ const BemorKartaPage = {
     const isInf = type === 'infarkt';
     const fio = document.getElementById('edit-fio')?.value?.trim();
     if (!fio) { showToast('F.I.O ni kiriting', 'warning'); return; }
+    const g = id => document.getElementById(id);
+    const now = new Date();
+    const qabulVaqtRaw = g('edit-qabul-vaqt')?.value;
+    const qv = qabulVaqtRaw ? new Date(qabulVaqtRaw + ':00+05:00') : null;
+    // Qabul vaqti validatsiyasi
+    if (qv && qv > now) {
+      g('edit-qabul-vaqt')?.classList.add('border-red-500');
+      showToast('⚠️ Qabul vaqti kelajakda bo\'lishi mumkin emas!', 'error', 5000);
+      return;
+    }
+    // Vaqt mezonlari validatsiyasi
+    const vaqtFields = isInf
+      ? [['edit-tlt-vaqt','TLT vaqti'],['edit-pci-vaqt','PCI vaqti']]
+      : [['edit-kt-vaqti','KT/MSKT vaqti'],['edit-trombolizis-vaqti','Trombolizis vaqti'],['edit-trombektomiya-vaqti','Trombektomiya vaqti']];
+    for (const [fieldId, label] of vaqtFields) {
+      const raw = g(fieldId)?.value;
+      if (!raw) continue;
+      const vt = new Date(raw + ':00+05:00');
+      if (vt > now) {
+        g(fieldId)?.classList.add('border-red-500');
+        showToast(`⚠️ ${label} kelajakda bo'lishi mumkin emas!`, 'error', 5000);
+        return;
+      }
+      if (qv && vt < qv) {
+        g(fieldId)?.classList.add('border-red-500');
+        showToast(`⚠️ ${label} bemor qabul vaqtidan oldin bo'lishi mumkin emas!`, 'error', 5000);
+        return;
+      }
+    }
     const btn = document.getElementById('btn-edit-save');
     setLoading(btn, true);
-    const g = id => document.getElementById(id);
-    const qabulVaqtRaw = g('edit-qabul-vaqt')?.value;
-    const qabulVaqt = qabulVaqtRaw
-      ? new Date(qabulVaqtRaw + ':00+05:00').toISOString()
-      : null;
+    const qabulVaqt = qv ? qv.toISOString() : null;
     const updates = {
       fio,
       jins:          g('edit-jins')?.value || null,
