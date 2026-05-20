@@ -33,7 +33,7 @@ const DashboardPage = {
     try {
       const profile = await Profile.getCurrent();
       const ov = DashboardPage._viewViloyat;
-      const [stats, trend, trend12, recent, viloyat, demo, riskFactors, longStay, genderMort] = await Promise.all([
+      const [stats, trend, trend12, recent, viloyat, demo, riskFactors, longStay, genderMort, ageSex] = await Promise.all([
         DB.getDashboardStats(ov),
         DB.getTrend30(ov),
         DB.getTrend12Month(ov),
@@ -42,9 +42,11 @@ const DashboardPage = {
         DB.getDemographics(ov),
         DB.getRiskFactors(ov),
         DB.getLongStayPatients(ov),
-        DB.getGenderMortality(ov)
+        DB.getGenderMortality(ov),
+        DB.getAgeSexPyramid(ov)
       ]);
       DashboardPage._recentPatients = recent;
+      DashboardPage._ageSex = ageSex;
       DashboardPage.renderContent(stats, trend, trend12, recent, viloyat, profile, demo, riskFactors, longStay, genderMort);
     } catch (err) {
       const inner = document.getElementById('dashboard-inner');
@@ -351,6 +353,16 @@ const DashboardPage = {
         <div class="p-4" style="height:420px;position:relative"><canvas id="butterflyChart"></canvas></div>
       </div>
 
+      <!-- ROW 5: AGE-SEX PYRAMID -->
+      <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-8">
+        <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-4">
+          <div id="pyramid-infarkt"></div>
+        </div>
+        <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-4">
+          <div id="pyramid-insult"></div>
+        </div>
+      </div>
+
       <!-- ROW: RISK FACTORS DONUT CHARTS -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
         <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
@@ -550,6 +562,12 @@ const DashboardPage = {
       initIcons();
       setTimeout(() => {
         DashboardPage.drawNewCharts(trend, trend12, stats, viloyat, demo, profile, riskFactors);
+        // Age-Sex Pyramids
+        const ageSex = DashboardPage._ageSex;
+        if (ageSex && typeof AgePyramid !== 'undefined') {
+          AgePyramid.render('pyramid-infarkt', ageSex.infarkt, 'INFARKT', '#dc2626');
+          AgePyramid.render('pyramid-insult',  ageSex.insult,  'INSULT',  '#2563eb');
+        }
       }, 300);
     });
   },
