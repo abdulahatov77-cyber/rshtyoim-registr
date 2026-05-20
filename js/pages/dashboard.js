@@ -333,95 +333,22 @@ const DashboardPage = {
         <div class="w-full" style="height:480px"><canvas id="regionChart"></canvas></div>
       </div>
 
-      <!-- ROW 4: DEMOGRAPHICS -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-        <!-- Gender -->
-        <!-- Gender -->
-        <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between">
-          <h3 class="text-base font-bold text-slate-800 mb-2 text-center tracking-wide uppercase">Jins bo'yicha taqsimot</h3>
-          <div class="flex flex-col gap-6 w-full h-full justify-center mt-2">
-            <!-- Infarkt -->
-            <div class="relative flex flex-col items-center">
-              <div class="flex items-center justify-between gap-2 w-full px-2">
-                <div class="flex flex-col items-center">
-                   <svg width="40" height="40" viewBox="0 0 24 24" fill="#38bdf8"><path d="M12 2C10.9 2 10 2.9 10 4s.9 2 2 2 2-.9 2-2-.9-2-2-2zm-1.5 5h3C14.9 7 16 8.1 16 9.5V15h-1.5v6h-5v-6H8V9.5C8 8.1 9.1 7 10.5 7z"/></svg>
-                   <span class="text-3xl font-black text-[#2e3150] mt-1">${infMP}%</span>
-                   <span class="text-sm font-bold text-slate-500 mt-1">${infM} ta</span>
-                </div>
-                <div class="relative flex flex-col items-center justify-center">
-                   <div class="w-28 h-28 rounded-full shadow-sm" style="background: conic-gradient(#f472b6 0% ${infFP}%, #38bdf8 ${infFP}% 100%);"></div>
-                   <span class="absolute bg-white px-2 py-0.5 rounded-full text-xs font-bold text-red-500 shadow-sm -bottom-2">INFARKT</span>
-                </div>
-                <div class="flex flex-col items-center">
-                   <svg width="40" height="40" viewBox="0 0 24 24" fill="#f472b6"><path d="M12 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm2.94 5c-.32 0-.6.18-.74.46L13 10.74V22h-2v-11.26l-1.2-3.28A.8.8 0 0 0 9.06 7H9c-.55 0-1 .45-1 1v6h2v8h4v-8h2V8c0-.55-.45-1-1-1h-.06z"/></svg>
-                   <span class="text-3xl font-black text-[#2e3150] mt-1">${infFP}%</span>
-                   <span class="text-sm font-bold text-slate-500 mt-1">${infF} ta</span>
-                </div>
-              </div>
-              ${genderMort ? (() => {
-                const gm = genderMort.infarkt;
-                const mDeathP = gm.male > 0 ? ((gm.maleDeath / gm.male) * 100).toFixed(1) : '0.0';
-                const fDeathP = gm.female > 0 ? ((gm.femaleDeath / gm.female) * 100).toFixed(1) : '0.0';
-                const fHigher = parseFloat(fDeathP) > parseFloat(mDeathP);
-                return `<div class="mt-3 w-full flex items-center justify-center gap-3 text-xs">
-                  <span class="flex items-center gap-1 px-2 py-1 rounded-lg bg-sky-50 text-sky-700 font-bold">Erkak vafot: ${mDeathP}%</span>
-                  <span class="flex items-center gap-1 px-2 py-1 rounded-lg font-bold ${fHigher ? 'bg-red-50 text-red-600' : 'bg-pink-50 text-pink-700'}">
-                    ${fHigher ? '⚠️ ' : ''}Ayol vafot: ${fDeathP}%
-                  </span>
-                </div>`;
-              })() : ''}
+      <!-- ROW 4: BUTTERFLY CHART — Oylar bo'yicha Infarkt vs Insult -->
+      <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden mb-8">
+        <div class="px-6 pt-5 pb-3 border-b border-slate-100">
+          <h3 class="text-sm font-bold text-slate-700 uppercase tracking-wider text-center">Oylar bo'yicha holat — Infarkt va Insult</h3>
+          <div class="flex justify-center gap-8 mt-2">
+            <div class="flex items-center gap-2">
+              <span class="w-4 h-3 rounded-sm inline-block" style="background:#1e3a8a"></span>
+              <span class="text-xs font-semibold text-slate-600">Infarkt — <b>${trend12 ? trend12.infData.reduce((a,b)=>a+b,0) : 0} ta</b></span>
             </div>
-
-            <!-- Insult -->
-            <div class="relative flex flex-col items-center">
-              <div class="flex items-center justify-between gap-2 w-full px-2">
-                <div class="flex flex-col items-center">
-                   <svg width="40" height="40" viewBox="0 0 24 24" fill="#38bdf8"><path d="M12 2C10.9 2 10 2.9 10 4s.9 2 2 2 2-.9 2-2-.9-2-2-2zm-1.5 5h3C14.9 7 16 8.1 16 9.5V15h-1.5v6h-5v-6H8V9.5C8 8.1 9.1 7 10.5 7z"/></svg>
-                   <span class="text-3xl font-black text-[#2e3150] mt-1">${insMP}%</span>
-                   <span class="text-sm font-bold text-slate-500 mt-1">${insM} ta</span>
-                </div>
-                <div class="relative flex flex-col items-center justify-center">
-                   <div class="w-28 h-28 rounded-full shadow-sm" style="background: conic-gradient(#f472b6 0% ${insFP}%, #38bdf8 ${insFP}% 100%);"></div>
-                   <span class="absolute bg-white px-2 py-0.5 rounded-full text-xs font-bold text-blue-500 shadow-sm -bottom-2">INSULT</span>
-                </div>
-                <div class="flex flex-col items-center">
-                   <svg width="40" height="40" viewBox="0 0 24 24" fill="#f472b6"><path d="M12 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm2.94 5c-.32 0-.6.18-.74.46L13 10.74V22h-2v-11.26l-1.2-3.28A.8.8 0 0 0 9.06 7H9c-.55 0-1 .45-1 1v6h2v8h4v-8h2V8c0-.55-.45-1-1-1h-.06z"/></svg>
-                   <span class="text-3xl font-black text-[#2e3150] mt-1">${insFP}%</span>
-                   <span class="text-sm font-bold text-slate-500 mt-1">${insF} ta</span>
-                </div>
-              </div>
-              ${genderMort ? (() => {
-                const gm = genderMort.insult;
-                const mDeathP = gm.male > 0 ? ((gm.maleDeath / gm.male) * 100).toFixed(1) : '0.0';
-                const fDeathP = gm.female > 0 ? ((gm.femaleDeath / gm.female) * 100).toFixed(1) : '0.0';
-                const fHigher = parseFloat(fDeathP) > parseFloat(mDeathP);
-                return `<div class="mt-3 w-full flex items-center justify-center gap-3 text-xs">
-                  <span class="flex items-center gap-1 px-2 py-1 rounded-lg bg-sky-50 text-sky-700 font-bold">Erkak vafot: ${mDeathP}%</span>
-                  <span class="flex items-center gap-1 px-2 py-1 rounded-lg font-bold ${fHigher ? 'bg-red-50 text-red-600' : 'bg-pink-50 text-pink-700'}">
-                    ${fHigher ? '⚠️ ' : ''}Ayol vafot: ${fDeathP}%
-                  </span>
-                </div>`;
-              })() : ''}
+            <div class="flex items-center gap-2">
+              <span class="w-4 h-3 rounded-sm inline-block" style="background:#dc2626"></span>
+              <span class="text-xs font-semibold text-slate-600">Insult — <b>${trend12 ? trend12.insData.reduce((a,b)=>a+b,0) : 0} ta</b></span>
             </div>
           </div>
         </div>
-        <!-- Age Groups -->
-        <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden flex flex-col">
-          <div class="px-6 pt-5 pb-3 border-b border-slate-100" style="background:linear-gradient(135deg,#eff6ff 0%,#fef2f2 100%)">
-            <h3 class="text-sm font-bold text-slate-700 uppercase tracking-wider text-center">Yosh guruhlari bo'yicha taqsimot</h3>
-            <div class="flex justify-center gap-6 mt-3">
-              <div class="flex items-center gap-2">
-                <span class="w-3 h-3 rounded-sm" style="background:#3b82f6"></span>
-                <span class="text-xs font-semibold text-slate-600">Insult — <b>${Object.values(demo?.insult?.ages||{}).reduce((a,b)=>a+b,0)} ta</b></span>
-              </div>
-              <div class="flex items-center gap-2">
-                <span class="w-3 h-3 rounded-sm" style="background:#ef4444"></span>
-                <span class="text-xs font-semibold text-slate-600">Infarkt — <b>${Object.values(demo?.infarkt?.ages||{}).reduce((a,b)=>a+b,0)} ta</b></span>
-              </div>
-            </div>
-          </div>
-          <div class="p-4 pb-6" style="min-height:300px;position:relative"><canvas id="ageChart"></canvas></div>
-        </div>
+        <div class="p-4" style="height:420px;position:relative"><canvas id="butterflyChart"></canvas></div>
       </div>
 
       <!-- ROW: RISK FACTORS DONUT CHARTS -->
@@ -922,7 +849,82 @@ const DashboardPage = {
       });
     }
 
-    // 3. Age Groups Chart
+    // 3. Butterfly Chart — oylar bo'yicha infarkt (chapga, ko'k) va insult (o'ngga, qizil)
+    const ctxB = document.getElementById('butterflyChart')?.getContext('2d');
+    if (ctxB && trend12) {
+      const bLabels = trend12.labels.slice().reverse();
+      const bInf   = trend12.infData.slice().reverse();
+      const bIns   = trend12.insData.slice().reverse();
+      new Chart(ctxB, {
+        type: 'bar',
+        data: {
+          labels: bLabels,
+          datasets: [
+            {
+              label: 'Infarkt',
+              data: bInf.map(v => -v),
+              backgroundColor: '#1e3a8a',
+              borderRadius: 3,
+              borderSkipped: false,
+              barPercentage: 0.7
+            },
+            {
+              label: 'Insult',
+              data: bIns,
+              backgroundColor: '#dc2626',
+              borderRadius: 3,
+              borderSkipped: false,
+              barPercentage: 0.7
+            }
+          ]
+        },
+        plugins: window.ChartDataLabels ? [window.ChartDataLabels] : [],
+        options: {
+          indexAxis: 'y',
+          responsive: true,
+          maintainAspectRatio: false,
+          layout: { padding: { left: 10, right: 10, top: 4, bottom: 4 } },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: ctx => {
+                  const v = Math.abs(ctx.parsed.x);
+                  return `${ctx.dataset.label}: ${v} ta`;
+                }
+              }
+            },
+            datalabels: window.ChartDataLabels ? {
+              display: ctx => Math.abs(ctx.dataset.data[ctx.dataIndex]) > 0,
+              formatter: v => Math.abs(v),
+              color: '#fff',
+              font: { weight: 'bold', size: 10 },
+              anchor: ctx => ctx.datasetIndex === 0 ? 'start' : 'end',
+              align: ctx => ctx.datasetIndex === 0 ? 'right' : 'left',
+              offset: 4
+            } : { display: false }
+          },
+          scales: {
+            x: {
+              stacked: false,
+              ticks: {
+                callback: v => Math.abs(v),
+                font: { size: 10 },
+                color: '#64748b'
+              },
+              grid: { color: '#f1f5f9' }
+            },
+            y: {
+              stacked: false,
+              ticks: { font: { size: 11, weight: '600' }, color: '#334155' },
+              grid: { display: false }
+            }
+          }
+        }
+      });
+    }
+
+    // 3b. Age Groups Chart (hidden canvas — kept for compatibility)
     const ctxA = document.getElementById('ageChart')?.getContext('2d');
     if (ctxA && demo) {
       const ageLabels = ['≤29', '30-44', '45-59', '60-74', '75+'];
@@ -933,20 +935,8 @@ const DashboardPage = {
         data: {
           labels: ageLabels,
           datasets: [
-            {
-              label: 'Insult',
-              data: insData,
-              backgroundColor: '#2563eb',
-              borderRadius: 5,
-              borderSkipped: false
-            },
-            {
-              label: 'Infarkt',
-              data: infData,
-              backgroundColor: '#dc2626',
-              borderRadius: 5,
-              borderSkipped: false
-            }
+            { label: 'Insult',  data: insData, backgroundColor: '#2563eb', borderRadius: 5, borderSkipped: false },
+            { label: 'Infarkt', data: infData, backgroundColor: '#dc2626', borderRadius: 5, borderSkipped: false }
           ]
         },
         plugins: window.ChartDataLabels ? [window.ChartDataLabels] : [],
