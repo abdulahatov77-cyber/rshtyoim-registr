@@ -79,10 +79,10 @@ const DashboardPage = {
     const jami = stats.jami || 0;
     const jamiInfarkt = stats.jamiInfarkt || 0;
     const jamiInsult = stats.jamiInsult || 0;
-    
+
     const aktivInfarkt = stats.infarktAktiv || 0;
     const aktivInsult = stats.insultAktiv || 0;
-    
+
     const vafotInfarkt = stats.vafotInfarkt || 0;
     const vafotInsult = stats.vafotInsult || 0;
 
@@ -93,6 +93,23 @@ const DashboardPage = {
 
     const bugunInfarkt = stats.infarktBugun || 0;
     const bugunInsult = stats.insultBugun || 0;
+    const bugunJami = bugunInfarkt + bugunInsult;
+
+    // O'tgan hafta vs bu hafta trend (oxirgi 30 kundan)
+    const spark7 = trend ? trend.infData.slice(-7).map((v,i) => v + (trend.insData[trend.insData.length-7+i]||0)) : [];
+    const thisWeek = spark7.reduce((a,b) => a+b, 0);
+    const prevWeek = trend ? (trend.infData.slice(-14,-7).map((v,i) => v + (trend.insData[trend.insData.length-14+i]||0))).reduce((a,b)=>a+b,0) : 0;
+    const weekDiff = prevWeek > 0 ? Math.round(((thisWeek - prevWeek) / prevWeek) * 100) : null;
+    const weekTrend = weekDiff !== null ? (weekDiff > 0 ? `↑${weekDiff}%` : weekDiff < 0 ? `↓${Math.abs(weekDiff)}%` : '→0%') : null;
+    const weekTrendColor = weekDiff > 0 ? 'text-red-300' : weekDiff < 0 ? 'text-emerald-300' : 'text-slate-400';
+
+    // Sparkline SVG (7 kun)
+    const renderSparkline = (data, color) => {
+      if (!data || data.length < 2) return '';
+      const max = Math.max(...data, 1);
+      const w = 80, h = 28, pts = data.map((v,i) => `${Math.round(i*(w/(data.length-1)))},${Math.round(h - (v/max)*h)}`).join(' ');
+      return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" fill="none"><polyline points="${pts}" stroke="${color}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/><circle cx="${pts.split(' ').pop().split(',')[0]}" cy="${pts.split(' ').pop().split(',')[1]}" r="3" fill="${color}"/></svg>`;
+    };
 
     const isSuperAdmin = profile?.role === 'super_admin';
     const viewViloyat = DashboardPage._viewViloyat;
@@ -123,22 +140,23 @@ const DashboardPage = {
       <!-- ROW 1: KPI CARDS (TOP 6) -->
       <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-6 mb-10">
         <!-- 1. Jami Qabul Qilingan Bemorlar -->
-        <div class="bg-slate-900 p-7 rounded-[32px] border border-slate-800 shadow-2xl hover:shadow-indigo-500/20 hover:-translate-y-2 transition-all duration-500 group cursor-pointer relative overflow-hidden">
-          <div class="absolute -right-10 -top-10 w-32 h-32 bg-indigo-600/10 rounded-full blur-3xl group-hover:bg-indigo-600/20 transition-all"></div>
-          <div class="flex items-center justify-between mb-6 relative z-10">
-            <div class="w-14 h-14 bg-indigo-500/10 text-indigo-400 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-all duration-500">${icon('users', 32)}</div>
-            <span class="text-[12px] font-black text-slate-500 uppercase tracking-[0.2em]">JAMI BAZA</span>
+        <div class="bg-slate-700 p-7 rounded-[32px] border border-slate-600 shadow-2xl hover:shadow-slate-500/20 hover:-translate-y-2 transition-all duration-500 group cursor-pointer relative overflow-hidden">
+          <div class="absolute -right-10 -top-10 w-32 h-32 bg-slate-500/10 rounded-full blur-3xl group-hover:bg-slate-500/20 transition-all"></div>
+          <div class="flex items-center justify-between mb-4 relative z-10">
+            <div class="w-12 h-12 bg-slate-500/20 text-slate-300 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-all duration-500">${icon('database', 26)}</div>
+            <span class="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">JAMI BAZA</span>
           </div>
-          <p class="text-slate-400 text-[11px] font-bold uppercase tracking-wider mb-2 relative z-10">Jami Qabul Qilingan</p>
+          <p class="text-slate-400 text-[11px] font-bold uppercase tracking-wider mb-1 relative z-10">Jami Qabul Qilingan</p>
           <h3 class="text-5xl font-black text-white relative z-10 tracking-tight">${jami.toLocaleString()}</h3>
-          <div class="mt-6 flex flex-col gap-3 relative z-10">
-            <div class="flex items-center justify-between py-2 px-3 bg-slate-800/50 rounded-xl border border-slate-700/50">
-              <div class="flex items-center gap-2"><span class="w-2 h-2 bg-red-500 rounded-full shadow-[0_0_10px_rgba(239,68,68,0.6)]"></span> <span class="text-[13px] font-bold text-slate-300">Infarkt</span></div>
-              <span class="text-lg font-black text-white">${jamiInfarkt}</span>
+          ${weekTrend ? `<div class="mt-2 relative z-10"><span class="text-xs font-bold ${weekTrendColor}">${weekTrend} o'tgan haftaga nisbatan</span></div>` : ''}
+          <div class="mt-4 flex flex-col gap-2 relative z-10">
+            <div class="flex items-center justify-between py-2 px-3 bg-slate-600/50 rounded-xl border border-slate-500/50">
+              <div class="flex items-center gap-2"><span class="w-2 h-2 bg-red-400 rounded-full"></span><span class="text-[12px] font-bold text-slate-300">Infarkt</span></div>
+              <span class="text-base font-black text-white">${jamiInfarkt}</span>
             </div>
-            <div class="flex items-center justify-between py-2 px-3 bg-slate-800/50 rounded-xl border border-slate-700/50">
-              <div class="flex items-center gap-2"><span class="w-2 h-2 bg-blue-500 rounded-full shadow-[0_0_10px_rgba(59,130,246,0.6)]"></span> <span class="text-[13px] font-bold text-slate-300">Insult</span></div>
-              <span class="text-lg font-black text-white">${jamiInsult}</span>
+            <div class="flex items-center justify-between py-2 px-3 bg-slate-600/50 rounded-xl border border-slate-500/50">
+              <div class="flex items-center gap-2"><span class="w-2 h-2 bg-blue-400 rounded-full"></span><span class="text-[12px] font-bold text-slate-300">Insult</span></div>
+              <span class="text-base font-black text-white">${jamiInsult}</span>
             </div>
           </div>
         </div>
@@ -146,23 +164,24 @@ const DashboardPage = {
         <!-- 2. Bugungi Yangi Bemorlar -->
         <div class="bg-blue-600 p-7 rounded-[32px] shadow-2xl shadow-blue-900/30 hover:shadow-blue-500/40 hover:-translate-y-2 transition-all duration-500 group cursor-pointer relative overflow-hidden">
           <div class="absolute -right-16 -bottom-16 w-56 h-56 bg-white/10 rounded-full blur-3xl group-hover:bg-white/20 transition-all duration-700"></div>
-          <div class="flex items-center justify-between mb-6 relative z-10">
-            <div class="w-14 h-14 bg-white/20 text-white rounded-2xl flex items-center justify-center group-hover:rotate-12 transition-all duration-500">${icon('activity', 32)}</div>
-            <span class="text-[12px] font-black text-blue-100 uppercase tracking-[0.2em]">BUGUN</span>
+          <div class="flex items-center justify-between mb-4 relative z-10">
+            <div class="w-12 h-12 bg-white/20 text-white rounded-2xl flex items-center justify-center group-hover:rotate-12 transition-all duration-500">${icon('activity', 26)}</div>
+            <span class="text-[11px] font-black text-blue-100 uppercase tracking-[0.2em]">BUGUN</span>
           </div>
-          <p class="text-blue-100/80 text-[11px] font-bold uppercase tracking-wider mb-2 relative z-10">Bugungi Yangi Qabullar</p>
-          <div class="flex items-baseline gap-3 relative z-10">
-            <h3 class="text-6xl font-black text-white tracking-tighter">${bugunInfarkt + bugunInsult}</h3>
-            <span class="text-[12px] font-black bg-white text-blue-600 px-3 py-1 rounded-xl uppercase">Ta</span>
+          <p class="text-blue-100/80 text-[11px] font-bold uppercase tracking-wider mb-1 relative z-10">Yangi Qabullar</p>
+          <h3 class="text-6xl font-black text-white tracking-tighter relative z-10">${bugunJami}</h3>
+          <div class="mt-2 relative z-10 flex items-center gap-2">
+            ${renderSparkline(spark7, 'rgba(255,255,255,0.8)')}
+            <span class="text-[10px] text-blue-200 font-semibold">7 kun</span>
           </div>
-          <div class="mt-6 flex flex-col gap-3 relative z-10">
+          <div class="mt-3 flex flex-col gap-2 relative z-10">
             <div class="flex items-center justify-between py-2 px-3 bg-white/10 rounded-xl border border-white/10">
-              <div class="flex items-center gap-2"><span class="w-2 h-2 bg-white rounded-full shadow-[0_0_10px_rgba(255,255,255,0.6)]"></span> <span class="text-[13px] font-bold text-white">Infarkt</span></div>
-              <span class="text-lg font-black text-white">${bugunInfarkt}</span>
+              <div class="flex items-center gap-2"><span class="w-2 h-2 bg-white rounded-full"></span><span class="text-[12px] font-bold text-white">Infarkt</span></div>
+              <span class="text-base font-black text-white">${bugunInfarkt}</span>
             </div>
             <div class="flex items-center justify-between py-2 px-3 bg-white/10 rounded-xl border border-white/10">
-              <div class="flex items-center gap-2"><span class="w-2 h-2 bg-white/50 rounded-full"></span> <span class="text-[13px] font-bold text-blue-100">Insult</span></div>
-              <span class="text-lg font-black text-white">${bugunInsult}</span>
+              <div class="flex items-center gap-2"><span class="w-2 h-2 bg-white/50 rounded-full"></span><span class="text-[12px] font-bold text-blue-100">Insult</span></div>
+              <span class="text-base font-black text-white">${bugunInsult}</span>
             </div>
           </div>
         </div>
@@ -189,22 +208,22 @@ const DashboardPage = {
         </div>
 
         <!-- 4. Statsionarda Davolanayotganlar -->
-        <div class="bg-slate-900 p-7 rounded-[32px] border border-slate-800 shadow-2xl hover:shadow-orange-500/20 hover:-translate-y-2 transition-all duration-500 group cursor-pointer relative overflow-hidden">
-          <div class="absolute right-0 bottom-0 w-40 h-40 bg-orange-500/5 rounded-full blur-3xl"></div>
-          <div class="flex items-center justify-between mb-6 relative z-10">
-            <div class="w-14 h-14 bg-orange-500/10 text-orange-400 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-all duration-500">${icon('bed-double', 32)}</div>
-            <span class="text-[12px] font-black text-orange-500 uppercase tracking-[0.2em]">AKTIV</span>
+        <div class="bg-sky-800 p-7 rounded-[32px] border border-sky-700 shadow-2xl hover:shadow-sky-500/30 hover:-translate-y-2 transition-all duration-500 group cursor-pointer relative overflow-hidden">
+          <div class="absolute right-0 bottom-0 w-40 h-40 bg-sky-400/10 rounded-full blur-3xl"></div>
+          <div class="flex items-center justify-between mb-4 relative z-10">
+            <div class="w-12 h-12 bg-sky-500/20 text-sky-300 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-all duration-500">${icon('bed-double', 26)}</div>
+            <span class="text-[11px] font-black text-sky-300 uppercase tracking-[0.2em]">AKTIV</span>
           </div>
-          <p class="text-slate-400 text-[11px] font-bold uppercase tracking-wider mb-2 relative z-10">Hozir Statsionarda</p>
+          <p class="text-sky-300/70 text-[11px] font-bold uppercase tracking-wider mb-1 relative z-10">Hozir Statsionarda</p>
           <h3 class="text-5xl font-black text-white relative z-10 tracking-tight">${(aktivInfarkt + aktivInsult).toLocaleString()}</h3>
-          <div class="mt-6 flex flex-col gap-3 relative z-10">
-            <div class="flex items-center justify-between py-2 px-3 bg-slate-800/50 rounded-xl border border-slate-700/50">
-              <div class="flex items-center gap-2"><span class="w-2 h-2 bg-red-500 rounded-full shadow-[0_0_10px_rgba(239,68,68,0.6)]"></span> <span class="text-[13px] font-bold text-slate-300">Infarkt</span></div>
-              <span class="text-lg font-black text-white">${aktivInfarkt}</span>
+          <div class="mt-4 flex flex-col gap-2 relative z-10">
+            <div class="flex items-center justify-between py-2 px-3 bg-sky-700/50 rounded-xl border border-sky-600/50">
+              <div class="flex items-center gap-2"><span class="w-2 h-2 bg-red-400 rounded-full"></span><span class="text-[12px] font-bold text-sky-100">Infarkt</span></div>
+              <span class="text-base font-black text-white">${aktivInfarkt}</span>
             </div>
-            <div class="flex items-center justify-between py-2 px-3 bg-slate-800/50 rounded-xl border border-slate-700/50">
-              <div class="flex items-center gap-2"><span class="w-2 h-2 bg-blue-500 rounded-full shadow-[0_0_10px_rgba(59,130,246,0.6)]"></span> <span class="text-[13px] font-bold text-slate-300">Insult</span></div>
-              <span class="text-lg font-black text-white">${aktivInsult}</span>
+            <div class="flex items-center justify-between py-2 px-3 bg-sky-700/50 rounded-xl border border-sky-600/50">
+              <div class="flex items-center gap-2"><span class="w-2 h-2 bg-blue-300 rounded-full"></span><span class="text-[12px] font-bold text-sky-100">Insult</span></div>
+              <span class="text-base font-black text-white">${aktivInsult}</span>
             </div>
           </div>
         </div>
