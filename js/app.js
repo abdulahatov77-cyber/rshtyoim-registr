@@ -9,6 +9,15 @@ const App = {
       if (overrides.length) MuassasaDB.applyToConfig(overrides);
     } catch(e) { /* muassasa_overrides table may not exist yet */ }
 
+    // LocalStorage dan aholi sonini yuklash (admin panelida o'zgartirilgan bo'lsa)
+    try {
+      const saved = localStorage.getItem('aholi_18plus');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        APP_CONFIG.AHOLI_18PLUS = Object.assign({}, APP_CONFIG.AHOLI_18PLUS, parsed);
+      }
+    } catch(e) { /* ignore */ }
+
     try {
       const session = await Auth.getSession();
       if (session) {
