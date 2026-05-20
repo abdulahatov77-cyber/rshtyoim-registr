@@ -95,6 +95,14 @@ const DashboardPage = {
     const bugunInsult = stats.insultBugun || 0;
     const bugunJami = bugunInfarkt + bugunInsult;
 
+    // Jami 18+ aholi (respublika yoki tanlangan viloyat)
+    const aholiMap = APP_CONFIG.AHOLI_18PLUS || {};
+    const viewVil = DashboardPage._viewViloyat;
+    const jamiAholi = viewVil
+      ? (aholiMap[viewVil] || 0)
+      : Object.values(aholiMap).reduce((a, b) => a + b, 0);
+    const per100k = jamiAholi > 0 ? +((jami / jamiAholi) * 100000).toFixed(1) : null;
+
     // O'tgan hafta vs bu hafta trend (oxirgi 30 kundan)
     const spark7 = trend ? trend.infData.slice(-7).map((v,i) => v + (trend.insData[trend.insData.length-7+i]||0)) : [];
     const thisWeek = spark7.reduce((a,b) => a+b, 0);
@@ -148,7 +156,11 @@ const DashboardPage = {
           </div>
           <p class="text-slate-400 text-[11px] font-bold uppercase tracking-wider mb-1 relative z-10">Jami Qabul Qilingan</p>
           <h3 class="text-5xl font-black text-white relative z-10 tracking-tight">${jami.toLocaleString()}</h3>
-          ${weekTrend ? `<div class="mt-2 relative z-10"><span class="text-xs font-bold ${weekTrendColor}">${weekTrend} o'tgan hafta</span></div>` : '<div class="mt-2"></div>'}
+          <div class="mt-2 relative z-10 flex flex-col gap-1">
+            ${weekTrend ? `<span class="text-xs font-bold ${weekTrendColor}">${weekTrend} o'tgan hafta</span>` : ''}
+            ${per100k !== null ? `<span class="text-xs text-slate-400 font-semibold">${per100k} / 100 000 aholi</span>` : ''}
+            ${jamiAholi > 0 ? `<span class="text-[10px] text-slate-500">18+ aholi: ${(jamiAholi/1000000).toFixed(2)} mln</span>` : ''}
+          </div>
           <div class="mt-auto pt-3 flex flex-col gap-2 relative z-10">
             <div class="flex items-center justify-between h-9 px-3 bg-slate-600/50 rounded-xl border border-slate-500/50">
               <div class="flex items-center gap-2"><span class="w-2 h-2 bg-red-400 rounded-full"></span><span class="text-[12px] font-bold text-slate-300">Infarkt</span></div>
