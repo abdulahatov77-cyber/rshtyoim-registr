@@ -1365,18 +1365,26 @@ const BemorKartaPage = {
             <label class="form-label">GCS bali</label>
             <input id="edit-gcs" type="number" class="form-input" value="${p.gcs_bali||p.gcs_qabul||''}" min="3" max="15"/>
           </div>
-          <div class="form-group">
+          ${(()=>{
+            const mt = (p.muolaja_turi||'').toLowerCase();
+            const showKt = p.mskt === "Ha – o'tkazildi" || mt.includes('mskt') || mt.includes('angiografiya');
+            const showTlt = mt.includes('trombolizis') || mt.includes('tlt') || mt.includes('trombolitik');
+            const showTromb = mt.includes('trombektomiya') || mt.includes('tromboekstraksiya') || mt.includes('tromboaspiratsiya') || mt.includes('kombinatsiyalangan');
+            return `
+          ${showKt ? `<div class="form-group">
             <label class="form-label">KT/MSKT vaqti</label>
             <input id="edit-kt-vaqti" type="datetime-local" class="form-input" value="${Utils.formatDateInput(p.kt_vaqti)||''}"/>
-          </div>
-          <div class="form-group">
+          </div>` : ''}
+          ${showTlt ? `<div class="form-group">
             <label class="form-label">Trombolizis vaqti</label>
             <input id="edit-trombolizis-vaqti" type="datetime-local" class="form-input" value="${Utils.formatDateInput(p.trombolizis_vaqti)||''}"/>
-          </div>
-          <div class="form-group">
+          </div>` : ''}
+          ${showTromb ? `<div class="form-group">
             <label class="form-label">Trombektomiya vaqti</label>
             <input id="edit-trombektomiya-vaqti" type="datetime-local" class="form-input" value="${Utils.formatDateInput(p.trombektomiya_vaqti)||''}"/>
-          </div>`}
+          </div>` : ''}`;
+          })()}
+          `}
         </div>`,
       footer: `
         <button class="btn btn-secondary" onclick="closeModal()">Bekor qilish</button>
@@ -1411,10 +1419,10 @@ const BemorKartaPage = {
       showToast('⚠️ Qabul vaqti kelajakda bo\'lishi mumkin emas!', 'error', 5000);
       return;
     }
-    // Vaqt mezonlari validatsiyasi
+    // Vaqt mezonlari validatsiyasi (faqat DOM da mavjud inputlarni tekshirish)
     const vaqtFields = isInf
       ? [['edit-tlt-vaqt','TLT vaqti'],['edit-pci-vaqt','PCI vaqti']]
-      : [['edit-kt-vaqti','KT/MSKT vaqti'],['edit-trombolizis-vaqti','Trombolizis vaqti'],['edit-trombektomiya-vaqti','Trombektomiya vaqti']];
+      : [['edit-kt-vaqti','KT/MSKT vaqti'],['edit-trombolizis-vaqti','Trombolizis vaqti'],['edit-trombektomiya-vaqti','Trombektomiya vaqti']].filter(([fId]) => !!g(fId));
     for (const [fieldId, label] of vaqtFields) {
       const raw = g(fieldId)?.value;
       if (!raw) continue;
