@@ -1,6 +1,6 @@
 // ==================== BEMORLAR RO'YXATI ====================
 const BemorlarPage = {
-  _filters: { type: 'all', status: '', viloyat: '', search: '', date: '', dateTo: '' },
+  _filters: { type: 'all', status: '', viloyat: '', search: '', date: '', dateTo: '', missingTime: false },
   _currentPage: 1,
   _perPage: 20,
   _selected: new Set(),
@@ -93,13 +93,21 @@ const BemorlarPage = {
             </div>
           </div>
         </div>
-        <div class="flex gap-3 justify-end border-t border-gray-100 pt-4 mt-2">
-          <button class="btn btn-secondary flex items-center gap-2" onclick="BemorlarPage.resetFilters()">
-            ${icon('refresh-cw', 16)} Tozalash
-          </button>
-          <button class="btn btn-primary flex items-center gap-2" onclick="BemorlarPage.exportData()">
-            ${icon('download', 16)} Export CSV
-          </button>
+        <div class="flex flex-wrap gap-3 items-center justify-between border-t border-gray-100 pt-4 mt-2">
+          <label class="flex items-center gap-2 cursor-pointer select-none">
+            <input type="checkbox" id="f-missing-time" onchange="BemorlarPage.applyFilter()"
+              ${f.missingTime ? 'checked' : ''}
+              style="width:16px;height:16px;accent-color:#dc2626;cursor:pointer"/>
+            <span class="text-sm font-semibold text-red-600">⏱ Vaqt mezonlari kiritilmagan</span>
+          </label>
+          <div class="flex gap-3">
+            <button class="btn btn-secondary flex items-center gap-2" onclick="BemorlarPage.resetFilters()">
+              ${icon('refresh-cw', 16)} Tozalash
+            </button>
+            <button class="btn btn-primary flex items-center gap-2" onclick="BemorlarPage.exportData()">
+              ${icon('download', 16)} Export CSV
+            </button>
+          </div>
         </div>
       </div>
 
@@ -144,13 +152,14 @@ const BemorlarPage = {
     BemorlarPage._filters.date = document.getElementById('f-date')?.value || '';
     BemorlarPage._filters.dateTo = document.getElementById('f-date-to')?.value || '';
     BemorlarPage._filters.search = document.getElementById('f-search')?.value || '';
+    BemorlarPage._filters.missingTime = document.getElementById('f-missing-time')?.checked || false;
     BemorlarPage._currentPage = 1;
     BemorlarPage.loadData();
   },
 
   resetFilters() {
     BemorlarPage._filters = {
-      type: 'all', status: '', search: '', date: '', dateTo: '',
+      type: 'all', status: '', search: '', date: '', dateTo: '', missingTime: false,
       viloyat: BemorlarPage._profile?.role === 'super_admin' ? '' : (BemorlarPage._profile?.viloyat || '')
     };
     BemorlarPage._currentPage = 1;
@@ -176,11 +185,30 @@ const BemorlarPage = {
       let combined = [];
       let totalCount = 0;
       const fetches = [];
-      if (f.type !== 'insult') fetches.push(DB.infarktList(fObj).then(r => ({ rows: r.data.map(x=>({...x,_type:'infarkt'})), count: r.count })));
-      if (f.type !== 'infarkt') fetches.push(DB.insultList(fObj).then(r => ({ rows: r.data.map(x=>({...x,_type:'insult'})), count: r.count })));
+      const fetchObj = f.missingTime ? { ...fObj, allCols: true } : fObj;
+      if (f.type !== 'insult') fetches.push(DB.infarktList(fetchObj).then(r => ({ rows: r.data.map(x=>({...x,_type:'infarkt'})), count: r.count })));
+      if (f.type !== 'infarkt') fetches.push(DB.insultList(fetchObj).then(r => ({ rows: r.data.map(x=>({...x,_type:'insult'})), count: r.count })));
       const results = await Promise.all(fetches);
       results.forEach(r => { combined.push(...r.rows); totalCount += r.count; });
       combined.sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
+
+      // Vaqt kiritilmagan filtr (client-side)
+      if (f.missingTime) {
+        combined = combined.filter(p => {
+          if (p._type === 'infarkt') {
+            const needsTLT = p.muolaja_turi?.includes('TLT') || p.muolaja_turi?.toLowerCase().includes('trombolitik');
+            const needsPCI = p.muolaja_turi?.includes('PCI') || p.muolaja_turi?.includes('stentlash') || p.muolaja_turi?.includes('TLBAP');
+            return !p.ekg_vaqti || (needsTLT && !p.tlt_vaqt) || (needsPCI && !p.pci_vaqt);
+          } else {
+            const needsTLT = p.muolaja_turi?.toLowerCase().includes('trombolizis') || p.muolaja_turi?.toLowerCase().includes('tlt');
+            const needsTromb = p.muolaja_turi?.toLowerCase().includes('trombektomiya') || p.muolaja_turi?.toLowerCase().includes('tromboekstraksiya');
+            const needsCT = p.mskt === 'Ha – o\'tkazildi';
+            return (needsTLT && !p.trombolizis_vaqti) || (needsTromb && !p.trombektomiya_vaqti) || (needsCT && !p.kt_vaqti);
+          }
+        });
+        totalCount = combined.length;
+      }
+
       BemorlarPage._allData = combined;
       BemorlarPage._totalCount = totalCount;
       BemorlarPage.renderTable();
