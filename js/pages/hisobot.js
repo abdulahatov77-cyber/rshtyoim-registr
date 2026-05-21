@@ -308,13 +308,19 @@ const HisobotPage = {
     const statsTrombektomiya= calcTimeStats(ins.filter(p=>p.trombektomiya_vaqti), 'qabul_vaqt', 'trombektomiya_vaqti');
     const statsCT           = calcTimeStats(ins.filter(p=>p.kt_vaqti), 'qabul_vaqt', 'kt_vaqti');
 
-    // n — vaqt to'ldirilmagan bemorlar soni (qanchasida bu maydon bo'sh)
-    const nEKG_total = infs.length;
-    const nTLT_inf_total = infs.filter(p=>p.muolaja_turi?.includes('TLT')||p.muolaja_turi?.includes('trombolitik')).length;
-    const nPCI_total = infs.filter(p=>p.muolaja_turi?.includes('PCI')||p.muolaja_turi?.includes('stentlash')||p.muolaja_turi?.includes('TLBAP')).length;
-    const nTLT_ins_total = ins.filter(p=>p.muolaja_turi?.toLowerCase().includes('trombolizis')||p.muolaja_turi?.toLowerCase().includes('tlt')).length;
-    const nTromb_total = ins.filter(p=>p.muolaja_turi?.toLowerCase().includes('trombektomiya')||p.muolaja_turi?.toLowerCase().includes('tromboekstraksiya')).length;
-    const nCT_total = ins.filter(p=>p.mskt==='Ha – o\'tkazildi').length;
+    // n — muolaja tanlangan bemorlar (vaqt to'ldirilishi kerak bo'lganlar)
+    const nEKG_total      = infs.length;
+    const nEKG_filled     = infs.filter(p=>p.ekg_vaqti).length;
+    const nTLT_inf_total  = infs.filter(p=>p.muolaja_turi?.includes('TLT')||p.muolaja_turi?.includes('trombolitik')).length;
+    const nTLT_inf_filled = infs.filter(p=>p.tlt_vaqt).length;
+    const nPCI_total      = infs.filter(p=>p.muolaja_turi?.includes('PCI')||p.muolaja_turi?.includes('stentlash')||p.muolaja_turi?.includes('TLBAP')).length;
+    const nPCI_filled     = infs.filter(p=>p.pci_vaqt).length;
+    const nTLT_ins_total  = ins.filter(p=>p.muolaja_turi?.toLowerCase().includes('trombolizis')||p.muolaja_turi?.toLowerCase().includes('tlt')).length;
+    const nTLT_ins_filled = ins.filter(p=>p.trombolizis_vaqti).length;
+    const nTromb_total    = ins.filter(p=>p.muolaja_turi?.toLowerCase().includes('trombektomiya')||p.muolaja_turi?.toLowerCase().includes('tromboekstraksiya')).length;
+    const nTromb_filled   = ins.filter(p=>p.trombektomiya_vaqti).length;
+    const nCT_total       = ins.filter(p=>p.mskt==='Ha – o\'tkazildi').length;
+    const nCT_filled      = ins.filter(p=>p.kt_vaqti).length;
 
     const now = new Date();
     const nowStr = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')} ${String(now.getDate()).padStart(2,'0')}.${String(now.getMonth()+1).padStart(2,'0')}.${now.getFullYear()}`;
@@ -434,6 +440,49 @@ const HisobotPage = {
             </div>
           </div>
           <div class="p-4">
+            <!-- Vaqt kiritilganlik darajasi -->
+            <div class="mb-5" style="background:#f8fafc;border-radius:14px;border:1px solid #e2e8f0;padding:14px">
+              <div style="font-size:11px;font-weight:900;color:#0f172a;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:10px">
+                📋 Vaqt mezonlari to'ldirilganlik darajasi
+              </div>
+              ${(() => {
+                const pctBar = (filled, total) => {
+                  if (total === 0) return '<span style="color:#94a3b8;font-size:10px">—</span>';
+                  const p = Math.round((filled/total)*100);
+                  const clr = p>=80?'#16a34a':p>=50?'#d97706':'#dc2626';
+                  return `<div style="display:flex;align-items:center;gap:6px">
+                    <div style="flex:1;background:#e2e8f0;border-radius:99px;height:7px;overflow:hidden">
+                      <div style="height:100%;width:${p}%;background:${clr};border-radius:99px"></div>
+                    </div>
+                    <span style="font-size:10px;font-weight:700;color:${clr};min-width:32px">${filled}/${total}</span>
+                    <span style="font-size:10px;color:#64748b">(${p}%)</span>
+                  </div>`;
+                };
+                const rows = [
+                  ['♥ Infarkt — EKG vaqti',       nEKG_filled,     nEKG_total],
+                  ['♥ Infarkt — TLT vaqti',        nTLT_inf_filled, nTLT_inf_total],
+                  ['♥ Infarkt — PCI/Groin vaqti',  nPCI_filled,     nPCI_total],
+                  ['◎ Insult — KT/MSKT vaqti',     nCT_filled,      nCT_total],
+                  ['◎ Insult — Trombolizis vaqti',  nTLT_ins_filled, nTLT_ins_total],
+                  ['◎ Insult — Trombektomiya vaqti',nTromb_filled,   nTromb_total],
+                ];
+                return `<table style="width:100%;border-collapse:collapse;font-size:11px">
+                  <thead><tr style="background:#e2e8f0">
+                    <th style="padding:6px 10px;text-align:left;font-weight:700;color:#475569;border-radius:6px 0 0 0">Mezon</th>
+                    <th style="padding:6px 10px;text-align:center;font-weight:700;color:#475569">To'ldirilgan</th>
+                    <th style="padding:6px 10px;text-align:left;font-weight:700;color:#475569;border-radius:0 6px 0 0">Daraja</th>
+                  </tr></thead>
+                  <tbody>
+                    ${rows.map(([label, filled, total], i) => `
+                      <tr style="background:${i%2===0?'#fff':'#f8fafc'};border-bottom:1px solid #f1f5f9">
+                        <td style="padding:7px 10px;font-weight:600;color:#334155">${label}</td>
+                        <td style="padding:7px 10px;text-align:center;color:#64748b">${filled} / ${total}</td>
+                        <td style="padding:7px 10px">${pctBar(filled, total)}</td>
+                      </tr>`).join('')}
+                  </tbody>
+                </table>`;
+              })()}
+            </div>
             <!-- Infarkt mezonlari -->
             <div class="mb-4">
               <div style="font-size:11px;font-weight:900;color:#b91c1c;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:10px;display:flex;align-items:center;gap:4px">
@@ -448,12 +497,12 @@ const HisobotPage = {
                   if (!stats) {
                     const badge = nTotal === 0
                       ? `<span style="display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;background:#f1f5f9;color:#94a3b8">N/A</span>`
-                      : `<span style="display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;background:#fef3c7;color:#92400e">TO'LDIRILMAGAN</span>`;
+                      : `<span style="display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;background:#fef3c7;color:#92400e">MA'LUMOT YETARLI EMAS</span>`;
                     return `<div style="padding:12px;background:#f8fafc;border-radius:14px;border:1px solid #e2e8f0;text-align:center">
                       <div style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;margin-bottom:6px">${label}</div>
                       <div style="font-size:22px;font-weight:900;color:#cbd5e1;margin:4px 0">—</div>
                       <div style="margin:6px 0">${badge}</div>
-                      ${nTotal > 0 ? `<div style="font-size:10px;color:#94a3b8">n=${nTotal} bemor, vaqt kiritilmagan</div>` : `<div style="font-size:10px;color:#94a3b8">Bu muolaja bajarilmagan</div>`}
+                      ${nTotal > 0 ? `<div style="font-size:10px;color:#94a3b8">Muolaja: ${nTotal} ta · vaqt kiritilmagan</div>` : `<div style="font-size:10px;color:#94a3b8">Bu muolaja bajarilmagan</div>`}
                     </div>`;
                   }
                   const pct = Math.min(100, Math.round((stats.median / target) * 100));
@@ -494,12 +543,12 @@ const HisobotPage = {
                   if (!stats) {
                     const badge = nTotal === 0
                       ? `<span style="display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;background:#f1f5f9;color:#94a3b8">N/A</span>`
-                      : `<span style="display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;background:#fef3c7;color:#92400e">TO'LDIRILMAGAN</span>`;
+                      : `<span style="display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;background:#fef3c7;color:#92400e">MA'LUMOT YETARLI EMAS</span>`;
                     return `<div style="padding:12px;background:#f8fafc;border-radius:14px;border:1px solid #e2e8f0;text-align:center">
                       <div style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;margin-bottom:6px">${label}</div>
                       <div style="font-size:22px;font-weight:900;color:#cbd5e1;margin:4px 0">—</div>
                       <div style="margin:6px 0">${badge}</div>
-                      ${nTotal > 0 ? `<div style="font-size:10px;color:#94a3b8">n=${nTotal} bemor, vaqt kiritilmagan</div>` : `<div style="font-size:10px;color:#94a3b8">Bu muolaja bajarilmagan</div>`}
+                      ${nTotal > 0 ? `<div style="font-size:10px;color:#94a3b8">Muolaja: ${nTotal} ta · vaqt kiritilmagan</div>` : `<div style="font-size:10px;color:#94a3b8">Bu muolaja bajarilmagan</div>`}
                     </div>`;
                   }
                   const pct = Math.min(100, Math.round((stats.median / target) * 100));
