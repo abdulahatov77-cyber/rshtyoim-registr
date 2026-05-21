@@ -1349,14 +1349,21 @@ const BemorKartaPage = {
             <label class="form-label">EKG vaqti</label>
             <input id="edit-ekg-vaqti" type="time" class="form-input" value="${p.ekg_vaqti||''}"/>
           </div>
-          <div class="form-group">
+          ${(()=>{
+            const mt = (p.muolaja_turi||'').toLowerCase();
+            const showTlt = mt.includes('tlt') || mt.includes('trombolitik');
+            const showPci = mt.includes('pci') || mt.includes('stentlash') || mt.includes('kag') || mt.includes('tlbap') || mt.includes('ballon') || mt.includes('angioplastika');
+            return `
+          ${showTlt ? `<div class="form-group">
             <label class="form-label">TLT vaqti</label>
             <input id="edit-tlt-vaqt" type="datetime-local" class="form-input" value="${Utils.formatDateInput(p.tlt_vaqt)||''}"/>
-          </div>
-          <div class="form-group">
+          </div>` : ''}
+          ${showPci ? `<div class="form-group">
             <label class="form-label">PCI/Groin vaqti</label>
             <input id="edit-pci-vaqt" type="datetime-local" class="form-input" value="${Utils.formatDateInput(p.pci_vaqt)||''}"/>
-          </div>` : `
+          </div>` : ''}`;
+          })()}
+          ` : `
           <div class="form-group">
             <label class="form-label">NIHSS (qabul)</label>
             <input id="edit-nihss" type="number" class="form-input" value="${p.nihss_qabul||''}" min="0" max="42"/>
@@ -1420,9 +1427,10 @@ const BemorKartaPage = {
       return;
     }
     // Vaqt mezonlari validatsiyasi (faqat DOM da mavjud inputlarni tekshirish)
-    const vaqtFields = isInf
+    const vaqtFields = (isInf
       ? [['edit-tlt-vaqt','TLT vaqti'],['edit-pci-vaqt','PCI vaqti']]
-      : [['edit-kt-vaqti','KT/MSKT vaqti'],['edit-trombolizis-vaqti','Trombolizis vaqti'],['edit-trombektomiya-vaqti','Trombektomiya vaqti']].filter(([fId]) => !!g(fId));
+      : [['edit-kt-vaqti','KT/MSKT vaqti'],['edit-trombolizis-vaqti','Trombolizis vaqti'],['edit-trombektomiya-vaqti','Trombektomiya vaqti']]
+    ).filter(([fId]) => !!g(fId));
     for (const [fieldId, label] of vaqtFields) {
       const raw = g(fieldId)?.value;
       if (!raw) continue;
