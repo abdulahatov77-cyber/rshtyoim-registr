@@ -109,7 +109,7 @@ const APP_CONFIG = {
     ],
     "Farg'ona viloyati": [
       "RSHTYOIM Farg'ona filiali", "Marg'ilon ShTB", "Quvasoy ShTB",
-      "Oltiariq TTB", "Quva TTB", "Farg'ona TTB",
+      "Oltiariq TTB", "Farg'ona TTB",
       "Qo'shtepa TTB", "Toshloq TTB", "Rishton TTB",
       "Buvayda TTB", "Uchko'prik TTB", "Dang'ara TTB",
       "Furqat TTB", "O'zbekiston TTB", "Beshariq TTB",
