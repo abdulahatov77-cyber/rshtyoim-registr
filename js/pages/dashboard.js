@@ -547,8 +547,8 @@ const DashboardPage = {
         // Age-Sex Pyramids
         const ageSex = DashboardPage._ageSex;
         if (ageSex && typeof AgePyramid !== 'undefined') {
-          AgePyramid.render('pyramid-infarkt', ageSex.infarkt, 'INFARKT', '#dc2626');
-          AgePyramid.render('pyramid-insult',  ageSex.insult,  'INSULT',  '#2563eb');
+          AgePyramid.render('pyramid-infarkt', ageSex.infarkt, 'INFARKT', '#dc2626', stats.jamiInfarkt);
+          AgePyramid.render('pyramid-insult',  ageSex.insult,  'INSULT',  '#2563eb', stats.jamiInsult);
         }
       }, 300);
     });

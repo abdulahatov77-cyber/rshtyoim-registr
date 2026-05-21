@@ -9,7 +9,7 @@ const AgePyramid = {
   COLOR_FEMALE: '#EF4444',  // yorqin qizil
   COLOR_DEATH: 'rgba(0,0,0,0.38)',
 
-  render(containerId, pyramidData, title, dotColor) {
+  render(containerId, pyramidData, title, dotColor, totalCount) {
     const el = document.getElementById(containerId);
     if (!el || !pyramidData) return;
 
@@ -121,7 +121,7 @@ const AgePyramid = {
 
     const header = `
       <text x="${W/2}" y="16" text-anchor="middle" font-size="13" font-weight="800" fill="#0f172a">
-        <tspan fill="${dotColor}">●</tspan><tspan> ${title} — ${totalAll.toLocaleString()} ta bemor</tspan>
+        <tspan fill="${dotColor}">●</tspan><tspan> ${title} — ${(totalCount || totalAll).toLocaleString()} ta bemor</tspan>
       </text>
       <text x="${W/2}" y="34" text-anchor="middle" font-size="10.5" fill="#64748b">
         Erkak: ${totalM} ta (${mPct}%) · Ayol: ${totalF} ta (${fPct}%) · Umumiy vafot: ${dPct}%
