@@ -415,13 +415,18 @@ const DB = {
     const p = await Profile.getCurrent();
     const viloyat = overrideViloyat !== undefined ? overrideViloyat : (p?.role === 'super_admin' ? null : p?.viloyat);
     const eqViloyat = (q) => viloyat ? q.eq('viloyat', viloyat) : q;
-    // Bugungi sana: UTC da bugunning 00:00 dan ertangi 00:00 gacha
-    const nowUtc = new Date();
-    const todayUtcStr = nowUtc.toISOString().slice(0, 10); // "YYYY-MM-DD"
-    const todayISO = todayUtcStr + 'T00:00:00.000Z';
-    const tomorrow = new Date(nowUtc);
-    tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
-    const todayEndISO = tomorrow.toISOString().slice(0, 10) + 'T00:00:00.000Z';
+    // Bugungi sana: O'zbekiston vaqti (UTC+5) da 00:00 dan 23:59 gacha
+    // UTC+5 => bugungi 00:00 UZT = UTC 19:00 (kecha), 23:59 UZT = UTC 18:59 (bugun)
+    const nowUzt = new Date();
+    const uztOffset = 5 * 60; // daqiqada
+    const localMs = nowUzt.getTime() + uztOffset * 60000;
+    const uztDate = new Date(localMs);
+    const yy = uztDate.getUTCFullYear();
+    const mm = String(uztDate.getUTCMonth() + 1).padStart(2, '0');
+    const dd = String(uztDate.getUTCDate()).padStart(2, '0');
+    // Bugungi 00:00 UZT = shu kecha UTC 19:00
+    const todayISO    = `${yy}-${mm}-${dd}T00:00:00+05:00`;
+    const todayEndISO = `${yy}-${mm}-${dd}T23:59:59+05:00`;
 
     const [
       { count: infAll },
