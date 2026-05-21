@@ -104,6 +104,9 @@ const BemorlarPage = {
             <button class="btn btn-secondary flex items-center gap-2" onclick="BemorlarPage.resetFilters()">
               ${icon('refresh-cw', 16)} Tozalash
             </button>
+            <button class="btn flex items-center gap-2" style="background:#f59e0b;color:#fff;border:none" onclick="BemorlarPage.openBulkTimeModal()">
+              ${icon('clock', 16)} Vaqt to'ldirish
+            </button>
             <button class="btn btn-primary flex items-center gap-2" onclick="BemorlarPage.exportData()">
               ${icon('download', 16)} Export CSV
             </button>
@@ -386,6 +389,174 @@ const BemorlarPage = {
       else BemorlarPage._selected.delete(key);
     });
     BemorlarPage._updateDeleteBtn();
+  },
+
+  async openBulkTimeModal() {
+    showModal({
+      title: `${icon('clock',18)} Vaqt mezonlarini to'ldirish`,
+      size: 'xl',
+      body: `<div class="flex justify-center py-8"><div class="w-8 h-8 border-4 border-amber-500 border-t-transparent rounded-full animate-spin"></div></div>`,
+      footer: `<button class="btn btn-secondary" onclick="closeModal()">Yopish</button>`
+    });
+
+    // Vaqt kiritilmagan barcha bemorlarni yuklash
+    const fetchAll = async (table, cols) => {
+      let all = [], offset = 0;
+      const sb = getSupabase();
+      const p = BemorlarPage._profile;
+      while (true) {
+        let q = sb.from(table).select(cols).range(offset, offset + 999);
+        if (p?.role !== 'super_admin' && p?.viloyat) q = q.eq('viloyat', p.viloyat);
+        const { data, error } = await q;
+        if (error || !data || !data.length) break;
+        all = all.concat(data);
+        if (data.length < 1000) break;
+        offset += 1000;
+      }
+      return all;
+    };
+
+    const [infRows, insRows] = await Promise.all([
+      fetchAll('infarkt_qabul', 'kt_no,fio,muolaja_turi,qabul_vaqt,ekg_vaqti,tlt_vaqt,pci_vaqt,viloyat'),
+      fetchAll('insult_qabul', 'kt_no,fio,muolaja_turi,mskt,qabul_vaqt,kt_vaqti,trombolizis_vaqti,trombektomiya_vaqti,viloyat')
+    ]);
+
+    // Filtrlash: faqat vaqt kiritilmaganlar
+    const missing = [];
+    infRows.forEach(p => {
+      const mt = (p.muolaja_turi||'').toLowerCase();
+      const needsTLT = mt.includes('tlt') || mt.includes('trombolitik');
+      const needsPCI = mt.includes('pci') || mt.includes('stentlash') || mt.includes('kag') || mt.includes('tlbap');
+      const fields = [];
+      if (!p.ekg_vaqti) fields.push({ id:'ekg_vaqti', label:'EKG vaqti', type:'time', val:'' });
+      if (needsTLT && !p.tlt_vaqt) fields.push({ id:'tlt_vaqt', label:'TLT vaqti', type:'datetime-local', val:'' });
+      if (needsPCI && !p.pci_vaqt) fields.push({ id:'pci_vaqt', label:'PCI/Groin vaqti', type:'datetime-local', val:'' });
+      if (fields.length) missing.push({ ...p, _type:'infarkt', _fields: fields });
+    });
+    insRows.forEach(p => {
+      const mt = (p.muolaja_turi||'').toLowerCase();
+      const isMskt = p.mskt === "Ha – o'tkazildi";
+      const needsTLT = mt.includes('trombolizis') || mt.includes('tlt');
+      const needsTromb = mt.includes('trombektomiya') || mt.includes('tromboekstraksiya') || mt.includes('tromboaspiratsiya') || mt.includes('kombinatsiya');
+      const fields = [];
+      if (isMskt && !p.kt_vaqti) fields.push({ id:'kt_vaqti', label:'KT/MSKT vaqti', type:'datetime-local', val:'' });
+      if (needsTLT && !p.trombolizis_vaqti) fields.push({ id:'trombolizis_vaqti', label:'Trombolizis vaqti', type:'datetime-local', val:'' });
+      if (needsTromb && !p.trombektomiya_vaqti) fields.push({ id:'trombektomiya_vaqti', label:'Trombektomiya vaqti', type:'datetime-local', val:'' });
+      if (fields.length) missing.push({ ...p, _type:'insult', _fields: fields });
+    });
+
+    BemorlarPage._bulkList = missing;
+
+    const modalBody = document.querySelector('#modal-container .modal-body, #modal-container [class*="modal"]');
+    const bodyEl = document.querySelector('#modal-container .overflow-y-auto') || document.querySelector('#modal-container .modal-body');
+
+    if (!missing.length) {
+      if (bodyEl) bodyEl.innerHTML = `<div class="py-12 text-center text-green-600 font-semibold">${icon('check-circle',32,'mx-auto mb-3')} Barcha vaqt mezonlari to'ldirilgan!</div>`;
+      initIcons();
+      return;
+    }
+
+    const rows = missing.map((p, i) => {
+      const isInf = p._type === 'infarkt';
+      const badge = isInf
+        ? `<span class="badge badge-red text-xs">Infarkt</span>`
+        : `<span class="badge badge-purple text-xs">Insult</span>`;
+      const fieldHtml = p._fields.map(f => `
+        <div class="flex items-center gap-2 mt-1">
+          <label class="text-xs text-gray-500 w-32 shrink-0">${f.label}</label>
+          <input type="${f.type}" class="form-input !py-1 !text-sm flex-1"
+            id="bulk-${i}-${f.id}" placeholder="${f.label}"/>
+        </div>`).join('');
+      return `
+        <div class="border border-gray-200 rounded-lg p-3 mb-2" id="bulk-row-${i}">
+          <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center gap-2">
+              ${badge}
+              <span class="font-semibold text-sm text-gray-900">${esc(p.fio||'—')}</span>
+              <span class="text-xs text-gray-400 font-mono">${esc(p.kt_no)}</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-xs text-gray-500">${Utils.formatDateTime(p.qabul_vaqt)}</span>
+              <button class="btn btn-primary !py-1 !px-3 !text-xs" onclick="BemorlarPage.saveBulkRow(${i})">
+                ${icon('save',13)} Saqlash
+              </button>
+            </div>
+          </div>
+          <div class="text-xs text-gray-500 mb-1">${esc(p.muolaja_turi||'—')}</div>
+          ${fieldHtml}
+        </div>`;
+    }).join('');
+
+    if (bodyEl) bodyEl.innerHTML = `
+      <div class="mb-3 flex items-center justify-between">
+        <span class="text-sm text-amber-700 font-semibold bg-amber-50 border border-amber-200 rounded px-3 py-1">
+          ${icon('alert-triangle',14)} ${missing.length} ta bemorda vaqt kiritilmagan
+        </span>
+        <button class="btn btn-primary flex items-center gap-2 !text-sm" onclick="BemorlarPage.saveAllBulk()">
+          ${icon('save',15)} Hammasini saqlash
+        </button>
+      </div>
+      <div id="bulk-list">${rows}</div>`;
+    initIcons();
+  },
+
+  async saveBulkRow(i) {
+    const p = BemorlarPage._bulkList[i];
+    if (!p) return;
+    const updates = {};
+    const toUTC = raw => raw ? new Date(raw + ':00+05:00').toISOString() : null;
+    p._fields.forEach(f => {
+      const el = document.getElementById(`bulk-${i}-${f.id}`);
+      if (!el || !el.value) return;
+      updates[f.id] = f.type === 'time' ? el.value : toUTC(el.value);
+    });
+    if (!Object.keys(updates).length) { showToast('Vaqt kiritilmagan', 'warning'); return; }
+    const btn = event.target.closest('button');
+    if (btn) { btn.disabled = true; btn.innerHTML = '...'; }
+    try {
+      const sb = getSupabase();
+      const table = p._type === 'infarkt' ? 'infarkt_qabul' : 'insult_qabul';
+      const { error } = await sb.from(table).update(updates).eq('kt_no', p.kt_no);
+      if (error) throw error;
+      const row = document.getElementById(`bulk-row-${i}`);
+      if (row) row.innerHTML = `<div class="flex items-center gap-2 py-1 text-green-600 text-sm">${icon('check-circle',16)} <b>${esc(p.fio)}</b> — saqlandi</div>`;
+      initIcons();
+    } catch(err) {
+      showToast(err.message, 'error');
+      if (btn) { btn.disabled = false; btn.innerHTML = `${icon('save',13)} Saqlash`; }
+    }
+  },
+
+  async saveAllBulk() {
+    const list = BemorlarPage._bulkList;
+    if (!list?.length) return;
+    const btn = event.target.closest('button');
+    if (btn) { btn.disabled = true; btn.textContent = 'Saqlanmoqda...'; }
+    let saved = 0, skipped = 0;
+    for (let i = 0; i < list.length; i++) {
+      const p = list[i];
+      const updates = {};
+      const toUTC = raw => raw ? new Date(raw + ':00+05:00').toISOString() : null;
+      p._fields.forEach(f => {
+        const el = document.getElementById(`bulk-${i}-${f.id}`);
+        if (!el || !el.value) return;
+        updates[f.id] = f.type === 'time' ? el.value : toUTC(el.value);
+      });
+      if (!Object.keys(updates).length) { skipped++; continue; }
+      try {
+        const sb = getSupabase();
+        const table = p._type === 'infarkt' ? 'infarkt_qabul' : 'insult_qabul';
+        const { error } = await sb.from(table).update(updates).eq('kt_no', p.kt_no);
+        if (!error) {
+          saved++;
+          const row = document.getElementById(`bulk-row-${i}`);
+          if (row) row.innerHTML = `<div class="flex items-center gap-2 py-1 text-green-600 text-sm">${icon('check-circle',16)} <b>${esc(p.fio)}</b> — saqlandi</div>`;
+        }
+      } catch(e) { skipped++; }
+    }
+    initIcons();
+    if (btn) { btn.disabled = false; btn.textContent = 'Hammasini saqlash'; }
+    showToast(`${saved} ta saqlandi${skipped ? `, ${skipped} ta o'tkazildi` : ''}`, saved > 0 ? 'success' : 'warning');
   },
 
   async deleteSelected() {
