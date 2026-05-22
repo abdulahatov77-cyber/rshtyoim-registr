@@ -1051,62 +1051,84 @@ const Telegram = {
       ? (() => {
           const d = new Date(patient.qabul_vaqt);
           if (isNaN(d)) return String(patient.qabul_vaqt);
-          // UTC+5 Toshkent vaqtiga o'girish
           const tz = new Date(d.getTime() + 5 * 60 * 60 * 1000);
           const pad = n => String(n).padStart(2, '0');
           return `${pad(tz.getUTCDate())}.${pad(tz.getUTCMonth()+1)}.${tz.getUTCFullYear()} ${pad(tz.getUTCHours())}:${pad(tz.getUTCMinutes())}`;
         })()
-      : 'вЂ”';
+      : '—';
 
-    const genderIcon = patient.jins === 'Ayol' ? 'рџ‘©' : 'рџ‘Ё';
-    const shifokor = patient.shifokor_fio || 'вЂ”';
+    const e = {
+      heart:   '🫀', // 🫀
+      brain:   '🧠', // 🧠
+      pin:     '📍', // 📍
+      hosp:    '🏥', // 🏥
+      doc:     '👨‍⚕️', // 👨‍⚕️
+      clip:    '📋', // 📋
+      man:     '👨', // 👨
+      woman:   '👩', // 👩
+      red:     '🔴', // 🔴
+      stetho:  '🩺', // 🩺
+      pill:    '💊', // 💊
+      inj:     '💉', // 💉
+      chart:   '📊', // 📊
+      clock:   '⏰',       // ⏰
+      clock2:  '🕐', // 🕐
+      warn:    '⚠️', // ⚠️
+      test:    '🧪', // 🧪
+      line:    '━━━━━━━━━━━━━━━━━━━━━━',
+      dash:    '—'
+    };
+
+    const genderIcon = patient.jins === 'Ayol' ? e.woman : e.man;
+    const dash = e.dash;
+    const shifokor = patient.shifokor_fio || dash;
 
     if (type === 'infarkt') {
       const killip = patient.killip || '';
       let kritik = '';
       if (killip.includes('III') || killip.includes('IV')) {
-        kritik = `\nвљ пёЏ <b>DIQQAT: KRITIK HOLAT! (Killip ${killip.includes('IV') ? 'IV' : 'III'})</b>`;
+        kritik = `\n${e.warn} <b>DIQQAT: KRITIK HOLAT! (Killip ${killip.includes('IV') ? 'IV' : 'III'})</b>`;
       }
       const kagLine = patient.angio_natija
-        ? `\nрџ§Є <b>KAG natijasi:</b> ${patient.angio_natija}` : '';
+        ? `\n${e.test} <b>KAG natijasi:</b> ${patient.angio_natija}` : '';
 
-      return `рџ«Ђ <b>YANGI INFARKT BEMOR QABUL QILINDI</b>
-в”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓ
-рџ“Ќ <b>Viloyat:</b> ${patient.viloyat || 'вЂ”'}
-рџЏҐ <b>Muassasa:</b> ${patient.muassasa || 'вЂ”'}
-рџ‘ЁвЂЌвљ•пёЏ <b>Shifokor:</b> ${shifokor}
-рџ“‹ <b>K/T No:</b> <code>${patient.kt_no || 'вЂ”'}</code>
-${genderIcon} <b>Bemor:</b> ${patient.fio || 'вЂ”'}, ${age} yosh, ${patient.jins || 'вЂ”'}
-рџ”ґ <b>${patient.infarkt_turi || 'вЂ”'}</b>
-рџ©є <b>Killip:</b> ${killip || 'вЂ”'}
-рџ’Љ <b>Muolaja:</b> ${patient.muolaja_turi || 'вЂ”'}${kagLine}
-рџ“Љ <b>AHA bali:</b> ${patient.aha_bali ?? 'вЂ”'}
-вЏ° <b>Simptom:</b> ${patient.simptom_vaqt || 'вЂ”'}
-рџ•ђ <b>Qabul:</b> ${qabul}
-в”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓ${kritik}`;
+      return `${e.heart} <b>YANGI INFARKT BEMOR QABUL QILINDI</b>
+${e.line}
+${e.pin} <b>Viloyat:</b> ${patient.viloyat || dash}
+${e.hosp} <b>Muassasa:</b> ${patient.muassasa || dash}
+${e.doc} <b>Shifokor:</b> ${shifokor}
+${e.clip} <b>K/T No:</b> <code>${patient.kt_no || dash}</code>
+${genderIcon} <b>Bemor:</b> ${patient.fio || dash}, ${age} yosh, ${patient.jins || dash}
+${e.red} <b>${patient.infarkt_turi || dash}</b>
+${e.stetho} <b>Killip:</b> ${killip || dash}
+${e.pill} <b>Muolaja:</b> ${patient.muolaja_turi || dash}${kagLine}
+${e.chart} <b>AHA bali:</b> ${patient.aha_bali ?? dash}
+${e.clock} <b>Simptom:</b> ${patient.simptom_vaqt || dash}
+${e.clock2} <b>Qabul:</b> ${qabul}
+${e.line}${kritik}`;
 
     } else {
-      const nihss = patient.nihss_qabul ?? 'вЂ”';
-      const gcs   = patient.gcs_bali ?? patient.gcs_qabul ?? 'вЂ”';
+      const nihss = patient.nihss_qabul ?? dash;
+      const gcs   = patient.gcs_bali ?? patient.gcs_qabul ?? dash;
       let kritik = '';
       if (patient.nihss_qabul != null && patient.nihss_qabul >= 15) {
-        kritik = `\nвљ пёЏ <b>DIQQAT: OG'IR HOLAT! (NIHSS = ${patient.nihss_qabul})</b>`;
+        kritik = `\n${e.warn} <b>DIQQAT: OG'IR HOLAT! (NIHSS = ${patient.nihss_qabul})</b>`;
       }
 
-      return `рџ§  <b>YANGI INSULT BEMOR QABUL QILINDI</b>
-в”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓ
-рџ“Ќ <b>Viloyat:</b> ${patient.viloyat || 'вЂ”'}
-рџЏҐ <b>Muassasa:</b> ${patient.muassasa || 'вЂ”'}
-рџ‘ЁвЂЌвљ•пёЏ <b>Shifokor:</b> ${shifokor}
-рџ“‹ <b>K/T в„–:</b> <code>${patient.kt_no || 'вЂ”'}</code>
-${genderIcon} <b>Bemor:</b> ${patient.fio || 'вЂ”'}, ${age} yosh, ${patient.jins || 'вЂ”'}
-рџ©є <b>Insult turi:</b> ${patient.insult_turi || 'вЂ”'}
-рџ“Љ <b>NIHSS/GCS:</b> ${nihss} / ${gcs}
-рџ“‹ <b>AHA:</b> ${patient.aha_bali ?? 'вЂ”'}
-вЏ±пёЏ <b>Simptom:</b> ${patient.simptom_vaqt || 'вЂ”'}
-рџ’‰ <b>Muolaja:</b> ${patient.muolaja_turi || 'вЂ”'}
-рџ•ђ <b>Qabul:</b> ${qabul}
-в”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓ${kritik}`;
+      return `${e.brain} <b>YANGI INSULT BEMOR QABUL QILINDI</b>
+${e.line}
+${e.pin} <b>Viloyat:</b> ${patient.viloyat || dash}
+${e.hosp} <b>Muassasa:</b> ${patient.muassasa || dash}
+${e.doc} <b>Shifokor:</b> ${shifokor}
+${e.clip} <b>K/T №:</b> <code>${patient.kt_no || dash}</code>
+${genderIcon} <b>Bemor:</b> ${patient.fio || dash}, ${age} yosh, ${patient.jins || dash}
+${e.stetho} <b>Insult turi:</b> ${patient.insult_turi || dash}
+${e.chart} <b>NIHSS/GCS:</b> ${nihss} / ${gcs}
+${e.clip} <b>AHA:</b> ${patient.aha_bali ?? dash}
+${e.clock} <b>Simptom:</b> ${patient.simptom_vaqt || dash}
+${e.inj} <b>Muolaja:</b> ${patient.muolaja_turi || dash}
+${e.clock2} <b>Qabul:</b> ${qabul}
+${e.line}${kritik}`;
     }
   }
 };
