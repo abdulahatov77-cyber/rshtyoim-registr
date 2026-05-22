@@ -163,6 +163,24 @@ const APP_CONFIG = {
     "Toshkent shahri":             2172000
   },
 
+  // 30+ aholi soni (jami aholi × 45%)
+  AHOLI_30PLUS: {
+    "Andijon viloyati":            1590255,
+    "Buxoro viloyati":              950490,
+    "Jizzax viloyati":              707940,
+    "Qashqadaryo viloyati":        1679310,
+    "Navoiy viloyati":              501750,
+    "Namangan viloyati":           1441215,
+    "Samarqand viloyati":          1978560,
+    "Surxondaryo viloyati":        1361205,
+    "Sirdaryo viloyati":            427320,
+    "Toshkent viloyati":           1428570,
+    "Farg'ona viloyati":           1907730,
+    "Xorazm viloyati":              933750,
+    "Qoraqalpog'iston Respublikasi": 925965,
+    "Toshkent shahri":             1438155
+  },
+
   BIRLAMCHI_TAKROIRIY: [
     "Birlamchi",
     "Takroriy"

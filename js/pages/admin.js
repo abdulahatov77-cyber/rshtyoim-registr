@@ -476,32 +476,36 @@ const AdminPage = {
   // ==================== AHOLI TAB ====================
 
   _buildAholiTab() {
-    const aholi = APP_CONFIG.AHOLI_18PLUS || {};
+    const aholi18 = APP_CONFIG.AHOLI_18PLUS || {};
+    const aholi30 = APP_CONFIG.AHOLI_30PLUS || {};
     const viloyatlar = APP_CONFIG.VILOYATLAR || [];
     const rows = viloyatlar.map(v => {
-      const val = aholi[v] || 0;
+      const v18 = aholi18[v] || 0;
+      const v30 = aholi30[v] || 0;
+      const key = v.replace(/[^a-zA-Z0-9]/g,'_');
+      const vEsc = v.replace(/'/g,"\\'");
       return `
         <tr style="border-bottom:1px solid rgba(99,118,158,0.1)">
           <td style="padding:12px 16px;color:#e2e8f0;font-weight:600">${v}</td>
           <td style="padding:12px 16px;text-align:right">
-            <input type="number" id="aholi-${v.replace(/[^a-zA-Z0-9]/g,'_')}"
-              value="${val}"
-              style="width:140px;background:#1e293b;border:1px solid #334155;border-radius:8px;padding:6px 10px;color:#f1f5f9;font-size:14px;font-weight:700;text-align:right"
-              onchange="AdminPage._aholiChanged('${v.replace(/'/g,"\\'")}', this.value)"
-            />
+            <input type="number" id="aholi18-${key}" value="${v18}"
+              style="width:130px;background:#1e293b;border:1px solid #334155;border-radius:8px;padding:6px 10px;color:#a5b4fc;font-size:14px;font-weight:700;text-align:right"
+              onchange="AdminPage._aholiChanged18('${vEsc}', this.value)"/>
           </td>
-          <td style="padding:12px 16px;text-align:right;color:#64748b;font-size:13px">
-            ${val > 0 ? (val/1000).toFixed(0) + ' ming' : '—'}
+          <td style="padding:12px 16px;text-align:right">
+            <input type="number" id="aholi30-${key}" value="${v30}"
+              style="width:130px;background:#1e293b;border:1px solid #334155;border-radius:8px;padding:6px 10px;color:#fcd34d;font-size:14px;font-weight:700;text-align:right"
+              onchange="AdminPage._aholiChanged30('${vEsc}', this.value)"/>
           </td>
         </tr>`;
     }).join('');
 
     return `
-      <div style="max-width:680px">
+      <div style="max-width:780px">
         <div style="background:#1e293b;border-radius:16px;padding:20px 24px;margin-bottom:20px;border:1px solid #334155">
           <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
             <span style="font-size:20px">👨‍👩‍👧</span>
-            <h3 style="color:#f1f5f9;font-size:16px;font-weight:700;margin:0">Viloyatlar bo'yicha 18+ aholi soni</h3>
+            <h3 style="color:#f1f5f9;font-size:16px;font-weight:700;margin:0">Viloyatlar bo'yicha aholi soni</h3>
           </div>
           <p style="color:#64748b;font-size:13px;margin:0">Bu ma'lumotlar "/ 100 000 aholi" hisobida ishlatiladi. Har yili yangilab turing.</p>
         </div>
@@ -511,8 +515,8 @@ const AdminPage = {
             <thead>
               <tr style="background:#1e293b">
                 <th style="padding:10px 16px;text-align:left;color:#94a3b8;font-size:12px;font-weight:700;text-transform:uppercase">Viloyat</th>
-                <th style="padding:10px 16px;text-align:right;color:#94a3b8;font-size:12px;font-weight:700;text-transform:uppercase">18+ aholi soni</th>
-                <th style="padding:10px 16px;text-align:right;color:#94a3b8;font-size:12px;font-weight:700;text-transform:uppercase">Taxminan</th>
+                <th style="padding:10px 16px;text-align:right;color:#a5b4fc;font-size:12px;font-weight:700;text-transform:uppercase">18+ aholi soni</th>
+                <th style="padding:10px 16px;text-align:right;color:#fcd34d;font-size:12px;font-weight:700;text-transform:uppercase">30+ aholi soni</th>
               </tr>
             </thead>
             <tbody>${rows}</tbody>
@@ -529,25 +533,32 @@ const AdminPage = {
       </div>`;
   },
 
-  _aholiChanged(viloyat, val) {
+  _aholiChanged18(viloyat, val) {
     if (!APP_CONFIG.AHOLI_18PLUS) APP_CONFIG.AHOLI_18PLUS = {};
     APP_CONFIG.AHOLI_18PLUS[viloyat] = parseInt(val) || 0;
+  },
+
+  _aholiChanged30(viloyat, val) {
+    if (!APP_CONFIG.AHOLI_30PLUS) APP_CONFIG.AHOLI_30PLUS = {};
+    APP_CONFIG.AHOLI_30PLUS[viloyat] = parseInt(val) || 0;
   },
 
   _saveAholi() {
     const statusEl = document.getElementById('aholi-save-status');
     const viloyatlar = APP_CONFIG.VILOYATLAR || [];
+    if (!APP_CONFIG.AHOLI_18PLUS) APP_CONFIG.AHOLI_18PLUS = {};
+    if (!APP_CONFIG.AHOLI_30PLUS) APP_CONFIG.AHOLI_30PLUS = {};
     viloyatlar.forEach(v => {
-      const id = 'aholi-' + v.replace(/[^a-zA-Z0-9]/g, '_');
-      const input = document.getElementById(id);
-      if (input) {
-        if (!APP_CONFIG.AHOLI_18PLUS) APP_CONFIG.AHOLI_18PLUS = {};
-        APP_CONFIG.AHOLI_18PLUS[v] = parseInt(input.value) || 0;
-      }
+      const key = v.replace(/[^a-zA-Z0-9]/g, '_');
+      const i18 = document.getElementById('aholi18-' + key);
+      const i30 = document.getElementById('aholi30-' + key);
+      if (i18) APP_CONFIG.AHOLI_18PLUS[v] = parseInt(i18.value) || 0;
+      if (i30) APP_CONFIG.AHOLI_30PLUS[v] = parseInt(i30.value) || 0;
     });
     try {
       localStorage.setItem('aholi_18plus', JSON.stringify(APP_CONFIG.AHOLI_18PLUS));
-      if (statusEl) statusEl.textContent = '✅ Saqlandi (sahifa yangilanguncha amal qiladi)';
+      localStorage.setItem('aholi_30plus', JSON.stringify(APP_CONFIG.AHOLI_30PLUS));
+      if (statusEl) statusEl.textContent = '✅ Saqlandi';
       setTimeout(() => { if (statusEl) statusEl.textContent = ''; }, 4000);
     } catch(e) {
       if (statusEl) statusEl.textContent = '❌ Xato: ' + e.message;

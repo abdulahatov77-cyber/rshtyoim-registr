@@ -11,11 +11,10 @@ const App = {
 
     // LocalStorage dan aholi sonini yuklash (admin panelida o'zgartirilgan bo'lsa)
     try {
-      const saved = localStorage.getItem('aholi_18plus');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        APP_CONFIG.AHOLI_18PLUS = Object.assign({}, APP_CONFIG.AHOLI_18PLUS, parsed);
-      }
+      const saved18 = localStorage.getItem('aholi_18plus');
+      if (saved18) APP_CONFIG.AHOLI_18PLUS = Object.assign({}, APP_CONFIG.AHOLI_18PLUS, JSON.parse(saved18));
+      const saved30 = localStorage.getItem('aholi_30plus');
+      if (saved30) APP_CONFIG.AHOLI_30PLUS = Object.assign({}, APP_CONFIG.AHOLI_30PLUS, JSON.parse(saved30));
     } catch(e) { /* ignore */ }
 
     try {

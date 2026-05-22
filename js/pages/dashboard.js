@@ -97,13 +97,20 @@ const DashboardPage = {
     const bugunInsult = stats.insultBugun || 0;
     const bugunJami = bugunInfarkt + bugunInsult;
 
-    // Jami 18+ aholi (respublika yoki tanlangan viloyat)
-    const aholiMap = APP_CONFIG.AHOLI_18PLUS || {};
+    // Jami 18+ va 30+ aholi (respublika yoki tanlangan viloyat)
+    const aholiMap18 = APP_CONFIG.AHOLI_18PLUS || {};
+    const aholiMap30 = APP_CONFIG.AHOLI_30PLUS || {};
     const viewVil = DashboardPage._viewViloyat;
-    const jamiAholi = viewVil
-      ? (aholiMap[viewVil] || 0)
-      : Object.values(aholiMap).reduce((a, b) => a + b, 0);
-    const per100k = jamiAholi > 0 ? +((jami / jamiAholi) * 100000).toFixed(1) : null;
+    const jamiAholi18 = viewVil
+      ? (aholiMap18[viewVil] || 0)
+      : Object.values(aholiMap18).reduce((a, b) => a + b, 0);
+    const jamiAholi30 = viewVil
+      ? (aholiMap30[viewVil] || 0)
+      : Object.values(aholiMap30).reduce((a, b) => a + b, 0);
+    const jamiAholi = jamiAholi18; // backwards compat
+    const per100k18 = jamiAholi18 > 0 ? +((jami / jamiAholi18) * 100000).toFixed(1) : null;
+    const per100k30 = jamiAholi30 > 0 ? +((jami / jamiAholi30) * 100000).toFixed(1) : null;
+    const per100k = per100k18;
 
     // O'tgan hafta vs bu hafta trend (oxirgi 30 kundan)
     const spark7 = trend ? trend.infData.slice(-7).map((v,i) => v + (trend.insData[trend.insData.length-7+i]||0)) : [];
@@ -159,22 +166,29 @@ const DashboardPage = {
           <p class="text-slate-400 text-[11px] font-bold uppercase tracking-wider mb-1 relative z-10">Jami Qabul Qilingan</p>
           <h3 class="text-5xl font-black text-white relative z-10 tracking-tight">${jami.toLocaleString()}</h3>
           ${weekDiff !== null ? `<div class="mt-1 relative z-10"><span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold ${weekDiff > 0 ? 'bg-red-500/20 text-red-300' : weekDiff < 0 ? 'bg-emerald-500/20 text-emerald-300' : 'bg-slate-500/20 text-slate-400'}">${weekDiff > 0 ? '▲' : weekDiff < 0 ? '▼' : '→'} ${Math.abs(weekDiff)}% hafta</span></div>` : '<div class="mt-1"></div>'}
-          ${jamiAholi > 0 ? `
-          <div class="mt-2 relative z-10 flex items-center gap-2">
-            <span class="text-base font-black text-indigo-200">${per100k}</span>
-            <span class="text-xs text-slate-400 font-semibold">/100 000 aholi</span>
-            <span class="text-[10px] text-slate-500 ml-auto">${(jamiAholi/1000000).toFixed(2)} mln 18+</span>
+          ${jamiAholi18 > 0 ? `
+          <div class="mt-2 relative z-10 flex flex-col gap-1">
+            <div class="flex items-center gap-2">
+              <span class="text-base font-black text-indigo-200">${per100k18}</span>
+              <span class="text-xs text-slate-400 font-semibold">/100 000 aholi</span>
+              <span class="text-[10px] text-slate-500 ml-auto">${(jamiAholi18/1000000).toFixed(2)} mln <span class="text-indigo-400">18+</span></span>
+            </div>
+            ${jamiAholi30 > 0 ? `<div class="flex items-center gap-2">
+              <span class="text-base font-black text-amber-300">${per100k30}</span>
+              <span class="text-xs text-slate-400 font-semibold">/100 000 aholi</span>
+              <span class="text-[10px] text-slate-500 ml-auto">${(jamiAholi30/1000000).toFixed(2)} mln <span class="text-amber-400">30+</span></span>
+            </div>` : ''}
           </div>` : '<div class="mt-2"></div>'}
           <div class="mt-auto pt-3 flex gap-2 relative z-10">
             <div class="flex-1 bg-red-500/10 border border-red-500/20 rounded-xl px-3 py-2.5">
               <div class="flex items-center gap-1.5 mb-1"><span class="w-2 h-2 bg-red-400 rounded-full"></span><span class="text-[11px] font-bold text-red-300">Infarkt</span></div>
               <div class="text-xl font-black text-white">${jamiInfarkt}</div>
-              ${jamiAholi > 0 ? `<div class="text-[10px] text-red-400 font-semibold mt-0.5">${+((jamiInfarkt/jamiAholi)*100000).toFixed(1)}/100k</div>` : ''}
+              ${jamiAholi18 > 0 ? `<div class="text-[10px] text-red-400 font-semibold mt-0.5">${+((jamiInfarkt/jamiAholi18)*100000).toFixed(1)}/100k <span class="text-slate-500">18+</span>${jamiAholi30>0?' · '+((jamiInfarkt/jamiAholi30)*100000).toFixed(1)+'/100k <span class="text-slate-500">30+</span>':''}</div>` : ''}
             </div>
             <div class="flex-1 bg-blue-500/10 border border-blue-500/20 rounded-xl px-3 py-2.5">
               <div class="flex items-center gap-1.5 mb-1"><span class="w-2 h-2 bg-blue-400 rounded-full"></span><span class="text-[11px] font-bold text-blue-300">Insult</span></div>
               <div class="text-xl font-black text-white">${jamiInsult}</div>
-              ${jamiAholi > 0 ? `<div class="text-[10px] text-blue-400 font-semibold mt-0.5">${+((jamiInsult/jamiAholi)*100000).toFixed(1)}/100k</div>` : ''}
+              ${jamiAholi18 > 0 ? `<div class="text-[10px] text-blue-400 font-semibold mt-0.5">${+((jamiInsult/jamiAholi18)*100000).toFixed(1)}/100k <span class="text-slate-500">18+</span>${jamiAholi30>0?' · '+((jamiInsult/jamiAholi30)*100000).toFixed(1)+'/100k <span class="text-slate-500">30+</span>':''}</div>` : ''}
             </div>
           </div>
         </div>
