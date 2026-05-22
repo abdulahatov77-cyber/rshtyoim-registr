@@ -274,11 +274,17 @@ const DashboardPage = {
           <div class="mt-auto pt-3 flex flex-col gap-2 relative z-10">
             <div class="flex items-center justify-between h-9 px-3 bg-slate-800/50 rounded-xl border border-slate-700/50">
               <div class="flex items-center gap-2"><span class="w-2 h-2 bg-red-500 rounded-full"></span><span class="text-[12px] font-bold text-slate-300">Infarkt</span></div>
-              <span class="text-base font-black text-white">${vafotInfarkt}</span>
+              <div class="flex items-center gap-2">
+                <span class="text-[11px] font-bold text-rose-400">${jamiInfarkt > 0 ? (vafotInfarkt/jamiInfarkt*100).toFixed(1) : 0}%</span>
+                <span class="text-base font-black text-white">${vafotInfarkt}</span>
+              </div>
             </div>
             <div class="flex items-center justify-between h-9 px-3 bg-slate-800/50 rounded-xl border border-slate-700/50">
               <div class="flex items-center gap-2"><span class="w-2 h-2 bg-blue-500 rounded-full"></span><span class="text-[12px] font-bold text-slate-300">Insult</span></div>
-              <span class="text-base font-black text-white">${vafotInsult}</span>
+              <div class="flex items-center gap-2">
+                <span class="text-[11px] font-bold text-rose-400">${jamiInsult > 0 ? (vafotInsult/jamiInsult*100).toFixed(1) : 0}%</span>
+                <span class="text-base font-black text-white">${vafotInsult}</span>
+              </div>
             </div>
           </div>
         </div>
@@ -297,11 +303,17 @@ const DashboardPage = {
           <div class="mt-auto pt-3 flex flex-col gap-2 relative z-10">
             <div class="flex items-center justify-between h-9 px-3 bg-slate-800/50 rounded-xl border border-slate-700/50">
               <div class="flex items-center gap-2"><span class="w-2 h-2 bg-red-500 rounded-full"></span><span class="text-[12px] font-bold text-slate-300">Infarkt</span></div>
-              <span class="text-base font-black text-white">${otkazilganInfarkt}</span>
+              <div class="flex items-center gap-2">
+                <span class="text-[11px] font-bold text-amber-400">${jamiInfarkt > 0 ? (otkazilganInfarkt/jamiInfarkt*100).toFixed(1) : 0}%</span>
+                <span class="text-base font-black text-white">${otkazilganInfarkt}</span>
+              </div>
             </div>
             <div class="flex items-center justify-between h-9 px-3 bg-slate-800/50 rounded-xl border border-slate-700/50">
               <div class="flex items-center gap-2"><span class="w-2 h-2 bg-blue-500 rounded-full"></span><span class="text-[12px] font-bold text-slate-300">Insult</span></div>
-              <span class="text-base font-black text-white">${otkazilganInsult}</span>
+              <div class="flex items-center gap-2">
+                <span class="text-[11px] font-bold text-amber-400">${jamiInsult > 0 ? (otkazilganInsult/jamiInsult*100).toFixed(1) : 0}%</span>
+                <span class="text-base font-black text-white">${otkazilganInsult}</span>
+              </div>
             </div>
           </div>
         </div>
