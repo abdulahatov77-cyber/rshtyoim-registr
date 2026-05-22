@@ -241,7 +241,7 @@ const InsultYangiPage = {
     const showOtkazilgan = muolaja === "Boshqa muassasaga o'tkazildi — angiografiya va endovaskulyar muolaja uchun";
     const showTLT = muolaja.toLowerCase().includes('trombolizis') || muolaja.toLowerCase().includes('tlt');
     const showTrombektomiya = muolaja.toLowerCase().includes('trombektomiya') || muolaja.toLowerCase().includes('tromboekstraksiya') || muolaja.toLowerCase().includes('tromboaspiratsiya') || muolaja.toLowerCase().includes('kombinatsiya');
-    const showMsktVaqt = d.mskt === 'Ha – o\'tkazildi';
+    const showMsktVaqt = d.mskt === 'Ha – o\'tkazildi' || muolaja.toLowerCase().includes('mskt') || muolaja.toLowerCase().includes('angiografiya');
 
     return `
       <div class="grid grid-cols-1 gap-x-6">
@@ -346,7 +346,9 @@ const InsultYangiPage = {
   onMsktChange(val) {
     InsultYangiPage._data.mskt = val;
     const div = document.getElementById('mskt-vaqt-div');
-    if (div) div.style.display = val === "Ha – o'tkazildi" ? 'block' : 'none';
+    const muolaja = (InsultYangiPage._data.muolaja_turi || '').toLowerCase();
+    const show = val === "Ha – o'tkazildi" || muolaja.includes('mskt') || muolaja.includes('angiografiya');
+    if (div) div.style.display = show ? 'block' : 'none';
   },
 
   onMuolajaChange(val) {
@@ -354,12 +356,15 @@ const InsultYangiPage = {
     const isOtk = val === "Boshqa muassasaga o'tkazildi — angiografiya va endovaskulyar muolaja uchun";
     const isTLT = val.toLowerCase().includes('trombolizis') || val.toLowerCase().includes('tlt');
     const isTrombektomiya = val.toLowerCase().includes('trombektomiya') || val.toLowerCase().includes('tromboekstraksiya') || val.toLowerCase().includes('tromboaspiratsiya') || val.toLowerCase().includes('kombinatsiya');
+    const isMskt = InsultYangiPage._data.mskt === "Ha – o'tkazildi" || val.toLowerCase().includes('mskt') || val.toLowerCase().includes('angiografiya');
     const otkazDiv = document.getElementById('otkazilgan-div');
     const tltDiv = document.getElementById('trombolizis-vaqt-div');
     const trombDiv = document.getElementById('trombektomiya-vaqt-div');
+    const msktDiv = document.getElementById('mskt-vaqt-div');
     if (otkazDiv) otkazDiv.style.display = isOtk ? 'block' : 'none';
     if (tltDiv) tltDiv.style.display = isTLT ? 'block' : 'none';
     if (trombDiv) trombDiv.style.display = isTrombektomiya ? 'block' : 'none';
+    if (msktDiv) msktDiv.style.display = isMskt ? 'block' : 'none';
     const btn = document.getElementById('save-btn');
     if (btn) {
       btn.className = `flex items-center gap-2 px-10 py-3 ${isOtk ? 'bg-orange-500 hover:bg-orange-600 shadow-orange-200' : 'bg-green-600 hover:bg-green-700 shadow-green-200'} text-white rounded-xl font-bold text-sm shadow-lg transition-all active:scale-95`;
@@ -481,7 +486,7 @@ const InsultYangiPage = {
       const muolaja = this._data.muolaja_turi || '';
       const isTLT = muolaja.toLowerCase().includes('trombolizis') || muolaja.toLowerCase().includes('tlt');
       const isTrombektomiya = muolaja.toLowerCase().includes('trombektomiya') || muolaja.toLowerCase().includes('tromboekstraksiya') || muolaja.toLowerCase().includes('tromboaspiratsiya') || muolaja.toLowerCase().includes('kombinatsiya');
-      const isMskt = this._data.mskt === 'Ha – o\'tkazildi';
+      const isMskt = this._data.mskt === 'Ha – o\'tkazildi' || muolaja.toLowerCase().includes('mskt') || muolaja.toLowerCase().includes('angiografiya');
 
       // KT/MSKT vaqti majburiy (MSKT o'tkazilganda)
       if (isMskt && !this._data.kt_vaqti) {
