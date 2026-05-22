@@ -767,7 +767,7 @@ const DB = {
     const viloyat = overrideMuassasa ? null : (overrideViloyat !== undefined ? overrideViloyat : (p?.role === 'super_admin' ? null : p?.viloyat));
     const sb = getSupabase();
     const eqV = (q) => overrideMuassasa ? q.eq('muassasa', overrideMuassasa) : (viloyat ? q.eq('viloyat', viloyat) : q);
-    const AGE_GROUPS = ['75+', '60-74', '45-59', '30-44', 'в‰¤29']; // yuqoridan pastga
+    const AGE_GROUPS = ['75+', '60-74', '45-59', '30-44', '≤29']; // yuqoridan pastga
     const norm = (s) => {
       const v = (s||'').toLowerCase();
       if (['erkak','e','m','male'].includes(v)) return 'male';
@@ -786,7 +786,7 @@ const DB = {
     };
     const ageGroup = (age) => {
       if (age === null) return null;
-      if (age <= 29) return 'в‰¤29';
+      if (age <= 29) return '≤29';
       if (age <= 44) return '30-44';
       if (age <= 59) return '45-59';
       if (age <= 74) return '60-74';
