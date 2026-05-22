@@ -350,7 +350,8 @@ const DashboardPage = {
            <div class="flex items-center gap-3">
              <div class="flex rounded-xl overflow-hidden border border-slate-200 text-xs font-bold">
                <button id="toggleAbs" onclick="DashboardPage.setChartMode('abs')" class="px-3 py-1.5 bg-blue-600 text-white transition-all">Mutlaq son</button>
-               <button id="toggle100k" onclick="DashboardPage.setChartMode('100k')" class="px-3 py-1.5 bg-white text-slate-500 hover:bg-slate-50 transition-all">/ 100 000</button>
+               <button id="toggle100k18" onclick="DashboardPage.setChartMode('100k18')" class="px-3 py-1.5 bg-white text-slate-500 hover:bg-slate-50 transition-all">/ 100 000 <span class="text-indigo-400">18+</span></button>
+               <button id="toggle100k30" onclick="DashboardPage.setChartMode('100k30')" class="px-3 py-1.5 bg-white text-slate-500 hover:bg-slate-50 transition-all">/ 100 000 <span class="text-amber-400">30+</span></button>
              </div>
              <div class="flex gap-3">
                <div class="flex items-center gap-1.5"><span class="w-3 h-3 bg-[#dc2626]"></span> <span class="text-[10px] font-bold text-slate-500 uppercase">Infarkt</span></div>
@@ -587,10 +588,14 @@ const DashboardPage = {
 
   setChartMode(mode) {
     DashboardPage._chartMode = mode;
-    const btnAbs  = document.getElementById('toggleAbs');
-    const btn100k = document.getElementById('toggle100k');
-    if (btnAbs)  { btnAbs.className  = mode === 'abs'  ? 'px-3 py-1.5 bg-blue-600 text-white transition-all text-xs font-bold' : 'px-3 py-1.5 bg-white text-slate-500 hover:bg-slate-50 transition-all text-xs font-bold'; }
-    if (btn100k) { btn100k.className = mode === '100k' ? 'px-3 py-1.5 bg-blue-600 text-white transition-all text-xs font-bold' : 'px-3 py-1.5 bg-white text-slate-500 hover:bg-slate-50 transition-all text-xs font-bold'; }
+    const active = 'px-3 py-1.5 bg-blue-600 text-white transition-all text-xs font-bold';
+    const inactive = 'px-3 py-1.5 bg-white text-slate-500 hover:bg-slate-50 transition-all text-xs font-bold';
+    const btnAbs   = document.getElementById('toggleAbs');
+    const btn18    = document.getElementById('toggle100k18');
+    const btn30    = document.getElementById('toggle100k30');
+    if (btnAbs) btnAbs.className = mode === 'abs' ? active : inactive;
+    if (btn18)  btn18.className  = mode === '100k18' ? active : inactive;
+    if (btn30)  btn30.className  = mode === '100k30' ? active : inactive;
     if (DashboardPage._buildRegionChart) DashboardPage._buildRegionChart(mode);
   },
 
@@ -758,11 +763,21 @@ const DashboardPage = {
       DashboardPage._regionData = regionData;
       DashboardPage._regionProfile = profile;
 
-      const aholi = APP_CONFIG.AHOLI_18PLUS || {};
+      const aholi18 = APP_CONFIG.AHOLI_18PLUS || {};
+      const aholi30 = APP_CONFIG.AHOLI_30PLUS || {};
       const getChartData = (mode) => {
-        if (mode === '100k') {
+        if (mode === '100k18' || mode === '100k') {
           return regionData.map(v => {
-            const pop = aholi[v.name] || 0;
+            const pop = aholi18[v.name] || 0;
+            return {
+              inf: pop > 0 ? +((v.inf / pop) * 100000).toFixed(2) : 0,
+              ins: pop > 0 ? +((v.ins / pop) * 100000).toFixed(2) : 0
+            };
+          });
+        }
+        if (mode === '100k30') {
+          return regionData.map(v => {
+            const pop = aholi30[v.name] || 0;
             return {
               inf: pop > 0 ? +((v.inf / pop) * 100000).toFixed(2) : 0,
               ins: pop > 0 ? +((v.ins / pop) * 100000).toFixed(2) : 0
@@ -778,7 +793,8 @@ const DashboardPage = {
           delete DashboardPage._charts.region;
         }
         const d = getChartData(mode);
-        const is100k = mode === '100k';
+        const is100k = mode === '100k18' || mode === '100k' || mode === '100k30';
+        const titleText = mode === '100k30' ? '100 000 aholiga nisbatan (30+)' : '100 000 aholiga nisbatan (18+)';
         DashboardPage._charts.region = new Chart(ctxR, {
           type: 'bar',
           data: {
@@ -825,7 +841,7 @@ const DashboardPage = {
                 grid: { borderDash: [5,5], color: '#e2e8f0' },
                 ticks: { font: { size: 12, weight: '600' } },
                 beginAtZero: true,
-                title: { display: is100k, text: '100 000 aholiga nisbatan', font: { size: 11 }, color: '#64748b' }
+                title: { display: is100k, text: titleText, font: { size: 11 }, color: '#64748b' }
               }
             }
           }
