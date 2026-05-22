@@ -249,7 +249,7 @@ const InsultYangiPage = {
           ${this.selectOptions(['Ha – o\'tkazildi', 'Yo\'q – boshqa sabab'], d.mskt||'')}</select>`,true)}
 
         <div id="mskt-vaqt-div" style="display:${showMsktVaqt?'block':'none'}">
-          ${this.field('kt_vaqti','KT/MSKT o\'tkazilgan vaqt',`<input id="kt_vaqti" type="datetime-local" class="form-input" value="${d.kt_vaqti||''}"/>`,false,'Door-to-CT mezonini hisoblash uchun')}
+          ${this.field('kt_vaqti','KT/MSKT o\'tkazilgan vaqt',`<input id="kt_vaqti" type="datetime-local" class="form-input" value="${d.kt_vaqti||''}"/>`,true,'Door-to-CT mezonini hisoblash uchun')}
         </div>
 
         ${this.field('muolaja_turi','Muolaja turi',`
