@@ -124,12 +124,11 @@ const APP_CONFIG = {
       "Xiva politravma markazi"
     ],
     "Qoraqalpog'iston Respublikasi": [
-      "RSHTYOIM Qoraqalpog'iston filiali", "Nukus ShTB", "Amudaryo TTB",
-      "Beruniy TTB", "Bo'zatov TTB", "Kegeyli TTB",
+      "RSHTYOIM Qoraqalpog'iston filiali", "Nukus TTB", "Nukus tumani",
+      "Amudaryo TTB", "Beruniy TTB", "Bo'zatov TTB", "Kegeyli TTB",
       "Qanliko'l TTB", "Qorao'zak TTB", "Mo'ynoq TTB",
-      "Taxiatosh ShTB", "Taxtako'pir TTB", "Shumanay TTB",
-      "Ellikqal'a TTB", "Xo'jayli TTB", "Chimboy TTB",
-      "Qo'ng'irot TTB", "To'rtko'l TTB", "Qo'ng'irot politravma markazi",
+      "Taxiatosh TTB", "Taxtako'pir TTB", "Shumanay TTB",
+      "Ellikqal'a TTB", "Xo'jayli TTB", "Qo'ng'irot politravma markazi",
       "Chimboy politravma markazi", "To'rtko'l politravma markazi"
     ],
     "Toshkent shahri": [
