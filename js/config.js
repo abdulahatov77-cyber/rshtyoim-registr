@@ -94,7 +94,7 @@ const APP_CONFIG = {
     ],
     "Sirdaryo viloyati": [
       "RSHTYOIM Sirdaryo filiali", "Yangiyer ShTB", "Boyovut TTB",
-      "Sardoba TTB", "Sayxunobod TTB",
+      "Sardoba TTB", "Sayxunobod TTB", "Mirzaobod TTB",
       "Shirin ShTB", "Xovos TTB", "Sirdaryo politravma markazi",
       "Oq Oltin politravma markazi"
     ],
