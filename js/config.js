@@ -56,7 +56,7 @@ const APP_CONFIG = {
       "Zomin politravma markazi"
     ],
     "Qashqadaryo viloyati": [
-      "RSHTYOIM Qashqadaryo filiali", "Qarshi ShTB", "Koson TTB",
+      "RSHTYOIM Qashqadaryo filiali", "Qarshi ShTB", "Qarshi TTB", "Koson TTB",
       "Qamashi TTB", "Kitob TTB", "Chiroqchi TTB",
       "Yakkabog'-1 TTB", "Yakkabog'-2 TTB", "Mirishkor-1 TTB",
       "Mirishkor-2 TTB", "Muborak TTB", "Nishon TTB",
@@ -117,7 +117,7 @@ const APP_CONFIG = {
       "Yozyovon politravma markazi", "Quva politravma markazi"
     ],
     "Xorazm viloyati": [
-      "RSHTYOIM Xorazm filiali", "Urganch ShTB", "Tuproqqal'a TTB", "Tuproqqa'la TTB",
+      "RSHTYOIM Xorazm filiali", "Urganch ShTB", "Urganch TTB", "Tuproqqal'a TTB", "Tuproqqa'la TTB",
       "Bog'ot TTB", "Qo'shko'pir TTB", "Xonqa TTB",
       "Xiva ShTB", "Shovot TTB", "Yangiariq TTB",
       "Yangibozor TTB", "Gurlan politravma markazi", "Xazorasp politravma markazi",
