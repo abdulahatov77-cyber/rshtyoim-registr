@@ -1,4 +1,4 @@
-// ==================== SUPABASE CLIENT ====================
+﻿// ==================== SUPABASE CLIENT ====================
 let _supabase = null;
 
 function getSupabase() {
@@ -411,10 +411,10 @@ const DB = {
   },
 
   // Dashboard stats
-  async getDashboardStats(overrideViloyat) {
+  async getDashboardStats(overrideViloyat, overrideMuassasa) {
     const p = await Profile.getCurrent();
-    const viloyat = overrideViloyat !== undefined ? overrideViloyat : (p?.role === 'super_admin' ? null : p?.viloyat);
-    const eqViloyat = (q) => viloyat ? q.eq('viloyat', viloyat) : q;
+    const viloyat = overrideMuassasa ? null : (overrideViloyat !== undefined ? overrideViloyat : (p?.role === 'super_admin' ? null : p?.viloyat));
+    const eqViloyat = (q) => overrideMuassasa ? q.eq('muassasa', overrideMuassasa) : (viloyat ? q.eq('viloyat', viloyat) : q);
     // Bugungi sana: O'zbekiston vaqti (UTC+5) da 00:00 dan 23:59 gacha
     // UTC+5 => bugungi 00:00 UZT = UTC 19:00 (kecha), 23:59 UZT = UTC 18:59 (bugun)
     const nowUzt = new Date();
@@ -454,7 +454,7 @@ const DB = {
       eqViloyat(getSupabase().from('insult_qabul').select('id', { count: 'exact', head: true }).eq('status', 'chiqarildi')),
       eqViloyat(getSupabase().from('infarkt_qabul').select('id', { count: 'exact', head: true }).gte('qabul_vaqt', todayISO).lt('qabul_vaqt', todayEndISO)),
       eqViloyat(getSupabase().from('insult_qabul').select('id', { count: 'exact', head: true }).gte('qabul_vaqt', todayISO).lt('qabul_vaqt', todayEndISO)),
-      eqViloyat(getSupabase().from('infarkt_qabul').select('id', { count: 'exact', head: true }).eq('status', 'active')).in('killip', ['Killip III — o\'pka shishi', 'Killip IV — kardiogen shok']),
+      eqViloyat(getSupabase().from('infarkt_qabul').select('id', { count: 'exact', head: true }).eq('status', 'active')).in('killip', ['Killip III вЂ” o\'pka shishi', 'Killip IV вЂ” kardiogen shok']),
       eqViloyat(getSupabase().from('insult_qabul').select('id', { count: 'exact', head: true }).eq('status', 'active')).gte('nihss_qabul', 15),
       eqViloyat(getSupabase().from('infarkt_qabul').select('id', { count: 'exact', head: true }).eq('status', 'otkazildi')),
       eqViloyat(getSupabase().from('insult_qabul').select('id', { count: 'exact', head: true }).eq('status', 'otkazildi'))
@@ -540,10 +540,10 @@ const DB = {
   },
 
   // Last 30 days trend
-  async getTrend30(overrideViloyat) {
+  async getTrend30(overrideViloyat, overrideMuassasa) {
     const p = await Profile.getCurrent();
-    const viloyat = overrideViloyat !== undefined ? overrideViloyat : (p?.role === 'super_admin' ? null : p?.viloyat);
-    const eqViloyat = (q) => viloyat ? q.eq('viloyat', viloyat) : q;
+    const viloyat = overrideMuassasa ? null : (overrideViloyat !== undefined ? overrideViloyat : (p?.role === 'super_admin' ? null : p?.viloyat));
+    const eqViloyat = (q) => overrideMuassasa ? q.eq('muassasa', overrideMuassasa) : (viloyat ? q.eq('viloyat', viloyat) : q);
     const from = new Date();
     from.setUTCDate(from.getUTCDate() - 29);
     from.setUTCHours(0, 0, 0, 0);
@@ -582,10 +582,10 @@ const DB = {
   },
 
   // Last 12 months trend
-  async getTrend12Month(overrideViloyat) {
+  async getTrend12Month(overrideViloyat, overrideMuassasa) {
     const p = await Profile.getCurrent();
-    const viloyat = overrideViloyat !== undefined ? overrideViloyat : (p?.role === 'super_admin' ? null : p?.viloyat);
-    const eqViloyat = (q) => viloyat ? q.eq('viloyat', viloyat) : q;
+    const viloyat = overrideMuassasa ? null : (overrideViloyat !== undefined ? overrideViloyat : (p?.role === 'super_admin' ? null : p?.viloyat));
+    const eqViloyat = (q) => overrideMuassasa ? q.eq('muassasa', overrideMuassasa) : (viloyat ? q.eq('viloyat', viloyat) : q);
     const now = new Date();
     const from = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 11, 1));
     const fromISO = from.toISOString();
@@ -625,10 +625,10 @@ const DB = {
   },
 
   // Risk factors distribution
-  async getRiskFactors(overrideViloyat) {
+  async getRiskFactors(overrideViloyat, overrideMuassasa) {
     const p = await Profile.getCurrent();
-    const viloyat = overrideViloyat !== undefined ? overrideViloyat : (p?.role === 'super_admin' ? null : p?.viloyat);
-    const eqViloyat = (q) => viloyat ? q.eq('viloyat', viloyat) : q;
+    const viloyat = overrideMuassasa ? null : (overrideViloyat !== undefined ? overrideViloyat : (p?.role === 'super_admin' ? null : p?.viloyat));
+    const eqViloyat = (q) => overrideMuassasa ? q.eq('muassasa', overrideMuassasa) : (viloyat ? q.eq('viloyat', viloyat) : q);
 
     const fetchAll = async (table) => {
       let all = [], offset = 0;
@@ -667,10 +667,10 @@ const DB = {
   },
 
   // Recent patients
-  async getRecentPatients(limit = 10, overrideViloyat) {
+  async getRecentPatients(limit = 10, overrideViloyat, overrideMuassasa) {
     const p = await Profile.getCurrent();
-    const viloyat = overrideViloyat !== undefined ? overrideViloyat : (p?.role === 'super_admin' ? null : p?.viloyat);
-    const eqViloyat = (q) => viloyat ? q.eq('viloyat', viloyat) : q;
+    const viloyat = overrideMuassasa ? null : (overrideViloyat !== undefined ? overrideViloyat : (p?.role === 'super_admin' ? null : p?.viloyat));
+    const eqViloyat = (q) => overrideMuassasa ? q.eq('muassasa', overrideMuassasa) : (viloyat ? q.eq('viloyat', viloyat) : q);
     const [{ data: inf }, { data: ins }] = await Promise.all([
       eqViloyat(getSupabase().from('infarkt_qabul').select('*').order('created_at', { ascending: false }).limit(limit)),
       eqViloyat(getSupabase().from('insult_qabul').select('*').order('created_at', { ascending: false }).limit(limit))
@@ -684,10 +684,10 @@ const DB = {
   },
 
   // 15+ kun davolanayotgan bemorlar muassasa bo'yicha
-  async getLongStayPatients(overrideViloyat) {
+  async getLongStayPatients(overrideViloyat, overrideMuassasa) {
     const p = await Profile.getCurrent();
-    const viloyat = overrideViloyat !== undefined ? overrideViloyat : (p?.role === 'super_admin' ? null : p?.viloyat);
-    const eqViloyat = (q) => viloyat ? q.eq('viloyat', viloyat) : q;
+    const viloyat = overrideMuassasa ? null : (overrideViloyat !== undefined ? overrideViloyat : (p?.role === 'super_admin' ? null : p?.viloyat));
+    const eqViloyat = (q) => overrideMuassasa ? q.eq('muassasa', overrideMuassasa) : (viloyat ? q.eq('viloyat', viloyat) : q);
     const cutoff = new Date();
     cutoff.setDate(cutoff.getDate() - 15);
     const cutoffISO = cutoff.toISOString();
@@ -711,10 +711,10 @@ const DB = {
   },
 
   // Jins bo'yicha vafot foizi
-  async getGenderMortality(overrideViloyat) {
+  async getGenderMortality(overrideViloyat, overrideMuassasa) {
     const p = await Profile.getCurrent();
-    const viloyat = overrideViloyat !== undefined ? overrideViloyat : (p?.role === 'super_admin' ? null : p?.viloyat);
-    const eqV = (q) => viloyat ? q.eq('viloyat', viloyat) : q;
+    const viloyat = overrideMuassasa ? null : (overrideViloyat !== undefined ? overrideViloyat : (p?.role === 'super_admin' ? null : p?.viloyat));
+    const eqV = (q) => overrideMuassasa ? q.eq('muassasa', overrideMuassasa) : (viloyat ? q.eq('viloyat', viloyat) : q);
     const sb = getSupabase();
     const norm = (s) => {
       const v = (s||'').toLowerCase();
@@ -747,27 +747,27 @@ const DB = {
   },
 
   // Demographics
-  async getDemographics(overrideViloyat) {
+  async getDemographics(overrideViloyat, overrideMuassasa) {
     const p = await Profile.getCurrent();
-    const viloyat = overrideViloyat !== undefined ? overrideViloyat : (p?.role === 'super_admin' ? null : p?.viloyat);
+    const viloyat = overrideMuassasa ? null : (overrideViloyat !== undefined ? overrideViloyat : (p?.role === 'super_admin' ? null : p?.viloyat));
     const { data, error } = await getSupabase().rpc('get_demographics', { p_viloyat: viloyat });
     if (error) {
       console.error('getDemographics RPC xato:', error.message);
       return {
-        infarkt: { male: 0, female: 0, ages: { '≤29': 0, '30-44': 0, '45-59': 0, '60-74': 0, '75+': 0 } },
-        insult:  { male: 0, female: 0, ages: { '≤29': 0, '30-44': 0, '45-59': 0, '60-74': 0, '75+': 0 } }
+        infarkt: { male: 0, female: 0, ages: { 'в‰¤29': 0, '30-44': 0, '45-59': 0, '60-74': 0, '75+': 0 } },
+        insult:  { male: 0, female: 0, ages: { 'в‰¤29': 0, '30-44': 0, '45-59': 0, '60-74': 0, '75+': 0 } }
       };
     }
     return data;
   },
 
   // Age-Sex Pyramid ma'lumotlari
-  async getAgeSexPyramid(overrideViloyat) {
+  async getAgeSexPyramid(overrideViloyat, overrideMuassasa) {
     const p = await Profile.getCurrent();
-    const viloyat = overrideViloyat !== undefined ? overrideViloyat : (p?.role === 'super_admin' ? null : p?.viloyat);
+    const viloyat = overrideMuassasa ? null : (overrideViloyat !== undefined ? overrideViloyat : (p?.role === 'super_admin' ? null : p?.viloyat));
     const sb = getSupabase();
-    const eqV = (q) => viloyat ? q.eq('viloyat', viloyat) : q;
-    const AGE_GROUPS = ['75+', '60-74', '45-59', '30-44', '≤29']; // yuqoridan pastga
+    const eqV = (q) => overrideMuassasa ? q.eq('muassasa', overrideMuassasa) : (viloyat ? q.eq('viloyat', viloyat) : q);
+    const AGE_GROUPS = ['75+', '60-74', '45-59', '30-44', 'в‰¤29']; // yuqoridan pastga
     const norm = (s) => {
       const v = (s||'').toLowerCase();
       if (['erkak','e','m','male'].includes(v)) return 'male';
@@ -786,7 +786,7 @@ const DB = {
     };
     const ageGroup = (age) => {
       if (age === null) return null;
-      if (age <= 29) return '≤29';
+      if (age <= 29) return 'в‰¤29';
       if (age <= 44) return '30-44';
       if (age <= 59) return '45-59';
       if (age <= 74) return '60-74';
@@ -908,7 +908,7 @@ const DB = {
       let key = viloyat ? r.muassasa : r.viloyat;
       if (!key) return;
 
-      const norm = (s) => s.replace(/[‘’ʼ`´]/g, "'").toLowerCase().replace(/ttb|shtb|emergency department|politravma markazi|filiali|shoshilinch tibbiy yordam/g, '').trim();
+      const norm = (s) => s.replace(/[вЂвЂ™Кј`Вґ]/g, "'").toLowerCase().replace(/ttb|shtb|emergency department|politravma markazi|filiali|shoshilinch tibbiy yordam/g, '').trim();
 
       // Agar nom configda bo'lmasa, o'xshashini qidirib ko'ramiz
       if (viloyat && !stats[key]) {
@@ -967,7 +967,7 @@ const Telegram = {
       ? APP_CONFIG.TELEGRAM_INFARKT_TOKEN
       : APP_CONFIG.TELEGRAM_INSULT_TOKEN;
 
-    // Chat ID — integer bo'lishi kerak
+    // Chat ID вЂ” integer bo'lishi kerak
     const chatId = parseInt(
       type === 'infarkt'
         ? APP_CONFIG.TELEGRAM_INFARKT_CHAT
@@ -993,20 +993,20 @@ const Telegram = {
       const json = await res.json();
 
       if (json.ok) {
-        showToast('📱 Telegram xabar yuborildi!', 'success', 3000);
-        console.log('✅ Telegram OK:', json);
+        showToast('рџ“± Telegram xabar yuborildi!', 'success', 3000);
+        console.log('вњ… Telegram OK:', json);
       } else {
         const errMsg = json.description || 'Noma\'lum xato';
-        showToast(`⚠️ Telegram xato: ${errMsg}`, 'warning', 6000);
-        console.error('❌ Telegram API xato:', json);
+        showToast(`вљ пёЏ Telegram xato: ${errMsg}`, 'warning', 6000);
+        console.error('вќЊ Telegram API xato:', json);
       }
     } catch (e) {
-      showToast(`⚠️ Telegram ulanmadi: ${e.message}`, 'warning', 6000);
-      console.error('❌ Telegram fetch xato:', e);
+      showToast(`вљ пёЏ Telegram ulanmadi: ${e.message}`, 'warning', 6000);
+      console.error('вќЊ Telegram fetch xato:', e);
     }
   },
 
-  // Test funksiyasi — brauzer konsolidan chaqirish uchun: Telegram.test('infarkt')
+  // Test funksiyasi вЂ” brauzer konsolidan chaqirish uchun: Telegram.test('infarkt')
   async test(type = 'infarkt') {
     const token = type === 'infarkt'
       ? APP_CONFIG.TELEGRAM_INFARKT_TOKEN
@@ -1017,7 +1017,7 @@ const Telegram = {
         : APP_CONFIG.TELEGRAM_INSULT_CHAT
     );
 
-    console.log(`🔍 Telegram test: type=${type}, chatId=${chatId}`);
+    console.log(`рџ”Ќ Telegram test: type=${type}, chatId=${chatId}`);
 
     const res = await fetch(
       `https://api.telegram.org/bot${token}/sendMessage`,
@@ -1026,7 +1026,7 @@ const Telegram = {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           chat_id: chatId,
-          text: `✅ RSHTYOIM test xabari — ${new Date().toLocaleString('uz-UZ')}`,
+          text: `вњ… RSHTYOIM test xabari вЂ” ${new Date().toLocaleString('uz-UZ')}`,
           parse_mode: 'HTML'
         })
       }
@@ -1034,9 +1034,9 @@ const Telegram = {
     const json = await res.json();
     console.log('Telegram test natija:', json);
     if (json.ok) {
-      showToast('✅ Test xabar yuborildi!', 'success');
+      showToast('вњ… Test xabar yuborildi!', 'success');
     } else {
-      showToast(`❌ Test xato: ${json.description}`, 'error', 8000);
+      showToast(`вќЊ Test xato: ${json.description}`, 'error', 8000);
     }
     return json;
   },
@@ -1056,57 +1056,57 @@ const Telegram = {
           const pad = n => String(n).padStart(2, '0');
           return `${pad(tz.getUTCDate())}.${pad(tz.getUTCMonth()+1)}.${tz.getUTCFullYear()} ${pad(tz.getUTCHours())}:${pad(tz.getUTCMinutes())}`;
         })()
-      : '—';
+      : 'вЂ”';
 
-    const genderIcon = patient.jins === 'Ayol' ? '👩' : '👨';
-    const shifokor = patient.shifokor_fio || '—';
+    const genderIcon = patient.jins === 'Ayol' ? 'рџ‘©' : 'рџ‘Ё';
+    const shifokor = patient.shifokor_fio || 'вЂ”';
 
     if (type === 'infarkt') {
       const killip = patient.killip || '';
       let kritik = '';
       if (killip.includes('III') || killip.includes('IV')) {
-        kritik = `\n⚠️ <b>DIQQAT: KRITIK HOLAT! (Killip ${killip.includes('IV') ? 'IV' : 'III'})</b>`;
+        kritik = `\nвљ пёЏ <b>DIQQAT: KRITIK HOLAT! (Killip ${killip.includes('IV') ? 'IV' : 'III'})</b>`;
       }
       const kagLine = patient.angio_natija
-        ? `\n🧪 <b>KAG natijasi:</b> ${patient.angio_natija}` : '';
+        ? `\nрџ§Є <b>KAG natijasi:</b> ${patient.angio_natija}` : '';
 
-      return `🫀 <b>YANGI INFARKT BEMOR QABUL QILINDI</b>
-━━━━━━━━━━━━━━━━━━━━━━
-📍 <b>Viloyat:</b> ${patient.viloyat || '—'}
-🏥 <b>Muassasa:</b> ${patient.muassasa || '—'}
-👨‍⚕️ <b>Shifokor:</b> ${shifokor}
-📋 <b>K/T No:</b> <code>${patient.kt_no || '—'}</code>
-${genderIcon} <b>Bemor:</b> ${patient.fio || '—'}, ${age} yosh, ${patient.jins || '—'}
-🔴 <b>${patient.infarkt_turi || '—'}</b>
-🩺 <b>Killip:</b> ${killip || '—'}
-💊 <b>Muolaja:</b> ${patient.muolaja_turi || '—'}${kagLine}
-📊 <b>AHA bali:</b> ${patient.aha_bali ?? '—'}
-⏰ <b>Simptom:</b> ${patient.simptom_vaqt || '—'}
-🕐 <b>Qabul:</b> ${qabul}
-━━━━━━━━━━━━━━━━━━━━━━${kritik}`;
+      return `рџ«Ђ <b>YANGI INFARKT BEMOR QABUL QILINDI</b>
+в”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓ
+рџ“Ќ <b>Viloyat:</b> ${patient.viloyat || 'вЂ”'}
+рџЏҐ <b>Muassasa:</b> ${patient.muassasa || 'вЂ”'}
+рџ‘ЁвЂЌвљ•пёЏ <b>Shifokor:</b> ${shifokor}
+рџ“‹ <b>K/T No:</b> <code>${patient.kt_no || 'вЂ”'}</code>
+${genderIcon} <b>Bemor:</b> ${patient.fio || 'вЂ”'}, ${age} yosh, ${patient.jins || 'вЂ”'}
+рџ”ґ <b>${patient.infarkt_turi || 'вЂ”'}</b>
+рџ©є <b>Killip:</b> ${killip || 'вЂ”'}
+рџ’Љ <b>Muolaja:</b> ${patient.muolaja_turi || 'вЂ”'}${kagLine}
+рџ“Љ <b>AHA bali:</b> ${patient.aha_bali ?? 'вЂ”'}
+вЏ° <b>Simptom:</b> ${patient.simptom_vaqt || 'вЂ”'}
+рџ•ђ <b>Qabul:</b> ${qabul}
+в”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓ${kritik}`;
 
     } else {
-      const nihss = patient.nihss_qabul ?? '—';
-      const gcs   = patient.gcs_bali ?? patient.gcs_qabul ?? '—';
+      const nihss = patient.nihss_qabul ?? 'вЂ”';
+      const gcs   = patient.gcs_bali ?? patient.gcs_qabul ?? 'вЂ”';
       let kritik = '';
       if (patient.nihss_qabul != null && patient.nihss_qabul >= 15) {
-        kritik = `\n⚠️ <b>DIQQAT: OG'IR HOLAT! (NIHSS = ${patient.nihss_qabul})</b>`;
+        kritik = `\nвљ пёЏ <b>DIQQAT: OG'IR HOLAT! (NIHSS = ${patient.nihss_qabul})</b>`;
       }
 
-      return `🧠 <b>YANGI INSULT BEMOR QABUL QILINDI</b>
-━━━━━━━━━━━━━━━━━━━━━━
-📍 <b>Viloyat:</b> ${patient.viloyat || '—'}
-🏥 <b>Muassasa:</b> ${patient.muassasa || '—'}
-👨‍⚕️ <b>Shifokor:</b> ${shifokor}
-📋 <b>K/T №:</b> <code>${patient.kt_no || '—'}</code>
-${genderIcon} <b>Bemor:</b> ${patient.fio || '—'}, ${age} yosh, ${patient.jins || '—'}
-🩺 <b>Insult turi:</b> ${patient.insult_turi || '—'}
-📊 <b>NIHSS/GCS:</b> ${nihss} / ${gcs}
-📋 <b>AHA:</b> ${patient.aha_bali ?? '—'}
-⏱️ <b>Simptom:</b> ${patient.simptom_vaqt || '—'}
-💉 <b>Muolaja:</b> ${patient.muolaja_turi || '—'}
-🕐 <b>Qabul:</b> ${qabul}
-━━━━━━━━━━━━━━━━━━━━━━${kritik}`;
+      return `рџ§  <b>YANGI INSULT BEMOR QABUL QILINDI</b>
+в”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓ
+рџ“Ќ <b>Viloyat:</b> ${patient.viloyat || 'вЂ”'}
+рџЏҐ <b>Muassasa:</b> ${patient.muassasa || 'вЂ”'}
+рџ‘ЁвЂЌвљ•пёЏ <b>Shifokor:</b> ${shifokor}
+рџ“‹ <b>K/T в„–:</b> <code>${patient.kt_no || 'вЂ”'}</code>
+${genderIcon} <b>Bemor:</b> ${patient.fio || 'вЂ”'}, ${age} yosh, ${patient.jins || 'вЂ”'}
+рџ©є <b>Insult turi:</b> ${patient.insult_turi || 'вЂ”'}
+рџ“Љ <b>NIHSS/GCS:</b> ${nihss} / ${gcs}
+рџ“‹ <b>AHA:</b> ${patient.aha_bali ?? 'вЂ”'}
+вЏ±пёЏ <b>Simptom:</b> ${patient.simptom_vaqt || 'вЂ”'}
+рџ’‰ <b>Muolaja:</b> ${patient.muolaja_turi || 'вЂ”'}
+рџ•ђ <b>Qabul:</b> ${qabul}
+в”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓ${kritik}`;
     }
   }
 };
@@ -1136,9 +1136,9 @@ const Realtime = {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'insult_qabul' }, callback)
       .subscribe((status) => {
         if (status === 'SUBSCRIBED') {
-          console.log('✅ Realtime ulandi:', channelName);
+          console.log('вњ… Realtime ulandi:', channelName);
         } else if (status === 'CHANNEL_ERROR') {
-          console.warn('⚠️ Realtime xato:', channelName);
+          console.warn('вљ пёЏ Realtime xato:', channelName);
         }
       });
 
@@ -1317,3 +1317,4 @@ const MuassasaDB = {
     ];
   }
 };
+

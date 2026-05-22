@@ -3,6 +3,7 @@ const DashboardPage = {
   _charts: {},
   _realtimeSub: null,
   _viewViloyat: undefined,
+  _viewMuassasa: undefined,
   _chartMode: 'abs', // 'abs' | '100k'
   _regionData: [],
   _regionProfile: null,
@@ -33,17 +34,18 @@ const DashboardPage = {
     try {
       const profile = await Profile.getCurrent();
       const ov = DashboardPage._viewViloyat;
+      const om = DashboardPage._viewMuassasa;
       const [stats, trend, trend12, recent, viloyat, demo, riskFactors, longStay, genderMort, ageSex] = await Promise.all([
-        DB.getDashboardStats(ov),
-        DB.getTrend30(ov),
-        DB.getTrend12Month(ov),
-        DB.getRecentPatients(10, ov),
-        DB.getViloyatStats(ov),
-        DB.getDemographics(ov),
-        DB.getRiskFactors(ov),
-        DB.getLongStayPatients(ov),
-        DB.getGenderMortality(ov),
-        DB.getAgeSexPyramid(ov)
+        DB.getDashboardStats(ov, om),
+        DB.getTrend30(ov, om),
+        DB.getTrend12Month(ov, om),
+        DB.getRecentPatients(10, ov, om),
+        om ? Promise.resolve([]) : DB.getViloyatStats(ov),
+        DB.getDemographics(ov, om),
+        DB.getRiskFactors(ov, om),
+        DB.getLongStayPatients(ov, om),
+        DB.getGenderMortality(ov, om),
+        DB.getAgeSexPyramid(ov, om)
       ]);
       DashboardPage._recentPatients = recent;
       DashboardPage._ageSex = ageSex;
@@ -68,6 +70,7 @@ const DashboardPage = {
     if (!inner) return;
 
     const isFiltered = profile?.role !== 'super_admin' && !!profile?.viloyat;
+    const isRshtyoim = !!DashboardPage._viewMuassasa;
     const distTitle = isFiltered ? `${profile?.viloyat} muassasalari bo'yicha` : "Viloyatlar bo'yicha grafik";
 
     // Gender Calculation
@@ -151,6 +154,10 @@ const DashboardPage = {
           const label = v.replace(' viloyati','').replace(' Respublikasi','');
           return `<button onclick="DashboardPage.setViewViloyat('${safeV}')" class="px-3 py-1.5 rounded-xl text-[11px] font-bold border transition-all ${cls}">${label}</button>`;
         }).join('')}
+        <button onclick="DashboardPage.setViewMuassasa('Respublika Shoshilinch Tibbiy Yordam Ilmiy Markazi')"
+          class="px-3 py-1.5 rounded-xl text-[11px] font-bold border transition-all ${DashboardPage._viewMuassasa ? 'bg-red-600 text-white border-red-600 shadow-md shadow-red-200' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'}">
+          RSHTYoIM
+        </button>
       </div>
       ` : ''}
 
@@ -344,7 +351,7 @@ const DashboardPage = {
       </div>
 
       <!-- ROW 3: REGIONAL DISTRIBUTION CHART -->
-      <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm mb-8">
+      <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm mb-8" ${isRshtyoim ? 'style="display:none"' : ''}>
         <div class="flex items-center justify-between mb-6 flex-wrap gap-3">
            <h3 class="text-sm font-bold text-slate-800 uppercase tracking-wider">${distTitle}</h3>
            <div class="flex items-center gap-3">
@@ -583,6 +590,13 @@ const DashboardPage = {
 
   setViewViloyat(viloyat) {
     DashboardPage._viewViloyat = viloyat;
+    DashboardPage._viewMuassasa = undefined;
+    DashboardPage.loadData();
+  },
+
+  setViewMuassasa(muassasa) {
+    DashboardPage._viewMuassasa = muassasa;
+    DashboardPage._viewViloyat = undefined;
     DashboardPage.loadData();
   },
 
