@@ -346,11 +346,11 @@ const InfarktYangiPage = {
           ${this.selectOptions(APP_CONFIG.INFARKT_MUOLAJALARI, muolaja)}</select>`,true)}
 
         <div id="tlt-vaqt-div" style="display:${showTLT?'block':'none'}">
-          ${this.field('tlt_vaqt','TLT (trombolitik terapiya) o\'tkazilgan vaqt',`<input id="tlt_vaqt" type="datetime-local" class="form-input" value="${d.tlt_vaqt||''}"/>`,false,'Door-to-needle mezonini hisoblash uchun')}
+          ${this.field('tlt_vaqt','TLT (trombolitik terapiya) o\'tkazilgan vaqt',`<input id="tlt_vaqt" type="datetime-local" class="form-input" value="${d.tlt_vaqt||''}"/>`,true,'Door-to-needle mezonini hisoblash uchun')}
         </div>
 
         <div id="pci-vaqt-div" style="display:${showPCI?'block':'none'}">
-          ${this.field('pci_vaqt','PCI/TLBAP (kateter kiritilgan vaqt — Groin time)',`<input id="pci_vaqt" type="datetime-local" class="form-input" value="${d.pci_vaqt||''}"/>`,false,'Door-to-groin mezonini hisoblash uchun')}
+          ${this.field('pci_vaqt','PCI/TLBAP (kateter kiritilgan vaqt — Groin time)',`<input id="pci_vaqt" type="datetime-local" class="form-input" value="${d.pci_vaqt||''}"/>`,true,'Door-to-groin mezonini hisoblash uchun')}
         </div>
 
         <div id="angio-div" style="display:${showAngio?'block':'none'}">

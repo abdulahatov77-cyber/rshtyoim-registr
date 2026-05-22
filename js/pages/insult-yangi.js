@@ -267,11 +267,11 @@ const InsultYangiPage = {
         `,true)}
 
         <div id="trombolizis-vaqt-div" style="display:${showTLT?'block':'none'}">
-          ${this.field('trombolizis_vaqti','Trombolizis (TLT) o\'tkazilgan vaqt',`<input id="trombolizis_vaqti" type="datetime-local" class="form-input" value="${d.trombolizis_vaqti||''}"/>`,false,'Door-to-needle mezonini hisoblash uchun')}
+          ${this.field('trombolizis_vaqti','Trombolizis (TLT) o\'tkazilgan vaqt',`<input id="trombolizis_vaqti" type="datetime-local" class="form-input" value="${d.trombolizis_vaqti||''}"/>`,true,'Door-to-needle mezonini hisoblash uchun')}
         </div>
 
         <div id="trombektomiya-vaqt-div" style="display:${showTrombektomiya?'block':'none'}">
-          ${this.field('trombektomiya_vaqti','Trombektomiya (Groin time)',`<input id="trombektomiya_vaqti" type="datetime-local" class="form-input" value="${d.trombektomiya_vaqti||''}"/>`,false,'Door-to-groin mezonini hisoblash uchun')}
+          ${this.field('trombektomiya_vaqti','Trombektomiya (Groin time)',`<input id="trombektomiya_vaqti" type="datetime-local" class="form-input" value="${d.trombektomiya_vaqti||''}"/>`,true,'Door-to-groin mezonini hisoblash uchun')}
         </div>
 
         <div id="otkazilgan-div" style="display:${showOtkazilgan?'block':'none'}">
