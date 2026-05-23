@@ -7,8 +7,10 @@ const DashboardPage = {
   _chartMode: 'abs', // 'abs' | '100k'
   _regionData: [],
   _regionProfile: null,
+  _pollTimer: null,
 
   async render() {
+    if (DashboardPage._pollTimer) { clearInterval(DashboardPage._pollTimer); DashboardPage._pollTimer = null; }
     const user = await Auth.getUser();
     const profile = await Profile.getCurrent();
     DashboardPage._profile = profile;
@@ -162,168 +164,8 @@ const DashboardPage = {
       ` : ''}
 
       <!-- ROW 1: KPI CARDS (TOP 6) -->
-      <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-6 mb-10" style="align-items:stretch">
-        <!-- 1. Jami Qabul Qilingan Bemorlar -->
-        <div class="bg-slate-700 p-7 rounded-[32px] border border-slate-600 shadow-2xl hover:shadow-slate-500/20 hover:-translate-y-2 transition-all duration-500 group cursor-pointer relative overflow-hidden flex flex-col">
-          <div class="absolute -right-10 -top-10 w-32 h-32 bg-slate-500/10 rounded-full blur-3xl group-hover:bg-slate-500/20 transition-all"></div>
-          <div class="flex items-center justify-between mb-4 relative z-10">
-            <div class="w-12 h-12 bg-slate-500/20 text-slate-300 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-all duration-500">${icon('database', 26)}</div>
-            <span class="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">JAMI BAZA</span>
-          </div>
-          <p class="text-slate-400 text-[11px] font-bold uppercase tracking-wider mb-1 relative z-10">Jami Qabul Qilingan</p>
-          <h3 class="text-5xl font-black text-white relative z-10 tracking-tight">${jami.toLocaleString()}</h3>
-          ${weekDiff !== null ? `<div class="mt-1 relative z-10"><span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold ${weekDiff > 0 ? 'bg-red-500/20 text-red-300' : weekDiff < 0 ? 'bg-emerald-500/20 text-emerald-300' : 'bg-slate-500/20 text-slate-400'}">${weekDiff > 0 ? '▲' : weekDiff < 0 ? '▼' : '→'} ${Math.abs(weekDiff)}% hafta</span></div>` : '<div class="mt-1"></div>'}
-          ${jamiAholi18 > 0 ? `
-          <div class="mt-2 relative z-10 flex flex-col gap-1">
-            <div class="flex items-center gap-2">
-              <span class="text-base font-black text-indigo-200">${per100k18}</span>
-              <span class="text-xs text-slate-400 font-semibold">/100 000 aholi</span>
-              <span class="text-[10px] text-slate-500 ml-auto">${(jamiAholi18/1000000).toFixed(2)} mln <span class="text-indigo-400">18+</span></span>
-            </div>
-            ${jamiAholi30 > 0 ? `<div class="flex items-center gap-2">
-              <span class="text-base font-black text-amber-300">${per100k30}</span>
-              <span class="text-xs text-slate-400 font-semibold">/100 000 aholi</span>
-              <span class="text-[10px] text-slate-500 ml-auto">${(jamiAholi30/1000000).toFixed(2)} mln <span class="text-amber-400">30+</span></span>
-            </div>` : ''}
-          </div>` : '<div class="mt-2"></div>'}
-          <div class="mt-auto pt-3 flex gap-2 relative z-10">
-            <div class="flex-1 bg-red-500/10 border border-red-500/20 rounded-xl px-3 py-2.5">
-              <div class="flex items-center gap-1.5 mb-1"><span class="w-2 h-2 bg-red-400 rounded-full"></span><span class="text-[11px] font-bold text-red-300">Infarkt</span></div>
-              <div class="text-xl font-black text-white">${jamiInfarkt}</div>
-              ${jamiAholi18 > 0 ? `<div class="text-[10px] text-red-400 font-semibold mt-0.5">${+((jamiInfarkt/jamiAholi18)*100000).toFixed(1)}/100k <span class="text-slate-500">18+</span>${jamiAholi30>0?' · '+((jamiInfarkt/jamiAholi30)*100000).toFixed(1)+'/100k <span class="text-slate-500">30+</span>':''}</div>` : ''}
-            </div>
-            <div class="flex-1 bg-blue-500/10 border border-blue-500/20 rounded-xl px-3 py-2.5">
-              <div class="flex items-center gap-1.5 mb-1"><span class="w-2 h-2 bg-blue-400 rounded-full"></span><span class="text-[11px] font-bold text-blue-300">Insult</span></div>
-              <div class="text-xl font-black text-white">${jamiInsult}</div>
-              ${jamiAholi18 > 0 ? `<div class="text-[10px] text-blue-400 font-semibold mt-0.5">${+((jamiInsult/jamiAholi18)*100000).toFixed(1)}/100k <span class="text-slate-500">18+</span>${jamiAholi30>0?' · '+((jamiInsult/jamiAholi30)*100000).toFixed(1)+'/100k <span class="text-slate-500">30+</span>':''}</div>` : ''}
-            </div>
-          </div>
-        </div>
-
-        <!-- 2. Bugungi Yangi Bemorlar -->
-        <div class="bg-blue-600 p-7 rounded-[32px] shadow-2xl shadow-blue-900/30 hover:shadow-blue-500/40 hover:-translate-y-2 transition-all duration-500 group cursor-pointer relative overflow-hidden flex flex-col">
-          <div class="absolute -right-16 -bottom-16 w-56 h-56 bg-white/10 rounded-full blur-3xl group-hover:bg-white/20 transition-all duration-700"></div>
-          <div class="flex items-center justify-between mb-4 relative z-10">
-            <div class="w-12 h-12 bg-white/20 text-white rounded-2xl flex items-center justify-center group-hover:rotate-12 transition-all duration-500">${icon('activity', 26)}</div>
-            <span class="text-[11px] font-black text-blue-100 uppercase tracking-[0.2em]">BUGUN</span>
-          </div>
-          <p class="text-blue-100/80 text-[11px] font-bold uppercase tracking-wider mb-1 relative z-10">Yangi Qabullar</p>
-          <h3 class="text-6xl font-black text-white tracking-tighter relative z-10">${bugunJami}</h3>
-          <div class="mt-2 relative z-10 flex items-center gap-2">
-            ${renderSparkline(spark7, 'rgba(255,255,255,0.8)')}
-            <span class="text-[10px] text-blue-200 font-semibold">7 kun</span>
-          </div>
-          <div class="mt-auto pt-3 flex flex-col gap-2 relative z-10">
-            <div class="flex items-center justify-between h-9 px-3 bg-white/10 rounded-xl border border-white/10">
-              <div class="flex items-center gap-2"><span class="w-2 h-2 bg-white rounded-full"></span><span class="text-[12px] font-bold text-white">Infarkt</span></div>
-              <span class="text-base font-black text-white">${bugunInfarkt}</span>
-            </div>
-            <div class="flex items-center justify-between h-9 px-3 bg-white/10 rounded-xl border border-white/10">
-              <div class="flex items-center gap-2"><span class="w-2 h-2 bg-white/50 rounded-full"></span><span class="text-[12px] font-bold text-blue-100">Insult</span></div>
-              <span class="text-base font-black text-white">${bugunInsult}</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- 3. Jami Chiqarilgan Bemorlar -->
-        <div class="bg-emerald-900 p-7 rounded-[32px] border border-emerald-800 shadow-2xl hover:shadow-emerald-500/20 hover:-translate-y-2 transition-all duration-500 group cursor-pointer relative overflow-hidden flex flex-col">
-          <div class="absolute -left-10 -bottom-10 w-32 h-32 bg-emerald-500/10 rounded-full blur-3xl"></div>
-          <div class="flex items-center justify-between mb-4 relative z-10">
-            <div class="w-12 h-12 bg-emerald-500/10 text-emerald-400 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-all duration-500">${icon('log-out', 26)}</div>
-            <span class="text-[11px] font-black text-emerald-500 uppercase tracking-[0.2em]">CHIQARILGAN</span>
-          </div>
-          <p class="text-emerald-500/60 text-[11px] font-bold uppercase tracking-wider mb-1 relative z-10">Uyga javob berilgan</p>
-          <h3 class="text-5xl font-black text-white relative z-10 tracking-tight">${(chiqarilganInfarkt + chiqarilganInsult).toLocaleString()}</h3>
-          <div class="mt-auto pt-3 flex flex-col gap-2 relative z-10">
-            <div class="flex items-center justify-between h-9 px-3 bg-emerald-800/50 rounded-xl border border-emerald-700/50">
-              <div class="flex items-center gap-2"><span class="w-2 h-2 bg-red-400 rounded-full"></span><span class="text-[12px] font-bold text-emerald-100">Infarkt</span></div>
-              <span class="text-base font-black text-white">${chiqarilganInfarkt}</span>
-            </div>
-            <div class="flex items-center justify-between h-9 px-3 bg-emerald-800/50 rounded-xl border border-emerald-700/50">
-              <div class="flex items-center gap-2"><span class="w-2 h-2 bg-blue-400 rounded-full"></span><span class="text-[12px] font-bold text-emerald-100">Insult</span></div>
-              <span class="text-base font-black text-white">${chiqarilganInsult}</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- 4. Statsionarda Davolanayotganlar -->
-        <div class="bg-sky-800 p-7 rounded-[32px] border border-sky-700 shadow-2xl hover:shadow-sky-500/30 hover:-translate-y-2 transition-all duration-500 group cursor-pointer relative overflow-hidden flex flex-col">
-          <div class="absolute right-0 bottom-0 w-40 h-40 bg-sky-400/10 rounded-full blur-3xl"></div>
-          <div class="flex items-center justify-between mb-4 relative z-10">
-            <div class="w-12 h-12 bg-sky-500/20 text-sky-300 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-all duration-500">${icon('bed-double', 26)}</div>
-            <span class="text-[11px] font-black text-sky-300 uppercase tracking-[0.2em]">AKTIV</span>
-          </div>
-          <p class="text-sky-300/70 text-[11px] font-bold uppercase tracking-wider mb-1 relative z-10">Hozir Statsionarda</p>
-          <h3 class="text-5xl font-black text-white relative z-10 tracking-tight">${(aktivInfarkt + aktivInsult).toLocaleString()}</h3>
-          <div class="mt-auto pt-3 flex flex-col gap-2 relative z-10">
-            <div class="flex items-center justify-between h-9 px-3 bg-sky-700/50 rounded-xl border border-sky-600/50">
-              <div class="flex items-center gap-2"><span class="w-2 h-2 bg-red-400 rounded-full"></span><span class="text-[12px] font-bold text-sky-100">Infarkt</span></div>
-              <span class="text-base font-black text-white">${aktivInfarkt}</span>
-            </div>
-            <div class="flex items-center justify-between h-9 px-3 bg-sky-700/50 rounded-xl border border-sky-600/50">
-              <div class="flex items-center gap-2"><span class="w-2 h-2 bg-blue-300 rounded-full"></span><span class="text-[12px] font-bold text-sky-100">Insult</span></div>
-              <span class="text-base font-black text-white">${aktivInsult}</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- 5. Jami Vafot Etganlar -->
-        <div class="bg-slate-900 p-7 rounded-[32px] border border-slate-800 shadow-2xl hover:shadow-rose-500/20 hover:-translate-y-2 transition-all duration-500 group cursor-pointer relative overflow-hidden flex flex-col" onclick="DashboardPage.showVafotDetail()">
-          <div class="absolute -right-10 -top-10 w-32 h-32 bg-rose-600/5 rounded-full blur-3xl"></div>
-          <div class="flex items-center justify-between mb-4 relative z-10">
-            <div class="w-12 h-12 bg-rose-500/10 text-rose-400 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-all duration-500">${icon('user-x', 26)}</div>
-            <div class="px-3 py-1 bg-rose-500/10 rounded-xl border border-rose-500/20">
-              <span class="text-sm font-black text-rose-500">${jami > 0 ? ((vafotInfarkt + vafotInsult) / jami * 100).toFixed(1) : 0}%</span>
-            </div>
-          </div>
-          <p class="text-slate-400 text-[11px] font-bold uppercase tracking-wider mb-1 relative z-10">Vafot etganlar</p>
-          <h3 class="text-5xl font-black text-white relative z-10 tracking-tight">${(vafotInfarkt + vafotInsult).toLocaleString()}</h3>
-          <div class="mt-auto pt-3 flex flex-col gap-2 relative z-10">
-            <div class="flex items-center justify-between h-9 px-3 bg-slate-800/50 rounded-xl border border-slate-700/50">
-              <div class="flex items-center gap-2"><span class="w-2 h-2 bg-red-500 rounded-full"></span><span class="text-[12px] font-bold text-slate-300">Infarkt</span></div>
-              <div class="flex items-center gap-2">
-                <span class="text-[11px] font-bold text-rose-400">${jamiInfarkt > 0 ? (vafotInfarkt/jamiInfarkt*100).toFixed(1) : 0}%</span>
-                <span class="text-base font-black text-white">${vafotInfarkt}</span>
-              </div>
-            </div>
-            <div class="flex items-center justify-between h-9 px-3 bg-slate-800/50 rounded-xl border border-slate-700/50">
-              <div class="flex items-center gap-2"><span class="w-2 h-2 bg-blue-500 rounded-full"></span><span class="text-[12px] font-bold text-slate-300">Insult</span></div>
-              <div class="flex items-center gap-2">
-                <span class="text-[11px] font-bold text-rose-400">${jamiInsult > 0 ? (vafotInsult/jamiInsult*100).toFixed(1) : 0}%</span>
-                <span class="text-base font-black text-white">${vafotInsult}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 6. O'tkazilgan Bemorlar -->
-        <div class="bg-slate-900 p-7 rounded-[32px] border border-slate-800 shadow-2xl hover:shadow-amber-500/20 hover:-translate-y-2 transition-all duration-500 group cursor-pointer relative overflow-hidden flex flex-col">
-          <div class="absolute -left-10 -bottom-10 w-32 h-32 bg-amber-500/5 rounded-full blur-3xl"></div>
-          <div class="flex items-center justify-between mb-4 relative z-10">
-            <div class="w-12 h-12 bg-amber-500/10 text-amber-400 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-all duration-500">${icon('arrow-right-circle', 26)}</div>
-            <div class="px-3 py-1 bg-amber-500/10 rounded-xl border border-amber-500/20">
-              <span class="text-sm font-black text-amber-500">${jami > 0 ? ((otkazilganInfarkt + otkazilganInsult) / jami * 100).toFixed(1) : 0}%</span>
-            </div>
-          </div>
-          <p class="text-slate-400 text-[11px] font-bold uppercase tracking-wider mb-1 relative z-10">Boshqa muassasaga</p>
-          <h3 class="text-5xl font-black text-white relative z-10 tracking-tight">${(otkazilganInfarkt + otkazilganInsult).toLocaleString()}</h3>
-          <div class="mt-auto pt-3 flex flex-col gap-2 relative z-10">
-            <div class="flex items-center justify-between h-9 px-3 bg-slate-800/50 rounded-xl border border-slate-700/50">
-              <div class="flex items-center gap-2"><span class="w-2 h-2 bg-red-500 rounded-full"></span><span class="text-[12px] font-bold text-slate-300">Infarkt</span></div>
-              <div class="flex items-center gap-2">
-                <span class="text-[11px] font-bold text-amber-400">${jamiInfarkt > 0 ? (otkazilganInfarkt/jamiInfarkt*100).toFixed(1) : 0}%</span>
-                <span class="text-base font-black text-white">${otkazilganInfarkt}</span>
-              </div>
-            </div>
-            <div class="flex items-center justify-between h-9 px-3 bg-slate-800/50 rounded-xl border border-slate-700/50">
-              <div class="flex items-center gap-2"><span class="w-2 h-2 bg-blue-500 rounded-full"></span><span class="text-[12px] font-bold text-slate-300">Insult</span></div>
-              <div class="flex items-center gap-2">
-                <span class="text-[11px] font-bold text-amber-400">${jamiInsult > 0 ? (otkazilganInsult/jamiInsult*100).toFixed(1) : 0}%</span>
-                <span class="text-base font-black text-white">${otkazilganInsult}</span>
-              </div>
-            </div>
-          </div>
-        </div>
+      <div id="kpi-cards-grid" class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-6 mb-10" style="align-items:stretch">
+        ${DashboardPage.renderKpiCards(stats, trend, demo)}
       </div>
 
       <!-- ROW 2: DYNAMICS CHART (FULL WIDTH) -->
@@ -1261,7 +1103,244 @@ const DashboardPage = {
 
   subscribeRealtime() {
     Realtime.subscribeBemorlar(async () => {
-      await DashboardPage.loadData();
+      await DashboardPage.refreshKpi();
     });
+    // Har 60 soniyada polling
+    if (DashboardPage._pollTimer) clearInterval(DashboardPage._pollTimer);
+    DashboardPage._pollTimer = setInterval(async () => {
+      await DashboardPage.refreshKpi();
+    }, 60000);
+  },
+
+  async refreshKpi() {
+    try {
+      const ov = DashboardPage._viewViloyat;
+      const om = DashboardPage._viewMuassasa;
+      const [stats, trend, demo] = await Promise.all([
+        DB.getDashboardStats(ov, om),
+        DB.getTrend30(ov, om),
+        DB.getDemographics(ov, om)
+      ]);
+      const grid = document.getElementById('kpi-cards-grid');
+      if (grid) {
+        grid.innerHTML = DashboardPage.renderKpiCards(stats, trend, demo);
+        initIcons();
+      }
+    } catch(e) {
+      console.warn('KPI refresh xato:', e.message);
+    }
+  },
+
+  renderKpiCards(stats, trend, demo) {
+    // Stat Values Calculation
+    const jami = stats.jami || 0;
+    const jamiInfarkt = stats.jamiInfarkt || 0;
+    const jamiInsult = stats.jamiInsult || 0;
+
+    const aktivInfarkt = stats.infarktAktiv || 0;
+    const aktivInsult = stats.insultAktiv || 0;
+
+    const vafotInfarkt = stats.vafotInfarkt || 0;
+    const vafotInsult = stats.vafotInsult || 0;
+
+    const chiqarilganInfarkt = stats.chiqarilganInfarkt || 0;
+    const chiqarilganInsult = stats.chiqarilganInsult || 0;
+    const otkazilganInfarkt = stats.otkazilganInfarkt || 0;
+    const otkazilganInsult = stats.otkazilganInsult || 0;
+
+    const bugunInfarkt = stats.infarktBugun || 0;
+    const bugunInsult = stats.insultBugun || 0;
+    const bugunJami = bugunInfarkt + bugunInsult;
+
+    // Aholi hisoblash
+    const aholiMap18 = APP_CONFIG.AHOLI_18PLUS || {};
+    const aholiMap30 = APP_CONFIG.AHOLI_30PLUS || {};
+    const viewVil = DashboardPage._viewViloyat;
+    const jamiAholi18 = viewVil
+      ? (aholiMap18[viewVil] || 0)
+      : Object.values(aholiMap18).reduce((a, b) => a + b, 0);
+    const jamiAholi30 = viewVil
+      ? (aholiMap30[viewVil] || 0)
+      : Object.values(aholiMap30).reduce((a, b) => a + b, 0);
+    const per100k18 = jamiAholi18 > 0 ? +((jami / jamiAholi18) * 100000).toFixed(1) : null;
+    const per100k30 = jamiAholi30 > 0 ? +((jami / jamiAholi30) * 100000).toFixed(1) : null;
+
+    // Haftalik trend
+    const spark7 = trend ? trend.infData.slice(-7).map((v,i) => v + (trend.insData[trend.insData.length-7+i]||0)) : [];
+    const thisWeek = spark7.reduce((a,b) => a+b, 0);
+    const prevWeek = trend ? (trend.infData.slice(-14,-7).map((v,i) => v + (trend.insData[trend.insData.length-14+i]||0))).reduce((a,b)=>a+b,0) : 0;
+    const weekDiff = prevWeek > 0 ? Math.round(((thisWeek - prevWeek) / prevWeek) * 100) : null;
+
+    // Sparkline SVG
+    const renderSparkline = (data, color) => {
+      if (!data || data.length < 2) return '';
+      const max = Math.max(...data, 1);
+      const w = 80, h = 28, pts = data.map((v,i) => `${Math.round(i*(w/(data.length-1)))},${Math.round(h - (v/max)*h)}`).join(' ');
+      return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" fill="none"><polyline points="${pts}" stroke="${color}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/><circle cx="${pts.split(' ').pop().split(',')[0]}" cy="${pts.split(' ').pop().split(',')[1]}" r="3" fill="${color}"/></svg>`;
+    };
+
+    return `
+        <!-- 1. Jami Qabul Qilingan Bemorlar -->
+        <div class="bg-slate-700 p-7 rounded-[32px] border border-slate-600 shadow-2xl hover:shadow-slate-500/20 hover:-translate-y-2 transition-all duration-500 group cursor-pointer relative overflow-hidden flex flex-col">
+          <div class="absolute -right-10 -top-10 w-32 h-32 bg-slate-500/10 rounded-full blur-3xl group-hover:bg-slate-500/20 transition-all"></div>
+          <div class="flex items-center justify-between mb-4 relative z-10">
+            <div class="w-12 h-12 bg-slate-500/20 text-slate-300 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-all duration-500">${icon('database', 26)}</div>
+            <span class="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">JAMI BAZA</span>
+          </div>
+          <p class="text-slate-400 text-[11px] font-bold uppercase tracking-wider mb-1 relative z-10">Jami Qabul Qilingan</p>
+          <h3 class="text-5xl font-black text-white relative z-10 tracking-tight">${jami.toLocaleString()}</h3>
+          ${weekDiff !== null ? `<div class="mt-1 relative z-10"><span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold ${weekDiff > 0 ? 'bg-red-500/20 text-red-300' : weekDiff < 0 ? 'bg-emerald-500/20 text-emerald-300' : 'bg-slate-500/20 text-slate-400'}">${weekDiff > 0 ? '▲' : weekDiff < 0 ? '▼' : '→'} ${Math.abs(weekDiff)}% hafta</span></div>` : '<div class="mt-1"></div>'}
+          ${jamiAholi18 > 0 ? `
+          <div class="mt-2 relative z-10 flex flex-col gap-1">
+            <div class="flex items-center gap-2">
+              <span class="text-base font-black text-indigo-200">${per100k18}</span>
+              <span class="text-xs text-slate-400 font-semibold">/100 000 aholi</span>
+              <span class="text-[10px] text-slate-500 ml-auto">${(jamiAholi18/1000000).toFixed(2)} mln <span class="text-indigo-400">18+</span></span>
+            </div>
+            ${jamiAholi30 > 0 ? `<div class="flex items-center gap-2">
+              <span class="text-base font-black text-amber-300">${per100k30}</span>
+              <span class="text-xs text-slate-400 font-semibold">/100 000 aholi</span>
+              <span class="text-[10px] text-slate-500 ml-auto">${(jamiAholi30/1000000).toFixed(2)} mln <span class="text-amber-400">30+</span></span>
+            </div>` : ''}
+          </div>` : '<div class="mt-2"></div>'}
+          <div class="mt-auto pt-3 flex gap-2 relative z-10">
+            <div class="flex-1 bg-red-500/10 border border-red-500/20 rounded-xl px-3 py-2.5">
+              <div class="flex items-center gap-1.5 mb-1"><span class="w-2 h-2 bg-red-400 rounded-full"></span><span class="text-[11px] font-bold text-red-300">Infarkt</span></div>
+              <div class="text-xl font-black text-white">${jamiInfarkt}</div>
+              ${jamiAholi18 > 0 ? `<div class="text-[10px] text-red-400 font-semibold mt-0.5">${+((jamiInfarkt/jamiAholi18)*100000).toFixed(1)}/100k <span class="text-slate-500">18+</span>${jamiAholi30>0?' · '+((jamiInfarkt/jamiAholi30)*100000).toFixed(1)+'/100k <span class="text-slate-500">30+</span>':''}</div>` : ''}
+            </div>
+            <div class="flex-1 bg-blue-500/10 border border-blue-500/20 rounded-xl px-3 py-2.5">
+              <div class="flex items-center gap-1.5 mb-1"><span class="w-2 h-2 bg-blue-400 rounded-full"></span><span class="text-[11px] font-bold text-blue-300">Insult</span></div>
+              <div class="text-xl font-black text-white">${jamiInsult}</div>
+              ${jamiAholi18 > 0 ? `<div class="text-[10px] text-blue-400 font-semibold mt-0.5">${+((jamiInsult/jamiAholi18)*100000).toFixed(1)}/100k <span class="text-slate-500">18+</span>${jamiAholi30>0?' · '+((jamiInsult/jamiAholi30)*100000).toFixed(1)+'/100k <span class="text-slate-500">30+</span>':''}</div>` : ''}
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. Bugungi Yangi Bemorlar -->
+        <div class="bg-blue-600 p-7 rounded-[32px] shadow-2xl shadow-blue-900/30 hover:shadow-blue-500/40 hover:-translate-y-2 transition-all duration-500 group cursor-pointer relative overflow-hidden flex flex-col">
+          <div class="absolute -right-16 -bottom-16 w-56 h-56 bg-white/10 rounded-full blur-3xl group-hover:bg-white/20 transition-all duration-700"></div>
+          <div class="flex items-center justify-between mb-4 relative z-10">
+            <div class="w-12 h-12 bg-white/20 text-white rounded-2xl flex items-center justify-center group-hover:rotate-12 transition-all duration-500">${icon('activity', 26)}</div>
+            <span class="text-[11px] font-black text-blue-100 uppercase tracking-[0.2em]">BUGUN</span>
+          </div>
+          <p class="text-blue-100/80 text-[11px] font-bold uppercase tracking-wider mb-1 relative z-10">Yangi Qabullar</p>
+          <h3 class="text-6xl font-black text-white tracking-tighter relative z-10">${bugunJami}</h3>
+          <div class="mt-2 relative z-10 flex items-center gap-2">
+            ${renderSparkline(spark7, 'rgba(255,255,255,0.8)')}
+            <span class="text-[10px] text-blue-200 font-semibold">7 kun</span>
+          </div>
+          <div class="mt-auto pt-3 flex flex-col gap-2 relative z-10">
+            <div class="flex items-center justify-between h-9 px-3 bg-white/10 rounded-xl border border-white/10">
+              <div class="flex items-center gap-2"><span class="w-2 h-2 bg-white rounded-full"></span><span class="text-[12px] font-bold text-white">Infarkt</span></div>
+              <span class="text-base font-black text-white">${bugunInfarkt}</span>
+            </div>
+            <div class="flex items-center justify-between h-9 px-3 bg-white/10 rounded-xl border border-white/10">
+              <div class="flex items-center gap-2"><span class="w-2 h-2 bg-white/50 rounded-full"></span><span class="text-[12px] font-bold text-blue-100">Insult</span></div>
+              <span class="text-base font-black text-white">${bugunInsult}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. Jami Chiqarilgan Bemorlar -->
+        <div class="bg-emerald-900 p-7 rounded-[32px] border border-emerald-800 shadow-2xl hover:shadow-emerald-500/20 hover:-translate-y-2 transition-all duration-500 group cursor-pointer relative overflow-hidden flex flex-col">
+          <div class="absolute -left-10 -bottom-10 w-32 h-32 bg-emerald-500/10 rounded-full blur-3xl"></div>
+          <div class="flex items-center justify-between mb-4 relative z-10">
+            <div class="w-12 h-12 bg-emerald-500/10 text-emerald-400 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-all duration-500">${icon('log-out', 26)}</div>
+            <span class="text-[11px] font-black text-emerald-500 uppercase tracking-[0.2em]">CHIQARILGAN</span>
+          </div>
+          <p class="text-emerald-500/60 text-[11px] font-bold uppercase tracking-wider mb-1 relative z-10">Uyga javob berilgan</p>
+          <h3 class="text-5xl font-black text-white relative z-10 tracking-tight">${(chiqarilganInfarkt + chiqarilganInsult).toLocaleString()}</h3>
+          <div class="mt-auto pt-3 flex flex-col gap-2 relative z-10">
+            <div class="flex items-center justify-between h-9 px-3 bg-emerald-800/50 rounded-xl border border-emerald-700/50">
+              <div class="flex items-center gap-2"><span class="w-2 h-2 bg-red-400 rounded-full"></span><span class="text-[12px] font-bold text-emerald-100">Infarkt</span></div>
+              <span class="text-base font-black text-white">${chiqarilganInfarkt}</span>
+            </div>
+            <div class="flex items-center justify-between h-9 px-3 bg-emerald-800/50 rounded-xl border border-emerald-700/50">
+              <div class="flex items-center gap-2"><span class="w-2 h-2 bg-blue-400 rounded-full"></span><span class="text-[12px] font-bold text-emerald-100">Insult</span></div>
+              <span class="text-base font-black text-white">${chiqarilganInsult}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4. Statsionarda Davolanayotganlar -->
+        <div class="bg-sky-800 p-7 rounded-[32px] border border-sky-700 shadow-2xl hover:shadow-sky-500/30 hover:-translate-y-2 transition-all duration-500 group cursor-pointer relative overflow-hidden flex flex-col">
+          <div class="absolute right-0 bottom-0 w-40 h-40 bg-sky-400/10 rounded-full blur-3xl"></div>
+          <div class="flex items-center justify-between mb-4 relative z-10">
+            <div class="w-12 h-12 bg-sky-500/20 text-sky-300 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-all duration-500">${icon('bed-double', 26)}</div>
+            <span class="text-[11px] font-black text-sky-300 uppercase tracking-[0.2em]">AKTIV</span>
+          </div>
+          <p class="text-sky-300/70 text-[11px] font-bold uppercase tracking-wider mb-1 relative z-10">Hozir Statsionarda</p>
+          <h3 class="text-5xl font-black text-white relative z-10 tracking-tight">${(aktivInfarkt + aktivInsult).toLocaleString()}</h3>
+          <div class="mt-auto pt-3 flex flex-col gap-2 relative z-10">
+            <div class="flex items-center justify-between h-9 px-3 bg-sky-700/50 rounded-xl border border-sky-600/50">
+              <div class="flex items-center gap-2"><span class="w-2 h-2 bg-red-400 rounded-full"></span><span class="text-[12px] font-bold text-sky-100">Infarkt</span></div>
+              <span class="text-base font-black text-white">${aktivInfarkt}</span>
+            </div>
+            <div class="flex items-center justify-between h-9 px-3 bg-sky-700/50 rounded-xl border border-sky-600/50">
+              <div class="flex items-center gap-2"><span class="w-2 h-2 bg-blue-300 rounded-full"></span><span class="text-[12px] font-bold text-sky-100">Insult</span></div>
+              <span class="text-base font-black text-white">${aktivInsult}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 5. Jami Vafot Etganlar -->
+        <div class="bg-slate-900 p-7 rounded-[32px] border border-slate-800 shadow-2xl hover:shadow-rose-500/20 hover:-translate-y-2 transition-all duration-500 group cursor-pointer relative overflow-hidden flex flex-col" onclick="DashboardPage.showVafotDetail()">
+          <div class="absolute -right-10 -top-10 w-32 h-32 bg-rose-600/5 rounded-full blur-3xl"></div>
+          <div class="flex items-center justify-between mb-4 relative z-10">
+            <div class="w-12 h-12 bg-rose-500/10 text-rose-400 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-all duration-500">${icon('user-x', 26)}</div>
+            <div class="px-3 py-1 bg-rose-500/10 rounded-xl border border-rose-500/20">
+              <span class="text-sm font-black text-rose-500">${jami > 0 ? ((vafotInfarkt + vafotInsult) / jami * 100).toFixed(1) : 0}%</span>
+            </div>
+          </div>
+          <p class="text-slate-400 text-[11px] font-bold uppercase tracking-wider mb-1 relative z-10">Vafot etganlar</p>
+          <h3 class="text-5xl font-black text-white relative z-10 tracking-tight">${(vafotInfarkt + vafotInsult).toLocaleString()}</h3>
+          <div class="mt-auto pt-3 flex flex-col gap-2 relative z-10">
+            <div class="flex items-center justify-between h-9 px-3 bg-slate-800/50 rounded-xl border border-slate-700/50">
+              <div class="flex items-center gap-2"><span class="w-2 h-2 bg-red-500 rounded-full"></span><span class="text-[12px] font-bold text-slate-300">Infarkt</span></div>
+              <div class="flex items-center gap-2">
+                <span class="text-[11px] font-bold text-rose-400">${jamiInfarkt > 0 ? (vafotInfarkt/jamiInfarkt*100).toFixed(1) : 0}%</span>
+                <span class="text-base font-black text-white">${vafotInfarkt}</span>
+              </div>
+            </div>
+            <div class="flex items-center justify-between h-9 px-3 bg-slate-800/50 rounded-xl border border-slate-700/50">
+              <div class="flex items-center gap-2"><span class="w-2 h-2 bg-blue-500 rounded-full"></span><span class="text-[12px] font-bold text-slate-300">Insult</span></div>
+              <div class="flex items-center gap-2">
+                <span class="text-[11px] font-bold text-rose-400">${jamiInsult > 0 ? (vafotInsult/jamiInsult*100).toFixed(1) : 0}%</span>
+                <span class="text-base font-black text-white">${vafotInsult}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 6. O'tkazilgan Bemorlar -->
+        <div class="bg-slate-900 p-7 rounded-[32px] border border-slate-800 shadow-2xl hover:shadow-amber-500/20 hover:-translate-y-2 transition-all duration-500 group cursor-pointer relative overflow-hidden flex flex-col">
+          <div class="absolute -left-10 -bottom-10 w-32 h-32 bg-amber-500/5 rounded-full blur-3xl"></div>
+          <div class="flex items-center justify-between mb-4 relative z-10">
+            <div class="w-12 h-12 bg-amber-500/10 text-amber-400 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-all duration-500">${icon('arrow-right-circle', 26)}</div>
+            <div class="px-3 py-1 bg-amber-500/10 rounded-xl border border-amber-500/20">
+              <span class="text-sm font-black text-amber-500">${jami > 0 ? ((otkazilganInfarkt + otkazilganInsult) / jami * 100).toFixed(1) : 0}%</span>
+            </div>
+          </div>
+          <p class="text-slate-400 text-[11px] font-bold uppercase tracking-wider mb-1 relative z-10">Boshqa muassasaga</p>
+          <h3 class="text-5xl font-black text-white relative z-10 tracking-tight">${(otkazilganInfarkt + otkazilganInsult).toLocaleString()}</h3>
+          <div class="mt-auto pt-3 flex flex-col gap-2 relative z-10">
+            <div class="flex items-center justify-between h-9 px-3 bg-slate-800/50 rounded-xl border border-slate-700/50">
+              <div class="flex items-center gap-2"><span class="w-2 h-2 bg-red-500 rounded-full"></span><span class="text-[12px] font-bold text-slate-300">Infarkt</span></div>
+              <div class="flex items-center gap-2">
+                <span class="text-[11px] font-bold text-amber-400">${jamiInfarkt > 0 ? (otkazilganInfarkt/jamiInfarkt*100).toFixed(1) : 0}%</span>
+                <span class="text-base font-black text-white">${otkazilganInfarkt}</span>
+              </div>
+            </div>
+            <div class="flex items-center justify-between h-9 px-3 bg-slate-800/50 rounded-xl border border-slate-700/50">
+              <div class="flex items-center gap-2"><span class="w-2 h-2 bg-blue-500 rounded-full"></span><span class="text-[12px] font-bold text-slate-300">Insult</span></div>
+              <div class="flex items-center gap-2">
+                <span class="text-[11px] font-bold text-amber-400">${jamiInsult > 0 ? (otkazilganInsult/jamiInsult*100).toFixed(1) : 0}%</span>
+                <span class="text-base font-black text-white">${otkazilganInsult}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+    `;
   }
 };
