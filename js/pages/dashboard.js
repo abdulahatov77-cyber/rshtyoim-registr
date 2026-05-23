@@ -368,45 +368,8 @@ const DashboardPage = {
                 <th class="p-4 text-right border-b border-slate-100"></th>
               </tr>
             </thead>
-            <tbody class="text-sm">
-              ${recent.map(p => {
-                const rawDiag = p._type==='infarkt' ? (p.infarkt_turi || 'Miokard Infarkti') : (p.insult_turi || 'Ishemik Insult');
-                const t = rawDiag.toUpperCase();
-                let fDiag = t;
-                if (t.includes('STEMI')) fDiag = "O'KS ST ELEVATSIYA BILAN (STEMI)";
-                else if (t.includes('NSTEMI')) fDiag = "O'KS ST ELEVATSIYASIZ (NSTEMI)";
-                else if (t.includes("MIOKARD INFARKTI") || t.includes("AMI")) fDiag = "O'TKIR MIOKARD INFARKTI (AMI)";
-                else if (t.includes('TIA') || t.includes('TRANZITOR')) fDiag = "TIA (TRANZITOR ISHEMIK ATAKA)";
-                else if (t.includes('GEMORRAGIK')) fDiag = "GEMORRAGIK INSULT";
-                else if (t.includes('ISHEMIK')) fDiag = "ISHEMIK INSULT";
-
-                return `
-                <tr class="border-b border-slate-50 hover:bg-slate-50/50 cursor-pointer transition-colors" onclick="Router.go('bemor-karta',{kt_no:'${p.kt_no}', type:'${p._type}'})">
-                  <td class="p-4 text-slate-500 font-mono text-[11px]">${p.kt_no}</td>
-                  <td class="p-4">
-                    <div class="font-bold text-slate-800">${p.fio || '—'}</div>
-                    <div class="text-[10px] text-slate-400 font-medium uppercase mt-0.5">${Utils.calculateAge(p.tugilgan_yil)||'—'} yosh · ${p.jinsi==='Erkak'?'E':'A'}</div>
-                  </td>
-                  <td class="p-4">
-                    <span class="px-2 py-0.5 ${p._type==='infarkt' ? 'bg-red-50 text-red-600 border-red-100' : 'bg-blue-50 text-blue-600 border-blue-100'} text-[10px] font-bold rounded border uppercase">
-                      ${fDiag}
-                    </span>
-                  </td>
-                  <td class="p-4">
-                    <div class="text-slate-700 font-medium">${Utils.formatDate(p.qabul_vaqt)}</div>
-                    <div class="text-[10px] text-slate-400 font-bold">${Utils.formatDateTime(p.qabul_vaqt).split(', ')[1] || ''}</div>
-                  </td>
-                  <td class="p-4">${Utils.statusBadge(p.status)}</td>
-                  <td class="p-4">
-                    <div class="flex items-center gap-2">
-                       <div class="w-12 h-1.5 bg-slate-100 rounded-full overflow-hidden"><div class="h-full bg-green-500 w-[90%]"></div></div>
-                       <span class="text-[10px] font-bold text-slate-400">90%</span>
-                    </div>
-                  </td>
-                  <td class="p-4 text-right text-slate-300">${icon('chevron-right', 20)}</td>
-                </tr>
-                `;
-              }).join('')}
+            <tbody id="recent-patients-body" class="text-sm">
+              ${DashboardPage._renderRecentRows(recent)}
             </tbody>
           </table>
         </div>
@@ -1114,21 +1077,96 @@ const DashboardPage = {
 
   async refreshKpi() {
     try {
+      const profile = await Profile.getCurrent();
       const ov = DashboardPage._viewViloyat;
       const om = DashboardPage._viewMuassasa;
-      const [stats, trend, demo] = await Promise.all([
+      const [stats, trend, trend12, recent, viloyat, demo, riskFactors, longStay, genderMort, ageSex] = await Promise.all([
         DB.getDashboardStats(ov, om),
         DB.getTrend30(ov, om),
-        DB.getDemographics(ov, om)
+        DB.getTrend12Month(ov, om),
+        DB.getRecentPatients(10, ov, om),
+        om ? Promise.resolve([]) : DB.getViloyatStats(ov),
+        DB.getDemographics(ov, om),
+        DB.getRiskFactors(ov, om),
+        DB.getLongStayPatients(ov, om),
+        DB.getGenderMortality(ov, om),
+        DB.getAgeSexPyramid(ov, om)
       ]);
+      DashboardPage._recentPatients = recent;
+      DashboardPage._ageSex = ageSex;
+
+      // KPI kartalar
       const grid = document.getElementById('kpi-cards-grid');
       if (grid) {
         grid.innerHTML = DashboardPage.renderKpiCards(stats, trend, demo);
         initIcons();
       }
+
+      // Grafiklarni yangilash — mavjud chartlarni destroy qilib qayta qurish
+      ['dynamicsChart','regionChart','monthlyChart','butterflyChart','ageChart','riskInfarktChart','riskInsultChart'].forEach(id => {
+        const canvas = document.getElementById(id);
+        if (canvas) {
+          const existing = Chart.getChart(canvas);
+          if (existing) existing.destroy();
+        }
+      });
+      DashboardPage._charts = {};
+      DashboardPage.drawNewCharts(trend, trend12, stats, viloyat, demo, profile, riskFactors);
+
+      // Yaqinda qabul qilinganlar jadvalini yangilash
+      const recentEl = document.getElementById('recent-patients-body');
+      if (recentEl && recent) {
+        recentEl.innerHTML = DashboardPage._renderRecentRows(recent);
+        initIcons();
+      }
+
+      // Yosh piramidasi
+      if (ageSex && typeof AgePyramid !== 'undefined') {
+        AgePyramid.render('pyramid-infarkt', ageSex.infarkt, 'INFARKT', '#dc2626', stats.jamiInfarkt);
+        AgePyramid.render('pyramid-insult',  ageSex.insult,  'INSULT',  '#2563eb', stats.jamiInsult);
+      }
     } catch(e) {
-      console.warn('KPI refresh xato:', e.message);
+      console.warn('Dashboard refresh xato:', e.message);
     }
+  },
+
+  _renderRecentRows(patients) {
+    return patients.map(p => {
+      const rawDiag = p._type==='infarkt' ? (p.infarkt_turi || 'Miokard Infarkti') : (p.insult_turi || 'Ishemik Insult');
+      const t = rawDiag.toUpperCase();
+      let fDiag = t;
+      if (t.includes('STEMI')) fDiag = "O'KS ST ELEVATSIYA BILAN (STEMI)";
+      else if (t.includes('NSTEMI')) fDiag = "O'KS ST ELEVATSIYASIZ (NSTEMI)";
+      else if (t.includes("MIOKARD INFARKTI") || t.includes("AMI")) fDiag = "O'TKIR MIOKARD INFARKTI (AMI)";
+      else if (t.includes('TIA') || t.includes('TRANZITOR')) fDiag = "TIA (TRANZITOR ISHEMIK ATAKA)";
+      else if (t.includes('GEMORRAGIK')) fDiag = "GEMORRAGIK INSULT";
+      else if (t.includes('ISHEMIK')) fDiag = "ISHEMIK INSULT";
+      return `
+      <tr class="border-b border-slate-50 hover:bg-slate-50/50 cursor-pointer transition-colors" onclick="Router.go('bemor-karta',{kt_no:'${p.kt_no}', type:'${p._type}'})">
+        <td class="p-4 text-slate-500 font-mono text-[11px]">${p.kt_no}</td>
+        <td class="p-4">
+          <div class="font-bold text-slate-800">${p.fio || '—'}</div>
+          <div class="text-[10px] text-slate-400 font-medium uppercase mt-0.5">${Utils.calculateAge(p.tugilgan_yil)||'—'} yosh · ${p.jinsi==='Erkak'?'E':'A'}</div>
+        </td>
+        <td class="p-4">
+          <span class="px-2 py-0.5 ${p._type==='infarkt' ? 'bg-red-50 text-red-600 border-red-100' : 'bg-blue-50 text-blue-600 border-blue-100'} text-[10px] font-bold rounded border uppercase">
+            ${fDiag}
+          </span>
+        </td>
+        <td class="p-4">
+          <div class="text-slate-700 font-medium">${Utils.formatDate(p.qabul_vaqt)}</div>
+          <div class="text-[10px] text-slate-400 font-bold">${Utils.formatDateTime(p.qabul_vaqt).split(', ')[1] || ''}</div>
+        </td>
+        <td class="p-4">${Utils.statusBadge(p.status)}</td>
+        <td class="p-4">
+          <div class="flex items-center gap-2">
+            <div class="w-12 h-1.5 bg-slate-100 rounded-full overflow-hidden"><div class="h-full bg-green-500 w-[90%]"></div></div>
+            <span class="text-[10px] font-bold text-slate-400">90%</span>
+          </div>
+        </td>
+        <td class="p-4 text-right text-slate-300">${icon('chevron-right', 20)}</td>
+      </tr>`;
+    }).join('');
   },
 
   renderKpiCards(stats, trend, demo) {
