@@ -329,7 +329,7 @@ const InfarktYangiPage = {
     return val && (val.includes('TLT') || val.includes('trombolitik'));
   },
   _isPCI(val) {
-    return val && (val.includes('PCI') || val.includes('stentlash') || val.includes('TLBAP') || val.includes('ballon'));
+    return val && (val.includes('PCI') || val.includes('stentlash') || val.includes('TLBAP') || val.includes('ballon') || val.includes('KAG'));
   },
 
   renderStep3() {
@@ -339,6 +339,7 @@ const InfarktYangiPage = {
     const showOtkazilgan = muolaja === 'Boshqa muassasaga o\'tkazildi';
     const showTLT = InfarktYangiPage._isTLT(muolaja);
     const showPCI = InfarktYangiPage._isPCI(muolaja);
+    const pciLabel = muolaja === 'Faqat KAG (diagnostik koronar angiografiya)' ? 'KAG o\'tkazilgan vaqt (Groin time)' : 'PCI/KAG (kateter kiritilgan vaqt — Groin time)';
 
     return `
       <div class="grid grid-cols-1 gap-x-6">
@@ -350,7 +351,7 @@ const InfarktYangiPage = {
         </div>
 
         <div id="pci-vaqt-div" style="display:${showPCI?'block':'none'}">
-          ${this.field('pci_vaqt','PCI/TLBAP (kateter kiritilgan vaqt — Groin time)',`<input id="pci_vaqt" type="datetime-local" class="form-input" value="${d.pci_vaqt||''}"/>`,true,'Door-to-groin mezonini hisoblash uchun')}
+          ${this.field('pci_vaqt', pciLabel, `<input id="pci_vaqt" type="datetime-local" class="form-input" value="${d.pci_vaqt||''}"/>`,true,'Door-to-groin mezonini hisoblash uchun')}
         </div>
 
         <div id="angio-div" style="display:${showAngio?'block':'none'}">
@@ -390,7 +391,14 @@ const InfarktYangiPage = {
     const tltDiv = document.getElementById('tlt-vaqt-div');
     const pciDiv = document.getElementById('pci-vaqt-div');
     if (tltDiv) tltDiv.style.display = InfarktYangiPage._isTLT(val) ? 'block' : 'none';
-    if (pciDiv) pciDiv.style.display = InfarktYangiPage._isPCI(val) ? 'block' : 'none';
+    if (pciDiv) {
+      pciDiv.style.display = InfarktYangiPage._isPCI(val) ? 'block' : 'none';
+      const lbl = pciDiv.querySelector('label');
+      if (lbl) {
+        const isFaqatKag = val === 'Faqat KAG (diagnostik koronar angiografiya)';
+        lbl.childNodes.forEach(n => { if (n.nodeType === 3) n.textContent = isFaqatKag ? "KAG o'tkazilgan vaqt (Groin time)" : 'PCI/KAG (kateter kiritilgan vaqt — Groin time)'; });
+      }
+    }
     if (angioDiv) {
       const isAngio = val === 'Faqat KAG (diagnostik koronar angiografiya)';
       angioDiv.style.display = isAngio ? 'block' : 'none';
