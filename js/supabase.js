@@ -881,19 +881,12 @@ const DB = {
     const table = type === 'infarkt' ? 'infarkt_qabul' : 'insult_qabul';
     const sb = getSupabase();
 
-    let all = [], offset = 0;
-    while (true) {
-      let query = sb.from(table).select('viloyat, muassasa, status');
-      if (viloyat) query = query.eq('viloyat', viloyat);
-      query = query.range(offset, offset + 999);
-      const { data, error } = await query;
-      if (error) { if (error.code === 'PGRST103') break; throw error; }
-      if (!data || data.length === 0) break;
-      all = all.concat(data);
-      if (data.length < 1000) break;
-      offset += 1000;
-    }
-    const data = all;
+    let query = sb.from(table)
+      .select('viloyat, muassasa, status')
+      .not(viloyat ? 'muassasa' : 'viloyat', 'is', null);
+    if (viloyat) query = query.eq('viloyat', viloyat);
+    const { data, error } = await query;
+    if (error) throw error;
     
     const stats = {};
     
