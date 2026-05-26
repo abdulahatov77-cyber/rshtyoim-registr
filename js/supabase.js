@@ -878,48 +878,38 @@ const DB = {
 
   // Detailed Registry Stats (Viloyat or Muassasa level)
   async getRegistryStats(type, viloyat = null) {
-    const table = type === 'infarkt' ? 'infarkt_qabul' : 'insult_qabul';
     const sb = getSupabase();
+    const fn = type === 'infarkt' ? 'get_infarkt_registry_stats' : 'get_insult_registry_stats';
 
-    let query = sb.from(table)
-      .select('viloyat, muassasa, status')
-      .not(viloyat ? 'muassasa' : 'viloyat', 'is', null);
-    if (viloyat) query = query.eq('viloyat', viloyat);
-    const { data, error } = await query;
+    const { data, error } = await sb.rpc(fn, { p_viloyat: viloyat });
     if (error) throw error;
-    
+
     const stats = {};
-    
-    // Dastlab barcha muassasalarni 0 bilan to'ldiramiz (agar viloyat tanlangan bo'lsa)
+
     if (viloyat && APP_CONFIG.MUASSASALAR[viloyat]) {
       APP_CONFIG.MUASSASALAR[viloyat].forEach(m => {
         stats[m] = { name: m, jami: 0, aktiv: 0, vafot: 0, chiqarildi: 0, otkazildi: 0 };
       });
     }
 
-    data.forEach(r => {
-      let key = viloyat ? r.muassasa : r.viloyat;
+    const norm = (s) => s.toLowerCase().replace(/ttb|shtb|emergency department|politravma markazi|filiali|shoshilinch tibbiy yordam/g, '').trim();
+
+    (data || []).forEach(r => {
+      let key = r.name;
       if (!key) return;
-
-      const norm = (s) => s.replace(/[вЂвЂ™Кј`Вґ]/g, "'").toLowerCase().replace(/ttb|shtb|emergency department|politravma markazi|filiali|shoshilinch tibbiy yordam/g, '').trim();
-
-      // Agar nom configda bo'lmasa, o'xshashini qidirib ko'ramiz
       if (viloyat && !stats[key]) {
         const nKey = norm(key);
         const match = Object.keys(stats).find(name => norm(name) === nKey || norm(name).includes(nKey) || nKey.includes(norm(name)));
         if (match) key = match;
       }
-
-      if (!stats[key]) {
-        stats[key] = { name: key, jami: 0, aktiv: 0, vafot: 0, chiqarildi: 0, otkazildi: 0 };
-      }
-      stats[key].jami++;
-      if (r.status === 'active') stats[key].aktiv++;
-      else if (r.status === 'vafot') stats[key].vafot++;
-      else if (r.status === 'chiqarildi') stats[key].chiqarildi++;
-      else if (r.status === 'otkazildi') stats[key].otkazildi++;
+      if (!stats[key]) stats[key] = { name: key, jami: 0, aktiv: 0, vafot: 0, chiqarildi: 0, otkazildi: 0 };
+      stats[key].jami += Number(r.jami);
+      stats[key].aktiv += Number(r.aktiv);
+      stats[key].vafot += Number(r.vafot);
+      stats[key].chiqarildi += Number(r.chiqarildi);
+      stats[key].otkazildi += Number(r.otkazildi);
     });
-    
+
     return Object.values(stats).sort((a, b) => b.jami - a.jami || a.name.localeCompare(b.name));
   },
 
