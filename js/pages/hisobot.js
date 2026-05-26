@@ -1128,15 +1128,47 @@ const HisobotPage = {
       const ami    = infs.filter(p => p.infarkt_turi?.toLowerCase().includes('miokard')).length;
       const infViloyat = {};
       infs.forEach(p => { if (p.viloyat) infViloyat[p.viloyat] = (infViloyat[p.viloyat]||0)+1; });
-      // Muolaja nomlarini normalizatsiya: trim + kichik harf bilan birlashtirish, lekin ko'rsatishda asl nom
+      // Muolaja nomlarini standartlashtirish lug'ati (kirill+lotin+qisqartmalar → standart o'zbek nomi)
+      const MUOLAJA_STD = [
+        { pattern: /medikamentoz.*konservativ|konservativ.*medikamentoz/i, std: "Medikamentoz (konservativ) davo" },
+        { pattern: /konservativ/i,    std: "Medikamentoz (konservativ) davo" },
+        { pattern: /цаг\s*\+\s*тлт|цаг\s*\+\s*тромболиз|serebral.*angiograf.*tlt|serebral.*angiograf.*trombolit/i, std: "Serebral angiografiya + TLT (trombolizis)" },
+        { pattern: /цаг\s*\+\s*стент|serebral.*angiograf.*stent/i, std: "Serebral angiografiya + stentlash" },
+        { pattern: /цаг\s*\+\s*тромбоаспир/i, std: "Serebral angiografiya + tromboaspiratsiya" },
+        { pattern: /цаг\s*\+\s*тромбоэкстр|цаг\s*\+\s*tromboekstr/i, std: "Mexanik trombektomiya (tromboekstraksiya)" },
+        { pattern: /цаг\s*\+\s*тлбап/i, std: "Serebral angiografiya + TLBAP" },
+        { pattern: /комбин|kombinatsiy|tromboaspirats.*tromboekstr|трасп.*трэкст|трасп.*трэкстр/i, std: "Kombinatsiyalangan muolaja (tromboaspiratsiya + tromboekstraksiya)" },
+        { pattern: /trombektom|tromboekstraks|трombektom/i, std: "Mexanik trombektomiya (tromboekstraksiya)" },
+        { pattern: /\bцаг\b|faqat.*serebral.*angiograf|serebral.*angiograf.*faqat|faqat\s*цаг/i, std: "Faqat serebral angiografiya (ЦАГ)" },
+        { pattern: /serebral.*angiograf/i, std: "Serebral angiografiya" },
+        { pattern: /mskt.*angiograf|кта\b|ct\s*angio/i, std: "MSKT angiografiya" },
+        { pattern: /\bmskt\b/i, std: "MSKT" },
+        { pattern: /trombolit|tromboliz|\btlt\b/i, std: "Trombolitik terapiya (TLT)" },
+        { pattern: /neyrojarr|нейрохир|нейрожарр/i, std: "Neyrojarrohlik amaliyoti" },
+        { pattern: /jarr.*gemorr|gemorr.*jarr|jarrohlik.*gemorragik|gemorragik.*jarrohlik/i, std: "Gemorragik insult bo'yicha jarrohlik amaliyoti" },
+        { pattern: /aksh|cabg|шунт|bypass/i, std: "Aortokoronar shuntlash (AKSh)" },
+        { pattern: /коронар.*стент|stent.*koronar|чкав|чрескож|\bpci\b/i, std: "Koronar stentlash (PCI)" },
+        { pattern: /коронаро|коронарангиограф|koronarangiograf|\bkag\b/i, std: "Koronarangiografiya (KAG)" },
+        { pattern: /stentlash|стентир/i, std: "Stentlash" },
+        { pattern: /muolaja.*o.tkazilmadi|o.tkazilmadi|не\s*проводил/i, std: "Muolaja o'tkazilmadi" },
+        { pattern: /o.tkazilmadi/i, std: "Muolaja o'tkazilmadi" },
+        { pattern: /boshqa.*muassasa|направлен.*другое/i, std: "Boshqa muassasaga o'tkazildi (endovaskulyar muolaja uchun)" },
+        { pattern: /medikamentoz/i, std: "Medikamentoz davo" },
+      ];
+      const stdMuolaja = (raw) => {
+        const s = (raw || '').trim();
+        for (const { pattern, std } of MUOLAJA_STD) {
+          if (pattern.test(s)) return std;
+        }
+        return s;
+      };
       const normMuolaja = (arr) => {
-        const normMap = {}; // kichik_harf_trim → { label, count }
+        const normMap = {};
         arr.forEach(p => {
           if (!p.muolaja_turi) return;
-          const raw = p.muolaja_turi.trim();
-          const key = raw.toLowerCase().replace(/\s+/g, ' ');
-          if (!normMap[key]) normMap[key] = { label: raw, count: 0 };
-          normMap[key].count++;
+          const std = stdMuolaja(p.muolaja_turi);
+          if (!normMap[std]) normMap[std] = { label: std, count: 0 };
+          normMap[std].count++;
         });
         return normMap;
       };
