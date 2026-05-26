@@ -861,8 +861,19 @@ const DashboardPage = {
 
     const COLORS = [
       '#3b82f6','#ef4444','#10b981','#f59e0b','#8b5cf6',
-      '#06b6d4','#f97316','#ec4899'
+      '#06b6d4','#f97316','#ec4899','#94a3b8'
     ];
+
+    // Faqat TOP 8, qolganlarini "Boshqalar" ga birlashtirish
+    const TOP = 8;
+    let displayData = data;
+    if (data.length > TOP) {
+      const top8 = data.slice(0, TOP);
+      const othersSum = data.slice(TOP).reduce((s, [, v]) => s + v, 0);
+      displayData = othersSum > 0 ? [...top8, ['Boshqalar', othersSum]] : top8;
+    }
+    data = displayData;
+
     const total = data.reduce((s, [, v]) => s + v, 0);
 
     // Outside pointer labels via custom plugin
