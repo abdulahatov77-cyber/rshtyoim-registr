@@ -1065,14 +1065,8 @@ const DashboardPage = {
   },
 
   subscribeRealtime() {
-    Realtime.subscribeBemorlar(async () => {
-      await DashboardPage.refreshKpi();
-    });
-    // Har 60 soniyada polling
-    if (DashboardPage._pollTimer) clearInterval(DashboardPage._pollTimer);
-    DashboardPage._pollTimer = setInterval(async () => {
-      await DashboardPage.refreshKpi();
-    }, 60000);
+    // Realtime va polling o'chirildi — resurs tejash uchun (Nano plan)
+    // Ma'lumotlarni yangilash uchun sahifadagi "Yangilash" tugmasini ishlating
   },
 
   async refreshKpi() {

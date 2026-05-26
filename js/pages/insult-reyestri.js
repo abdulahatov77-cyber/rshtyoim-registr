@@ -21,10 +21,7 @@ const InsultReyestriPage = {
     this._currentData = [];
     initIcons();
     await this.loadStats();
-    Realtime.subscribeBemorlar(async () => {
-      if (Router._current !== 'insult-reyestri') return;
-      await InsultReyestriPage.loadStats();
-    });
+    // Realtime o'chirildi — resurs tejash uchun (Nano plan)
   },
 
   async refreshStats() {

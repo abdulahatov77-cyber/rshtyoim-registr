@@ -27,10 +27,7 @@ const BemorlarPage = {
     
     BemorlarPage.renderFilters();
     await BemorlarPage.loadData();
-    Realtime.subscribeBemorlar(async () => {
-      if (!document.getElementById('bemorlar-inner')) return;
-      await BemorlarPage.loadData();
-    });
+    // Realtime o'chirildi — resurs tejash uchun (Nano plan)
   },
 
   renderFilters() {
