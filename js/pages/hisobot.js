@@ -120,7 +120,7 @@ const HisobotPage = {
             ${icon('printer', 16)} Chop etish
           </button>
           ${user?.role === 'super_admin' ? `
-          <button class="shadow-md hover:shadow-lg flex items-center justify-center gap-2 px-4 rounded-xl font-bold text-white text-sm" style="background:#2481cc;padding-top:8px;padding-bottom:8px" onclick="HisobotPage.sendDailyTelegramReport()" title="Sutkalik hisobot Telegramga">
+          <button class="shadow-md hover:shadow-lg flex items-center justify-center gap-2 px-4 rounded-xl font-bold text-white text-sm" style="background:#2481cc;padding-top:8px;padding-bottom:8px" onclick="HisobotPage.sendTelegramReport()" title="Tanlangan davr hisobotini Telegramga yuborish">
             ${icon('send', 16)} Telegram hisobot
           </button>` : ''}
         </div>
@@ -1075,49 +1075,26 @@ const HisobotPage = {
     w.document.close();
   },
 
-  async sendDailyTelegramReport() {
-    const pad = n => String(n).padStart(2, '0');
+  async sendTelegramReport() {
+    const d = HisobotPage._lastData;
+    if (!d) { showToast('Avval hisobotni yuklab oling (Ko\'rish tugmasini bosing)', 'warning'); return; }
 
-    // Toshkent UTC+5: hozirgi vaqtni Toshkent vaqtiga o'giramiz
-    const nowUTC = new Date();
-    const nowTZ = new Date(nowUTC.getTime() + 5 * 60 * 60 * 1000);
-    const tzH = nowTZ.getUTCHours();
-    const tzY = nowTZ.getUTCFullYear();
-    const tzM = nowTZ.getUTCMonth();
-    const tzD = nowTZ.getUTCDate();
+    const { infs, ins, from, to } = d;
 
-    // Toshkent 07:00 = UTC 02:00
-    // Davr: kecha 07:00 TZ → bugun 07:00 TZ
-    // endDate = bugun 07:00 TZ = UTC bugun 02:00
-    // Agar hozir TZ < 07:00 bo'lsa, "bugun 07:00" hali kelmagan
-    // → end = bugun 07:00 TZ (UTC 02:00), start = kecha 07:00 TZ (UTC yesterday 02:00)
-    const endDate   = new Date(Date.UTC(tzY, tzM, tzD, 2, 0, 0)); // UTC 02:00 = TZ 07:00
-    const startDate = new Date(endDate.getTime() - 24 * 60 * 60 * 1000);
-
-    // Supabase timestamptz uchun UTC ISO string beramiz
-    const fromISO = startDate.toISOString(); // e.g. "2026-05-15T02:00:00.000Z"
-    const toISO   = endDate.toISOString();   // e.g. "2026-05-16T02:00:00.000Z"
-
-    // Label uchun Toshkent sana
-    const startLabel = fmtTZ(startDate);
-    const endLabel   = fmtTZ(endDate);
-    function fmtTZ(utcDate) {
-      const tz = new Date(utcDate.getTime() + 5 * 60 * 60 * 1000);
-      return `${pad(tz.getUTCDate())}.${pad(tz.getUTCMonth()+1)}.${tz.getUTCFullYear()} 07:00`;
-    }
+    // from/to are UTC ISO strings stored by loadReport; extract Toshkent local date labels
+    const fmtDate = (isoStr) => {
+      const tz = new Date(new Date(isoStr).getTime() + 5 * 60 * 60 * 1000);
+      const pad = n => String(n).padStart(2, '0');
+      return `${pad(tz.getUTCDate())}.${pad(tz.getUTCMonth()+1)}.${tz.getUTCFullYear()}`;
+    };
+    const startLabel = fmtDate(from);
+    const endLabel   = fmtDate(to);
+    const periodLabel = startLabel === endLabel ? startLabel : `${startLabel} — ${endLabel}`;
 
     showToast('📊 Hisobot tayyorlanmoqda...', 'info', 3000);
 
     try {
       const sb = getSupabase();
-
-      // Yangi qabul qilinganlar (shu davrda qabul_vaqt)
-      const [infNew, insNew] = await Promise.all([
-        sb.from('infarkt_qabul').select('kt_no,fio,viloyat,status,infarkt_turi,muolaja_turi').gte('qabul_vaqt', fromISO).lt('qabul_vaqt', toISO),
-        sb.from('insult_qabul').select('kt_no,fio,viloyat,status,insult_turi,muolaja_turi').gte('qabul_vaqt', fromISO).lt('qabul_vaqt', toISO)
-      ]);
-      const infs = infNew.data || [];
-      const ins  = insNew.data || [];
 
       // Hozir shifoxonada (status = active, barcha vaqt)
       const [infActive, insActive] = await Promise.all([
@@ -1126,7 +1103,6 @@ const HisobotPage = {
       ]);
       const infActiveCount = infActive.count ?? 0;
       const insActiveCount = insActive.count ?? 0;
-      console.log('[Hisobot] infActive:', infActive.count, 'insActive:', insActive.count, 'infs:', infs.length, 'ins:', ins.length);
 
       // Infarkt hisobot
       const infChiqarildi = infs.filter(p => p.status === 'chiqarildi').length;
@@ -1152,12 +1128,12 @@ const HisobotPage = {
       const insMuolaja = {};
       ins.forEach(p => { if (p.muolaja_turi) insMuolaja[p.muolaja_turi] = (insMuolaja[p.muolaja_turi]||0)+1; });
 
-      const vilStr = (obj) => Object.entries(obj).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`  • ${k}: ${v} ta`).join('\n') || '  —';
+      const vilStr     = (obj) => Object.entries(obj).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`  • ${k}: ${v} ta`).join('\n') || '  —';
       const muolajaStr = (obj) => Object.entries(obj).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`  • ${k}: ${v} ta`).join('\n') || '  —';
 
-      const infMsg = `🫀 INFARKT SUTKALIK HISOBOT
+      const infMsg = `🫀 INFARKT HISOBOT
 ━━━━━━━━━━━━━━━━━━━━━━
-📅 Davr: ${startLabel} — ${endLabel}
+📅 Davr: ${periodLabel}
 ━━━━━━━━━━━━━━━━━━━━━━
 👥 Jami yangi qabul: ${infs.length} ta
 🟢 Davolanib chiqarildi: ${infChiqarildi} ta
@@ -1177,9 +1153,9 @@ ${vilStr(infViloyat)}
 ${muolajaStr(infMuolaja)}
 ━━━━━━━━━━━━━━━━━━━━━━`;
 
-      const insMsg = `🧠 INSULT SUTKALIK HISOBOT
+      const insMsg = `🧠 INSULT HISOBOT
 ━━━━━━━━━━━━━━━━━━━━━━
-📅 Davr: ${startLabel} — ${endLabel}
+📅 Davr: ${periodLabel}
 ━━━━━━━━━━━━━━━━━━━━━━
 👥 Jami yangi qabul: ${ins.length} ta
 🟢 Davolanib chiqarildi: ${insChiqarildi} ta
@@ -1214,7 +1190,7 @@ ${muolajaStr(insMuolaja)}
       ]);
 
       if (r1.ok && r2.ok) {
-        showToast('✅ Sutkalik hisobot Telegramga yuborildi!', 'success', 5000);
+        showToast('✅ Hisobot Telegramga yuborildi!', 'success', 5000);
       } else {
         showToast('⚠️ Telegram xato: ' + (r1.description || r2.description || 'Noma\'lum'), 'error', 6000);
       }
