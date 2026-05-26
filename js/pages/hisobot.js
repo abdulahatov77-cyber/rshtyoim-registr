@@ -1156,8 +1156,8 @@ const HisobotPage = {
         { pattern: /faqat\s*(цаг|serebral)|^цаг$/i, std: "Faqat serebral angiografiya (ЦАГ)" },
         // Boshqa muassasaga o'tkazildi — barcha variantlar
         { pattern: /boshqa muassasaga o.tkazildi/i, std: "Boshqa muassasaga o'tkazildi (endovaskulyar muolaja uchun)" },
-        // O'tkazilmadi / Muolaja o'tkazilmadi
-        { pattern: /o.tkazilmadi/i, std: "Muolaja o'tkazilmadi" },
+        // O'tkazilmadi / Muolaja o'tkazilmadi → Medikamentoz (konservativ) davo
+        { pattern: /o.tkazilmadi/i, std: "Medikamentoz (konservativ) davo" },
         // MSKT angiografiya
         { pattern: /mskt\s*angiograf/i, std: "MSKT angiografiya" },
         { pattern: /\bmskt\b/i, std: "MSKT" },
