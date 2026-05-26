@@ -1128,31 +1128,42 @@ const HisobotPage = {
       const ami    = infs.filter(p => p.infarkt_turi?.toLowerCase().includes('miokard')).length;
       const infViloyat = {};
       infs.forEach(p => { if (p.viloyat) infViloyat[p.viloyat] = (infViloyat[p.viloyat]||0)+1; });
-      // Muolaja nomlarini standartlashtirish lug'ati (kirill+lotin+qisqartmalar → standart o'zbek nomi)
+      // Muolaja nomlarini standartlashtirish — aniq bazadagi matnlar asosida
       const MUOLAJA_STD = [
-        { pattern: /medikamentoz.*konservativ|konservativ.*medikamentoz/i, std: "Medikamentoz (konservativ) davo" },
-        { pattern: /konservativ/i,    std: "Medikamentoz (konservativ) davo" },
-        { pattern: /цаг\s*\+\s*тлт|цаг\s*\+\s*тромболиз|serebral.*angiograf.*tlt|serebral.*angiograf.*trombolit/i, std: "Serebral angiografiya + TLT (trombolizis)" },
-        { pattern: /цаг\s*\+\s*стент|serebral.*angiograf.*stent/i, std: "Serebral angiografiya + stentlash" },
+        // Medikamentoz
+        { pattern: /konservativ/i, std: "Medikamentoz (konservativ) davo" },
+        // Gemorragik insult jarrohlik — ikki xil yozuv bor, birlashtirish
+        { pattern: /gemorragik insult bo.yicha jarrohlik|neyrojarrohlik.*gemorragik|jarrohlik.*gemorragik/i, std: "Gemorragik insult bo'yicha jarrohlik amaliyoti" },
+        // Kombinatsiyalangan (Комбинир ТрАспир ТрЭкстр)
+        { pattern: /комбинир|kombinatsiy.*tromboaspirats.*tromboekstr|tromboaspirats.*tromboekstr/i, std: "Kombinatsiyalangan muolaja (tromboaspiratsiya + tromboekstraksiya)" },
+        // ЦАГ + TLT
+        { pattern: /цаг\s*\+\s*тл[тт]|цаг\s*\+\s*тромболиз/i, std: "Serebral angiografiya + TLT (trombolizis)" },
+        // ЦАГ + Стентлаш
+        { pattern: /цаг\s*\+\s*стент/i, std: "Serebral angiografiya + stentlash" },
+        // ЦАГ + Тромбоаспирация
         { pattern: /цаг\s*\+\s*тромбоаспир/i, std: "Serebral angiografiya + tromboaspiratsiya" },
-        { pattern: /цаг\s*\+\s*тромбоэкстр|цаг\s*\+\s*tromboekstr/i, std: "Mexanik trombektomiya (tromboekstraksiya)" },
+        // ЦАГ + Тромбоэкстракция
+        { pattern: /цаг\s*\+\s*тромбоэкстр/i, std: "Serebral angiografiya + tromboekstraksiya (mexanik trombektomiya)" },
+        // ЦАГ + ТЛБАП
         { pattern: /цаг\s*\+\s*тлбап/i, std: "Serebral angiografiya + TLBAP" },
-        { pattern: /комбин|kombinatsiy|tromboaspirats.*tromboekstr|трасп.*трэкст|трасп.*трэкстр/i, std: "Kombinatsiyalangan muolaja (tromboaspiratsiya + tromboekstraksiya)" },
-        { pattern: /trombektom|tromboekstraks|трombektom/i, std: "Mexanik trombektomiya (tromboekstraksiya)" },
-        { pattern: /\bцаг\b|faqat.*serebral.*angiograf|serebral.*angiograf.*faqat|faqat\s*цаг/i, std: "Faqat serebral angiografiya (ЦАГ)" },
-        { pattern: /serebral.*angiograf/i, std: "Serebral angiografiya" },
-        { pattern: /mskt.*angiograf|кта\b|ct\s*angio/i, std: "MSKT angiografiya" },
-        { pattern: /\bmskt\b/i, std: "MSKT" },
-        { pattern: /trombolit|tromboliz|\btlt\b/i, std: "Trombolitik terapiya (TLT)" },
-        { pattern: /neyrojarr|нейрохир|нейрожарр/i, std: "Neyrojarrohlik amaliyoti" },
-        { pattern: /jarr.*gemorr|gemorr.*jarr|jarrohlik.*gemorragik|gemorragik.*jarrohlik/i, std: "Gemorragik insult bo'yicha jarrohlik amaliyoti" },
-        { pattern: /aksh|cabg|шунт|bypass/i, std: "Aortokoronar shuntlash (AKSh)" },
-        { pattern: /коронар.*стент|stent.*koronar|чкав|чрескож|\bpci\b/i, std: "Koronar stentlash (PCI)" },
-        { pattern: /коронаро|коронарангиограф|koronarangiograf|\bkag\b/i, std: "Koronarangiografiya (KAG)" },
-        { pattern: /stentlash|стентир/i, std: "Stentlash" },
-        { pattern: /muolaja.*o.tkazilmadi|o.tkazilmadi|не\s*проводил/i, std: "Muolaja o'tkazilmadi" },
+        // Serebral angiografiya + TLT (lotin)
+        { pattern: /serebral angiografiya\s*\+\s*t(lt|rombolit)/i, std: "Serebral angiografiya + TLT (trombolizis)" },
+        // Serebral angiografiya + tromboekstraksiya
+        { pattern: /serebral angiografiya\s*\+\s*tromboekstr/i, std: "Serebral angiografiya + tromboekstraksiya (mexanik trombektomiya)" },
+        // Serebral angiografiya + stentlash
+        { pattern: /serebral angiografiya\s*\+\s*stent/i, std: "Serebral angiografiya + stentlash" },
+        // Faqat ЦАГ / Faqat serebral angiografiya
+        { pattern: /faqat\s*(цаг|serebral)|^цаг$/i, std: "Faqat serebral angiografiya (ЦАГ)" },
+        // Boshqa muassasaga o'tkazildi — barcha variantlar
+        { pattern: /boshqa muassasaga o.tkazildi/i, std: "Boshqa muassasaga o'tkazildi (endovaskulyar muolaja uchun)" },
+        // O'tkazilmadi / Muolaja o'tkazilmadi
         { pattern: /o.tkazilmadi/i, std: "Muolaja o'tkazilmadi" },
-        { pattern: /boshqa.*muassasa|направлен.*другое/i, std: "Boshqa muassasaga o'tkazildi (endovaskulyar muolaja uchun)" },
+        // MSKT angiografiya
+        { pattern: /mskt\s*angiograf/i, std: "MSKT angiografiya" },
+        { pattern: /\bmskt\b/i, std: "MSKT" },
+        // KAG
+        { pattern: /koronarangiograf|\bkag\b/i, std: "Koronarangiografiya (KAG)" },
+        // Medikamentoz (oxirida — eng umumiy)
         { pattern: /medikamentoz/i, std: "Medikamentoz davo" },
       ];
       const stdMuolaja = (raw) => {
