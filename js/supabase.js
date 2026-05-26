@@ -633,8 +633,16 @@ const DB = {
       p_viloyat:  viloyat || null,
       p_muassasa: overrideMuassasa || null
     });
-    if (error) throw error;
     const AGE_GROUPS = ['75+', '60-74', '45-59', '30-44', '≤29'];
+    const emptyPyramid = () => {
+      const res = {};
+      AGE_GROUPS.forEach(g => { res[g] = { mTotal: 0, fTotal: 0, mDeath: 0, fDeath: 0 }; });
+      return { groups: AGE_GROUPS, data: res };
+    };
+    if (error) {
+      console.error('getAgeSexPyramid xato:', error.message);
+      return { infarkt: emptyPyramid(), insult: emptyPyramid() };
+    }
     const buildPyramid = (registr) => {
       const res = {};
       AGE_GROUPS.forEach(g => { res[g] = { mTotal: 0, fTotal: 0, mDeath: 0, fDeath: 0 }; });
