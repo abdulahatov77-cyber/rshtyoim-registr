@@ -521,12 +521,13 @@ const DB = {
       p_viloyat:  viloyat || null,
       p_muassasa: overrideMuassasa || null
     });
-    if (error) throw error;
+    if (error) { console.error('getTrend12Month xato:', error.message); throw error; }
     const monthNames = ['Yan','Fev','Mar','Apr','May','Iyn','Iyl','Avg','Sen','Okt','Noy','Dek'];
     const rows = data || [];
+    console.log('getTrend12Month rows:', rows.length, rows);
     const labels  = rows.map(r => `${monthNames[parseInt(r.oy.split('-')[1]) - 1]} ${r.oy.split('-')[0]}`);
-    const infData = rows.map(r => r.infarkt_count || 0);
-    const insData = rows.map(r => r.insult_count  || 0);
+    const infData = rows.map(r => Number(r.infarkt_count) || 0);
+    const insData = rows.map(r => Number(r.insult_count)  || 0);
     return { labels, infData, insData };
   },
 
