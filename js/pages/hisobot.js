@@ -1133,7 +1133,7 @@ const HisobotPage = {
         // Medikamentoz
         { pattern: /konservativ/i, std: "Medikamentoz (konservativ) davo" },
         // Gemorragik insult jarrohlik — ikki xil yozuv bor, birlashtirish
-        { pattern: /gemorragik insult bo.yicha jarrohlik|neyrojarrohlik.*gemorragik|jarrohlik.*gemorragik/i, std: "Gemorragik insult bo'yicha jarrohlik amaliyoti" },
+        { pattern: /gemorragik insult bo.yicha jarrohlik|neyrojarrohlik.*gemorragik|jarrohlik.*gemorragik|neyrojarrohlik amaliyoti/i, std: "Gemorragik insult bo'yicha jarrohlik amaliyoti" },
         // Kombinatsiyalangan (Комбинир ТрАспир ТрЭкстр)
         { pattern: /комбинир|kombinatsiy.*tromboaspirats.*tromboekstr|tromboaspirats.*tromboekstr/i, std: "Kombinatsiyalangan muolaja (tromboaspiratsiya + tromboekstraksiya)" },
         // ЦАГ + TLT
