@@ -428,242 +428,121 @@ const DB = {
     const todayISO    = `${yy}-${mm}-${dd}T00:00:00+05:00`;
     const todayEndISO = `${yy}-${mm}-${dd}T23:59:59+05:00`;
 
-    const [
-      { count: infAll },
-      { count: insAll },
-      { count: infAktiv },
-      { count: insAktiv },
-      { count: infVafot },
-      { count: insVafot },
-      { count: infChiqarildi },
-      { count: insChiqarildi },
-      { count: infarktBugun },
-      { count: insultBugun },
-      { count: kritikInfarkt },
-      { count: kritikInsult },
-      { count: infOtkaz },
-      { count: insOtkaz }
-    ] = await Promise.all([
-      eqViloyat(getSupabase().from('infarkt_qabul').select('id', { count: 'exact', head: true })),
-      eqViloyat(getSupabase().from('insult_qabul').select('id', { count: 'exact', head: true })),
-      eqViloyat(getSupabase().from('infarkt_qabul').select('id', { count: 'exact', head: true }).eq('status', 'active')),
-      eqViloyat(getSupabase().from('insult_qabul').select('id', { count: 'exact', head: true }).eq('status', 'active')),
-      eqViloyat(getSupabase().from('infarkt_qabul').select('id', { count: 'exact', head: true }).eq('status', 'vafot')),
-      eqViloyat(getSupabase().from('insult_qabul').select('id', { count: 'exact', head: true }).eq('status', 'vafot')),
-      eqViloyat(getSupabase().from('infarkt_qabul').select('id', { count: 'exact', head: true }).eq('status', 'chiqarildi')),
-      eqViloyat(getSupabase().from('insult_qabul').select('id', { count: 'exact', head: true }).eq('status', 'chiqarildi')),
-      eqViloyat(getSupabase().from('infarkt_qabul').select('id', { count: 'exact', head: true }).gte('qabul_vaqt', todayISO).lt('qabul_vaqt', todayEndISO)),
-      eqViloyat(getSupabase().from('insult_qabul').select('id', { count: 'exact', head: true }).gte('qabul_vaqt', todayISO).lt('qabul_vaqt', todayEndISO)),
-      eqViloyat(getSupabase().from('infarkt_qabul').select('id', { count: 'exact', head: true }).eq('status', 'active')).in('killip', ['Killip III вЂ” o\'pka shishi', 'Killip IV вЂ” kardiogen shok']),
-      eqViloyat(getSupabase().from('insult_qabul').select('id', { count: 'exact', head: true }).eq('status', 'active')).gte('nihss_qabul', 15),
-      eqViloyat(getSupabase().from('infarkt_qabul').select('id', { count: 'exact', head: true }).eq('status', 'otkazildi')),
-      eqViloyat(getSupabase().from('insult_qabul').select('id', { count: 'exact', head: true }).eq('status', 'otkazildi'))
-    ]);
-
-    // Klinik turlari va muolajalar breakdown (paginated)
-    const fetchAllTypes = async (table, cols) => {
-      let all = [], offset = 0;
-      while (true) {
-        const { data, error } = await eqViloyat(
-          getSupabase().from(table).select(cols)
-        ).range(offset, offset + 999);
-        if (error) { if (error.code === 'PGRST103') break; throw error; }
-        if (!data || data.length === 0) break;
-        all = all.concat(data);
-        if (data.length < 1000) break;
-        offset += 1000;
-      }
-      return all;
-    };
-    const [iT, nT] = await Promise.all([
-      fetchAllTypes('infarkt_qabul', 'infarkt_turi,muolaja_turi,status'),
-      fetchAllTypes('insult_qabul', 'insult_turi,muolaja_turi,status')
-    ]);
+    // Barcha statistikani bitta RPC chaqiruvida olamiz (14 ta alohida so'rov o'rniga)
+    const { data: rpcData, error: rpcErr } = await getSupabase().rpc('get_dashboard_stats', {
+      p_viloyat:   viloyat || null,
+      p_muassasa:  overrideMuassasa || null,
+      p_today_start: todayISO,
+      p_today_end:   todayEndISO
+    });
+    if (rpcErr) throw rpcErr;
+    const s = rpcData || {};
 
     return {
-      jamiInfarkt: infAll || 0,
-      jamiInsult: insAll || 0,
-      jami: (infAll || 0) + (insAll || 0),
-      infarktAktiv: infAktiv || 0,
-      insultAktiv: insAktiv || 0,
-      vafotInfarkt: infVafot || 0,
-      vafotInsult: insVafot || 0,
-      vafot: (infVafot || 0) + (insVafot || 0),
-      chiqarilganInfarkt: infChiqarildi || 0,
-      chiqarilganInsult: insChiqarildi || 0,
-      infarktBugun: infarktBugun || 0,
-      insultBugun: insultBugun || 0,
-      kritikInfarkt: kritikInfarkt || 0,
-      kritikInsult: kritikInsult || 0,
-      otkazilganInfarkt: infOtkaz || 0,
-      otkazilganInsult: insOtkaz || 0,
-      otkazildi: (infOtkaz || 0) + (insOtkaz || 0),
+      jamiInfarkt:        s.jami_infarkt        || 0,
+      jamiInsult:         s.jami_insult         || 0,
+      jami:              (s.jami_infarkt         || 0) + (s.jami_insult         || 0),
+      infarktAktiv:       s.aktiv_infarkt       || 0,
+      insultAktiv:        s.aktiv_insult        || 0,
+      vafotInfarkt:       s.vafot_infarkt       || 0,
+      vafotInsult:        s.vafot_insult        || 0,
+      vafot:             (s.vafot_infarkt        || 0) + (s.vafot_insult        || 0),
+      chiqarilganInfarkt: s.chiqarildi_infarkt  || 0,
+      chiqarilganInsult:  s.chiqarildi_insult   || 0,
+      infarktBugun:       s.bugun_infarkt       || 0,
+      insultBugun:        s.bugun_insult        || 0,
+      kritikInfarkt:      s.kritik_infarkt      || 0,
+      kritikInsult:       s.kritik_insult       || 0,
+      otkazilganInfarkt:  s.otkazildi_infarkt   || 0,
+      otkazilganInsult:   s.otkazildi_insult    || 0,
+      otkazildi:         (s.otkazildi_infarkt    || 0) + (s.otkazildi_insult    || 0),
       // Infarkt klinik
-      stemi:              iT.filter(p => p.infarkt_turi?.toUpperCase().includes('STEMI') && !p.infarkt_turi?.toUpperCase().includes('NSTEMI')).length,
-      stemiDavol:         iT.filter(p => p.infarkt_turi?.toUpperCase().includes('STEMI') && !p.infarkt_turi?.toUpperCase().includes('NSTEMI') && p.status === 'chiqarildi').length,
-      stemiVafot:         iT.filter(p => p.infarkt_turi?.toUpperCase().includes('STEMI') && !p.infarkt_turi?.toUpperCase().includes('NSTEMI') && p.status === 'vafot').length,
-      nstemi:             iT.filter(p => p.infarkt_turi?.toUpperCase().includes('NSTEMI')).length,
-      nstemiDavol:        iT.filter(p => p.infarkt_turi?.toUpperCase().includes('NSTEMI') && p.status === 'chiqarildi').length,
-      nstemiVafot:        iT.filter(p => p.infarkt_turi?.toUpperCase().includes('NSTEMI') && p.status === 'vafot').length,
-      miokard:            iT.filter(p => p.infarkt_turi?.toLowerCase().includes('miokard')).length,
-      miokardDavol:       iT.filter(p => p.infarkt_turi?.toLowerCase().includes('miokard') && p.status === 'chiqarildi').length,
-      miokardVafot:       iT.filter(p => p.infarkt_turi?.toLowerCase().includes('miokard') && p.status === 'vafot').length,
-      koronar:            iT.filter(p => p.muolaja_turi?.includes('KAG') || p.muolaja_turi?.toLowerCase().includes('koronarangiografiya')).length,
-      koronarDavol:       iT.filter(p => (p.muolaja_turi?.includes('KAG') || p.muolaja_turi?.toLowerCase().includes('koronarangiografiya')) && p.status === 'chiqarildi').length,
-      koronarVafot:       iT.filter(p => (p.muolaja_turi?.includes('KAG') || p.muolaja_turi?.toLowerCase().includes('koronarangiografiya')) && p.status === 'vafot').length,
-      trombolizis:        iT.filter(p => p.muolaja_turi?.includes('TLT') || p.muolaja_turi?.toLowerCase().includes('trombolitik')).length,
-      trombolizisDavol:   iT.filter(p => (p.muolaja_turi?.includes('TLT') || p.muolaja_turi?.toLowerCase().includes('trombolitik')) && p.status === 'chiqarildi').length,
-      trombolizisVafot:   iT.filter(p => (p.muolaja_turi?.includes('TLT') || p.muolaja_turi?.toLowerCase().includes('trombolitik')) && p.status === 'vafot').length,
-      medikamentoz:       iT.filter(p => p.muolaja_turi?.toLowerCase().includes('medikamentoz')).length,
-      medikamentozDavol:  iT.filter(p => p.muolaja_turi?.toLowerCase().includes('medikamentoz') && p.status === 'chiqarildi').length,
-      medikamentozVafot:  iT.filter(p => p.muolaja_turi?.toLowerCase().includes('medikamentoz') && p.status === 'vafot').length,
+      stemi:              s.stemi               || 0,
+      stemiDavol:         s.stemi_davol         || 0,
+      stemiVafot:         s.stemi_vafot         || 0,
+      nstemi:             s.nstemi              || 0,
+      nstemiDavol:        s.nstemi_davol        || 0,
+      nstemiVafot:        s.nstemi_vafot        || 0,
+      miokard:            s.miokard             || 0,
+      miokardDavol:       s.miokard_davol       || 0,
+      miokardVafot:       s.miokard_vafot       || 0,
+      koronar:            s.koronar             || 0,
+      koronarDavol:       s.koronar_davol       || 0,
+      koronarVafot:       s.koronar_vafot       || 0,
+      trombolizis:        s.trombolizis         || 0,
+      trombolizisDavol:   s.trombolizis_davol   || 0,
+      trombolizisVafot:   s.trombolizis_vafot   || 0,
+      medikamentoz:       s.medikamentoz_inf    || 0,
+      medikamentozDavol:  s.medikamentoz_inf_davol || 0,
+      medikamentozVafot:  s.medikamentoz_inf_vafot || 0,
       // Insult klinik
-      ishemik:                nT.filter(p => p.insult_turi?.toLowerCase().includes('ishemik')).length,
-      ishemikDavol:           nT.filter(p => p.insult_turi?.toLowerCase().includes('ishemik') && p.status === 'chiqarildi').length,
-      ishemikVafot:           nT.filter(p => p.insult_turi?.toLowerCase().includes('ishemik') && p.status === 'vafot').length,
-      gemorragik:             nT.filter(p => p.insult_turi?.toLowerCase().includes('gemorragik')).length,
-      gemorragikDavol:        nT.filter(p => p.insult_turi?.toLowerCase().includes('gemorragik') && p.status === 'chiqarildi').length,
-      gemorragikVafot:        nT.filter(p => p.insult_turi?.toLowerCase().includes('gemorragik') && p.status === 'vafot').length,
-      tia:                    nT.filter(p => p.insult_turi?.toUpperCase().includes('TIA')).length,
-      tiaDavol:               nT.filter(p => p.insult_turi?.toUpperCase().includes('TIA') && p.status === 'chiqarildi').length,
-      tiaVafot:               nT.filter(p => p.insult_turi?.toUpperCase().includes('TIA') && p.status === 'vafot').length,
-      mskt:                   nT.filter(p => p.muolaja_turi?.toUpperCase().includes('MSKT')).length,
-      msktDavol:              nT.filter(p => p.muolaja_turi?.toUpperCase().includes('MSKT') && p.status === 'chiqarildi').length,
-      msktVafot:              nT.filter(p => p.muolaja_turi?.toUpperCase().includes('MSKT') && p.status === 'vafot').length,
-      trombektomiya:          nT.filter(p => p.muolaja_turi?.toLowerCase().includes('trombektom') || p.muolaja_turi?.toLowerCase().includes('tromboekstraksiya')).length,
-      trombektomiyaDavol:     nT.filter(p => (p.muolaja_turi?.toLowerCase().includes('trombektom') || p.muolaja_turi?.toLowerCase().includes('tromboekstraksiya')) && p.status === 'chiqarildi').length,
-      trombektomiyaVafot:     nT.filter(p => (p.muolaja_turi?.toLowerCase().includes('trombektom') || p.muolaja_turi?.toLowerCase().includes('tromboekstraksiya')) && p.status === 'vafot').length,
-      insultMedikamentoz:       nT.filter(p => p.muolaja_turi?.toLowerCase().includes('medikamentoz') || p.muolaja_turi?.toLowerCase().includes('konservativ')).length,
-      insultMedikamentozDavol:  nT.filter(p => (p.muolaja_turi?.toLowerCase().includes('medikamentoz') || p.muolaja_turi?.toLowerCase().includes('konservativ')) && p.status === 'chiqarildi').length,
-      insultMedikamentozVafot:  nT.filter(p => (p.muolaja_turi?.toLowerCase().includes('medikamentoz') || p.muolaja_turi?.toLowerCase().includes('konservativ')) && p.status === 'vafot').length,
+      ishemik:                s.ishemik             || 0,
+      ishemikDavol:           s.ishemik_davol       || 0,
+      ishemikVafot:           s.ishemik_vafot       || 0,
+      gemorragik:             s.gemorragik          || 0,
+      gemorragikDavol:        s.gemorragik_davol    || 0,
+      gemorragikVafot:        s.gemorragik_vafot    || 0,
+      tia:                    s.tia                 || 0,
+      tiaDavol:               s.tia_davol           || 0,
+      tiaVafot:               s.tia_vafot           || 0,
+      mskt:                   s.mskt                || 0,
+      msktDavol:              s.mskt_davol          || 0,
+      msktVafot:              s.mskt_vafot          || 0,
+      trombektomiya:          s.trombektomiya       || 0,
+      trombektomiyaDavol:     s.trombektomiya_davol || 0,
+      trombektomiyaVafot:     s.trombektomiya_vafot || 0,
+      insultMedikamentoz:       s.medikamentoz_ins        || 0,
+      insultMedikamentozDavol:  s.medikamentoz_ins_davol  || 0,
+      insultMedikamentozVafot:  s.medikamentoz_ins_vafot  || 0,
     };
   },
 
-  // Last 30 days trend
+  // Last 30 days trend — RPC orqali (Toshkent UTC+5 da)
   async getTrend30(overrideViloyat, overrideMuassasa) {
     const p = await Profile.getCurrent();
     const viloyat = overrideMuassasa ? null : (overrideViloyat !== undefined ? overrideViloyat : (p?.role === 'super_admin' ? null : p?.viloyat));
-    const eqViloyat = (q) => overrideMuassasa ? q.eq('muassasa', overrideMuassasa) : (viloyat ? q.eq('viloyat', viloyat) : q);
-    const from = new Date();
-    from.setUTCDate(from.getUTCDate() - 29);
-    from.setUTCHours(0, 0, 0, 0);
-    const fromISO = from.toISOString();
-
-    const fetchAll = async (table) => {
-      let all = [], offset = 0;
-      while (true) {
-        const { data, error } = await eqViloyat(
-          getSupabase().from(table).select('qabul_vaqt').gte('qabul_vaqt', fromISO)
-        ).range(offset, offset + 999);
-        if (error) { if (error.code === 'PGRST103') break; throw error; }
-        if (!data || data.length === 0) break;
-        all = all.concat(data);
-        if (data.length < 1000) break;
-        offset += 1000;
-      }
-      return all;
-    };
-
-    const [inf, ins] = await Promise.all([
-      fetchAll('infarkt_qabul'),
-      fetchAll('insult_qabul')
-    ]);
-
-    const labels = [], infData = [], insData = [];
-    for (let i = 0; i < 30; i++) {
-      const d = new Date(from);
-      d.setUTCDate(from.getUTCDate() + i);
-      const ds = d.toISOString().split('T')[0];
-      labels.push(ds.slice(5));
-      infData.push(inf.filter(r => r.qabul_vaqt?.startsWith(ds)).length);
-      insData.push(ins.filter(r => r.qabul_vaqt?.startsWith(ds)).length);
-    }
+    const { data, error } = await getSupabase().rpc('get_trend_30', {
+      p_viloyat:  viloyat || null,
+      p_muassasa: overrideMuassasa || null
+    });
+    if (error) throw error;
+    const rows = data || [];
+    const labels  = rows.map(r => r.sana.slice(5));
+    const infData = rows.map(r => r.infarkt_count || 0);
+    const insData = rows.map(r => r.insult_count  || 0);
     return { labels, infData, insData };
   },
 
-  // Last 12 months trend
+  // Last 12 months trend — RPC orqali
   async getTrend12Month(overrideViloyat, overrideMuassasa) {
     const p = await Profile.getCurrent();
     const viloyat = overrideMuassasa ? null : (overrideViloyat !== undefined ? overrideViloyat : (p?.role === 'super_admin' ? null : p?.viloyat));
-    const eqViloyat = (q) => overrideMuassasa ? q.eq('muassasa', overrideMuassasa) : (viloyat ? q.eq('viloyat', viloyat) : q);
-    const now = new Date();
-    const from = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 11, 1));
-    const fromISO = from.toISOString();
-
-    const fetchAll = async (table) => {
-      let all = [], offset = 0;
-      while (true) {
-        const { data, error } = await eqViloyat(
-          getSupabase().from(table).select('qabul_vaqt').gte('qabul_vaqt', fromISO)
-        ).range(offset, offset + 999);
-        if (error) { if (error.code === 'PGRST103') break; throw error; }
-        if (!data || data.length === 0) break;
-        all = all.concat(data);
-        if (data.length < 1000) break;
-        offset += 1000;
-      }
-      return all;
-    };
-
-    const [inf, ins] = await Promise.all([
-      fetchAll('infarkt_qabul'),
-      fetchAll('insult_qabul')
-    ]);
-
-    const labels = [], infData = [], insData = [];
+    const { data, error } = await getSupabase().rpc('get_trend_12month', {
+      p_viloyat:  viloyat || null,
+      p_muassasa: overrideMuassasa || null
+    });
+    if (error) throw error;
     const monthNames = ['Yan','Fev','Mar','Apr','May','Iyn','Iyl','Avg','Sen','Okt','Noy','Dek'];
-    for (let i = 0; i < 12; i++) {
-      const d = new Date(Date.UTC(from.getUTCFullYear(), from.getUTCMonth() + i, 1));
-      const yr = d.getUTCFullYear();
-      const mo = d.getUTCMonth();
-      const prefix = `${yr}-${String(mo + 1).padStart(2, '0')}`;
-      labels.push(`${monthNames[mo]} ${yr}`);
-      infData.push(inf.filter(r => r.qabul_vaqt?.startsWith(prefix)).length);
-      insData.push(ins.filter(r => r.qabul_vaqt?.startsWith(prefix)).length);
-    }
+    const rows = data || [];
+    const labels  = rows.map(r => `${monthNames[parseInt(r.oy.split('-')[1]) - 1]} ${r.oy.split('-')[0]}`);
+    const infData = rows.map(r => r.infarkt_count || 0);
+    const insData = rows.map(r => r.insult_count  || 0);
     return { labels, infData, insData };
   },
 
-  // Risk factors distribution
+  // Risk factors distribution — RPC orqali
   async getRiskFactors(overrideViloyat, overrideMuassasa) {
     const p = await Profile.getCurrent();
     const viloyat = overrideMuassasa ? null : (overrideViloyat !== undefined ? overrideViloyat : (p?.role === 'super_admin' ? null : p?.viloyat));
-    const eqViloyat = (q) => overrideMuassasa ? q.eq('muassasa', overrideMuassasa) : (viloyat ? q.eq('viloyat', viloyat) : q);
-
-    const fetchAll = async (table) => {
-      let all = [], offset = 0;
-      while (true) {
-        const { data, error } = await eqViloyat(
-          getSupabase().from(table).select('xavf_omil')
-        ).range(offset, offset + 999);
-        if (error) { if (error.code === 'PGRST103') break; throw error; }
-        if (!data || data.length === 0) break;
-        all = all.concat(data);
-        if (data.length < 1000) break;
-        offset += 1000;
-      }
-      return all;
-    };
-
-    const [inf, ins] = await Promise.all([
-      fetchAll('infarkt_qabul'),
-      fetchAll('insult_qabul')
-    ]);
-
-    const count = (rows) => {
-      const map = {};
-      rows.forEach(r => {
-        const arr = Array.isArray(r.xavf_omil) ? r.xavf_omil : (r.xavf_omil ? [r.xavf_omil] : []);
-        arr.forEach(v => {
-          if (!v || !v.trim()) return;
-          const k = v.trim();
-          map[k] = (map[k] || 0) + 1;
-        });
-      });
-      return Object.entries(map).sort((a, b) => b[1] - a[1]).slice(0, 8);
-    };
-
-    return { infarkt: count(inf), insult: count(ins) };
+    const { data, error } = await getSupabase().rpc('get_risk_factors', {
+      p_viloyat:  viloyat || null,
+      p_muassasa: overrideMuassasa || null
+    });
+    if (error) throw error;
+    const rows = data || [];
+    const inf = rows.filter(r => r.registr === 'infarkt').map(r => [r.omil, r.cnt]);
+    const ins = rows.filter(r => r.registr === 'insult').map(r => [r.omil, r.cnt]);
+    return { infarkt: inf, insult: ins };
   },
 
   // Recent patients
@@ -710,40 +589,25 @@ const DB = {
     return Object.values(map).sort((a, b) => b.bemorlar.length - a.bemorlar.length);
   },
 
-  // Jins bo'yicha vafot foizi
+  // Jins bo'yicha vafot foizi — RPC orqali
   async getGenderMortality(overrideViloyat, overrideMuassasa) {
     const p = await Profile.getCurrent();
     const viloyat = overrideMuassasa ? null : (overrideViloyat !== undefined ? overrideViloyat : (p?.role === 'super_admin' ? null : p?.viloyat));
-    const eqV = (q) => overrideMuassasa ? q.eq('muassasa', overrideMuassasa) : (viloyat ? q.eq('viloyat', viloyat) : q);
-    const sb = getSupabase();
-    const norm = (s) => {
-      const v = (s||'').toLowerCase();
-      if (['erkak','e','m','male'].includes(v)) return 'male';
-      if (['ayol','a','f','female'].includes(v)) return 'female';
-      return null;
-    };
-    const fetchAll = async (table) => {
-      let all = [], offset = 0;
-      while (true) {
-        const { data, error } = await eqV(sb.from(table).select('jins,status')).range(offset, offset + 999);
-        if (error || !data || data.length === 0) break;
-        all = all.concat(data);
-        if (data.length < 1000) break;
-        offset += 1000;
-      }
-      return all;
-    };
-    const [inf, ins] = await Promise.all([fetchAll('infarkt_qabul'), fetchAll('insult_qabul')]);
-    const calc = (rows) => {
+    const { data, error } = await getSupabase().rpc('get_gender_mortality', {
+      p_viloyat:  viloyat || null,
+      p_muassasa: overrideMuassasa || null
+    });
+    if (error) throw error;
+    const rows = data || [];
+    const build = (registr) => {
       const r = { male: 0, female: 0, maleDeath: 0, femaleDeath: 0 };
-      rows.forEach(row => {
-        const g = norm(row.jins);
-        if (g === 'male') { r.male++; if (row.status === 'vafot') r.maleDeath++; }
-        else if (g === 'female') { r.female++; if (row.status === 'vafot') r.femaleDeath++; }
+      rows.filter(x => x.registr === registr).forEach(x => {
+        if (x.jins === 'male')   { r.male   = x.jami; r.maleDeath   = x.vafot; }
+        if (x.jins === 'female') { r.female = x.jami; r.femaleDeath = x.vafot; }
       });
       return r;
     };
-    return { infarkt: calc(inf), insult: calc(ins) };
+    return { infarkt: build('infarkt'), insult: build('insult') };
   },
 
   // Demographics
@@ -761,13 +625,37 @@ const DB = {
     return data;
   },
 
-  // Age-Sex Pyramid ma'lumotlari
+  // Age-Sex Pyramid ma'lumotlari — RPC orqali
   async getAgeSexPyramid(overrideViloyat, overrideMuassasa) {
+    const p = await Profile.getCurrent();
+    const viloyat = overrideMuassasa ? null : (overrideViloyat !== undefined ? overrideViloyat : (p?.role === 'super_admin' ? null : p?.viloyat));
+    const { data, error } = await getSupabase().rpc('get_age_sex_pyramid', {
+      p_viloyat:  viloyat || null,
+      p_muassasa: overrideMuassasa || null
+    });
+    if (error) throw error;
+    const AGE_GROUPS = ['75+', '60-74', '45-59', '30-44', '≤29'];
+    const buildPyramid = (registr) => {
+      const res = {};
+      AGE_GROUPS.forEach(g => { res[g] = { mTotal: 0, fTotal: 0, mDeath: 0, fDeath: 0 }; });
+      (data || []).filter(r => r.registr === registr).forEach(r => {
+        const g = r.yosh_guruhi;
+        if (!res[g]) return;
+        if (r.jins === 'male')   { res[g].mTotal += r.jami; res[g].mDeath += r.vafot; }
+        if (r.jins === 'female') { res[g].fTotal += r.jami; res[g].fDeath += r.vafot; }
+      });
+      return { groups: AGE_GROUPS, data: res };
+    };
+    return { infarkt: buildPyramid('infarkt'), insult: buildPyramid('insult') };
+  },
+
+  // _getAgeSexPyramid_OLD — eskirgan, faqat zaxira sifatida saqlanadi
+  async _getAgeSexPyramid_OLD(overrideViloyat, overrideMuassasa) {
     const p = await Profile.getCurrent();
     const viloyat = overrideMuassasa ? null : (overrideViloyat !== undefined ? overrideViloyat : (p?.role === 'super_admin' ? null : p?.viloyat));
     const sb = getSupabase();
     const eqV = (q) => overrideMuassasa ? q.eq('muassasa', overrideMuassasa) : (viloyat ? q.eq('viloyat', viloyat) : q);
-    const AGE_GROUPS = ['75+', '60-74', '45-59', '30-44', '≤29']; // yuqoridan pastga
+    const AGE_GROUPS = ['75+', '60-74', '45-59', '30-44', '≤29'];
     const norm = (s) => {
       const v = (s||'').toLowerCase();
       if (['erkak','e','m','male'].includes(v)) return 'male';
@@ -820,60 +708,15 @@ const DB = {
     return { infarkt: buildPyramid(inf), insult: buildPyramid(ins) };
   },
 
-  // Viloyat (yoki Muassasa) distribution
+  // Viloyat (yoki Muassasa) distribution — RPC orqali
   async getViloyatStats(overrideViloyat) {
     const p = await Profile.getCurrent();
     const userViloyat = overrideViloyat !== undefined ? overrideViloyat : (p?.role === 'super_admin' ? null : p?.viloyat);
-    const sb = getSupabase();
-
-    if (userViloyat) {
-      // Non-admin: muassasa kesimida ko'rsatish
-      const fetchAll = async (table) => {
-        let all = [], offset = 0;
-        while (true) {
-          const { data, error } = await sb.from(table).select('muassasa').eq('viloyat', userViloyat).range(offset, offset + 999);
-          if (error) { if (error.code === 'PGRST103') break; throw error; }
-          if (!data || data.length === 0) break;
-          all = all.concat(data);
-          if (data.length < 1000) break;
-          offset += 1000;
-        }
-        return all;
-      };
-      const [inf, ins] = await Promise.all([
-        fetchAll('infarkt_qabul'),
-        fetchAll('insult_qabul')
-      ]);
-      const map = {};
-      (inf || []).forEach(r => {
-        if (!r.muassasa) return;
-        if (!map[r.muassasa]) map[r.muassasa] = { total: 0, inf: 0, ins: 0 };
-        map[r.muassasa].total++; map[r.muassasa].inf++;
-      });
-      (ins || []).forEach(r => {
-        if (!r.muassasa) return;
-        if (!map[r.muassasa]) map[r.muassasa] = { total: 0, inf: 0, ins: 0 };
-        map[r.muassasa].total++; map[r.muassasa].ins++;
-      });
-      return Object.entries(map).map(([name, s]) => [name, s.total, s.inf, s.ins]).sort((a, b) => b[1] - a[1]);
-    }
-
-    // Admin: har viloyat uchun server-side count (qator limiti muammosi yo'q)
-    const viloyatlar = APP_CONFIG.VILOYATLAR || [];
-    const countResults = await Promise.all(
-      viloyatlar.flatMap(v => [
-        sb.from('infarkt_qabul').select('id', { count: 'exact', head: true }).eq('viloyat', v),
-        sb.from('insult_qabul').select('id', { count: 'exact', head: true }).eq('viloyat', v)
-      ])
-    );
-    return viloyatlar
-      .map((name, i) => {
-        const inf = countResults[i * 2].count || 0;
-        const ins = countResults[i * 2 + 1].count || 0;
-        return [name, inf + ins, inf, ins];
-      })
-      .filter(r => r[1] > 0)
-      .sort((a, b) => b[1] - a[1]);
+    const { data, error } = await getSupabase().rpc('get_viloyat_stats', {
+      p_viloyat: userViloyat || null
+    });
+    if (error) throw error;
+    return (data || []).map(r => [r.nom, r.jami, r.infarkt_count, r.insult_count]);
   },
 
   // Detailed Registry Stats (Viloyat or Muassasa level)
@@ -914,27 +757,34 @@ const DB = {
   },
 
   async fixInstitutionNames() {
-    const tables = ['infarkt_qabul', 'insult_qabul'];
+    // Muassasa nomlarini APP_CONFIG.MUASSASALAR ro'yxatiga moslash
     const sb = getSupabase();
     let updatedCount = 0;
-
     const clean = (s) => s.toLowerCase().replace(/ttb|shtb|emergency department|politravma markazi|filiali|shoshilinch tibbiy yordam/g, '').trim();
 
-    for (const table of tables) {
-      const { data: records, error } = await sb.from(table).select('id, muassasa, viloyat');
+    for (const table of ['infarkt_qabul', 'insult_qabul']) {
+      // Faqat noto'g'ri muassasa nomlari bo'lgan qatorlarni olamiz
+      const { data: distinct, error } = await sb.from(table)
+        .select('viloyat, muassasa')
+        .not('muassasa', 'is', null)
+        .order('viloyat');
       if (error) continue;
 
-      for (const rec of records) {
-        if (!rec.muassasa || !rec.viloyat) continue;
+      // Unikal (viloyat, muassasa) juftlarini olib ishlash
+      const seen = new Set();
+      for (const rec of (distinct || [])) {
+        const key = `${rec.viloyat}|${rec.muassasa}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
         const newList = APP_CONFIG.MUASSASALAR[rec.viloyat] || [];
-        if (!newList.includes(rec.muassasa)) {
-          const cOld = clean(rec.muassasa);
-          const match = newList.find(m => clean(m) === cOld || clean(m).includes(cOld) || cOld.includes(clean(m)));
-
-          if (match && match !== rec.muassasa) {
-            await sb.from(table).update({ muassasa: match }).eq('id', rec.id);
-            updatedCount++;
-          }
+        if (newList.includes(rec.muassasa)) continue;
+        const cOld = clean(rec.muassasa);
+        const match = newList.find(m => clean(m) === cOld || clean(m).includes(cOld) || cOld.includes(clean(m)));
+        if (match && match !== rec.muassasa) {
+          const { count } = await sb.from(table).update({ muassasa: match })
+            .eq('viloyat', rec.viloyat).eq('muassasa', rec.muassasa)
+            .select('id', { count: 'exact', head: true });
+          updatedCount += count || 0;
         }
       }
     }

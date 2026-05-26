@@ -87,6 +87,8 @@ const HisobotPage = {
               <option value="today">Bugun</option>
               <option value="week">So'nggi 7 kun</option>
               <option value="month" selected>So'nggi 30 kun</option>
+              <option value="3month">So'nggi 3 oy</option>
+              <option value="6month">So'nggi 6 oy</option>
               <option value="year">So'nggi 1 yil</option>
             </select>
           </div>
@@ -141,10 +143,12 @@ const HisobotPage = {
     const val = document.getElementById('h-period')?.value;
     const today = new Date();
     let from = new Date();
-    if (val==='today') { from = today; }
-    else if (val==='week') { from.setDate(today.getDate()-7); }
-    else if (val==='month') { from.setDate(today.getDate()-30); }
-    else if (val==='year') { from.setFullYear(today.getFullYear()-1); }
+    if      (val==='today')  { /* from = today */ }
+    else if (val==='week')   { from.setDate(today.getDate()-7); }
+    else if (val==='month')  { from.setDate(today.getDate()-30); }
+    else if (val==='3month') { from.setMonth(today.getMonth()-3); }
+    else if (val==='6month') { from.setMonth(today.getMonth()-6); }
+    else if (val==='year')   { from.setFullYear(today.getFullYear()-1); }
     else return;
     document.getElementById('h-from').value = from.toISOString().split('T')[0];
     document.getElementById('h-to').value = today.toISOString().split('T')[0];

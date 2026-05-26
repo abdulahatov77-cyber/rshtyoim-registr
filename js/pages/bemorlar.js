@@ -62,6 +62,7 @@ const BemorlarPage = {
               <option value="active">Aktiv</option>
               <option value="chiqarildi">Chiqarildi</option>
               <option value="vafot">Vafot</option>
+              <option value="otkazildi">O'tkazildi</option>
             </select>
           </div>
           ${BemorlarPage._profile?.role === 'super_admin' ? `
