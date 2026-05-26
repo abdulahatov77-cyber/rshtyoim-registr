@@ -1130,8 +1130,8 @@ const HisobotPage = {
       infs.forEach(p => { if (p.viloyat) infViloyat[p.viloyat] = (infViloyat[p.viloyat]||0)+1; });
       // Muolaja nomlarini standartlashtirish — aniq bazadagi matnlar asosida
       const MUOLAJA_STD = [
-        // Medikamentoz
-        { pattern: /konservativ/i, std: "Medikamentoz (konservativ) davo" },
+        // Medikamentoz — konservativ va bajarilmadi ham Medikamentoz davo ga
+        { pattern: /konservativ|bajarilmadi/i, std: "Medikamentoz davo" },
         // Gemorragik insult jarrohlik — ikki xil yozuv bor, birlashtirish
         { pattern: /gemorragik insult bo.yicha jarrohlik|neyrojarrohlik.*gemorragik|jarrohlik.*gemorragik|neyrojarrohlik amaliyoti/i, std: "Gemorragik insult bo'yicha jarrohlik amaliyoti" },
         // Kombinatsiyalangan (Комбинир ТрАспир ТрЭкстр)
@@ -1157,7 +1157,7 @@ const HisobotPage = {
         // Boshqa muassasaga o'tkazildi — barcha variantlar
         { pattern: /boshqa muassasaga o.tkazildi/i, std: "Boshqa muassasaga o'tkazildi (endovaskulyar muolaja uchun)" },
         // O'tkazilmadi / Muolaja o'tkazilmadi → Medikamentoz (konservativ) davo
-        { pattern: /o.tkazilmadi/i, std: "Medikamentoz (konservativ) davo" },
+        { pattern: /o.tkazilmadi/i, std: "Medikamentoz davo" },
         // MSKT angiografiya
         { pattern: /mskt\s*angiograf/i, std: "MSKT angiografiya" },
         { pattern: /\bmskt\b/i, std: "MSKT" },
