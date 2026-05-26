@@ -1117,8 +1117,19 @@ const HisobotPage = {
       const ami    = infs.filter(p => p.infarkt_turi?.toLowerCase().includes('miokard')).length;
       const infViloyat = {};
       infs.forEach(p => { if (p.viloyat) infViloyat[p.viloyat] = (infViloyat[p.viloyat]||0)+1; });
-      const infMuolaja = {};
-      infs.forEach(p => { if (p.muolaja_turi) infMuolaja[p.muolaja_turi] = (infMuolaja[p.muolaja_turi]||0)+1; });
+      // Muolaja nomlarini normalizatsiya: trim + kichik harf bilan birlashtirish, lekin ko'rsatishda asl nom
+      const normMuolaja = (arr) => {
+        const normMap = {}; // kichik_harf_trim → { label, count }
+        arr.forEach(p => {
+          if (!p.muolaja_turi) return;
+          const raw = p.muolaja_turi.trim();
+          const key = raw.toLowerCase().replace(/\s+/g, ' ');
+          if (!normMap[key]) normMap[key] = { label: raw, count: 0 };
+          normMap[key].count++;
+        });
+        return normMap;
+      };
+      const infMuolajaNorm = normMuolaja(infs);
 
       // Insult hisobot
       const insChiqarildi = ins.filter(p => p.status === 'chiqarildi').length;
@@ -1129,11 +1140,10 @@ const HisobotPage = {
       const tia       = ins.filter(p => p.insult_turi?.toLowerCase().includes('tia')).length;
       const insViloyat = {};
       ins.forEach(p => { if (p.viloyat) insViloyat[p.viloyat] = (insViloyat[p.viloyat]||0)+1; });
-      const insMuolaja = {};
-      ins.forEach(p => { if (p.muolaja_turi) insMuolaja[p.muolaja_turi] = (insMuolaja[p.muolaja_turi]||0)+1; });
+      const insMuolajaNorm = normMuolaja(ins);
 
-      const vilStr     = (obj) => Object.entries(obj).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`  • ${k}: ${v} ta`).join('\n') || '  —';
-      const muolajaStr = (obj) => Object.entries(obj).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`  • ${k}: ${v} ta`).join('\n') || '  —';
+      const vilStr = (obj) => Object.entries(obj).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`  • ${k}: ${v} ta`).join('\n') || '  —';
+      const muolajaStr = (normObj) => Object.values(normObj).sort((a,b)=>b.count-a.count).map(x=>`  • ${x.label}: ${x.count} ta`).join('\n') || '  —';
 
       const infMsg = `🫀 INFARKT HISOBOT
 ━━━━━━━━━━━━━━━━━━━━━━
@@ -1154,7 +1164,7 @@ const HisobotPage = {
 ${vilStr(infViloyat)}
 ━━━━━━━━━━━━━━━━━━━━━━
 💊 Davolash turlari:
-${muolajaStr(infMuolaja)}
+${muolajaStr(infMuolajaNorm)}
 ━━━━━━━━━━━━━━━━━━━━━━`;
 
       const insMsg = `🧠 INSULT HISOBOT
@@ -1176,7 +1186,7 @@ ${muolajaStr(infMuolaja)}
 ${vilStr(insViloyat)}
 ━━━━━━━━━━━━━━━━━━━━━━
 💊 Davolash turlari:
-${muolajaStr(insMuolaja)}
+${muolajaStr(insMuolajaNorm)}
 ━━━━━━━━━━━━━━━━━━━━━━`;
 
       const send = async (token, chatId, text) => {
