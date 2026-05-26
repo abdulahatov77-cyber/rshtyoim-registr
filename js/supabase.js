@@ -618,8 +618,8 @@ const DB = {
     if (error) {
       console.error('getDemographics RPC xato:', error.message);
       return {
-        infarkt: { male: 0, female: 0, ages: { 'в‰¤29': 0, '30-44': 0, '45-59': 0, '60-74': 0, '75+': 0 } },
-        insult:  { male: 0, female: 0, ages: { 'в‰¤29': 0, '30-44': 0, '45-59': 0, '60-74': 0, '75+': 0 } }
+        infarkt: { male: 0, female: 0, ages: { '≤29': 0, '30-44': 0, '45-59': 0, '60-74': 0, '75+': 0 } },
+        insult:  { male: 0, female: 0, ages: { '≤29': 0, '30-44': 0, '45-59': 0, '60-74': 0, '75+': 0 } }
       };
     }
     return data;
