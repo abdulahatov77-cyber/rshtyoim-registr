@@ -158,6 +158,11 @@ const HisobotPage = {
     const from = document.getElementById('h-from')?.value;
     const to = document.getElementById('h-to')?.value;
     if (!from||!to) { showToast('Sana oralig\'ini tanlang','warning'); return; }
+    // Clear stale data so Telegram button won't send previous period's report
+    HisobotPage._lastData = null;
+    // Disable Telegram button while loading
+    const tgBtn = document.querySelector('[onclick="HisobotPage.sendTelegramReport()"]');
+    if (tgBtn) { tgBtn.disabled = true; tgBtn.style.opacity = '0.5'; tgBtn.style.cursor = 'not-allowed'; }
     HisobotPage._lastListType = null;
     HisobotPage._savedFilters = {
       from, to,
@@ -206,8 +211,14 @@ const HisobotPage = {
 
       const ageLabel = (ageFrom > 0 || ageTo < 120) ? ` · Yosh: ${ageFrom}–${ageTo}` : '';
       HisobotPage._lastData = { infs, ins, kuzatuv, from, to, ageLabel };
+      // Re-enable Telegram button now that data is ready
+      const tgBtnOk = document.querySelector('[onclick="HisobotPage.sendTelegramReport()"]');
+      if (tgBtnOk) { tgBtnOk.disabled = false; tgBtnOk.style.opacity = ''; tgBtnOk.style.cursor = ''; }
       HisobotPage.renderReport(infs, ins, kuzatuv, from, to, ageLabel);
     } catch(err) {
+      // Re-enable Telegram button on error too
+      const tgBtnErr = document.querySelector('[onclick="HisobotPage.sendTelegramReport()"]');
+      if (tgBtnErr) { tgBtnErr.disabled = false; tgBtnErr.style.opacity = ''; tgBtnErr.style.cursor = ''; }
       if (el) el.innerHTML = `
         <div class="h-card text-center text-red-600 py-12">
           <div class="mx-auto w-16 h-16 bg-red-100 text-red-500 rounded-full flex items-center justify-center mb-4">${icon('alert-triangle', 32)}</div>
