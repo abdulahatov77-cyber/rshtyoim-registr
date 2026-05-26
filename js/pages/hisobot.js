@@ -1085,11 +1085,11 @@ const HisobotPage = {
 
     const { infs, ins, from, to } = d;
 
-    // from/to are UTC ISO strings stored by loadReport; extract Toshkent local date labels
-    const fmtDate = (isoStr) => {
-      const tz = new Date(new Date(isoStr).getTime() + 5 * 60 * 60 * 1000);
-      const pad = n => String(n).padStart(2, '0');
-      return `${pad(tz.getUTCDate())}.${pad(tz.getUTCMonth()+1)}.${tz.getUTCFullYear()}`;
+    // from/to — "YYYY-MM-DD" formatida oddiy sana satri (_lastData dan)
+    const fmtDate = (dateStr) => {
+      // "2026-04-26" → "26.04.2026"
+      const parts = dateStr.split('T')[0].split('-');
+      return `${parts[2]}.${parts[1]}.${parts[0]}`;
     };
     const startLabel = fmtDate(from);
     const endLabel   = fmtDate(to);
