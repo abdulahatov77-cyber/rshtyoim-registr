@@ -1087,7 +1087,9 @@ const DashboardPage = {
       const profile = await Profile.getCurrent();
       const ov = DashboardPage._viewViloyat;
       const om = DashboardPage._viewMuassasa;
-      const [stats, trend, trend12, recent, viloyat, demo, riskFactors, longStay, genderMort, ageSex] = await Promise.all([
+      const AGE_GROUPS2 = ['75+', '60-74', '45-59', '30-44', '≤29'];
+      const emptyPyramid2 = () => { const r = {}; AGE_GROUPS2.forEach(g => { r[g] = { mTotal:0, fTotal:0, mDeath:0, fDeath:0 }; }); return { groups: AGE_GROUPS2, data: r }; };
+      const res2 = await Promise.allSettled([
         DB.getDashboardStats(ov, om),
         DB.getTrend30(ov, om),
         DB.getTrend12Month(ov, om),
@@ -1099,6 +1101,17 @@ const DashboardPage = {
         DB.getGenderMortality(ov, om),
         DB.getAgeSexPyramid(ov, om)
       ]);
+      const val2 = (i, def) => res2[i].status === 'fulfilled' ? res2[i].value : def;
+      const stats      = val2(0, {});
+      const trend      = val2(1, { labels:[], infData:[], insData:[] });
+      const trend12    = val2(2, { labels:[], infData:[], insData:[] });
+      const recent     = val2(3, []);
+      const viloyat    = val2(4, []);
+      const demo       = val2(5, { infarkt:{male:0,female:0,ages:{}}, insult:{male:0,female:0,ages:{}} });
+      const riskFactors= val2(6, []);
+      const longStay   = val2(7, []);
+      const genderMort = val2(8, null);
+      const ageSex     = val2(9, { infarkt: emptyPyramid2(), insult: emptyPyramid2() });
       DashboardPage._recentPatients = recent;
       DashboardPage._ageSex = ageSex;
 
