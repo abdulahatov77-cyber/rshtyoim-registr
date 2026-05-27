@@ -1,4 +1,44 @@
 // ==================== HISOBOT SAHIFASI ====================
+
+const MUOLAJA_STD = [
+  { pattern: /konservativ|bajarilmadi/i, std: "Medikamentoz davo" },
+  { pattern: /gemorragik insult bo.yicha jarrohlik|neyrojarrohlik.*gemorragik|jarrohlik.*gemorragik|neyrojarrohlik amaliyoti/i, std: "Gemorragik insult bo'yicha jarrohlik amaliyoti" },
+  { pattern: /комбинир|kombinatsiy.*tromboaspirats.*tromboekstr|tromboaspirats.*tromboekstr/i, std: "Kombinatsiyalangan muolaja (tromboaspiratsiya + tromboekstraksiya)" },
+  { pattern: /цаг\s*\+\s*тл[тт]|цаг\s*\+\s*тромболиз/i, std: "Serebral angiografiya + TLT (trombolizis)" },
+  { pattern: /цаг\s*\+\s*стент/i, std: "Serebral angiografiya + stentlash" },
+  { pattern: /цаг\s*\+\s*тромбоаспир/i, std: "Serebral angiografiya + tromboaspiratsiya" },
+  { pattern: /цаг\s*\+\s*тромбоэкстр/i, std: "Serebral angiografiya + tromboekstraksiya (mexanik trombektomiya)" },
+  { pattern: /цаг\s*\+\s*тлбап/i, std: "Serebral angiografiya + TLBAP" },
+  { pattern: /serebral angiografiya\s*\+\s*t(lt|rombolit)/i, std: "Serebral angiografiya + TLT (trombolizis)" },
+  { pattern: /serebral angiografiya\s*\+\s*tromboekstr/i, std: "Serebral angiografiya + tromboekstraksiya (mexanik trombektomiya)" },
+  { pattern: /serebral angiografiya\s*\+\s*stent/i, std: "Serebral angiografiya + stentlash" },
+  { pattern: /faqat\s*(цаг|serebral)|^цаг$/i, std: "Faqat serebral angiografiya (ЦАГ)" },
+  { pattern: /boshqa muassasaga o.tkazildi/i, std: "Boshqa muassasaga o'tkazildi (endovaskulyar muolaja uchun)" },
+  { pattern: /o.tkazilmadi/i, std: "Medikamentoz davo" },
+  { pattern: /mskt\s*angiograf/i, std: "MSKT angiografiya" },
+  { pattern: /\bmskt\b/i, std: "MSKT" },
+  { pattern: /koronarangiograf|\bkag\b/i, std: "Koronarangiografiya (KAG)" },
+  { pattern: /medikamentoz/i, std: "Medikamentoz davo" },
+];
+
+const stdMuolaja = (raw) => {
+  const s = (raw || '').trim();
+  for (const { pattern, std } of MUOLAJA_STD) {
+    if (pattern.test(s)) return std;
+  }
+  return s;
+};
+
+const normMuolajaCounts = (arr) => {
+  const map = {};
+  arr.forEach(p => {
+    if (!p.muolaja_turi) return;
+    const std = stdMuolaja(p.muolaja_turi);
+    map[std] = (map[std] || 0) + 1;
+  });
+  return map;
+};
+
 const HisobotPage = {
   _charts: {},
   _lastData: null,
@@ -788,11 +828,10 @@ const HisobotPage = {
 
     // Make charts render in next frame to ensure DOM is ready
     requestAnimationFrame(() => {
-      // Infarkt muolajalar — xuddi avvalgidek, muolaja_turi dan dinamik
-      const infMuolajaCounts = {};
-      infs.forEach(p => { if (p.muolaja_turi) infMuolajaCounts[p.muolaja_turi] = (infMuolajaCounts[p.muolaja_turi] || 0) + 1; });
-      const infMLabels = Object.keys(infMuolajaCounts);
-      const infMVals = Object.values(infMuolajaCounts);
+      // Infarkt muolajalar — normalized via MUOLAJA_STD
+      const infMCounts = normMuolajaCounts(infs);
+      const infMLabels = Object.keys(infMCounts);
+      const infMVals = Object.values(infMCounts);
       const ctx1 = document.getElementById('h-inf-chart')?.getContext('2d');
       if (ctx1 && infMLabels.length) {
         new Chart(ctx1, {
@@ -817,11 +856,10 @@ const HisobotPage = {
         });
       }
 
-      // Insult muolajalar — xuddi shu usulda, muolaja_turi dan dinamik
-      const insMuolajaCounts = {};
-      ins.forEach(p => { if (p.muolaja_turi) insMuolajaCounts[p.muolaja_turi] = (insMuolajaCounts[p.muolaja_turi] || 0) + 1; });
-      const insMLabels = Object.keys(insMuolajaCounts);
-      const insMVals = Object.values(insMuolajaCounts);
+      // Insult muolajalar — normalized via MUOLAJA_STD
+      const insMCounts = normMuolajaCounts(ins);
+      const insMLabels = Object.keys(insMCounts);
+      const insMVals = Object.values(insMCounts);
       const ctx2 = document.getElementById('h-ins-chart')?.getContext('2d');
       if (ctx2 && insMLabels.length) {
         new Chart(ctx2, {
@@ -1128,62 +1166,7 @@ const HisobotPage = {
       const ami    = infs.filter(p => p.infarkt_turi?.toLowerCase().includes('miokard')).length;
       const infViloyat = {};
       infs.forEach(p => { if (p.viloyat) infViloyat[p.viloyat] = (infViloyat[p.viloyat]||0)+1; });
-      // Muolaja nomlarini standartlashtirish — aniq bazadagi matnlar asosida
-      const MUOLAJA_STD = [
-        // Medikamentoz — konservativ va bajarilmadi ham Medikamentoz davo ga
-        { pattern: /konservativ|bajarilmadi/i, std: "Medikamentoz davo" },
-        // Gemorragik insult jarrohlik — ikki xil yozuv bor, birlashtirish
-        { pattern: /gemorragik insult bo.yicha jarrohlik|neyrojarrohlik.*gemorragik|jarrohlik.*gemorragik|neyrojarrohlik amaliyoti/i, std: "Gemorragik insult bo'yicha jarrohlik amaliyoti" },
-        // Kombinatsiyalangan (Комбинир ТрАспир ТрЭкстр)
-        { pattern: /комбинир|kombinatsiy.*tromboaspirats.*tromboekstr|tromboaspirats.*tromboekstr/i, std: "Kombinatsiyalangan muolaja (tromboaspiratsiya + tromboekstraksiya)" },
-        // ЦАГ + TLT
-        { pattern: /цаг\s*\+\s*тл[тт]|цаг\s*\+\s*тромболиз/i, std: "Serebral angiografiya + TLT (trombolizis)" },
-        // ЦАГ + Стентлаш
-        { pattern: /цаг\s*\+\s*стент/i, std: "Serebral angiografiya + stentlash" },
-        // ЦАГ + Тромбоаспирация
-        { pattern: /цаг\s*\+\s*тромбоаспир/i, std: "Serebral angiografiya + tromboaspiratsiya" },
-        // ЦАГ + Тромбоэкстракция
-        { pattern: /цаг\s*\+\s*тромбоэкстр/i, std: "Serebral angiografiya + tromboekstraksiya (mexanik trombektomiya)" },
-        // ЦАГ + ТЛБАП
-        { pattern: /цаг\s*\+\s*тлбап/i, std: "Serebral angiografiya + TLBAP" },
-        // Serebral angiografiya + TLT (lotin)
-        { pattern: /serebral angiografiya\s*\+\s*t(lt|rombolit)/i, std: "Serebral angiografiya + TLT (trombolizis)" },
-        // Serebral angiografiya + tromboekstraksiya
-        { pattern: /serebral angiografiya\s*\+\s*tromboekstr/i, std: "Serebral angiografiya + tromboekstraksiya (mexanik trombektomiya)" },
-        // Serebral angiografiya + stentlash
-        { pattern: /serebral angiografiya\s*\+\s*stent/i, std: "Serebral angiografiya + stentlash" },
-        // Faqat ЦАГ / Faqat serebral angiografiya
-        { pattern: /faqat\s*(цаг|serebral)|^цаг$/i, std: "Faqat serebral angiografiya (ЦАГ)" },
-        // Boshqa muassasaga o'tkazildi — barcha variantlar
-        { pattern: /boshqa muassasaga o.tkazildi/i, std: "Boshqa muassasaga o'tkazildi (endovaskulyar muolaja uchun)" },
-        // O'tkazilmadi / Muolaja o'tkazilmadi → Medikamentoz (konservativ) davo
-        { pattern: /o.tkazilmadi/i, std: "Medikamentoz davo" },
-        // MSKT angiografiya
-        { pattern: /mskt\s*angiograf/i, std: "MSKT angiografiya" },
-        { pattern: /\bmskt\b/i, std: "MSKT" },
-        // KAG
-        { pattern: /koronarangiograf|\bkag\b/i, std: "Koronarangiografiya (KAG)" },
-        // Medikamentoz (oxirida — eng umumiy)
-        { pattern: /medikamentoz/i, std: "Medikamentoz davo" },
-      ];
-      const stdMuolaja = (raw) => {
-        const s = (raw || '').trim();
-        for (const { pattern, std } of MUOLAJA_STD) {
-          if (pattern.test(s)) return std;
-        }
-        return s;
-      };
-      const normMuolaja = (arr) => {
-        const normMap = {};
-        arr.forEach(p => {
-          if (!p.muolaja_turi) return;
-          const std = stdMuolaja(p.muolaja_turi);
-          if (!normMap[std]) normMap[std] = { label: std, count: 0 };
-          normMap[std].count++;
-        });
-        return normMap;
-      };
-      const infMuolajaNorm = normMuolaja(infs);
+      const infMuolajaNorm = normMuolajaCounts(infs);
 
       // Insult hisobot
       const insChiqarildi = ins.filter(p => p.status === 'chiqarildi').length;
@@ -1194,10 +1177,10 @@ const HisobotPage = {
       const tia       = ins.filter(p => p.insult_turi?.toLowerCase().includes('tia')).length;
       const insViloyat = {};
       ins.forEach(p => { if (p.viloyat) insViloyat[p.viloyat] = (insViloyat[p.viloyat]||0)+1; });
-      const insMuolajaNorm = normMuolaja(ins);
+      const insMuolajaNorm = normMuolajaCounts(ins);
 
       const vilStr = (obj) => Object.entries(obj).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`  • ${k}: ${v} ta`).join('\n') || '  —';
-      const muolajaStr = (normObj) => Object.values(normObj).sort((a,b)=>b.count-a.count).map(x=>`  • ${x.label}: ${x.count} ta`).join('\n') || '  —';
+      const muolajaStr = (normObj) => Object.entries(normObj).sort((a,b)=>b[1]-a[1]).map(([label,count])=>`  • ${label}: ${count} ta`).join('\n') || '  —';
 
       const infMsg = `🫀 INFARKT HISOBOT
 ━━━━━━━━━━━━━━━━━━━━━━

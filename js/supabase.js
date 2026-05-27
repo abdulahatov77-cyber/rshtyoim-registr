@@ -614,7 +614,7 @@ const DB = {
   async getDemographics(overrideViloyat, overrideMuassasa) {
     const p = await Profile.getCurrent();
     const viloyat = overrideMuassasa ? null : (overrideViloyat !== undefined ? overrideViloyat : (p?.role === 'super_admin' ? null : p?.viloyat));
-    const { data, error } = await getSupabase().rpc('get_demographics', { p_viloyat: viloyat });
+    const { data, error } = await getSupabase().rpc('get_demographics', { p_viloyat: viloyat, p_muassasa: overrideMuassasa || null });
     if (error) {
       console.error('getDemographics RPC xato:', error.message);
       return {
