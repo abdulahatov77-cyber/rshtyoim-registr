@@ -218,16 +218,33 @@ const HisobotPage = {
         <p class="text-blue-900 font-semibold">Hisobot tayyorlanmoqda...</p>
       </div>`;
       
+    const reEnableTg = () => {
+      const btn = document.querySelector('[onclick="HisobotPage.sendTelegramReport()"]');
+      if (btn) { btn.disabled = false; btn.style.opacity = ''; btn.style.cursor = ''; }
+    };
+    const showErr = (msg) => {
+      const elNow = document.getElementById('h-results');
+      if (elNow) elNow.innerHTML = `
+        <div class="h-card text-center text-red-600 py-12">
+          <div class="mx-auto w-16 h-16 bg-red-100 text-red-500 rounded-full flex items-center justify-center mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+          </div>
+          <h3 class="text-xl font-bold mb-2">Xatolik yuz berdi</h3>
+          <p class="text-sm text-red-500 max-w-md mx-auto">${msg}</p>
+          <button class="mt-4 px-4 py-2 bg-blue-600 text-white rounded-xl text-sm font-bold" onclick="HisobotPage.loadReport()">Qayta urinish</button>
+        </div>`;
+    };
+
     try {
       const profile = await Profile.getCurrent();
-      // Toshkent (UTC+5) sanasini UTC ISO ga o'tkazamiz — timestamptz bilan to'g'ri solishtirish uchun
       const fromUTC = new Date(from + 'T00:00:00+05:00').toISOString();
       const toUTC   = new Date(to   + 'T23:59:59+05:00').toISOString();
       const filters = { from: fromUTC, to: toUTC };
-      if (profile?.role !== 'admin' && profile?.viloyat) {
+      // Faqat oddiy admin uchun viloyat filtri — super_admin hamma ma'lumotni ko'radi
+      if (profile?.role === 'admin' && profile?.viloyat) {
         filters.viloyat = profile.viloyat;
       }
-      
+
       const ageFrom = parseInt(document.getElementById('h-age-from')?.value) || 0;
       const ageTo   = parseInt(document.getElementById('h-age-to')?.value)   || 120;
       const byAge = arr => arr.filter(p => {
@@ -236,36 +253,29 @@ const HisobotPage = {
         return age >= ageFrom && age <= ageTo;
       });
 
-      const [infRes, insRes, kuzatuvRes] = await Promise.all([
+      const [infResult, insResult, kuzatuvResult] = await Promise.allSettled([
         DB.infarktList({ ...filters, allCols: true }),
         DB.insultList({ ...filters, allCols: true }),
         getSupabase().from('kuzatuv').select('*').gte('created_at', filters.from).lte('created_at', filters.to).range(0, 9999)
       ]);
-      const infs = byAge(infRes.data || infRes);
-      const ins  = byAge(insRes.data || insRes);
-      const kuzatuvAll = kuzatuvRes.data || [];
 
-      // Filter kuzatuv by region (since table lacks viloyat field)
+      if (infResult.status === 'rejected') throw new Error('Infarkt ma\'lumotlari yuklanmadi: ' + infResult.reason?.message);
+      if (insResult.status === 'rejected') throw new Error('Insult ma\'lumotlari yuklanmadi: ' + insResult.reason?.message);
+
+      const infs = byAge((infResult.value?.data) || []);
+      const ins  = byAge((insResult.value?.data) || []);
+      const kuzatuvAll = kuzatuvResult.status === 'fulfilled' ? (kuzatuvResult.value?.data || []) : [];
+
       const validKtNos = new Set([...infs.map(p => p.kt_no), ...ins.map(p => p.kt_no)]);
       const kuzatuv = kuzatuvAll.filter(k => validKtNos.has(k.kt_no));
 
       const ageLabel = (ageFrom > 0 || ageTo < 120) ? ` · Yosh: ${ageFrom}–${ageTo}` : '';
       HisobotPage._lastData = { infs, ins, kuzatuv, from, to, ageLabel };
-      // Re-enable Telegram button now that data is ready
-      const tgBtnOk = document.querySelector('[onclick="HisobotPage.sendTelegramReport()"]');
-      if (tgBtnOk) { tgBtnOk.disabled = false; tgBtnOk.style.opacity = ''; tgBtnOk.style.cursor = ''; }
+      reEnableTg();
       HisobotPage.renderReport(infs, ins, kuzatuv, from, to, ageLabel);
     } catch(err) {
-      // Re-enable Telegram button on error too
-      const tgBtnErr = document.querySelector('[onclick="HisobotPage.sendTelegramReport()"]');
-      if (tgBtnErr) { tgBtnErr.disabled = false; tgBtnErr.style.opacity = ''; tgBtnErr.style.cursor = ''; }
-      if (el) el.innerHTML = `
-        <div class="h-card text-center text-red-600 py-12">
-          <div class="mx-auto w-16 h-16 bg-red-100 text-red-500 rounded-full flex items-center justify-center mb-4">${icon('alert-triangle', 32)}</div>
-          <h3 class="text-xl font-bold mb-2">Xatolik yuz berdi</h3>
-          <p>${err.message}</p>
-        </div>`;
-      initIcons();
+      reEnableTg();
+      showErr(err.message || 'Noma\'lum xatolik');
     }
   },
 
