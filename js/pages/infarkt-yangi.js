@@ -534,7 +534,7 @@ const InfarktYangiPage = {
     // Step 3: vaqt mezonlari validatsiyasi
     if (this._step === 3) {
       const now = new Date();
-      const qv = this._data.qabul_vaqt ? new Date(this._data.qabul_vaqt + (this._data.qabul_vaqt.includes('T') ? ':00+05:00' : '')) : null;
+      const qv = (() => { try { return this._data.qabul_vaqt ? new Date(this._data.qabul_vaqt + (this._data.qabul_vaqt.includes('T') ? ':00+05:00' : '')) : null; } catch(e) { return null; } })();
       const muolaja = this._data.muolaja_turi || '';
       const isTLT = muolaja.toLowerCase().includes('tlt') || muolaja.toLowerCase().includes('trombolit');
       const isPCI = muolaja.toLowerCase().includes('pci') || muolaja.toLowerCase().includes('angioplast') || muolaja.toLowerCase().includes('stent') || muolaja.toLowerCase().includes('groin') || muolaja.toLowerCase().includes('kag');

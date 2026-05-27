@@ -809,7 +809,7 @@ const AdminPage = {
       if (error) throw error;
       showToast(`✅ Tuzatildi: ${kt_no}`, 'success');
       if (AdminPage._auditData) {
-        AdminPage._auditData = AdminPage._auditData.filter(r => !(r.kt_no == kt_no && r._type === type));
+        AdminPage._auditData = AdminPage._auditData.filter(r => !(String(r.kt_no) === String(kt_no) && r._type === type));
         AdminPage._renderTabContent();
       }
     } catch(err) { showToast('❌ ' + err.message, 'error'); }
@@ -917,7 +917,7 @@ const AdminPage = {
       if (error) throw error;
       showToast(`✅ O'chirildi: ${kt_no}`, 'success');
       if (AdminPage._auditData) {
-        AdminPage._auditData = AdminPage._auditData.filter(r => !(r.kt_no == kt_no && r._type === type));
+        AdminPage._auditData = AdminPage._auditData.filter(r => !(String(r.kt_no) === String(kt_no) && r._type === type));
         AdminPage._renderTabContent();
       }
     } catch(err) { showToast('❌ ' + err.message, 'error'); }

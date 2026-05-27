@@ -143,7 +143,10 @@ const DashboardPage = {
       if (!data || data.length < 2) return '';
       const max = Math.max(...data, 1);
       const w = 80, h = 28, pts = data.map((v,i) => `${Math.round(i*(w/(data.length-1)))},${Math.round(h - (v/max)*h)}`).join(' ');
-      return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" fill="none"><polyline points="${pts}" stroke="${color}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/><circle cx="${pts.split(' ').pop().split(',')[0]}" cy="${pts.split(' ').pop().split(',')[1]}" r="3" fill="${color}"/></svg>`;
+      const lastPt = pts.split(' ').filter(Boolean);
+      const last = lastPt.length ? lastPt[lastPt.length-1].split(',') : ['0','0'];
+      const cx = last[0] || '0', cy = last[1] || '0';
+      return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" fill="none"><polyline points="${pts}" stroke="${color}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/><circle cx="${cx}" cy="${cy}" r="3" fill="${color}"/></svg>`;
     };
 
     const isSuperAdmin = profile?.role === 'super_admin';
@@ -651,7 +654,7 @@ const DashboardPage = {
                     if (!is100k) return [];
                     const idx = items[0]?.dataIndex;
                     const v = regionData[idx];
-                    const pop = aholi[v?.name];
+                    const pop = (aholi18 || {})[v?.name];
                     return pop ? [`Aholi 18+: ${(pop/1000).toFixed(0)} ming`] : [];
                   }
                 }
@@ -1177,7 +1180,7 @@ const DashboardPage = {
         <td class="p-4 text-slate-500 font-mono text-[11px]">${p.kt_no}</td>
         <td class="p-4">
           <div class="font-bold text-slate-800">${p.fio || '—'}</div>
-          <div class="text-[10px] text-slate-400 font-medium uppercase mt-0.5">${Utils.calculateAge(p.tugilgan_yil)||'—'} yosh · ${p.jinsi==='Erkak'?'E':'A'}</div>
+          <div class="text-[10px] text-slate-400 font-medium uppercase mt-0.5">${Utils.calculateAge(p.tugilgan_yil)||'—'} yosh · ${(p.jins||p.jinsi)==='Erkak'?'E':'A'}</div>
         </td>
         <td class="p-4">
           <span class="px-2 py-0.5 ${p._type==='infarkt' ? 'bg-red-50 text-red-600 border-red-100' : 'bg-blue-50 text-blue-600 border-blue-100'} text-[10px] font-bold rounded border uppercase">
@@ -1245,7 +1248,10 @@ const DashboardPage = {
       if (!data || data.length < 2) return '';
       const max = Math.max(...data, 1);
       const w = 80, h = 28, pts = data.map((v,i) => `${Math.round(i*(w/(data.length-1)))},${Math.round(h - (v/max)*h)}`).join(' ');
-      return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" fill="none"><polyline points="${pts}" stroke="${color}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/><circle cx="${pts.split(' ').pop().split(',')[0]}" cy="${pts.split(' ').pop().split(',')[1]}" r="3" fill="${color}"/></svg>`;
+      const lastPt2 = pts.split(' ').filter(Boolean);
+      const last2 = lastPt2.length ? lastPt2[lastPt2.length-1].split(',') : ['0','0'];
+      const cx2 = last2[0] || '0', cy2 = last2[1] || '0';
+      return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" fill="none"><polyline points="${pts}" stroke="${color}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/><circle cx="${cx2}" cy="${cy2}" r="3" fill="${color}"/></svg>`;
     };
 
     return `
