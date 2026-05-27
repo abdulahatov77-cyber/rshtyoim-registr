@@ -1013,7 +1013,8 @@ const DashboardPage = {
     try {
       const sb = getSupabase();
       const vil = DashboardPage._viewViloyat;
-      const eqV = q => vil ? q.eq('viloyat', vil) : q;
+      const muassasa = DashboardPage._viewMuassasa;
+      const eqV = q => muassasa ? q.eq('muassasa', muassasa) : (vil ? q.eq('viloyat', vil) : q);
       const [infRes, insRes] = await Promise.all([
         eqV(sb.from('infarkt_qabul').select('kt_no,fio,tugilgan_yil,viloyat,muassasa,qabul_vaqt,infarkt_turi').eq('status','vafot')).order('qabul_vaqt',{ascending:false}),
         eqV(sb.from('insult_qabul').select('kt_no,fio,tugilgan_yil,viloyat,muassasa,qabul_vaqt,insult_turi').eq('status','vafot')).order('qabul_vaqt',{ascending:false})

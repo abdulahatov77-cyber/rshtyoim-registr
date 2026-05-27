@@ -179,9 +179,9 @@ const BemorlarPage = {
       search:   f.search   || undefined,
       page, pageSize
     };
-    if (f.date)   fObj.from = f.date   + 'T00:00:00';
-    if (f.dateTo) fObj.to   = f.dateTo + 'T23:59:59';
-    else if (f.date) fObj.to = f.date  + 'T23:59:59';
+    if (f.date)   fObj.from = new Date(f.date   + 'T00:00:00+05:00').toISOString();
+    if (f.dateTo) fObj.to   = new Date(f.dateTo + 'T23:59:59+05:00').toISOString();
+    else if (f.date) fObj.to = new Date(f.date  + 'T23:59:59+05:00').toISOString();
     try {
       let combined = [];
       let totalCount = 0;

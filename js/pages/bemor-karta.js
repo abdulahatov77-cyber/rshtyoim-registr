@@ -109,7 +109,7 @@ const BemorKartaPage = {
 
       BemorKartaPage._navList = combined;
       BemorKartaPage._navIndex = combined.findIndex(
-        p => p.kt_no === kt_no && p._type === type
+        p => String(p.kt_no) === String(kt_no) && p._type === type
       );
       // Update just the nav bar in the DOM (no full re-render)
       BemorKartaPage._updateNavBar();
