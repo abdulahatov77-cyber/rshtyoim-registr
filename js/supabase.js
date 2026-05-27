@@ -835,15 +835,12 @@ const Telegram = {
 
       if (json.ok) {
         showToast('рџ“± Telegram xabar yuborildi!', 'success', 3000);
-        console.log('вњ… Telegram OK:', json);
       } else {
         const errMsg = json.description || 'Noma\'lum xato';
         showToast(`вљ пёЏ Telegram xato: ${errMsg}`, 'warning', 6000);
-        console.error('вќЊ Telegram API xato:', json);
       }
     } catch (e) {
       showToast(`вљ пёЏ Telegram ulanmadi: ${e.message}`, 'warning', 6000);
-      console.error('вќЊ Telegram fetch xato:', e);
     }
   },
 
@@ -858,7 +855,6 @@ const Telegram = {
         : APP_CONFIG.TELEGRAM_INSULT_CHAT
     );
 
-    console.log(`рџ”Ќ Telegram test: type=${type}, chatId=${chatId}`);
 
     const res = await fetch(
       `https://api.telegram.org/bot${token}/sendMessage`,
@@ -873,7 +869,6 @@ const Telegram = {
       }
     );
     const json = await res.json();
-    console.log('Telegram test natija:', json);
     if (json.ok) {
       showToast('вњ… Test xabar yuborildi!', 'success');
     } else {
@@ -999,9 +994,7 @@ const Realtime = {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'insult_qabul' }, callback)
       .subscribe((status) => {
         if (status === 'SUBSCRIBED') {
-          console.log('вњ… Realtime ulandi:', channelName);
         } else if (status === 'CHANNEL_ERROR') {
-          console.warn('вљ пёЏ Realtime xato:', channelName);
         }
       });
 
@@ -1180,4 +1173,5 @@ const MuassasaDB = {
     ];
   }
 };
+
 
