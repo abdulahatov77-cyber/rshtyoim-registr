@@ -39,32 +39,45 @@ const DashboardPage = {
       const om = DashboardPage._viewMuassasa;
       const AGE_GROUPS = ['75+', '60-74', '45-59', '30-44', '≤29'];
       const emptyPyramid = () => { const r = {}; AGE_GROUPS.forEach(g => { r[g] = { mTotal:0, fTotal:0, mDeath:0, fDeath:0 }; }); return { groups: AGE_GROUPS, data: r }; };
-      const results = await Promise.allSettled([
+      const emptyDemo = { infarkt:{male:0,female:0,ages:{}}, insult:{male:0,female:0,ages:{}} };
+
+      // BOSQICH 1: Tez yuklanadigan asosiy ma'lumotlar
+      const phase1 = await Promise.allSettled([
         DB.getDashboardStats(ov, om),
         DB.getTrend30(ov, om),
         DB.getTrend12Month(ov, om),
         DB.getRecentPatients(10, ov, om),
         om ? Promise.resolve([]) : DB.getViloyatStats(ov),
+      ]);
+      const val1 = (i, def) => phase1[i].status === 'fulfilled' ? phase1[i].value : def;
+      const stats   = val1(0, {});
+      const trend   = val1(1, { labels:[], infData:[], insData:[] });
+      const trend12 = val1(2, { labels:[], infData:[], insData:[] });
+      const recent  = val1(3, []);
+      const viloyat = val1(4, []);
+      DashboardPage._recentPatients = recent;
+      DashboardPage._ageSex = { infarkt: emptyPyramid(), insult: emptyPyramid() };
+
+      // Sahifani darhol ko'rsatamiz
+      DashboardPage.renderContent(stats, trend, trend12, recent, viloyat, profile, emptyDemo, [], [], null);
+
+      // BOSQICH 2: Og'ir ma'lumotlar fonda yuklanadi
+      const phase2 = await Promise.allSettled([
         DB.getDemographics(ov, om),
         DB.getRiskFactors(ov, om),
         DB.getLongStayPatients(ov, om),
-        DB.getGenderMortality(ov, om),
         DB.getAgeSexPyramid(ov, om)
       ]);
-      const val = (i, def) => results[i].status === 'fulfilled' ? results[i].value : (console.error('Dashboard so\'rov xato:', results[i].reason?.message), def);
-      const stats      = val(0, {});
-      const trend      = val(1, { labels:[], infData:[], insData:[] });
-      const trend12    = val(2, { labels:[], infData:[], insData:[] });
-      const recent     = val(3, []);
-      const viloyat    = val(4, []);
-      const demo       = val(5, { infarkt:{male:0,female:0,ages:{}}, insult:{male:0,female:0,ages:{}} });
-      const riskFactors= val(6, []);
-      const longStay   = val(7, []);
-      const genderMort = val(8, null);
-      const ageSex     = val(9, { infarkt: emptyPyramid(), insult: emptyPyramid() });
-      DashboardPage._recentPatients = recent;
+      const val2 = (i, def) => phase2[i].status === 'fulfilled' ? phase2[i].value : def;
+      const demo      = val2(0, emptyDemo);
+      const riskFactors = val2(1, []);
+      const longStay  = val2(2, []);
+      const ageSex    = val2(3, { infarkt: emptyPyramid(), insult: emptyPyramid() });
       DashboardPage._ageSex = ageSex;
-      DashboardPage.renderContent(stats, trend, trend12, recent, viloyat, profile, demo, riskFactors, longStay, genderMort);
+
+      // Faqat grafiklar va pastki qismlarni yangilaymiz
+      DashboardPage._updateSecondaryContent(stats, demo, riskFactors, longStay, ageSex);
+
     } catch (err) {
       const inner = document.getElementById('dashboard-inner');
       if (inner) {
@@ -77,6 +90,41 @@ const DashboardPage = {
           </div>`;
           initIcons();
       }
+    }
+  },
+
+  _updateSecondaryContent(stats, demo, riskFactors, longStay, ageSex) {
+    // Risk factors donut chartlarini yangilaymiz
+    if (riskFactors) {
+      DashboardPage._drawDonut('riskInfarktChart', 'riskInfarktLegend', riskFactors.infarkt, '#ef4444', stats?.jamiInfarkt);
+      DashboardPage._drawDonut('riskInsultChart',  'riskInsultLegend',  riskFactors.insult,  '#3b82f6', stats?.jamiInsult);
+    }
+    // Age-Sex pyramidlarni yangilaymiz
+    if (ageSex && typeof AgePyramid !== 'undefined') {
+      AgePyramid.render('pyramid-infarkt', ageSex.infarkt, 'INFARKT', '#dc2626', stats?.jamiInfarkt);
+      AgePyramid.render('pyramid-insult',  ageSex.insult,  'INSULT',  '#2563eb', stats?.jamiInsult);
+    }
+    // 15+ kun jadvalini yangilaymiz
+    DashboardPage._longStayData = longStay;
+    const longStayEl = document.getElementById('longstay-body');
+    if (longStayEl) {
+      longStayEl.innerHTML = longStay.length === 0
+        ? `<tr><td colspan="5" class="p-10 text-center text-slate-400 font-medium">15 kun va undan ko'p davolanayotgan bemorlar yo'q</td></tr>`
+        : longStay.map((g, idx) => {
+            const inf = g.bemorlar.filter(b=>b._type==='infarkt').length;
+            const ins = g.bemorlar.filter(b=>b._type==='insult').length;
+            const maxDays = Math.max(...g.bemorlar.map(b=>b.kunlar));
+            return `<tr class="hover:bg-orange-50/30 transition-colors">
+              <td class="p-4"><div class="flex items-center gap-2"><div class="w-7 h-7 bg-orange-100 text-orange-500 rounded-lg flex items-center justify-center">${icon('building-2',14)}</div><span class="font-bold text-slate-700">${esc(g.muassasa)}</span></div></td>
+              <td class="p-4"><span class="px-2.5 py-1 bg-orange-50 text-orange-700 border border-orange-100 rounded-lg text-xs font-black">${g.bemorlar.length} ta</span></td>
+              <td class="p-4"><span class="px-2.5 py-1 bg-red-50 text-red-700 border border-red-100 rounded-lg text-xs font-black">${maxDays} kun</span></td>
+              <td class="p-4"><div class="flex gap-2">${inf>0?`<span class="px-2 py-0.5 bg-red-50 text-red-600 border border-red-100 rounded text-[10px] font-bold">${inf} infarkt</span>`:''}${ins>0?`<span class="px-2 py-0.5 bg-blue-50 text-blue-600 border border-blue-100 rounded text-[10px] font-bold">${ins} insult</span>`:''}</div></td>
+              <td class="p-4 text-right"><button class="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-[10px] font-bold text-slate-600 hover:bg-slate-100 transition-all" onclick="DashboardPage.showLongStayDetail(${idx})">Ko'rish</button></td>
+            </tr>`;
+          }).join('');
+      // Jami sonini ham yangilaymiz
+      const longStayCount = document.getElementById('longstay-count');
+      if (longStayCount) longStayCount.textContent = longStay.reduce((s,g)=>s+g.bemorlar.length,0) + ' ta bemor';
     }
   },
 
@@ -304,11 +352,8 @@ const DashboardPage = {
               <p class="text-[11px] text-slate-400 font-medium">Statsionarda 15+ kun qolgan aktiv bemorlar — muassasa bo'yicha</p>
             </div>
           </div>
-          <span class="px-3 py-1.5 bg-orange-100 text-orange-700 text-xs font-black rounded-xl border border-orange-200">${longStay.reduce((s,g)=>s+g.bemorlar.length,0)} ta bemor</span>
+          <span id="longstay-count" class="px-3 py-1.5 bg-orange-100 text-orange-700 text-xs font-black rounded-xl border border-orange-200">yuklanmoqda...</span>
         </div>
-        ${longStay.length === 0 ? `
-          <div class="p-10 text-center text-slate-400 font-medium">15 kun va undan ko'p davolanayotgan bemorlar yo'q</div>
-        ` : `
         <div class="overflow-x-auto">
           <table class="w-full text-left">
             <thead>
@@ -320,7 +365,7 @@ const DashboardPage = {
                 <th class="p-4 border-b border-slate-100"></th>
               </tr>
             </thead>
-            <tbody class="text-sm divide-y divide-slate-50">
+            <tbody id="longstay-body" class="text-sm divide-y divide-slate-50">
               ${longStay.map((g, idx) => {
                 const inf = g.bemorlar.filter(b=>b._type==='infarkt').length;
                 const ins = g.bemorlar.filter(b=>b._type==='insult').length;
@@ -355,7 +400,6 @@ const DashboardPage = {
             </tbody>
           </table>
         </div>
-        `}
       </div>
 
       <!-- ROW 7: PATIENT LIST TABLE -->
@@ -685,12 +729,6 @@ const DashboardPage = {
 
       buildRegionChart(DashboardPage._chartMode);
       DashboardPage._buildRegionChart = buildRegionChart;
-    }
-
-    // 4. Risk Factors Donut Charts
-    if (riskFactors) {
-      DashboardPage._drawDonut('riskInfarktChart', 'riskInfarktLegend', riskFactors.infarkt, '#ef4444', stats?.jamiInfarkt);
-      DashboardPage._drawDonut('riskInsultChart',  'riskInsultLegend',  riskFactors.insult,  '#3b82f6', stats?.jamiInsult);
     }
 
     // 2b. Monthly Trend Chart
