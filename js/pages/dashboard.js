@@ -642,7 +642,7 @@ const DashboardPage = {
           plugins: window.ChartDataLabels ? [window.ChartDataLabels] : [],
           options: {
             responsive: true, maintainAspectRatio: false,
-            layout: { padding: { top: 24, bottom: 10 } },
+            layout: { padding: { top: 32, bottom: 10, left: 4, right: 4 } },
             plugins: {
               legend: {
                 display: true, position: 'top', align: 'end',
@@ -708,10 +708,12 @@ const DashboardPage = {
         plugins: window.ChartDataLabels ? [window.ChartDataLabels] : [],
         options: {
           responsive: true, maintainAspectRatio: false,
+          layout: { padding: { top: 30, bottom: 4, left: 4, right: 4 } },
           plugins: {
             legend: { display: false },
             datalabels: window.ChartDataLabels ? {
               anchor: 'end', align: 'top',
+              clamp: true,
               display: ctx => ctx.dataset.data[ctx.dataIndex] > 0,
               color: ctx => ctx.datasetIndex === 0 ? '#dc2626' : '#2563eb',
               font: { weight: 'bold', size: 11 },
