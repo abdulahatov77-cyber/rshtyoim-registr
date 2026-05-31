@@ -1,6 +1,7 @@
 // ==================== APP INITIALIZATION ====================
 const App = {
   _user: null,
+  _profile: null,
 
   async init() {
     // Load muassasa overrides before routing so all dropdowns have correct data
@@ -21,6 +22,7 @@ const App = {
       const session = await Auth.getSession();
       if (session) {
         App._user = session.user;
+        Profile.getCurrent().then(p => { App._profile = p; }).catch(()=>{});
         Router.go('dashboard');
       } else {
         Router.go('login');
@@ -34,6 +36,7 @@ const App = {
     Auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_IN' && session) {
         App._user = session.user;
+        Profile.getCurrent().then(p => { App._profile = p; }).catch(()=>{});
         if (Router._current === 'login') Router.go('dashboard');
       } else if (event === 'SIGNED_OUT') {
         App._user = null;

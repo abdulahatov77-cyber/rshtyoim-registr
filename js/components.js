@@ -135,6 +135,12 @@ const Components = {
         </nav>
 
         <div class="p-4 border-t border-slate-100 shrink-0">
+          <!-- Taklif / Muammo tugmasi -->
+          <button onclick="Components.showFeedbackModal()" class="w-full mb-3 flex items-center gap-2 px-3 py-2.5 bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-700 rounded-xl text-xs font-bold transition-all group">
+            <span class="w-6 h-6 bg-amber-100 group-hover:bg-amber-200 rounded-lg flex items-center justify-center flex-shrink-0">${icon('message-circle', 14)}</span>
+            <span>Taklif / Muammo yuborish</span>
+            ${icon('chevron-right', 14, 'ml-auto opacity-50')}
+          </button>
           <div class="bg-slate-50 rounded-xl p-3 flex items-center gap-3 border border-slate-100">
             <div class="w-9 h-9 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-sm flex-shrink-0"
                  style="background: ${isSuperAdmin ? 'linear-gradient(135deg,#7c3aed,#4f46e5)' : isAdmin ? 'linear-gradient(135deg,#0ea5e9,#2563eb)' : '#2563eb'}">${initials}</div>
@@ -205,6 +211,92 @@ const Components = {
     if (title.includes('infarkt')) return 'heart';
     if (title.includes('insult')) return 'brain';
     return 'activity';
+  },
+
+  // ── Feedback Modal ──
+  showFeedbackModal() {
+    const profile = App._profile || {};
+    const sender = profile.fio || profile.full_name || profile.email || 'Noma\'lum';
+    const viloyat = profile.viloyat || '—';
+    const role = profile.role || '—';
+
+    showModal({
+      title: 'Taklif yoki muammo yuborish',
+      body: `
+        <div class="space-y-4">
+          <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 flex items-start gap-2">
+            ${icon('info', 16, 'text-amber-600 flex-shrink-0 mt-0.5')}
+            <p class="text-xs text-amber-700 font-medium">Xabaringiz Super Administrator <b>Abdulahatov M.</b> ga yuboriladi. Tizim muammolari, takliflar yoki savollaringizni yozing.</p>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-wide">Tur</label>
+            <div class="flex gap-2">
+              <label class="flex items-center gap-2 cursor-pointer px-3 py-2 border border-slate-200 rounded-lg hover:border-blue-400 transition-all has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50">
+                <input type="radio" name="fb-tur" value="Muammo" class="accent-blue-600" checked> <span class="text-sm font-medium text-slate-700">🔴 Muammo</span>
+              </label>
+              <label class="flex items-center gap-2 cursor-pointer px-3 py-2 border border-slate-200 rounded-lg hover:border-blue-400 transition-all has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50">
+                <input type="radio" name="fb-tur" value="Taklif" class="accent-blue-600"> <span class="text-sm font-medium text-slate-700">💡 Taklif</span>
+              </label>
+              <label class="flex items-center gap-2 cursor-pointer px-3 py-2 border border-slate-200 rounded-lg hover:border-blue-400 transition-all has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50">
+                <input type="radio" name="fb-tur" value="Savol" class="accent-blue-600"> <span class="text-sm font-medium text-slate-700">❓ Savol</span>
+              </label>
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-wide">Xabar</label>
+            <textarea id="fb-text" rows="5" placeholder="Muammo yoki taklifingizni batafsil yozing..."
+              class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"></textarea>
+          </div>
+          <p class="text-[11px] text-slate-400">Yuboruvchi: <b>${sender}</b> · ${viloyat} · ${role}</p>
+        </div>
+      `,
+      footer: `
+        <button onclick="closeModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-sm font-bold transition-all">Bekor qilish</button>
+        <button id="fb-send-btn" onclick="Components.sendFeedback('${sender}','${viloyat}','${role}')" class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-bold transition-all flex items-center gap-2">
+          ${icon('send', 16)} Yuborish
+        </button>
+      `
+    });
+  },
+
+  async sendFeedback(sender, viloyat, role) {
+    const text = document.getElementById('fb-text')?.value?.trim();
+    const tur = document.querySelector('input[name="fb-tur"]:checked')?.value || 'Muammo';
+    if (!text) { showToast('Xabar matni kiritilmagan', 'warning'); return; }
+
+    const btn = document.getElementById('fb-send-btn');
+    setLoading(btn, true, 'Yuborilmoqda...');
+
+    const emoji = tur === 'Muammo' ? '🔴' : tur === 'Taklif' ? '💡' : '❓';
+    const msg = `${emoji} <b>${tur.toUpperCase()} — RSHTYOIM Registr</b>\n` +
+      `━━━━━━━━━━━━━━━━━━━━\n` +
+      `👤 <b>Yuboruvchi:</b> ${sender}\n` +
+      `📍 <b>Viloyat:</b> ${viloyat}\n` +
+      `🔑 <b>Rol:</b> ${role}\n` +
+      `━━━━━━━━━━━━━━━━━━━━\n` +
+      `📝 <b>Xabar:</b>\n${text}\n` +
+      `━━━━━━━━━━━━━━━━━━━━\n` +
+      `🕐 ${new Date().toLocaleString('uz-UZ', { timeZone: 'Asia/Tashkent' })}`;
+
+    try {
+      const token = APP_CONFIG.TELEGRAM_INFARKT_TOKEN;
+      const chatId = APP_CONFIG.TELEGRAM_INFARKT_CHAT;
+      const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chat_id: chatId, text: msg, parse_mode: 'HTML' })
+      });
+      const json = await res.json();
+      if (json.ok) {
+        closeModal();
+        showToast('Xabaringiz muvaffaqiyatli yuborildi!', 'success');
+      } else {
+        throw new Error(json.description || 'Telegram xato');
+      }
+    } catch (e) {
+      setLoading(btn, false);
+      showToast('Xabar yuborishda xato: ' + e.message, 'error');
+    }
   },
 
   // ── Layout Wrapper ──
