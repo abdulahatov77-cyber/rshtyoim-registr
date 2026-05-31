@@ -70,15 +70,33 @@ const AdminPage = {
             ['xabarlar', '💬 Xabarlar']
           ].map(([t, label]) => `
             <button onclick="AdminPage.switchTab('${t}')" id="tab-btn-${t}"
-              style="padding:9px 20px;border-radius:10px;border:none;cursor:pointer;font-size:13px;font-weight:700;transition:all 0.2s;
+              style="padding:9px 20px;border-radius:10px;border:none;cursor:pointer;font-size:13px;font-weight:700;transition:all 0.2s;display:flex;align-items:center;gap:6px;
               ${AdminPage._activeTab === t ? 'background:#1e293b;color:#e2e8f0;box-shadow:0 2px 8px rgba(0,0,0,0.3)' : 'background:transparent;color:#64748b;'}">
-              ${label}
+              ${label}${t === 'xabarlar' ? ' <span id="tab-unread-badge" style="display:none;background:#ef4444;color:white;font-size:10px;font-weight:800;border-radius:999px;padding:1px 6px;line-height:16px"></span>' : ''}
             </button>`).join('')}
         </div>
         <div id="admin-tab-content"></div>
       </div>`;
     AdminPage._renderTabContent();
     initIcons();
+    AdminPage._loadTabUnreadBadge();
+  },
+
+  async _loadTabUnreadBadge() {
+    try {
+      const { count } = await getSupabase()
+        .from('feedback')
+        .select('id', { count: 'exact', head: true })
+        .eq('o_qildi', false);
+      const badge = document.getElementById('tab-unread-badge');
+      if (!badge) return;
+      if (count > 0) {
+        badge.textContent = count;
+        badge.style.display = 'inline-block';
+      } else {
+        badge.style.display = 'none';
+      }
+    } catch(e) { /* ignore */ }
   },
 
   switchTab(tab) {
@@ -1017,6 +1035,8 @@ const AdminPage = {
       if (error) throw error;
       showToast('Javob saqlandi!', 'success');
       AdminPage._loadFeedback();
+      AdminPage._loadTabUnreadBadge();
+      Components._loadUnreadFeedbackBadge();
     } catch(err) { showToast('Xato: ' + err.message, 'error'); }
   },
 

@@ -139,6 +139,7 @@ const Components = {
           <button onclick="Components.showFeedbackModal()" class="w-full mb-3 flex items-center gap-2 px-3 py-2.5 bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-700 rounded-xl text-xs font-bold transition-all group">
             <span class="w-6 h-6 bg-amber-100 group-hover:bg-amber-200 rounded-lg flex items-center justify-center flex-shrink-0">${icon('message-circle', 14)}</span>
             <span>Savol va takliflar yuborish</span>
+            <span id="sidebar-unread-badge" style="display:none;background:#ef4444;color:white;font-size:10px;font-weight:800;border-radius:999px;padding:1px 6px;margin-left:auto;line-height:16px"></span>
             ${icon('chevron-right', 14, 'ml-auto opacity-50')}
           </button>
           <div class="bg-slate-50 rounded-xl p-3 flex items-center gap-3 border border-slate-100">
@@ -320,6 +321,26 @@ const Components = {
     this._clockInterval = setInterval(update, 1000);
     Notifications.load();
     Notifications._updateBadge(); // yangi DOM da badge ni yangilash
+    Components._loadUnreadFeedbackBadge();
+  },
+
+  async _loadUnreadFeedbackBadge() {
+    const profile = App._profile || {};
+    if (profile.role !== 'super_admin') return;
+    try {
+      const { count } = await getSupabase()
+        .from('feedback')
+        .select('id', { count: 'exact', head: true })
+        .eq('o_qildi', false);
+      const badge = document.getElementById('sidebar-unread-badge');
+      if (!badge) return;
+      if (count > 0) {
+        badge.textContent = count;
+        badge.style.display = 'inline-block';
+      } else {
+        badge.style.display = 'none';
+      }
+    } catch(e) { /* ignore */ }
   },
 
   // ── Step Progress ──
