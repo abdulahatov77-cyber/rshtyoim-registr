@@ -1,6 +1,7 @@
 ﻿// ==================== ADMIN PANEL ====================
 const AdminPage = {
   _profiles: [],
+  _totalCount: null,
   _search: '',
   _filterRole: '',
   _activeTab: 'users',
@@ -40,7 +41,13 @@ const AdminPage = {
 
   async _loadProfiles() {
     try {
-      AdminPage._profiles = await Profile.listAll();
+      // Parallel: ro'yxat + haqiqiy son (RLS/limit dan mustaqil)
+      const [profiles, countRes] = await Promise.all([
+        Profile.listAll(),
+        getSupabase().from('profiles').select('id', { count: 'exact', head: true })
+      ]);
+      AdminPage._profiles = profiles;
+      AdminPage._totalCount = countRes.count ?? profiles.length;
       AdminPage.renderContent();
     } catch (err) {
       const inner = document.getElementById('admin-content');
@@ -154,7 +161,7 @@ const AdminPage = {
       <div class="stat-grid" style="margin-bottom:20px;grid-template-columns:repeat(4,1fr)">
         <div class="stat-card">
           <div class="stat-icon" style="background:rgba(59,130,246,0.15);color:#60a5fa">${icon('users',24)}</div>
-          <div><div class="stat-value">${all.length}</div><div class="stat-label">Jami foydalanuvchilar</div></div>
+          <div><div class="stat-value">${AdminPage._totalCount ?? all.length}</div><div class="stat-label">Jami foydalanuvchilar</div></div>
         </div>
         <div class="stat-card">
           <div class="stat-icon" style="background:rgba(139,92,246,0.15);color:#c4b5fd">${icon('crown',24)}</div>
