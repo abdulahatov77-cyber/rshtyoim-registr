@@ -1065,7 +1065,7 @@ const Profile = {
     return p?.role === 'super_admin';
   },
   async listAll() {
-    const { data, error } = await getSupabase().from('profiles').select('*').order('created_at', { ascending: false });
+    const { data, error } = await getSupabase().from('profiles').select('*').order('created_at', { ascending: false }).range(0, 9999);
     if (error) throw error;
     return data || [];
   },
