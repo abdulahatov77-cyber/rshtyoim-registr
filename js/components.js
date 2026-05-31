@@ -138,7 +138,7 @@ const Components = {
           <!-- Taklif / Muammo tugmasi -->
           <button onclick="Components.showFeedbackModal()" class="w-full mb-3 flex items-center gap-2 px-3 py-2.5 bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-700 rounded-xl text-xs font-bold transition-all group">
             <span class="w-6 h-6 bg-amber-100 group-hover:bg-amber-200 rounded-lg flex items-center justify-center flex-shrink-0">${icon('message-circle', 14)}</span>
-            <span>Taklif / Muammo yuborish</span>
+            <span>Savol va takliflar yuborish</span>
             ${icon('chevron-right', 14, 'ml-auto opacity-50')}
           </button>
           <div class="bg-slate-50 rounded-xl p-3 flex items-center gap-3 border border-slate-100">
@@ -221,12 +221,12 @@ const Components = {
     const role = profile.role || '—';
 
     showModal({
-      title: 'Taklif yoki muammo yuborish',
+      title: 'Savol va takliflar yuborish',
       body: `
         <div class="space-y-4">
           <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 flex items-start gap-2">
             ${icon('info', 16, 'text-amber-600 flex-shrink-0 mt-0.5')}
-            <p class="text-xs text-amber-700 font-medium">Xabaringiz Super Administrator <b>Abdulahatov M.</b> ga yuboriladi. Tizim muammolari, takliflar yoki savollaringizni yozing.</p>
+            <p class="text-xs text-amber-700 font-medium">Xabaringiz platforma administratori <b>Abdulahatov M.X.</b>ga yuboriladi. Tizimdagi muammolar, takliflar yoki savollaringizni yozing.</p>
           </div>
           <div>
             <label class="block text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-wide">Tur</label>
@@ -252,14 +252,14 @@ const Components = {
       `,
       footer: `
         <button onclick="closeModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-sm font-bold transition-all">Bekor qilish</button>
-        <button id="fb-send-btn" onclick="Components.sendFeedback('${sender}','${viloyat}','${role}')" class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-bold transition-all flex items-center gap-2">
+        <button id="fb-send-btn" onclick="Components.sendFeedback()" class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-bold transition-all flex items-center gap-2">
           ${icon('send', 16)} Yuborish
         </button>
       `
     });
   },
 
-  async sendFeedback(sender, viloyat, role) {
+  async sendFeedback() {
     const text = document.getElementById('fb-text')?.value?.trim();
     const tur = document.querySelector('input[name="fb-tur"]:checked')?.value || 'Muammo';
     if (!text) { showToast('Xabar matni kiritilmagan', 'warning'); return; }
@@ -267,32 +267,21 @@ const Components = {
     const btn = document.getElementById('fb-send-btn');
     setLoading(btn, true, 'Yuborilmoqda...');
 
-    const emoji = tur === 'Muammo' ? '🔴' : tur === 'Taklif' ? '💡' : '❓';
-    const msg = `${emoji} <b>${tur.toUpperCase()} — RSHTYOIM Registr</b>\n` +
-      `━━━━━━━━━━━━━━━━━━━━\n` +
-      `👤 <b>Yuboruvchi:</b> ${sender}\n` +
-      `📍 <b>Viloyat:</b> ${viloyat}\n` +
-      `🔑 <b>Rol:</b> ${role}\n` +
-      `━━━━━━━━━━━━━━━━━━━━\n` +
-      `📝 <b>Xabar:</b>\n${text}\n` +
-      `━━━━━━━━━━━━━━━━━━━━\n` +
-      `🕐 ${new Date().toLocaleString('uz-UZ', { timeZone: 'Asia/Tashkent' })}`;
-
     try {
-      const token = APP_CONFIG.TELEGRAM_INFARKT_TOKEN;
-      const chatId = APP_CONFIG.TELEGRAM_INFARKT_CHAT;
-      const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ chat_id: chatId, text: msg, parse_mode: 'HTML' })
+      const profile = App._profile || {};
+      const user = await Auth.getUser();
+      const { error } = await getSupabase().from('feedback').insert({
+        sender_id:    user?.id || null,
+        sender_name:  profile.fio || profile.full_name || profile.email || 'Noma\'lum',
+        sender_email: profile.email || user?.email || null,
+        viloyat:      profile.viloyat || null,
+        rol:          profile.role || null,
+        tur,
+        xabar:        text
       });
-      const json = await res.json();
-      if (json.ok) {
-        closeModal();
-        showToast('Xabaringiz muvaffaqiyatli yuborildi!', 'success');
-      } else {
-        throw new Error(json.description || 'Telegram xato');
-      }
+      if (error) throw error;
+      closeModal();
+      showToast('Xabaringiz muvaffaqiyatli yuborildi!', 'success');
     } catch (e) {
       setLoading(btn, false);
       showToast('Xabar yuborishda xato: ' + e.message, 'error');

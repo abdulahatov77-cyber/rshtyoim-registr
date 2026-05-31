@@ -66,7 +66,8 @@ const AdminPage = {
             ['muassasalar', '🏥 Muassasalar'],
             ['aholi', '👨‍👩‍👧 Aholi soni'],
             ['audit', '🔍 Ma\'lumot sifati'],
-            ['logs', '📋 Kirish tarixi']
+            ['logs', '📋 Kirish tarixi'],
+            ['xabarlar', '💬 Xabarlar']
           ].map(([t, label]) => `
             <button onclick="AdminPage.switchTab('${t}')" id="tab-btn-${t}"
               style="padding:9px 20px;border-radius:10px;border:none;cursor:pointer;font-size:13px;font-weight:700;transition:all 0.2s;
@@ -82,7 +83,7 @@ const AdminPage = {
 
   switchTab(tab) {
     AdminPage._activeTab = tab;
-    ['users','muassasalar','aholi','audit','logs'].forEach(t => {
+    ['users','muassasalar','aholi','audit','logs','xabarlar'].forEach(t => {
       const btn = document.getElementById(`tab-btn-${t}`);
       if (!btn) return;
       btn.style.background = t === tab ? '#1e293b' : 'transparent';
@@ -100,6 +101,7 @@ const AdminPage = {
     else if (AdminPage._activeTab === 'aholi') el.innerHTML = AdminPage._buildAholiTab();
     else if (AdminPage._activeTab === 'audit') el.innerHTML = AdminPage._buildAuditTab();
     else if (AdminPage._activeTab === 'logs') { el.innerHTML = '<div style="color:#94a3b8;padding:32px;text-align:center">Yuklanmoqda...</div>'; AdminPage._loadLogs(); }
+    else if (AdminPage._activeTab === 'xabarlar') { el.innerHTML = '<div style="color:#94a3b8;padding:32px;text-align:center">Yuklanmoqda...</div>'; AdminPage._loadFeedback(); }
     initIcons();
   },
 
@@ -907,6 +909,115 @@ const AdminPage = {
           </table>
         </div>
       </div>`;
+  },
+
+  // ==================== XABARLAR TAB ====================
+  async _loadFeedback() {
+    try {
+      const { data, error } = await getSupabase()
+        .from('feedback')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      const el = document.getElementById('admin-tab-content');
+      if (el) { el.innerHTML = AdminPage._buildFeedbackTab(data || []); initIcons(); }
+    } catch(err) {
+      const el = document.getElementById('admin-tab-content');
+      if (el) el.innerHTML = `<div class="card" style="color:#f87171;padding:32px;text-align:center">❌ ${err.message}</div>`;
+    }
+  },
+
+  _buildFeedbackTab(items) {
+    const fmtDate = dt => {
+      if (!dt) return '—';
+      const d = new Date(dt);
+      const tz = new Date(d.getTime() + 5*60*60*1000);
+      const pad = n => String(n).padStart(2,'0');
+      return `${pad(tz.getUTCDate())}.${pad(tz.getUTCMonth()+1)}.${tz.getUTCFullYear()} ${pad(tz.getUTCHours())}:${pad(tz.getUTCMinutes())}`;
+    };
+    const turBadge = t => {
+      if (t === 'Muammo') return `<span style="background:#fee2e2;color:#b91c1c;padding:2px 10px;border-radius:20px;font-size:11px;font-weight:700">🔴 Muammo</span>`;
+      if (t === 'Taklif') return `<span style="background:#fefce8;color:#92400e;padding:2px 10px;border-radius:20px;font-size:11px;font-weight:700">💡 Taklif</span>`;
+      return `<span style="background:#eff6ff;color:#1e40af;padding:2px 10px;border-radius:20px;font-size:11px;font-weight:700">❓ Savol</span>`;
+    };
+    const yangi = items.filter(i => !i.o_qildi).length;
+    if (!items.length) return `
+      <div class="card" style="text-align:center;padding:60px">
+        <div style="font-size:48px;margin-bottom:16px">💬</div>
+        <h3 style="color:#e2e8f0;font-size:18px;font-weight:700">Xabarlar yo'q</h3>
+        <p style="color:#64748b;font-size:14px;margin-top:8px">Hali hech kim xabar yubormagan</p>
+      </div>`;
+    return `
+      <div class="card" style="margin-bottom:16px;padding:16px 20px;display:flex;align-items:center;gap:16px">
+        <div style="display:flex;gap:16px">
+          <div style="text-align:center">
+            <div style="font-size:22px;font-weight:800;color:#3b82f6">${items.length}</div>
+            <div style="font-size:11px;color:#64748b;font-weight:600">Jami</div>
+          </div>
+          <div style="text-align:center">
+            <div style="font-size:22px;font-weight:800;color:#f59e0b">${yangi}</div>
+            <div style="font-size:11px;color:#64748b;font-weight:600">Yangi</div>
+          </div>
+          <div style="text-align:center">
+            <div style="font-size:22px;font-weight:800;color:#22c55e">${items.length - yangi}</div>
+            <div style="font-size:11px;color:#64748b;font-weight:600">Javob berilgan</div>
+          </div>
+        </div>
+        <button onclick="AdminPage._loadFeedback()" class="btn btn-ghost btn-sm" style="margin-left:auto">${icon('refresh-cw',14)} Yangilash</button>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        ${items.map(item => `
+          <div style="background:white;border:1px solid ${!item.o_qildi ? '#fbbf24' : '#e2e8f0'};border-radius:16px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.06)">
+            <div style="padding:16px 20px;display:flex;align-items:flex-start;gap:12px;border-bottom:1px solid #f1f5f9">
+              <div style="width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#0ea5e9,#2563eb);color:white;font-weight:700;font-size:15px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                ${(item.sender_name||'?').charAt(0).toUpperCase()}
+              </div>
+              <div style="flex:1;min-width:0">
+                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px">
+                  <span style="font-weight:700;font-size:14px;color:#1e293b">${esc(item.sender_name||'Noma\'lum')}</span>
+                  ${turBadge(item.tur)}
+                  ${!item.o_qildi ? `<span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700">YANGI</span>` : ''}
+                </div>
+                <div style="font-size:11px;color:#94a3b8">${esc(item.viloyat||'—')} · ${esc(item.rol||'—')} · ${fmtDate(item.created_at)}</div>
+              </div>
+            </div>
+            <div style="padding:16px 20px;background:#f8fafc">
+              <p style="font-size:14px;color:#334155;line-height:1.6;white-space:pre-wrap">${esc(item.xabar||'')}</p>
+            </div>
+            ${item.javob ? `
+              <div style="padding:14px 20px;background:#f0fdf4;border-top:1px solid #bbf7d0;display:flex;gap:10px">
+                <div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#7c3aed,#4f46e5);color:white;font-weight:700;font-size:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0">A</div>
+                <div style="flex:1">
+                  <div style="font-size:11px;font-weight:700;color:#166534;margin-bottom:4px">Administrator javobi · ${fmtDate(item.javob_vaqt)}</div>
+                  <p style="font-size:13px;color:#166534;line-height:1.5;white-space:pre-wrap">${esc(item.javob)}</p>
+                </div>
+              </div>` : ''}
+            <div style="padding:12px 20px;border-top:1px solid #f1f5f9;display:flex;gap:8px;align-items:flex-end">
+              <textarea id="javob-${item.id}" rows="2" placeholder="Javob yozing..."
+                style="flex:1;border:1px solid #e2e8f0;border-radius:10px;padding:8px 12px;font-size:13px;resize:none;outline:none;font-family:inherit">${item.javob ? esc(item.javob) : ''}</textarea>
+              <button onclick="AdminPage._sendJavob('${item.id}')"
+                style="padding:8px 16px;background:#2563eb;color:white;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:6px">
+                ${icon('send',14)} ${item.javob ? 'Yangilash' : 'Javob berish'}
+              </button>
+            </div>
+          </div>`).join('')}
+      </div>`;
+  },
+
+  async _sendJavob(id) {
+    const textarea = document.getElementById(`javob-${id}`);
+    const javob = textarea?.value?.trim();
+    if (!javob) { showToast('Javob matni kiritilmagan', 'warning'); return; }
+    try {
+      const { error } = await getSupabase().from('feedback').update({
+        javob,
+        javob_vaqt: new Date().toISOString(),
+        o_qildi: true
+      }).eq('id', id);
+      if (error) throw error;
+      showToast('Javob saqlandi!', 'success');
+      AdminPage._loadFeedback();
+    } catch(err) { showToast('Xato: ' + err.message, 'error'); }
   },
 
   async deleteAuditRecord(kt_no, type) {

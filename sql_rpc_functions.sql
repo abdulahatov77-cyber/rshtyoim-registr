@@ -215,7 +215,10 @@ LANGUAGE sql STABLE AS $$
     SELECT 'infarkt' AS reg, jins, status,
       EXTRACT(YEAR FROM AGE(
         COALESCE(qabul_vaqt, NOW()),
-        COALESCE(tugilgan_sana::timestamptz, (tugilgan_yil::text || '-07-01')::date::timestamptz)
+        COALESCE(
+          tugilgan_sana::timestamptz,
+          (LPAD(SUBSTRING(tugilgan_yil::text FROM '^\d{4}'), 4, '0') || '-07-01')::date::timestamptz
+        )
       ))::int AS yosh
     FROM infarkt_qabul
     WHERE (p_viloyat IS NULL OR viloyat = p_viloyat) AND (p_muassasa IS NULL OR muassasa = p_muassasa)
@@ -224,7 +227,10 @@ LANGUAGE sql STABLE AS $$
     SELECT 'insult', jins, status,
       EXTRACT(YEAR FROM AGE(
         COALESCE(qabul_vaqt, NOW()),
-        COALESCE(tugilgan_sana::timestamptz, (tugilgan_yil::text || '-07-01')::date::timestamptz)
+        COALESCE(
+          tugilgan_sana::timestamptz,
+          (LPAD(SUBSTRING(tugilgan_yil::text FROM '^\d{4}'), 4, '0') || '-07-01')::date::timestamptz
+        )
       ))::int
     FROM insult_qabul
     WHERE (p_viloyat IS NULL OR viloyat = p_viloyat) AND (p_muassasa IS NULL OR muassasa = p_muassasa)
