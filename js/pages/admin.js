@@ -273,10 +273,10 @@ const AdminPage = {
     return `<tr>
       <td style="color:#64748b;font-size:11px">${num}</td>
       <td style="font-weight:600;font-size:12px">${p.email||'—'}${isMain?'<span style="font-size:10px;background:rgba(139,92,246,0.15);color:#c4b5fd;padding:1px 6px;border-radius:10px;margin-left:4px">Asosiy</span>':''}</td>
-      <td style="font-size:12px;color:#94a3b8">${p.fio||p.full_name||'—'}</td>
+      <td style="font-size:12px;color:#cbd5e1">${p.fio||p.full_name||'—'}</td>
       <td>${roleBadge}</td>
-      <td style="font-size:12px">${p.viloyat||'<span style="color:#64748b">Belgilanmagan</span>'}</td>
-      <td style="font-size:11px;color:#64748b">${p.created_at?new Date(p.created_at).toLocaleDateString('uz-UZ'):'—'}</td>
+      <td style="font-size:12px;color:#e2e8f0;font-weight:500">${p.viloyat||'<span style="color:#475569">Belgilanmagan</span>'}</td>
+      <td style="font-size:11px;color:#94a3b8">${p.created_at?new Date(p.created_at).toLocaleDateString('uz-UZ'):'—'}</td>
       <td>
         <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
           <select id="role-${p.id}" onchange="AdminPage.changeRole('${p.id}',this.value)"
