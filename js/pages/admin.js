@@ -232,7 +232,7 @@ const AdminPage = {
           <div style="padding:4px 0;max-height:70vh;overflow-y:auto">
             ${topVil.length ? topVil.map(([v,cnt]) => `
               <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 4px;border-bottom:1px solid rgba(99,118,158,0.1)">
-                <span style="font-size:12px;color:#cbd5e1;flex:1;margin-right:8px">${v}</span>
+                <span style="font-size:12px;color:#f1f5f9;font-weight:600;flex:1;margin-right:8px">${v}</span>
                 <span style="font-size:12px;font-weight:700;color:#60a5fa;background:rgba(59,130,246,0.12);padding:2px 8px;border-radius:20px;white-space:nowrap">${cnt}</span>
               </div>`).join('')
             : '<p style="color:#64748b;font-size:12px;text-align:center;padding:16px">Viloyatlar yo\'q</p>'}
