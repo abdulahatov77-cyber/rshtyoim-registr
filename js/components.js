@@ -140,6 +140,7 @@ const Components = {
             <span class="w-6 h-6 bg-amber-100 group-hover:bg-amber-200 rounded-lg flex items-center justify-center flex-shrink-0">${icon('message-circle', 14)}</span>
             <span>Savol va takliflar yuborish</span>
             <span id="sidebar-unread-badge" style="display:none;background:#ef4444;color:white;font-size:10px;font-weight:800;border-radius:999px;padding:1px 6px;margin-left:auto;line-height:16px"></span>
+            <span id="sidebar-reply-badge" style="display:none;background:#16a34a;color:white;font-size:10px;font-weight:800;border-radius:999px;padding:1px 7px;margin-left:auto;line-height:16px">Javob ✓</span>
             ${icon('chevron-right', 14, 'ml-auto opacity-50')}
           </button>
           <div class="bg-slate-50 rounded-xl p-3 flex items-center gap-3 border border-slate-100">
@@ -215,11 +216,58 @@ const Components = {
   },
 
   // ── Feedback Modal ──
-  showFeedbackModal() {
+  async showFeedbackModal() {
     const profile = App._profile || {};
     const sender = profile.fio || profile.full_name || profile.email || 'Noma\'lum';
     const viloyat = profile.viloyat || '—';
     const role = profile.role || '—';
+    const isSA = profile.role === 'super_admin';
+
+    // Foydalanuvchi o'z xabarlarini yuklash
+    let historyHtml = '';
+    if (!isSA) {
+      try {
+        const user = App._user;
+        if (user) {
+          const { data } = await getSupabase()
+            .from('feedback')
+            .select('id,created_at,tur,xabar,javob,javob_vaqt,javob_korildi')
+            .eq('sender_id', user.id)
+            .order('created_at', { ascending: false })
+            .limit(5);
+          if (data && data.length) {
+            // Javob ko'rildi deb belgilash
+            const unreadIds = data.filter(r => r.javob && !r.javob_korildi).map(r => r.id);
+            if (unreadIds.length) {
+              getSupabase().from('feedback').update({ javob_korildi: true }).in('id', unreadIds).then(() => {
+                Components._loadUnreadFeedbackBadge();
+              });
+            }
+            const fmtDate = dt => dt ? new Date(dt).toLocaleDateString('uz-Cyrl-UZ', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' }) : '';
+            const esc = s => (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+            historyHtml = `
+              <div style="border-top:1px solid #e2e8f0;padding-top:16px;margin-top:4px">
+                <p class="text-xs font-bold text-slate-500 uppercase tracking-wide mb-3">Mening xabarlarim</p>
+                <div style="display:flex;flex-direction:column;gap:10px">
+                  ${data.map(r => `
+                    <div style="border:1px solid ${r.javob ? '#bbf7d0' : '#e2e8f0'};border-radius:12px;padding:12px;background:${r.javob ? '#f0fdf4' : '#f8fafc'}">
+                      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+                        <span style="font-size:11px;font-weight:700;color:#64748b">${r.tur} · ${fmtDate(r.created_at)}</span>
+                        ${r.javob ? '<span style="font-size:10px;font-weight:800;background:#16a34a;color:white;border-radius:999px;padding:2px 8px">Javob keldi ✓</span>' : '<span style="font-size:10px;font-weight:700;color:#94a3b8">Kutilmoqda...</span>'}
+                      </div>
+                      <p style="font-size:13px;color:#334155;margin:0 0 8px">${esc(r.xabar)}</p>
+                      ${r.javob ? `<div style="background:#dcfce7;border-radius:8px;padding:8px 10px;margin-top:4px">
+                        <p style="font-size:11px;font-weight:700;color:#15803d;margin:0 0 4px">Admin javobi · ${fmtDate(r.javob_vaqt)}</p>
+                        <p style="font-size:13px;color:#166534;margin:0">${esc(r.javob)}</p>
+                      </div>` : ''}
+                    </div>
+                  `).join('')}
+                </div>
+              </div>`;
+          }
+        }
+      } catch(e) { /* ignore */ }
+    }
 
     showModal({
       title: 'Savol va takliflar yuborish',
@@ -245,10 +293,11 @@ const Components = {
           </div>
           <div>
             <label class="block text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-wide">Xabar</label>
-            <textarea id="fb-text" rows="5" placeholder="Muammo yoki taklifingizni batafsil yozing..."
+            <textarea id="fb-text" rows="4" placeholder="Muammo yoki taklifingizni batafsil yozing..."
               class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"></textarea>
           </div>
           <p class="text-[11px] text-slate-400">Yuboruvchi: <b>${sender}</b> · ${viloyat} · ${role}</p>
+          ${historyHtml}
         </div>
       `,
       footer: `
@@ -326,19 +375,33 @@ const Components = {
 
   async _loadUnreadFeedbackBadge() {
     const profile = App._profile || {};
-    if (profile.role !== 'super_admin') return;
+    const isSA = profile.role === 'super_admin';
     try {
-      const { count } = await getSupabase()
-        .from('feedback')
-        .select('id', { count: 'exact', head: true })
-        .eq('o_qildi', false);
-      const badge = document.getElementById('sidebar-unread-badge');
-      if (!badge) return;
-      if (count > 0) {
-        badge.textContent = count;
-        badge.style.display = 'inline-block';
+      if (isSA) {
+        // Super admin: o'qilmagan xabarlar soni
+        const { count } = await getSupabase()
+          .from('feedback')
+          .select('id', { count: 'exact', head: true })
+          .eq('o_qildi', false);
+        const badge = document.getElementById('sidebar-unread-badge');
+        if (badge) {
+          badge.textContent = count || 0;
+          badge.style.display = count > 0 ? 'inline-block' : 'none';
+        }
       } else {
-        badge.style.display = 'none';
+        // Oddiy foydalanuvchi: o'ziga javob kelgan xabar bormi
+        const user = App._user;
+        if (!user) return;
+        const { count } = await getSupabase()
+          .from('feedback')
+          .select('id', { count: 'exact', head: true })
+          .eq('sender_id', user.id)
+          .not('javob', 'is', null)
+          .eq('javob_korildi', false);
+        const badge = document.getElementById('sidebar-reply-badge');
+        if (badge) {
+          badge.style.display = count > 0 ? 'inline-block' : 'none';
+        }
       }
     } catch(e) { /* ignore */ }
   },
