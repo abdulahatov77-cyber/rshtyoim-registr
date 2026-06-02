@@ -513,6 +513,16 @@ const InfarktYangiPage = {
         showToast('⚠️ Tug\'ilgan sana noto\'g\'ri kiritilgan!', 'error', 5000);
       }
     }
+    // Qabul vaqti — soat ham kiritilishi shart
+    if (this._step === 0 && this._data.qabul_vaqt) {
+      const hasTime = v => v && v.includes('T') && v.split('T')[1] && v.split('T')[1] !== '--:--';
+      if (!hasTime(this._data.qabul_vaqt)) {
+        valid = false;
+        const el = document.getElementById('qabul_vaqt');
+        if (el) { el.classList.add('border-red-500'); el.focus(); }
+        showToast('⚠️ Qabul vaqti: sana bilan birga soatni ham kiriting!', 'error', 5000);
+      }
+    }
     // Qabul vaqti kelajakda bo'lmasligi kerak
     if (this._step === 0 && this._data.qabul_vaqt) {
       const qv = new Date(this._data.qabul_vaqt);
@@ -538,6 +548,19 @@ const InfarktYangiPage = {
       const muolaja = this._data.muolaja_turi || '';
       const isTLT = muolaja.toLowerCase().includes('tlt') || muolaja.toLowerCase().includes('trombolit');
       const isPCI = muolaja.toLowerCase().includes('pci') || muolaja.toLowerCase().includes('angioplast') || muolaja.toLowerCase().includes('stent') || muolaja.toLowerCase().includes('groin') || muolaja.toLowerCase().includes('kag');
+
+      // Soat kiritilganligini tekshirish — faqat sana yetarli emas
+      const hasTime = val => val && val.includes('T') && !val.endsWith('T') && val.split('T')[1] && val.split('T')[1] !== '--:--';
+      for (const [fieldId, label] of [['tlt_vaqt','TLT vaqti'], ['pci_vaqt','PCI/KAG vaqti']]) {
+        const val = this._data[fieldId];
+        if (val && !hasTime(val)) {
+          valid = false;
+          const el = document.getElementById(fieldId);
+          if (el) { el.classList.add('border-red-500'); el.focus(); }
+          showToast(`⚠️ ${label}: sana bilan birga soatni ham kiriting!`, 'error', 5000);
+          break;
+        }
+      }
 
       // TLT vaqti majburiy (TLT muolajasi tanlanganda)
       if (isTLT && !this._data.tlt_vaqt) {

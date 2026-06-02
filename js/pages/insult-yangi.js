@@ -479,6 +479,16 @@ const InsultYangiPage = {
       }
     }
     // Qabul vaqti kelajakda bo'lmasligi kerak
+    // Qabul vaqti — soat ham kiritilishi shart
+    if (this._step === 0 && this._data.qabul_vaqt) {
+      const hasTime = v => v && v.includes('T') && v.split('T')[1] && v.split('T')[1] !== '--:--';
+      if (!hasTime(this._data.qabul_vaqt)) {
+        valid = false;
+        const el = document.getElementById('qabul_vaqt');
+        if (el) { el.classList.add('border-red-500'); el.focus(); }
+        showToast('⚠️ Qabul vaqti: sana bilan birga soatni ham kiriting!', 'error', 5000);
+      }
+    }
     if (this._step === 0 && this._data.qabul_vaqt) {
       const qv = new Date(this._data.qabul_vaqt);
       if (qv > new Date()) {
@@ -505,6 +515,19 @@ const InsultYangiPage = {
       const isTLT = muolajaL.includes('trombolizis') || muolajaL.includes('tlt');
       const isTrombektomiya = muolajaL.includes('trombektomiya') || muolajaL.includes('tromboekstraksiya') || muolajaL.includes('tromboaspiratsiya') || muolajaL.includes('kombinatsiya') || muolajaL.includes('angiografiya') || muolajaL.includes('stentlash') || muolajaL.includes('tlbap');
       const isMskt = this._data.mskt === 'Ha – o\'tkazildi' || muolajaL.includes('mskt');
+
+      // Soat kiritilganligini tekshirish
+      const hasTime = val => val && val.includes('T') && val.split('T')[1] && val.split('T')[1] !== '--:--';
+      for (const [fieldId, label] of [['kt_vaqti','KT/MSKT vaqti'], ['trombolizis_vaqti','Trombolizis vaqti'], ['trombektomiya_vaqti','Trombektomiya vaqti']]) {
+        const val = this._data[fieldId];
+        if (val && !hasTime(val)) {
+          valid = false;
+          const el = document.getElementById(fieldId);
+          if (el) { el.classList.add('border-red-500'); el.focus(); }
+          showToast(`⚠️ ${label}: sana bilan birga soatni ham kiriting!`, 'error', 5000);
+          break;
+        }
+      }
 
       // KT/MSKT vaqti majburiy (MSKT o'tkazilganda)
       if (isMskt && !this._data.kt_vaqti) {
