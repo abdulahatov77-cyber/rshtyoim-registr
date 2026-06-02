@@ -318,14 +318,20 @@ const Calculators = {
     });
     const input = document.getElementById(this._currentInputId);
     if (input) {
+      // readonly bo'lsa ham yozish uchun vaqtincha olib, keyin qaytarish
+      const wasReadonly = input.hasAttribute('readonly');
+      if (wasReadonly) input.removeAttribute('readonly');
       input.value = total;
-      
+      if (wasReadonly) input.setAttribute('readonly', '');
+
+      // _data ni to'g'ridan yangilash (readonly inputda change event ishlamaydi)
+      const id = this._currentInputId;
+      if (typeof InsultYangiPage !== 'undefined' && InsultYangiPage._data) InsultYangiPage._data[id] = String(total);
+      if (typeof InfarktYangiPage !== 'undefined' && InfarktYangiPage._data) InfarktYangiPage._data[id] = String(total);
+
       // Kichik vizual effekt (miltillash)
       input.classList.add('bg-green-100', 'border-green-500', 'text-green-800');
       setTimeout(() => input.classList.remove('bg-green-100', 'border-green-500', 'text-green-800'), 1000);
-      
-      const event = new Event('change', { bubbles: true });
-      input.dispatchEvent(event);
     }
     this.closeModal();
   }
