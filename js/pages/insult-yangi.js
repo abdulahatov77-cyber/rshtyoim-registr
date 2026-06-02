@@ -251,7 +251,18 @@ const InsultYangiPage = {
           ${this.selectOptions(['Ha – o\'tkazildi', 'Yo\'q – boshqa sabab'], d.mskt||'')}</select>`,true)}
 
         <div id="mskt-vaqt-div" style="display:${showMsktVaqt?'block':'none'}">
-          ${this.field('kt_vaqti','KT/MSKT o\'tkazilgan vaqt',`<input id="kt_vaqti" type="datetime-local" class="form-input" value="${d.kt_vaqti||''}"/>`,true,'Door-to-CT mezonini hisoblash uchun')}
+          ${this.field('kt_vaqti','KT/MSKT o\'tkazilgan vaqt',`
+            <div class="flex gap-2">
+              <div class="flex-1">
+                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Sana *</label>
+                <input id="kt_sana" type="date" class="form-input w-full" value="${d.kt_vaqti?d.kt_vaqti.split('T')[0]:''}"/>
+              </div>
+              <div class="flex-1">
+                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Soat * (HH:MM)</label>
+                <input id="kt_soat" type="time" class="form-input w-full" value="${d.kt_vaqti?d.kt_vaqti.split('T')[1]?.slice(0,5):''}"/>
+              </div>
+            </div>`,true,'Door-to-CT mezonini hisoblash uchun')}
+          <input id="kt_vaqti" type="hidden" value="${d.kt_vaqti||''}"/>
         </div>
 
         ${this.field('muolaja_turi','Muolaja turi',`
@@ -269,11 +280,33 @@ const InsultYangiPage = {
         `,true)}
 
         <div id="trombolizis-vaqt-div" style="display:${showTLT?'block':'none'}">
-          ${this.field('trombolizis_vaqti','Trombolizis (TLT) o\'tkazilgan vaqt',`<input id="trombolizis_vaqti" type="datetime-local" class="form-input" value="${d.trombolizis_vaqti||''}"/>`,true,'Door-to-needle mezonini hisoblash uchun')}
+          ${this.field('trombolizis_vaqti','Trombolizis (TLT) o\'tkazilgan vaqt',`
+            <div class="flex gap-2">
+              <div class="flex-1">
+                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Sana *</label>
+                <input id="trombolizis_sana" type="date" class="form-input w-full" value="${d.trombolizis_vaqti?d.trombolizis_vaqti.split('T')[0]:''}"/>
+              </div>
+              <div class="flex-1">
+                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Soat * (HH:MM)</label>
+                <input id="trombolizis_soat" type="time" class="form-input w-full" value="${d.trombolizis_vaqti?d.trombolizis_vaqti.split('T')[1]?.slice(0,5):''}"/>
+              </div>
+            </div>`,true,'Door-to-needle mezonini hisoblash uchun')}
+          <input id="trombolizis_vaqti" type="hidden" value="${d.trombolizis_vaqti||''}"/>
         </div>
 
         <div id="trombektomiya-vaqt-div" style="display:${showTrombektomiya?'block':'none'}">
-          ${this.field('trombektomiya_vaqti', trombektomiyaLabel, `<input id="trombektomiya_vaqti" type="datetime-local" class="form-input" value="${d.trombektomiya_vaqti||''}"/>`,true,'Door-to-groin mezonini hisoblash uchun')}
+          ${this.field('trombektomiya_vaqti', trombektomiyaLabel, `
+            <div class="flex gap-2">
+              <div class="flex-1">
+                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Sana *</label>
+                <input id="trombektomiya_sana" type="date" class="form-input w-full" value="${d.trombektomiya_vaqti?d.trombektomiya_vaqti.split('T')[0]:''}"/>
+              </div>
+              <div class="flex-1">
+                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Soat * (HH:MM)</label>
+                <input id="trombektomiya_soat" type="time" class="form-input w-full" value="${d.trombektomiya_vaqti?d.trombektomiya_vaqti.split('T')[1]?.slice(0,5):''}"/>
+              </div>
+            </div>`,true,'Door-to-groin mezonini hisoblash uchun')}
+          <input id="trombektomiya_vaqti" type="hidden" value="${d.trombektomiya_vaqti||''}"/>
         </div>
 
         <div id="otkazilgan-div" style="display:${showOtkazilgan?'block':'none'}">
@@ -397,11 +430,24 @@ const InsultYangiPage = {
     ['viloyat','muassasa','boshqa_muassasa','kt_no','qabul_vaqt','murojaat_yoli','yuborgan_muassasa',
      'tez_yordam_kelgan_vaqt','birinchi_murojaat_vaqti',
      'fio','simptom_vaqt','gcs_bali','insult_turi','qon_bosimi','aha_bali','nihss_qabul',
-     'mskt','kt_vaqti','trombolizis_vaqti','trombektomiya_vaqti','otkazilgan_muassasa','shifokor_fio']
+     'mskt','otkazilgan_muassasa','shifokor_fio']
     .forEach(id => {
       const el = document.getElementById(id);
       if (el) InsultYangiPage._data[id] = el.value;
     });
+
+    // kt_vaqti, trombolizis_vaqti, trombektomiya_vaqti: sana + soat dan yig'ish
+    for (const [prefix, field] of [['kt','kt_vaqti'],['trombolizis','trombolizis_vaqti'],['trombektomiya','trombektomiya_vaqti']]) {
+      const sana = document.getElementById(`${prefix}_sana`)?.value;
+      const soat = document.getElementById(`${prefix}_soat`)?.value;
+      if (sana && soat) {
+        InsultYangiPage._data[field] = `${sana}T${soat}`;
+      } else if (sana && !soat) {
+        InsultYangiPage._data[field] = sana;
+      } else {
+        InsultYangiPage._data[field] = '';
+      }
+    }
 
     const tugilgan = document.getElementById('tugilgan_sana');
     if (tugilgan) {
@@ -516,25 +562,24 @@ const InsultYangiPage = {
       const isTrombektomiya = muolajaL.includes('trombektomiya') || muolajaL.includes('tromboekstraksiya') || muolajaL.includes('tromboaspiratsiya') || muolajaL.includes('kombinatsiya') || muolajaL.includes('angiografiya') || muolajaL.includes('stentlash') || muolajaL.includes('tlbap');
       const isMskt = this._data.mskt === 'Ha – o\'tkazildi' || muolajaL.includes('mskt');
 
-      // Soat kiritilganligini tekshirish
-      const hasTime = val => val && val.includes('T') && val.split('T')[1] && val.split('T')[1] !== '--:--';
-      for (const [fieldId, label] of [['kt_vaqti','KT/MSKT vaqti'], ['trombolizis_vaqti','Trombolizis vaqti'], ['trombektomiya_vaqti','Trombektomiya vaqti']]) {
-        const val = this._data[fieldId];
-        if (val && !hasTime(val)) {
-          valid = false;
-          const el = document.getElementById(fieldId);
-          if (el) { el.classList.add('border-red-500'); el.focus(); }
-          showToast(`⚠️ ${label}: sana bilan birga soatni ham kiriting!`, 'error', 5000);
-          break;
-        }
-      }
-
       // KT/MSKT vaqti majburiy (MSKT o'tkazilganda)
       if (isMskt && !this._data.kt_vaqti) {
-        valid = false;
-        const el = document.getElementById('kt_vaqti');
-        if (el) { el.classList.add('border-red-500'); el.focus(); }
-        showToast('⚠️ KT/MSKT vaqtini kiriting!', 'error', 5000);
+        const sana = document.getElementById('kt_sana')?.value;
+        const soat = document.getElementById('kt_soat')?.value;
+        if (!sana) {
+          valid = false;
+          document.getElementById('kt_sana')?.classList.add('border-red-500');
+          document.getElementById('kt_sana')?.focus();
+          showToast('⚠️ KT/MSKT sanasini kiriting!', 'error', 5000);
+        } else if (!soat) {
+          valid = false;
+          document.getElementById('kt_soat')?.classList.add('border-red-500');
+          document.getElementById('kt_soat')?.focus();
+          showToast('⚠️ KT/MSKT soatini kiriting!', 'error', 5000);
+        } else {
+          valid = false;
+          showToast('⚠️ KT/MSKT vaqtini kiriting!', 'error', 5000);
+        }
       } else if (this._data.kt_vaqti) {
         const kv = new Date(this._data.kt_vaqti + ':00+05:00');
         if (kv > now) {
@@ -552,42 +597,56 @@ const InsultYangiPage = {
 
       // Trombolizis vaqti majburiy (TLT muolajasi tanlanganda)
       if (isTLT && !this._data.trombolizis_vaqti) {
-        valid = false;
-        const el = document.getElementById('trombolizis_vaqti');
-        if (el) { el.classList.add('border-red-500'); el.focus(); }
-        showToast('⚠️ Trombolizis vaqtini kiriting!', 'error', 5000);
+        const sana = document.getElementById('trombolizis_sana')?.value;
+        const soat = document.getElementById('trombolizis_soat')?.value;
+        if (!sana) {
+          valid = false;
+          document.getElementById('trombolizis_sana')?.classList.add('border-red-500');
+          document.getElementById('trombolizis_sana')?.focus();
+          showToast('⚠️ Trombolizis sanasini kiriting!', 'error', 5000);
+        } else if (!soat) {
+          valid = false;
+          document.getElementById('trombolizis_soat')?.classList.add('border-red-500');
+          document.getElementById('trombolizis_soat')?.focus();
+          showToast('⚠️ Trombolizis soatini kiriting!', 'error', 5000);
+        } else { valid = false; showToast('⚠️ Trombolizis vaqtini kiriting!', 'error', 5000); }
       } else if (this._data.trombolizis_vaqti) {
         const tv = new Date(this._data.trombolizis_vaqti + ':00+05:00');
         if (tv > now) {
           valid = false;
-          const el = document.getElementById('trombolizis_vaqti');
-          if (el) { el.classList.add('border-red-500'); el.focus(); }
+          document.getElementById('trombolizis_sana')?.classList.add('border-red-500');
           showToast('⚠️ Trombolizis vaqti kelajakda bo\'lishi mumkin emas!', 'error', 5000);
         } else if (qv && tv < qv) {
           valid = false;
-          const el = document.getElementById('trombolizis_vaqti');
-          if (el) { el.classList.add('border-red-500'); el.focus(); }
+          document.getElementById('trombolizis_sana')?.classList.add('border-red-500');
           showToast('⚠️ Trombolizis vaqti bemor qabul vaqtidan oldin bo\'lishi mumkin emas!', 'error', 5000);
         }
       }
 
       // Trombektomiya vaqti majburiy (trombektomiya muolajasi tanlanganda)
       if (isTrombektomiya && !this._data.trombektomiya_vaqti) {
-        valid = false;
-        const el = document.getElementById('trombektomiya_vaqti');
-        if (el) { el.classList.add('border-red-500'); el.focus(); }
-        showToast('⚠️ Trombektomiya vaqtini kiriting!', 'error', 5000);
+        const sana = document.getElementById('trombektomiya_sana')?.value;
+        const soat = document.getElementById('trombektomiya_soat')?.value;
+        if (!sana) {
+          valid = false;
+          document.getElementById('trombektomiya_sana')?.classList.add('border-red-500');
+          document.getElementById('trombektomiya_sana')?.focus();
+          showToast('⚠️ Trombektomiya sanasini kiriting!', 'error', 5000);
+        } else if (!soat) {
+          valid = false;
+          document.getElementById('trombektomiya_soat')?.classList.add('border-red-500');
+          document.getElementById('trombektomiya_soat')?.focus();
+          showToast('⚠️ Trombektomiya soatini kiriting!', 'error', 5000);
+        } else { valid = false; showToast('⚠️ Trombektomiya vaqtini kiriting!', 'error', 5000); }
       } else if (this._data.trombektomiya_vaqti) {
         const trv = new Date(this._data.trombektomiya_vaqti + ':00+05:00');
         if (trv > now) {
           valid = false;
-          const el = document.getElementById('trombektomiya_vaqti');
-          if (el) { el.classList.add('border-red-500'); el.focus(); }
+          document.getElementById('trombektomiya_sana')?.classList.add('border-red-500');
           showToast('⚠️ Trombektomiya vaqti kelajakda bo\'lishi mumkin emas!', 'error', 5000);
         } else if (qv && trv < qv) {
           valid = false;
-          const el = document.getElementById('trombektomiya_vaqti');
-          if (el) { el.classList.add('border-red-500'); el.focus(); }
+          document.getElementById('trombektomiya_sana')?.classList.add('border-red-500');
           showToast('⚠️ Trombektomiya vaqti bemor qabul vaqtidan oldin bo\'lishi mumkin emas!', 'error', 5000);
         }
       }

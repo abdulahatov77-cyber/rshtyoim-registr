@@ -347,11 +347,33 @@ const InfarktYangiPage = {
           ${this.selectOptions(APP_CONFIG.INFARKT_MUOLAJALARI, muolaja)}</select>`,true)}
 
         <div id="tlt-vaqt-div" style="display:${showTLT?'block':'none'}">
-          ${this.field('tlt_vaqt','TLT (trombolitik terapiya) o\'tkazilgan vaqt',`<input id="tlt_vaqt" type="datetime-local" class="form-input" value="${d.tlt_vaqt||''}"/>`,true,'Door-to-needle mezonini hisoblash uchun')}
+          ${this.field('tlt_vaqt','TLT (trombolitik terapiya) o\'tkazilgan vaqt',`
+            <div class="flex gap-2">
+              <div class="flex-1">
+                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Sana *</label>
+                <input id="tlt_sana" type="date" class="form-input w-full" value="${d.tlt_vaqt?d.tlt_vaqt.split('T')[0]:''}"/>
+              </div>
+              <div class="flex-1">
+                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Soat * (HH:MM)</label>
+                <input id="tlt_soat" type="time" class="form-input w-full" value="${d.tlt_vaqt?d.tlt_vaqt.split('T')[1]?.slice(0,5):''}"/>
+              </div>
+            </div>`,true,'Door-to-needle mezonini hisoblash uchun')}
+          <input id="tlt_vaqt" type="hidden" value="${d.tlt_vaqt||''}"/>
         </div>
 
         <div id="pci-vaqt-div" style="display:${showPCI?'block':'none'}">
-          ${this.field('pci_vaqt', pciLabel, `<input id="pci_vaqt" type="datetime-local" class="form-input" value="${d.pci_vaqt||''}"/>`,true,'Door-to-groin mezonini hisoblash uchun')}
+          ${this.field('pci_vaqt', pciLabel, `
+            <div class="flex gap-2">
+              <div class="flex-1">
+                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Sana *</label>
+                <input id="pci_sana" type="date" class="form-input w-full" value="${d.pci_vaqt?d.pci_vaqt.split('T')[0]:''}"/>
+              </div>
+              <div class="flex-1">
+                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Soat * (HH:MM)</label>
+                <input id="pci_soat" type="time" class="form-input w-full" value="${d.pci_vaqt?d.pci_vaqt.split('T')[1]?.slice(0,5):''}"/>
+              </div>
+            </div>`,true,'Door-to-groin mezonini hisoblash uchun')}
+          <input id="pci_vaqt" type="hidden" value="${d.pci_vaqt||''}"/>
         </div>
 
         <div id="angio-div" style="display:${showAngio?'block':'none'}">
@@ -435,11 +457,24 @@ const InfarktYangiPage = {
      'tez_yordam_kelgan_vaqt','birinchi_murojaat_vaqti',
      'fio','aha_bali','simptom_vaqt','birlamchi_yoki_takroriy',
      'infarkt_turi','killip','qon_bosimi','puls','ekg_vaqti','troponin','kkfmb',
-     'muolaja_turi','angio_natija','tlt_vaqt','pci_vaqt','otkazilgan_muassasa','shifokor_fio']
+     'muolaja_turi','angio_natija','otkazilgan_muassasa','shifokor_fio']
     .forEach(id => {
       const el = document.getElementById(id);
       if (el) InfarktYangiPage._data[id] = el.value;
     });
+
+    // tlt_vaqt va pci_vaqt: sana + soat dan yig'ish
+    for (const [prefix, field] of [['tlt','tlt_vaqt'],['pci','pci_vaqt']]) {
+      const sana = document.getElementById(`${prefix}_sana`)?.value;
+      const soat = document.getElementById(`${prefix}_soat`)?.value;
+      if (sana && soat) {
+        InfarktYangiPage._data[field] = `${sana}T${soat}`;
+      } else if (sana && !soat) {
+        InfarktYangiPage._data[field] = sana; // soatsiz — validator xato beradi
+      } else {
+        InfarktYangiPage._data[field] = '';
+      }
+    }
 
     const tugilgan = document.getElementById('tugilgan_sana');
     if (tugilgan) {
@@ -549,25 +584,24 @@ const InfarktYangiPage = {
       const isTLT = muolaja.toLowerCase().includes('tlt') || muolaja.toLowerCase().includes('trombolit');
       const isPCI = muolaja.toLowerCase().includes('pci') || muolaja.toLowerCase().includes('angioplast') || muolaja.toLowerCase().includes('stent') || muolaja.toLowerCase().includes('groin') || muolaja.toLowerCase().includes('kag');
 
-      // Soat kiritilganligini tekshirish — faqat sana yetarli emas
-      const hasTime = val => val && val.includes('T') && !val.endsWith('T') && val.split('T')[1] && val.split('T')[1] !== '--:--';
-      for (const [fieldId, label] of [['tlt_vaqt','TLT vaqti'], ['pci_vaqt','PCI/KAG vaqti']]) {
-        const val = this._data[fieldId];
-        if (val && !hasTime(val)) {
-          valid = false;
-          const el = document.getElementById(fieldId);
-          if (el) { el.classList.add('border-red-500'); el.focus(); }
-          showToast(`⚠️ ${label}: sana bilan birga soatni ham kiriting!`, 'error', 5000);
-          break;
-        }
-      }
-
       // TLT vaqti majburiy (TLT muolajasi tanlanganda)
       if (isTLT && !this._data.tlt_vaqt) {
-        valid = false;
-        const el = document.getElementById('tlt_vaqt');
-        if (el) { el.classList.add('border-red-500'); el.focus(); }
-        showToast('⚠️ TLT vaqtini kiriting!', 'error', 5000);
+        const sana = document.getElementById('tlt_sana')?.value;
+        const soat = document.getElementById('tlt_soat')?.value;
+        if (!sana) {
+          valid = false;
+          document.getElementById('tlt_sana')?.classList.add('border-red-500');
+          document.getElementById('tlt_sana')?.focus();
+          showToast('⚠️ TLT sanasini kiriting!', 'error', 5000);
+        } else if (!soat) {
+          valid = false;
+          document.getElementById('tlt_soat')?.classList.add('border-red-500');
+          document.getElementById('tlt_soat')?.focus();
+          showToast('⚠️ TLT soatini kiriting!', 'error', 5000);
+        } else {
+          valid = false;
+          showToast('⚠️ TLT vaqtini kiriting!', 'error', 5000);
+        }
       } else if (this._data.tlt_vaqt) {
         const tv = new Date(this._data.tlt_vaqt + ':00+05:00');
         if (tv > now) {
@@ -585,21 +619,31 @@ const InfarktYangiPage = {
 
       // PCI vaqti majburiy (PCI/KAG muolajasi tanlanganda)
       if (isPCI && !this._data.pci_vaqt) {
-        valid = false;
-        const el = document.getElementById('pci_vaqt');
-        if (el) { el.classList.add('border-red-500'); el.focus(); }
-        showToast('⚠️ PCI/Groin vaqtini kiriting!', 'error', 5000);
+        const sana = document.getElementById('pci_sana')?.value;
+        const soat = document.getElementById('pci_soat')?.value;
+        if (!sana) {
+          valid = false;
+          document.getElementById('pci_sana')?.classList.add('border-red-500');
+          document.getElementById('pci_sana')?.focus();
+          showToast('⚠️ PCI/KAG sanasini kiriting!', 'error', 5000);
+        } else if (!soat) {
+          valid = false;
+          document.getElementById('pci_soat')?.classList.add('border-red-500');
+          document.getElementById('pci_soat')?.focus();
+          showToast('⚠️ PCI/KAG soatini kiriting!', 'error', 5000);
+        } else {
+          valid = false;
+          showToast('⚠️ PCI/Groin vaqtini kiriting!', 'error', 5000);
+        }
       } else if (this._data.pci_vaqt) {
         const pv = new Date(this._data.pci_vaqt + ':00+05:00');
         if (pv > now) {
           valid = false;
-          const el = document.getElementById('pci_vaqt');
-          if (el) { el.classList.add('border-red-500'); el.focus(); }
+          document.getElementById('pci_sana')?.classList.add('border-red-500');
           showToast('⚠️ PCI vaqti kelajakda bo\'lishi mumkin emas!', 'error', 5000);
         } else if (qv && pv < qv) {
           valid = false;
-          const el = document.getElementById('pci_vaqt');
-          if (el) { el.classList.add('border-red-500'); el.focus(); }
+          document.getElementById('pci_sana')?.classList.add('border-red-500');
           showToast('⚠️ PCI vaqti bemor qabul vaqtidan oldin bo\'lishi mumkin emas!', 'error', 5000);
         }
       }
