@@ -17,46 +17,64 @@ const HarakatPage = {
 
   async _load() {
     try {
-      // transfer_log da 2+ yozuvi bor bemorlar (kt_no bo'yicha group)
-      const { data, error } = await getSupabase()
-        .from('transfer_log')
-        .select('*')
-        .order('sana', { ascending: true });
-      if (error) throw error;
+      // infarkt_qabul va insult_qabul dan otkazilgan_muassasa bo'sh bo'lmaganlar
+      const [infRes, insRes, logRes] = await Promise.all([
+        getSupabase()
+          .from('infarkt_qabul')
+          .select('kt_no,fio,muassasa,viloyat,otkazilgan_muassasa,qabul_vaqt,muolaja_turi')
+          .not('otkazilgan_muassasa', 'is', null)
+          .neq('otkazilgan_muassasa', '')
+          .order('qabul_vaqt', { ascending: false })
+          .range(0, 4999),
+        getSupabase()
+          .from('insult_qabul')
+          .select('kt_no,fio,muassasa,viloyat,otkazilgan_muassasa,qabul_vaqt,muolaja_turi')
+          .not('otkazilgan_muassasa', 'is', null)
+          .neq('otkazilgan_muassasa', '')
+          .order('qabul_vaqt', { ascending: false })
+          .range(0, 4999),
+        getSupabase()
+          .from('transfer_log')
+          .select('*')
+          .order('sana', { ascending: true })
+      ]);
 
-      // kt_no bo'yicha guruhlash
-      const grouped = {};
-      (data || []).forEach(row => {
-        if (!grouped[row.kt_no]) grouped[row.kt_no] = [];
-        grouped[row.kt_no].push(row);
+      // transfer_log ni kt_no bo'yicha map
+      const logMap = {};
+      (logRes.data || []).forEach(row => {
+        if (!logMap[row.kt_no]) logMap[row.kt_no] = [];
+        logMap[row.kt_no].push(row);
       });
 
-      // Faqat 2+ yozuvi borlar (ya'ni kamida 1 ta o'tkazish bo'lgan)
-      HarakatPage._data = Object.entries(grouped)
-        .filter(([, rows]) => rows.length >= 1)
-        .map(([kt_no, rows]) => ({ kt_no, rows, bemor_turi: rows[0].bemor_turi }))
-        .sort((a, b) => {
-          const aLast = a.rows[a.rows.length - 1].sana || '';
-          const bLast = b.rows[b.rows.length - 1].sana || '';
-          return bLast.localeCompare(aLast);
-        });
+      // infarkt + insult bemorlarini birlashtirish
+      const combined = [
+        ...(infRes.data || []).map(p => ({ ...p, _type: 'infarkt' })),
+        ...(insRes.data || []).map(p => ({ ...p, _type: 'insult' }))
+      ];
 
-      // Bemor ma'lumotlarini ham yuklash (FIO uchun)
-      const ktNos = HarakatPage._data.map(d => d.kt_no);
-      if (ktNos.length) {
-        const [infRes, insRes] = await Promise.all([
-          getSupabase().from('infarkt_qabul').select('kt_no,fio,muassasa,viloyat').in('kt_no', ktNos),
-          getSupabase().from('insult_qabul').select('kt_no,fio,muassasa,viloyat').in('kt_no', ktNos)
-        ]);
-        const patientMap = {};
-        [...(infRes.data||[])].forEach(p => { patientMap[p.kt_no] = { ...p, _type: 'infarkt' }; });
-        [...(insRes.data||[])].forEach(p => { patientMap[p.kt_no] = { ...p, _type: 'insult' }; });
-        HarakatPage._data = HarakatPage._data.map(d => ({
-          ...d,
-          patient: patientMap[d.kt_no] || null,
-          bemor_turi: patientMap[d.kt_no]?._type || d.bemor_turi
-        }));
-      }
+      HarakatPage._data = combined.map(p => {
+        const logs = logMap[p.kt_no] || [];
+        // Zanjir: dastlabki muassasa → otkazilgan_muassasa (+ transfer_log da qo'shimcha)
+        const extraMuassasalar = logs.map(r => r.muassasa_ga);
+        // oxirgi nuqta: transfer_log da borsa — oxirgisi, bo'lmasa otkazilgan_muassasa
+        const lastMuassasa = extraMuassasalar.length
+          ? extraMuassasalar[extraMuassasalar.length - 1]
+          : p.otkazilgan_muassasa;
+        const lastSana = logs.length
+          ? logs[logs.length - 1].sana
+          : p.qabul_vaqt?.split('T')[0];
+
+        return {
+          kt_no: p.kt_no,
+          bemor_turi: p._type,
+          patient: p,
+          // Zanjir: dastlabki + o'tkazilgan + qo'shimcha transfer log
+          chain: [p.muassasa, p.otkazilgan_muassasa, ...extraMuassasalar.slice(0, -1)],
+          lastMuassasa,
+          lastSana,
+          stopsCount: 1 + extraMuassasalar.length
+        };
+      }).sort((a, b) => (b.lastSana || '').localeCompare(a.lastSana || ''));
 
       HarakatPage._render();
     } catch(e) {
@@ -75,7 +93,7 @@ const HarakatPage = {
       list = list.filter(d =>
         d.kt_no.toLowerCase().includes(q) ||
         (d.patient?.fio||'').toLowerCase().includes(q) ||
-        d.rows.some(r => (r.muassasa_ga||'').toLowerCase().includes(q))
+        d.chain.some(m => (m||'').toLowerCase().includes(q))
       );
     }
     return list;
@@ -97,17 +115,10 @@ const HarakatPage = {
       : list.map(d => {
           const p = d.patient;
           const isInf = d.bemor_turi === 'infarkt';
-          const rows = d.rows;
-          const firstMuassasa = p?.muassasa || rows[0]?.muassasa_dan || '—';
-          const lastMuassasa = rows[rows.length - 1]?.muassasa_ga || '—';
-          const lastSana = rows[rows.length - 1]?.sana;
-          const stopsCount = rows.length;
-
-          // Zanjir: 1-muassasa → ... → oxirgi
-          const chain = [firstMuassasa, ...rows.map(r => r.muassasa_ga)];
-          const chainHtml = chain.map((m, i) => `
-            <span style="font-size:11px;color:#334155;font-weight:${i===chain.length-1?'700':'500'}">${m}</span>
-            ${i < chain.length-1 ? '<span style="color:#94a3b8;margin:0 4px">→</span>' : ''}
+          const fullChain = [...d.chain, d.lastMuassasa];
+          const chainHtml = fullChain.map((m, i) => `
+            <span style="font-size:11px;color:#334155;font-weight:${i===fullChain.length-1?'700':'500'}">${esc(m||'—')}</span>
+            ${i < fullChain.length-1 ? '<span style="color:#94a3b8;margin:0 4px">→</span>' : ''}
           `).join('');
 
           return `
@@ -117,7 +128,7 @@ const HarakatPage = {
               onmouseout="this.style.boxShadow='none'">
               <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
                 <div style="flex:1;min-width:0">
-                  <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+                  <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap">
                     <span style="font-size:11px;font-weight:800;padding:2px 8px;border-radius:20px;
                       background:${isInf?'rgba(239,68,68,0.1)':'rgba(59,130,246,0.1)'};
                       color:${isInf?'#dc2626':'#2563eb'}">
@@ -125,7 +136,7 @@ const HarakatPage = {
                     </span>
                     <span style="font-size:12px;font-weight:700;color:#64748b">${d.kt_no}</span>
                     <span style="font-size:11px;background:#f1f5f9;color:#475569;padding:2px 8px;border-radius:20px;font-weight:700">
-                      ${stopsCount + 1} muassasa
+                      ${d.stopsCount + 1} muassasa
                     </span>
                   </div>
                   <div style="font-size:14px;font-weight:700;color:#1e293b;margin-bottom:8px">${esc(p?.fio||'—')}</div>
@@ -135,7 +146,7 @@ const HarakatPage = {
                 </div>
                 <div style="text-align:right;flex-shrink:0">
                   <div style="font-size:11px;color:#94a3b8;margin-bottom:4px">So'nggi harakat</div>
-                  <div style="font-size:13px;font-weight:700;color:#334155">${fmtDate(lastSana)}</div>
+                  <div style="font-size:13px;font-weight:700;color:#334155">${fmtDate(d.lastSana)}</div>
                   <div style="margin-top:8px;font-size:11px;color:#2563eb;font-weight:700">Kartani ochish →</div>
                 </div>
               </div>
