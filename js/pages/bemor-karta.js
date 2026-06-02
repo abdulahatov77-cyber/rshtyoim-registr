@@ -241,7 +241,7 @@ const BemorKartaPage = {
 
       <!-- Tabs Navigation -->
       <div class="flex items-center gap-2 mb-6 overflow-x-auto pb-2 border-b border-gray-200">
-        ${['Umumiy', 'Davolash', 'Holat', 'Multimedia', 'Navbatchi', 'Chiqarish', 'Kuzatuv'].map((t, i) => `
+        ${['Umumiy', 'Davolash', 'Holat', 'Multimedia', 'Navbatchi', 'Chiqarish', 'Kuzatuv', '🚑 Harakat'].map((t, i) => `
           <button onclick="BemorKartaPage.switchTab(${i})" id="tab-btn-${i}" class="px-5 py-2.5 rounded-full text-sm font-semibold transition-all whitespace-nowrap ${BemorKartaPage._activeTab === i ? 'bg-blue-600 text-white shadow-md' : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'}">
             ${t}
           </button>
@@ -273,7 +273,7 @@ const BemorKartaPage = {
 
   switchTab(idx) {
     // Update buttons
-    for (let i=0; i<7; i++) {
+    for (let i=0; i<8; i++) {
       const btn = document.getElementById(`tab-btn-${i}`);
       if (btn) {
         if (i === idx) {
@@ -305,7 +305,8 @@ const BemorKartaPage = {
     else if (idx===4) BemorKartaPage.renderShift(cont, p, type);
     else if (idx===5) BemorKartaPage.renderChiqarish(cont, p, type);
     else if (idx===6) BemorKartaPage.renderKuzatuv(cont, p, type);
-    
+    else if (idx===7) BemorKartaPage.renderHarakat(cont, p, type);
+
     initIcons();
   },
 
@@ -1620,6 +1621,191 @@ const BemorKartaPage = {
     } catch(err) {
       showToast(err.message, 'error');
       setLoading(btn, false);
+    }
+  },
+
+  // ==================== HARAKAT TARIXI ====================
+  async renderHarakat(el, p, type) {
+    el.innerHTML = `<div class="flex justify-center py-12"><div class="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div></div>`;
+    try {
+      const logs = await TransferLog.getByKtNo(p.kt_no);
+      BemorKartaPage._transferLogs = logs;
+      BemorKartaPage._buildHarakatUI(el, p, type, logs);
+    } catch(e) {
+      el.innerHTML = `<div class="text-red-500 p-6">Xato: ${e.message}</div>`;
+    }
+  },
+
+  _buildHarakatUI(el, p, type, logs) {
+    const fmtDate = dt => dt ? new Date(dt).toLocaleDateString('uz-UZ', { day:'2-digit', month:'2-digit', year:'numeric' }) : '—';
+    const profile = BemorKartaPage._profile;
+    const canEdit = profile?.role === 'admin' || profile?.role === 'super_admin';
+
+    // Birinchi nuqta — qabul qilingan muassasa
+    const firstEntry = {
+      id: '__first__',
+      muassasa_dan: '—',
+      muassasa_ga: p.muassasa || '—',
+      viloyat_ga: p.viloyat || '',
+      sana: p.qabul_vaqt ? p.qabul_vaqt.split('T')[0] : null,
+      sabab: 'Dastlabki qabul',
+      _first: true
+    };
+    const allLogs = [firstEntry, ...logs];
+
+    const timelineHtml = allLogs.map((log, idx) => {
+      const isFirst = log._first;
+      const isLast = idx === allLogs.length - 1;
+      return `
+        <div style="display:flex;gap:16px;position:relative">
+          <!-- Chiziq -->
+          <div style="display:flex;flex-direction:column;align-items:center;width:36px;flex-shrink:0">
+            <div style="width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;
+              background:${isFirst ? '#dbeafe' : '#f0fdf4'};border:2px solid ${isFirst ? '#3b82f6' : '#16a34a'}">
+              ${isFirst ? '🏥' : '🚑'}
+            </div>
+            ${!isLast ? `<div style="width:2px;flex:1;min-height:24px;background:#e2e8f0;margin:4px 0"></div>` : ''}
+          </div>
+          <!-- Karta -->
+          <div style="flex:1;background:white;border:1px solid #e2e8f0;border-radius:14px;padding:14px 16px;margin-bottom:${isLast?'0':'8px'}">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+              <div>
+                <div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px">
+                  ${isFirst ? 'Dastlabki qabul' : `${idx}-o'tkazish`}
+                  ${log.sabab && !isFirst ? `· <span style="color:#059669">${esc(log.sabab)}</span>` : ''}
+                </div>
+                <div style="font-size:15px;font-weight:700;color:#1e293b">${esc(log.muassasa_ga)}</div>
+                ${log.viloyat_ga ? `<div style="font-size:12px;color:#64748b;margin-top:2px">${esc(log.viloyat_ga)}</div>` : ''}
+              </div>
+              <div style="text-align:right;flex-shrink:0">
+                <div style="font-size:12px;font-weight:600;color:#334155">${fmtDate(log.sana)}</div>
+                ${!isFirst && canEdit ? `<button onclick="BemorKartaPage._deleteTransfer('${log.id}')" style="margin-top:6px;font-size:11px;color:#ef4444;background:none;border:none;cursor:pointer;padding:0">O'chirish</button>` : ''}
+              </div>
+            </div>
+            ${log.izoh ? `<div style="margin-top:8px;font-size:12px;color:#475569;background:#f8fafc;border-radius:8px;padding:6px 10px">${esc(log.izoh)}</div>` : ''}
+          </div>
+        </div>`;
+    }).join('');
+
+    // Yangi o'tkazish formasi
+    const viloyatOpts = Object.keys(APP_CONFIG.MUASSASALAR).map(v =>
+      `<option value="${v}">${v}</option>`).join('');
+
+    el.innerHTML = `
+      <div class="space-y-2">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+          <div>
+            <h3 style="font-size:16px;font-weight:800;color:#1e293b;margin:0">Bemor harakati tarixi</h3>
+            <p style="font-size:12px;color:#64748b;margin:4px 0 0">${allLogs.length} ta nuqta</p>
+          </div>
+          ${canEdit ? `<button onclick="BemorKartaPage._showAddTransferForm()" style="background:#2563eb;color:white;border:none;border-radius:10px;padding:8px 16px;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px">
+            + O'tkazish qo'shish
+          </button>` : ''}
+        </div>
+
+        <!-- O'tkazish formasi (yashirin) -->
+        <div id="transfer-form" style="display:none;background:#f0f9ff;border:1px solid #bae6fd;border-radius:14px;padding:16px;margin-bottom:16px">
+          <p style="font-size:13px;font-weight:700;color:#0369a1;margin:0 0 12px">Yangi o'tkazish yozuvi</p>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div>
+              <label style="font-size:11px;font-weight:700;color:#64748b;display:block;margin-bottom:4px">VILOYAT</label>
+              <select id="tr-viloyat" onchange="BemorKartaPage._onTrViloyat(this.value)" class="form-select" style="font-size:13px;padding:7px 10px">
+                <option value="">Tanlang...</option>
+                ${viloyatOpts}
+              </select>
+            </div>
+            <div>
+              <label style="font-size:11px;font-weight:700;color:#64748b;display:block;margin-bottom:4px">MUASSASA</label>
+              <select id="tr-muassasa" class="form-select" style="font-size:13px;padding:7px 10px">
+                <option value="">Avval viloyat tanlang</option>
+              </select>
+            </div>
+            <div>
+              <label style="font-size:11px;font-weight:700;color:#64748b;display:block;margin-bottom:4px">SANA</label>
+              <input id="tr-sana" type="date" class="form-input" style="font-size:13px;padding:7px 10px" value="${new Date().toISOString().split('T')[0]}">
+            </div>
+            <div>
+              <label style="font-size:11px;font-weight:700;color:#64748b;display:block;margin-bottom:4px">SABAB</label>
+              <select id="tr-sabab" class="form-select" style="font-size:13px;padding:7px 10px">
+                <option>Angiografiya uchun</option>
+                <option>Endovaskulyar muolaja</option>
+                <option>Reabilitatsiya</option>
+                <option>Ixtisoslashgan davolash</option>
+                <option>Yaxshilanmadi</option>
+                <option>Boshqa sabab</option>
+              </select>
+            </div>
+            <div style="grid-column:1/-1">
+              <label style="font-size:11px;font-weight:700;color:#64748b;display:block;margin-bottom:4px">IZOH (ixtiyoriy)</label>
+              <input id="tr-izoh" type="text" class="form-input" placeholder="Qo'shimcha ma'lumot..." style="font-size:13px;padding:7px 10px">
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:12px">
+            <button onclick="BemorKartaPage._saveTransfer()" style="background:#2563eb;color:white;border:none;border-radius:8px;padding:8px 20px;font-size:13px;font-weight:700;cursor:pointer">Saqlash</button>
+            <button onclick="document.getElementById('transfer-form').style.display='none'" style="background:#f1f5f9;color:#64748b;border:none;border-radius:8px;padding:8px 16px;font-size:13px;cursor:pointer">Bekor</button>
+          </div>
+        </div>
+
+        <!-- Timeline -->
+        <div>${timelineHtml}</div>
+      </div>`;
+    initIcons();
+  },
+
+  _showAddTransferForm() {
+    const form = document.getElementById('transfer-form');
+    if (form) { form.style.display = form.style.display === 'none' ? '' : 'none'; }
+  },
+
+  _onTrViloyat(v) {
+    const sel = document.getElementById('tr-muassasa');
+    if (!sel) return;
+    const muassasalar = APP_CONFIG.MUASSASALAR[v] || [];
+    sel.innerHTML = muassasalar.map(m => `<option value="${m}">${m}</option>`).join('');
+  },
+
+  async _saveTransfer() {
+    const viloyat = document.getElementById('tr-viloyat')?.value;
+    const muassasa = document.getElementById('tr-muassasa')?.value;
+    const sana = document.getElementById('tr-sana')?.value;
+    const sabab = document.getElementById('tr-sabab')?.value;
+    const izoh = document.getElementById('tr-izoh')?.value?.trim();
+    if (!muassasa || !sana) { showToast('Muassasa va sana majburiy', 'warning'); return; }
+
+    const p = BemorKartaPage._patient;
+    const type = BemorKartaPage._type;
+    const logs = BemorKartaPage._transferLogs || [];
+    const prev = logs.length > 0 ? logs[logs.length-1].muassasa_ga : p.muassasa;
+
+    try {
+      await TransferLog.add({
+        kt_no: p.kt_no,
+        bemor_turi: type,
+        muassasa_dan: prev || '',
+        viloyat_dan: p.viloyat || '',
+        muassasa_ga: muassasa,
+        viloyat_ga: viloyat,
+        sana,
+        sabab,
+        izoh: izoh || null
+      });
+      showToast('O\'tkazish yozuvi saqlandi', 'success');
+      BemorKartaPage.renderHarakat(document.getElementById('tab-content'), p, type);
+    } catch(e) {
+      showToast('Xato: ' + e.message, 'error');
+    }
+  },
+
+  async _deleteTransfer(id) {
+    if (!confirm('Bu yozuvni o\'chirmoqchimisiz?')) return;
+    try {
+      await TransferLog.remove(id);
+      showToast('O\'chirildi', 'success');
+      const p = BemorKartaPage._patient;
+      const type = BemorKartaPage._type;
+      BemorKartaPage.renderHarakat(document.getElementById('tab-content'), p, type);
+    } catch(e) {
+      showToast('Xato: ' + e.message, 'error');
     }
   }
 };

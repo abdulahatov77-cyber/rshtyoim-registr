@@ -800,6 +800,29 @@ const DB = {
   }
 };
 
+// ==================== TRANSFER LOG ====================
+const TransferLog = {
+  async getByKtNo(kt_no) {
+    const { data, error } = await getSupabase()
+      .from('transfer_log')
+      .select('*')
+      .eq('kt_no', kt_no)
+      .order('sana', { ascending: true });
+    if (error) throw error;
+    return data || [];
+  },
+
+  async add(record) {
+    const { error } = await getSupabase().from('transfer_log').insert(record);
+    if (error) throw error;
+  },
+
+  async remove(id) {
+    const { error } = await getSupabase().from('transfer_log').delete().eq('id', id);
+    if (error) throw error;
+  }
+};
+
 // ==================== TELEGRAM ====================
 const Telegram = {
 
