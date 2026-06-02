@@ -203,11 +203,69 @@ const Utils = {
   }
 };
 
+// ==================== SOUND ====================
+const Sound = {
+  _ctx: null,
+
+  _getCtx() {
+    if (!this._ctx) this._ctx = new (window.AudioContext || window.webkitAudioContext)();
+    return this._ctx;
+  },
+
+  _play(notes) {
+    try {
+      const ctx = this._getCtx();
+      let t = ctx.currentTime;
+      notes.forEach(([freq, dur, vol = 0.3]) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, t);
+        gain.gain.setValueAtTime(0, t);
+        gain.gain.linearRampToValueAtTime(vol, t + 0.01);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + dur);
+        osc.start(t);
+        osc.stop(t + dur);
+        t += dur * 0.85;
+      });
+    } catch(e) { /* AudioContext not supported */ }
+  },
+
+  // Muvaffaqiyat: bemor saqlandi, login, xabar yuborildi
+  success() {
+    this._play([[523, 0.12], [659, 0.12], [784, 0.2, 0.25]]);
+  },
+
+  // Xato: saqlash xatosi, server xatosi
+  error() {
+    this._play([[440, 0.15, 0.3], [330, 0.25, 0.3]]);
+  },
+
+  // Ogohlantirish: majburiy maydon, validation
+  warning() {
+    this._play([[587, 0.1, 0.2], [587, 0.15, 0.2]]);
+  },
+
+  // Yangi xabar / bildirishnoma
+  notify() {
+    this._play([[880, 0.08, 0.2], [1047, 0.15, 0.2]]);
+  }
+};
+
 // ==================== TOAST ====================
 function showToast(message, type = 'info', duration = 4000) {
   const icons = { success: '✅', error: '❌', info: 'ℹ️', warning: '⚠️' };
   const container = document.getElementById('toast-container');
   if (!container) return;
+
+  // Ovoz
+  try {
+    if (type === 'success') Sound.success();
+    else if (type === 'error') Sound.error();
+    else if (type === 'warning') Sound.warning();
+  } catch(e) {}
 
   const toast = document.createElement('div');
   toast.className = `toast toast-${type}`;
