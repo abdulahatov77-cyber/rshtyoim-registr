@@ -88,6 +88,7 @@ const Components = {
       { id: 'insult-reyestri', label: 'Insult reyestri', icon: 'brain' },
 
       { id: 'hisobot', label: 'Hisobotlar', icon: 'file-text', section: 'Tahlil va Hisobot' },
+      { id: 'harakat', label: 'Bemor harakati', icon: 'route' },
 
       { id: 'admin', label: 'Foydalanuvchilar', icon: 'user-cog', section: 'Tizim', superOnly: true },
       { id: 'settings', label: 'Sozlamalar', icon: 'settings' }

@@ -16,6 +16,7 @@ const Router = {
     'hisobot':          () => HisobotPage.render(),
     'admin':            () => AdminPage.render(),
     'settings':         () => SettingsPage.render(),
+    'harakat':          () => HarakatPage.render(),
   },
 
   back() {
