@@ -64,15 +64,23 @@ const HarakatPage = {
           ? logs[logs.length - 1].sana
           : p.qabul_vaqt?.split('T')[0];
 
+        // To'liq zanjir: dastlabki muassasa + transfer_log + oxirgi muassasa
+        // transfer_log bo'lmasa: [muassasa → otkazilgan_muassasa]
+        // transfer_log borsa:    [muassasa → log[0].muassasa_ga → ... → log[n].muassasa_ga]
+        let fullChain;
+        if (extraMuassasalar.length) {
+          fullChain = [p.muassasa, ...extraMuassasalar];
+        } else {
+          fullChain = [p.muassasa, p.otkazilgan_muassasa];
+        }
+
         return {
           kt_no: p.kt_no,
           bemor_turi: p._type,
           patient: p,
-          // Zanjir: dastlabki + o'tkazilgan + qo'shimcha transfer log
-          chain: [p.muassasa, p.otkazilgan_muassasa, ...extraMuassasalar.slice(0, -1)],
-          lastMuassasa,
+          fullChain,
           lastSana,
-          stopsCount: 1 + extraMuassasalar.length
+          stopsCount: fullChain.length
         };
       }).sort((a, b) => (b.lastSana || '').localeCompare(a.lastSana || ''));
 
@@ -93,7 +101,7 @@ const HarakatPage = {
       list = list.filter(d =>
         d.kt_no.toLowerCase().includes(q) ||
         (d.patient?.fio||'').toLowerCase().includes(q) ||
-        d.chain.some(m => (m||'').toLowerCase().includes(q))
+        d.fullChain.some(m => (m||'').toLowerCase().includes(q))
       );
     }
     return list;
@@ -115,10 +123,9 @@ const HarakatPage = {
       : list.map(d => {
           const p = d.patient;
           const isInf = d.bemor_turi === 'infarkt';
-          const fullChain = [...d.chain, d.lastMuassasa];
-          const chainHtml = fullChain.map((m, i) => `
-            <span style="font-size:11px;color:#334155;font-weight:${i===fullChain.length-1?'700':'500'}">${esc(m||'—')}</span>
-            ${i < fullChain.length-1 ? '<span style="color:#94a3b8;margin:0 4px">→</span>' : ''}
+          const chainHtml = d.fullChain.map((m, i) => `
+            <span style="font-size:11px;color:#334155;font-weight:${i===d.fullChain.length-1?'700':'500'}">${esc(m||'—')}</span>
+            ${i < d.fullChain.length-1 ? '<span style="color:#94a3b8;margin:0 4px">→</span>' : ''}
           `).join('');
 
           return `
