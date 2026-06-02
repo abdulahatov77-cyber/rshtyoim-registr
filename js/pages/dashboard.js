@@ -899,8 +899,11 @@ const DashboardPage = {
   },
 
   _drawDonut(canvasId, legendId, data, baseColor, patientCount) {
-    const ctx = document.getElementById(canvasId)?.getContext('2d');
-    if (!ctx || !data || !data.length) return;
+    const canvas = document.getElementById(canvasId);
+    if (!canvas || !data || !data.length) return;
+    const existing = Chart.getChart(canvas);
+    if (existing) existing.destroy();
+    const ctx = canvas.getContext('2d');
 
     const COLORS = [
       '#3b82f6','#ef4444','#10b981','#f59e0b','#8b5cf6',
