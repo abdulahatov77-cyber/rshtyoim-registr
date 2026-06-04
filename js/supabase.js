@@ -905,6 +905,9 @@ const Telegram = {
   },
 
   buildMessage(patient, type) {
+    // Telegram HTML da xavfli belgilarni tozalash
+    const tesc = s => s ? String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') : '';
+
     const tugilgan = patient.tugilgan_sana || patient.tugilgan_yil || '';
     const age = tugilgan
       ? new Date().getFullYear() - parseInt(tugilgan.toString().slice(0, 4))
@@ -944,8 +947,8 @@ const Telegram = {
 
     const genderIcon = patient.jins === 'Ayol' ? e.woman : e.man;
     const dash = e.dash;
-    const shifokor = patient.shifokor_fio || dash;
-    const shifokorTel = patient.shifokor_tel ? ` · 📞 ${patient.shifokor_tel}` : '';
+    const shifokor = tesc(patient.shifokor_fio) || dash;
+    const shifokorTel = patient.shifokor_tel ? ` · 📞 ${tesc(patient.shifokor_tel)}` : '';
 
     if (type === 'infarkt') {
       const killip = patient.killip || '';
@@ -958,16 +961,16 @@ const Telegram = {
 
       return `${e.heart} <b>YANGI INFARKT BEMOR QABUL QILINDI</b>
 ${e.line}
-${e.pin} <b>Viloyat:</b> ${patient.viloyat || dash}
-${e.hosp} <b>Muassasa:</b> ${patient.muassasa || dash}
+${e.pin} <b>Viloyat:</b> ${tesc(patient.viloyat) || dash}
+${e.hosp} <b>Muassasa:</b> ${tesc(patient.muassasa) || dash}
 ${e.doc} <b>Shifokor:</b> ${shifokor}${shifokorTel}
-${e.clip} <b>K/T No:</b> <code>${patient.kt_no || dash}</code>
-${genderIcon} <b>Bemor:</b> ${patient.fio || dash}, ${age} yosh, ${patient.jins || dash}
-${e.red} <b>${patient.infarkt_turi || dash}</b>
-${e.stetho} <b>Killip:</b> ${killip || dash}
-${e.pill} <b>Muolaja:</b> ${patient.muolaja_turi || dash}${kagLine}
+${e.clip} <b>K/T No:</b> <code>${tesc(patient.kt_no) || dash}</code>
+${genderIcon} <b>Bemor:</b> ${tesc(patient.fio) || dash}, ${age} yosh, ${tesc(patient.jins) || dash}
+${e.red} <b>${tesc(patient.infarkt_turi) || dash}</b>
+${e.stetho} <b>Killip:</b> ${tesc(killip) || dash}
+${e.pill} <b>Muolaja:</b> ${tesc(patient.muolaja_turi) || dash}${kagLine}
 ${e.chart} <b>AHA bali:</b> ${patient.aha_bali ?? dash}
-${e.clock} <b>Simptom:</b> ${patient.simptom_vaqt || dash}
+${e.clock} <b>Simptom:</b> ${tesc(patient.simptom_vaqt) || dash}
 ${e.clock2} <b>Qabul:</b> ${qabul}
 ${e.line}${kritik}`;
 
@@ -994,16 +997,16 @@ ${e.line}${kritik}`;
 
       return `${e.brain} <b>YANGI INSULT BEMOR QABUL QILINDI</b>
 ${e.line}
-${e.pin} <b>Viloyat:</b> ${patient.viloyat || dash}
-${e.hosp} <b>Muassasa:</b> ${patient.muassasa || dash}
+${e.pin} <b>Viloyat:</b> ${tesc(patient.viloyat) || dash}
+${e.hosp} <b>Muassasa:</b> ${tesc(patient.muassasa) || dash}
 ${e.doc} <b>Shifokor:</b> ${shifokor}${shifokorTel}
-${e.clip} <b>K/T №:</b> <code>${patient.kt_no || dash}</code>
-${genderIcon} <b>Bemor:</b> ${patient.fio || dash}, ${age} yosh, ${patient.jins || dash}
-${e.stetho} <b>Insult turi:</b> ${patient.insult_turi || dash}
+${e.clip} <b>K/T №:</b> <code>${tesc(patient.kt_no) || dash}</code>
+${genderIcon} <b>Bemor:</b> ${tesc(patient.fio) || dash}, ${age} yosh, ${tesc(patient.jins) || dash}
+${e.stetho} <b>Insult turi:</b> ${tesc(patient.insult_turi) || dash}
 ${e.chart} <b>NIHSS/GCS:</b> ${nihss} / ${gcs}
 ${e.clip} <b>AHA:</b> ${patient.aha_bali ?? dash}${aspectsLine}
-${e.clock} <b>Simptom:</b> ${patient.simptom_vaqt || dash}
-${e.inj} <b>Muolaja:</b> ${patient.muolaja_turi || dash}
+${e.clock} <b>Simptom:</b> ${tesc(patient.simptom_vaqt) || dash}
+${e.inj} <b>Muolaja:</b> ${tesc(patient.muolaja_turi) || dash}
 ${e.clock2} <b>Qabul:</b> ${qabul}
 ${e.line}${kritik}`;
     }
