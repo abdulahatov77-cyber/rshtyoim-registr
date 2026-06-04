@@ -53,7 +53,11 @@ const DashboardPage = {
         DB.getTrend30(ov, om),
         DB.getTrend12Month(ov, om),
         DB.getRecentPatients(10, ov, om),
-        om ? Promise.resolve([]) : (ov ? DB.getMuassasaStats(ov, df, dt) : DB.getViloyatStats(ov, df, dt)),
+        om ? Promise.resolve([]) : (
+          ov ? DB.getMuassasaStats(ov, df, dt) :
+          (profile?.role !== 'super_admin' && profile?.viloyat) ? DB.getMuassasaStats(profile.viloyat, df, dt) :
+          DB.getViloyatStats(ov, df, dt)
+        ),
         // Aktiv bemorlar sana filtrisiz — doim joriy holat
         (df || dt) ? DB.getDashboardStats(ov, om, null, null) : Promise.resolve(null),
       ]);
@@ -148,7 +152,8 @@ const DashboardPage = {
 
     const isFiltered = profile?.role !== 'super_admin' && !!profile?.viloyat;
     const isRshtyoim = !!DashboardPage._viewMuassasa;
-    const distTitle = isFiltered ? `${profile?.viloyat} muassasalari bo'yicha` : "Viloyatlar bo'yicha grafik";
+    const activeViloyat = DashboardPage._viewViloyat || (isFiltered ? profile?.viloyat : null);
+    const distTitle = activeViloyat ? `${activeViloyat} muassasalari bo'yicha` : "Viloyatlar bo'yicha grafik";
 
     // Gender Calculation
     const infM = demo.infarkt.male, infF = demo.infarkt.female, infT = (infM + infF) || 1;
