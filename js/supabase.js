@@ -721,12 +721,13 @@ const DB = {
   },
 
   // Viloyat (yoki Muassasa) distribution — RPC orqali
-  async getViloyatStats(overrideViloyat) {
+  async getViloyatStats(overrideViloyat, dateFrom, dateTo) {
     const p = await Profile.getCurrent();
     const userViloyat = overrideViloyat !== undefined ? overrideViloyat : (p?.role === 'super_admin' ? null : p?.viloyat);
-    const { data, error } = await getSupabase().rpc('get_viloyat_stats', {
-      p_viloyat: userViloyat || null
-    });
+    const params = { p_viloyat: userViloyat || null };
+    if (dateFrom) params.p_from = dateFrom;
+    if (dateTo)   params.p_to   = dateTo;
+    const { data, error } = await getSupabase().rpc('get_viloyat_stats', params);
     if (error) throw error;
     return (data || []).map(r => [r.nom, r.jami, r.infarkt_count, r.insult_count]);
   },

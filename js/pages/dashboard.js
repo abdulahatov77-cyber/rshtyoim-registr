@@ -4,6 +4,8 @@ const DashboardPage = {
   _realtimeSub: null,
   _viewViloyat: undefined,
   _viewMuassasa: undefined,
+  _viewDateFrom: null,
+  _viewDateTo: null,
   _chartMode: 'abs', // 'abs' | '100k'
   _regionData: [],
   _regionProfile: null,
@@ -37,17 +39,19 @@ const DashboardPage = {
       const profile = await Profile.getCurrent();
       const ov = DashboardPage._viewViloyat;
       const om = DashboardPage._viewMuassasa;
+      const df = DashboardPage._viewDateFrom;
+      const dt = DashboardPage._viewDateTo;
       const AGE_GROUPS = ['75+', '60-74', '45-59', '30-44', '≤29'];
       const emptyPyramid = () => { const r = {}; AGE_GROUPS.forEach(g => { r[g] = { mTotal:0, fTotal:0, mDeath:0, fDeath:0 }; }); return { groups: AGE_GROUPS, data: r }; };
       const emptyDemo = { infarkt:{male:0,female:0,ages:{}}, insult:{male:0,female:0,ages:{}} };
 
       // BOSQICH 1: Tez yuklanadigan asosiy ma'lumotlar
       const phase1 = await Promise.allSettled([
-        DB.getDashboardStats(ov, om),
+        DB.getDashboardStats(ov, om, df, dt),
         DB.getTrend30(ov, om),
         DB.getTrend12Month(ov, om),
         DB.getRecentPatients(10, ov, om),
-        om ? Promise.resolve([]) : DB.getViloyatStats(ov),
+        om ? Promise.resolve([]) : DB.getViloyatStats(ov, df, dt),
       ]);
       const val1 = (i, def) => phase1[i].status === 'fulfilled' ? phase1[i].value : def;
       const stats   = val1(0, {});
@@ -64,7 +68,7 @@ const DashboardPage = {
       // BOSQICH 2: Og'ir ma'lumotlar fonda yuklanadi
       const phase2 = await Promise.allSettled([
         DB.getDemographics(ov, om),
-        DB.getRiskFactors(ov, om),
+        DB.getRiskFactors(ov, om, df, dt),
         DB.getLongStayPatients(ov, om),
         DB.getAgeSexPyramid(ov, om)
       ]);
@@ -204,26 +208,56 @@ const DashboardPage = {
     inner.innerHTML = `
       ${isSuperAdmin ? `
       <!-- VILOYAT FILTER (faqat super_admin) -->
-      <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 mb-6 flex flex-wrap items-center gap-3">
-        <div class="flex items-center gap-2 mr-2">
-          <div class="w-7 h-7 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center">${icon('map-pin', 14)}</div>
-          <span class="text-xs font-bold text-slate-600 uppercase tracking-wider">Ko'rish rejimi:</span>
+      <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 mb-6">
+        <div class="flex flex-wrap items-center gap-3 mb-3">
+          <div class="flex items-center gap-2 mr-2">
+            <div class="w-7 h-7 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center">${icon('map-pin', 14)}</div>
+            <span class="text-xs font-bold text-slate-600 uppercase tracking-wider">Ko'rish rejimi:</span>
+          </div>
+          <button onclick="DashboardPage.setViewViloyat(undefined)"
+            class="px-3 py-1.5 rounded-xl text-[11px] font-bold border transition-all ${!viewViloyat ? 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-200' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'}">
+            Barcha viloyatlar
+          </button>
+          ${viloyatlarList.map(v => {
+            const safeV = v.replace(/'/g, "\\'");
+            const isActive = viewViloyat === v;
+            const cls = isActive ? 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-200' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100';
+            const label = v.replace(' viloyati','').replace(' Respublikasi','');
+            return `<button onclick="DashboardPage.setViewViloyat('${safeV}')" class="px-3 py-1.5 rounded-xl text-[11px] font-bold border transition-all ${cls}">${label}</button>`;
+          }).join('')}
+          <button onclick="DashboardPage.setViewMuassasa('Respublika Shoshilinch Tibbiy Yordam Ilmiy Markazi')"
+            class="px-3 py-1.5 rounded-xl text-[11px] font-bold border transition-all ${DashboardPage._viewMuassasa ? 'bg-red-600 text-white border-red-600 shadow-md shadow-red-200' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'}">
+            RSHTYoIM
+          </button>
         </div>
-        <button onclick="DashboardPage.setViewViloyat(undefined)"
-          class="px-3 py-1.5 rounded-xl text-[11px] font-bold border transition-all ${!viewViloyat ? 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-200' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'}">
-          Barcha viloyatlar
-        </button>
-        ${viloyatlarList.map(v => {
-          const safeV = v.replace(/'/g, "\\'");
-          const isActive = viewViloyat === v;
-          const cls = isActive ? 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-200' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100';
-          const label = v.replace(' viloyati','').replace(' Respublikasi','');
-          return `<button onclick="DashboardPage.setViewViloyat('${safeV}')" class="px-3 py-1.5 rounded-xl text-[11px] font-bold border transition-all ${cls}">${label}</button>`;
-        }).join('')}
-        <button onclick="DashboardPage.setViewMuassasa('Respublika Shoshilinch Tibbiy Yordam Ilmiy Markazi')"
-          class="px-3 py-1.5 rounded-xl text-[11px] font-bold border transition-all ${DashboardPage._viewMuassasa ? 'bg-red-600 text-white border-red-600 shadow-md shadow-red-200' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'}">
-          RSHTYoIM
-        </button>
+        <!-- SANA FILTRI -->
+        <div class="flex flex-wrap items-center gap-3 pt-3 border-t border-slate-100">
+          <div class="flex items-center gap-2 mr-2">
+            <div class="w-7 h-7 bg-amber-50 text-amber-600 rounded-lg flex items-center justify-center">${icon('calendar', 14)}</div>
+            <span class="text-xs font-bold text-slate-600 uppercase tracking-wider">Davr:</span>
+          </div>
+          <button onclick="DashboardPage.setDateFilter(null,null)"
+            class="px-3 py-1.5 rounded-xl text-[11px] font-bold border transition-all ${!DashboardPage._viewDateFrom ? 'bg-amber-500 text-white border-amber-500' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'}">
+            Barcha vaqt
+          </button>
+          ${(() => {
+            const now = new Date(new Date().getTime() + 5*60*60*1000);
+            const months = [];
+            for (let i = 0; i < 12; i++) {
+              const d = new Date(now);
+              d.setUTCMonth(d.getUTCMonth() - i);
+              const y = d.getUTCFullYear();
+              const m = d.getUTCMonth();
+              const from = new Date(Date.UTC(y, m, 1)).toISOString();
+              const to   = new Date(Date.UTC(y, m+1, 0, 23, 59, 59)).toISOString();
+              const label = d.toLocaleString('uz-UZ', { month: 'short', year: '2-digit', timeZone: 'UTC' });
+              const isActive = DashboardPage._viewDateFrom === from;
+              months.push(`<button onclick="DashboardPage.setDateFilter('${from}','${to}')"
+                class="px-3 py-1.5 rounded-xl text-[11px] font-bold border transition-all ${isActive ? 'bg-amber-500 text-white border-amber-500' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'}">${label}</button>`);
+            }
+            return months.join('');
+          })()}
+        </div>
       </div>
       ` : ''}
 
@@ -462,6 +496,12 @@ const DashboardPage = {
   setViewMuassasa(muassasa) {
     DashboardPage._viewMuassasa = muassasa;
     DashboardPage._viewViloyat = undefined;
+    DashboardPage.loadData();
+  },
+
+  setDateFilter(from, to) {
+    DashboardPage._viewDateFrom = from;
+    DashboardPage._viewDateTo   = to;
     DashboardPage.loadData();
   },
 
