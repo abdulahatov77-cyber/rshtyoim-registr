@@ -216,8 +216,18 @@ const InsultYangiPage = {
     const d = InsultYangiPage._data;
     return `
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6">
-        ${this.field('simptom_vaqt','Simptomlar qachon boshlangan?',`<select id="simptom_vaqt" class="form-select">
-          ${this.selectOptions(APP_CONFIG.SIMPTOM_VAQTLAR_INSULT, d.simptom_vaqt||'')}</select>`,true)}
+        ${this.field('simptom_vaqt','Simptomlar qachon boshlangan? (soat)',`
+          <div class="flex gap-3 items-center">
+            <input id="simptom_soat_raw" type="number" min="0" max="999" class="form-input w-32"
+              placeholder="Soat" value="${d._simptom_soat_raw||''}"
+              oninput="InsultYangiPage.onSimptomSoat(this.value)"/>
+            <div id="simptom_vaqt_label" class="text-sm font-bold px-3 py-2 rounded-lg ${d.simptom_vaqt ? (d.simptom_vaqt.includes('ko\'p') || d.simptom_vaqt.includes('ortiq') ? 'bg-red-50 text-red-600 border border-red-200' : 'bg-green-50 text-green-700 border border-green-200') : 'text-slate-400'}">
+              ${d.simptom_vaqt || '— soat kiriting'}
+            </div>
+          </div>
+          <input id="simptom_vaqt" type="hidden" value="${d.simptom_vaqt||''}"/>
+          <p class="text-xs text-slate-400 mt-1">24 soatgacha — aniq soat, 24 soatdan ko'p bo'lsa "24 soatdan ortiq" avtomatik ko'rinadi. Uyquda boshlangan bo'lsa <span class="underline cursor-pointer text-blue-500" onclick="InsultYangiPage.setSimptomUyqu()">shu yerni bosing</span>.</p>
+        `,true)}
         ${this.field('nihss_qabul','NIHSS qabul paytida (0–42 ball)',`<div class="flex gap-2 items-center"><input id="nihss_qabul" type="number" min="0" max="42" class="form-input w-full bg-slate-50 cursor-not-allowed" value="${d.nihss_qabul||''}" placeholder="Kalkulyator orqali to'ldiring" readonly style="pointer-events:none;opacity:0.8"/><button type="button" class="flex-shrink-0 bg-blue-100 text-blue-700 hover:bg-blue-200 px-3 py-2 rounded-lg text-sm font-bold shadow-sm transition-colors border border-blue-200 flex items-center gap-1" onclick="Calculators.openNIHSS('nihss_qabul')">🧮 Hisoblash</button></div>`,true)}
         ${this.field('gcs_bali','Glazgo shkalasi (GCS), (3-15 ball)',`<div class="flex gap-2 items-center"><input id="gcs_bali" type="number" min="3" max="15" class="form-input w-full bg-slate-50 cursor-not-allowed" value="${d.gcs_bali||''}" placeholder="Kalkulyator orqali to'ldiring" readonly style="pointer-events:none;opacity:0.8"/><button type="button" class="flex-shrink-0 bg-purple-100 text-purple-700 hover:bg-purple-200 px-3 py-2 rounded-lg text-sm font-bold shadow-sm transition-colors border border-purple-200 flex items-center gap-1" onclick="Calculators.openGCS('gcs_bali')">🧮 Hisoblash</button></div>`,true)}
         ${this.field('insult_turi','Insult turi',`<select id="insult_turi" class="form-select border-purple-300 focus:border-purple-500">
@@ -377,6 +387,46 @@ const InsultYangiPage = {
           </div>`;
       } catch(e) { /* silent */ }
     }, 700);
+  },
+
+  onSimptomSoat(val) {
+    const soat = parseInt(val);
+    const labelEl = document.getElementById('simptom_vaqt_label');
+    const hiddenEl = document.getElementById('simptom_vaqt');
+    if (!labelEl || !hiddenEl) return;
+    if (!val || isNaN(soat) || soat < 0) {
+      labelEl.textContent = '— soat kiriting';
+      labelEl.className = 'text-sm font-bold px-3 py-2 rounded-lg text-slate-400';
+      hiddenEl.value = '';
+      InsultYangiPage._data.simptom_vaqt = '';
+      InsultYangiPage._data._simptom_soat_raw = '';
+      return;
+    }
+    InsultYangiPage._data._simptom_soat_raw = val;
+    let label, isOver;
+    if (soat > 24) {
+      label = "24 soatdan ortiq";
+      isOver = true;
+    } else {
+      label = `${soat} soat ichida`;
+      isOver = false;
+    }
+    labelEl.textContent = label;
+    labelEl.className = `text-sm font-bold px-3 py-2 rounded-lg border ${isOver ? 'bg-red-50 text-red-600 border-red-200' : 'bg-green-50 text-green-700 border-green-200'}`;
+    hiddenEl.value = label;
+    InsultYangiPage._data.simptom_vaqt = label;
+  },
+
+  setSimptomUyqu() {
+    const label = "Uyquda boshlangan";
+    const labelEl = document.getElementById('simptom_vaqt_label');
+    const hiddenEl = document.getElementById('simptom_vaqt');
+    const rawEl = document.getElementById('simptom_soat_raw');
+    if (labelEl) { labelEl.textContent = label; labelEl.className = 'text-sm font-bold px-3 py-2 rounded-lg border bg-blue-50 text-blue-700 border-blue-200'; }
+    if (hiddenEl) hiddenEl.value = label;
+    if (rawEl) rawEl.value = '';
+    InsultYangiPage._data.simptom_vaqt = label;
+    InsultYangiPage._data._simptom_soat_raw = '';
   },
 
   onMsktChange(val) {

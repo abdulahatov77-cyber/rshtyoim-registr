@@ -297,8 +297,18 @@ const InfarktYangiPage = {
     return `
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6">
         ${this.field('aha_bali','AHA (American Heart Association) savolnomasi bali',`<div class="flex gap-2 items-center"><input id="aha_bali" type="number" class="form-input w-full bg-slate-50 cursor-not-allowed" value="${d.aha_bali||''}" placeholder="Kalkulyator orqali to'ldiring" readonly style="pointer-events:none;opacity:0.8"/><button type="button" class="flex-shrink-0 bg-rose-100 text-rose-700 hover:bg-rose-200 px-3 py-2 rounded-lg text-sm font-bold shadow-sm transition-colors border border-rose-200 flex items-center gap-1" onclick="Calculators.openAHA('aha_bali')">🧮 Hisoblash</button></div>`,true)}
-        ${this.field('simptom_vaqt','Simptomlar qachon boshlangan?',`<select id="simptom_vaqt" class="form-select">
-          ${this.selectOptions(APP_CONFIG.SIMPTOM_VAQTLAR, d.simptom_vaqt||'')}</select>`,true)}
+        ${this.field('simptom_vaqt','Simptomlar qachon boshlangan? (soat)',`
+          <div class="flex gap-3 items-center">
+            <input id="simptom_soat_raw" type="number" min="0" max="999" class="form-input w-32"
+              placeholder="Soat" value="${d._simptom_soat_raw||''}"
+              oninput="InfarktYangiPage.onSimptomSoat(this.value)"/>
+            <div id="simptom_vaqt_label" class="text-sm font-bold px-3 py-2 rounded-lg ${d.simptom_vaqt ? (d.simptom_vaqt.includes('ko\'p') || d.simptom_vaqt.includes('ortiq') ? 'bg-red-50 text-red-600 border border-red-200' : 'bg-green-50 text-green-700 border border-green-200') : 'text-slate-400'}">
+              ${d.simptom_vaqt || '— soat kiriting'}
+            </div>
+          </div>
+          <input id="simptom_vaqt" type="hidden" value="${d.simptom_vaqt||''}"/>
+          <p class="text-xs text-slate-400 mt-1">24 soatgacha — aniq soat kiriting. 24 dan ortiq bo'lsa "24 soatdan ko'p" avtomatik ko'rinadi. Noma'lum bo'lsa <span class="underline cursor-pointer text-blue-500" onclick="InfarktYangiPage.setSimptomNoma()">shu yerni bosing</span>.</p>
+        `,true)}
         ${this.field('birlamchi_yoki_takroriy','Birlamchi yoki takroriy?',`<select id="birlamchi_yoki_takroriy" class="form-select">
           ${this.selectOptions(APP_CONFIG.BIRLAMCHI_TAKROIRIY, d.birlamchi_yoki_takroriy||'')}</select>`,true)}
         ${this.field('infarkt_turi','Tashxis',`<select id="infarkt_turi" class="form-select border-red-300 focus:border-red-500">
@@ -404,6 +414,46 @@ const InfarktYangiPage = {
         </div>
       </div>
     `;
+  },
+
+  onSimptomSoat(val) {
+    const soat = parseInt(val);
+    const labelEl = document.getElementById('simptom_vaqt_label');
+    const hiddenEl = document.getElementById('simptom_vaqt');
+    if (!labelEl || !hiddenEl) return;
+    if (!val || isNaN(soat) || soat < 0) {
+      labelEl.textContent = '— soat kiriting';
+      labelEl.className = 'text-sm font-bold px-3 py-2 rounded-lg text-slate-400';
+      hiddenEl.value = '';
+      InfarktYangiPage._data.simptom_vaqt = '';
+      InfarktYangiPage._data._simptom_soat_raw = '';
+      return;
+    }
+    InfarktYangiPage._data._simptom_soat_raw = val;
+    let label, isOver;
+    if (soat > 24) {
+      label = "24 soatdan ko'p";
+      isOver = true;
+    } else {
+      label = `${soat} soat ichida`;
+      isOver = false;
+    }
+    labelEl.textContent = label;
+    labelEl.className = `text-sm font-bold px-3 py-2 rounded-lg border ${isOver ? 'bg-red-50 text-red-600 border-red-200' : 'bg-green-50 text-green-700 border-green-200'}`;
+    hiddenEl.value = label;
+    InfarktYangiPage._data.simptom_vaqt = label;
+  },
+
+  setSimptomNoma() {
+    const label = "Noma'lum";
+    const labelEl = document.getElementById('simptom_vaqt_label');
+    const hiddenEl = document.getElementById('simptom_vaqt');
+    const rawEl = document.getElementById('simptom_soat_raw');
+    if (labelEl) { labelEl.textContent = label; labelEl.className = 'text-sm font-bold px-3 py-2 rounded-lg border bg-slate-100 text-slate-600 border-slate-200'; }
+    if (hiddenEl) hiddenEl.value = label;
+    if (rawEl) rawEl.value = '';
+    InfarktYangiPage._data.simptom_vaqt = label;
+    InfarktYangiPage._data._simptom_soat_raw = '';
   },
 
   onMuolajaChange(val) {
