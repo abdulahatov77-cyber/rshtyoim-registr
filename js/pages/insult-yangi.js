@@ -257,8 +257,17 @@ const InsultYangiPage = {
 
     return `
       <div class="grid grid-cols-1 gap-x-6">
-        ${this.field('mskt','MSKT o\'tkazilganmi?',`<select id="mskt" class="form-select" onchange="InsultYangiPage.onMsktChange(this.value)">
-          ${this.selectOptions(['Ha – o\'tkazildi', 'Yo\'q – boshqa sabab'], d.mskt||'')}</select>`,true)}
+        ${this.field('mskt','MSKT (KT) o\'tkazilganmi?',`
+          <div class="flex gap-3">
+            <button type="button" id="mskt-ha" onclick="InsultYangiPage.onMsktChange('Ha – o\\'tkazildi')"
+              class="flex-1 py-2.5 rounded-xl font-bold text-sm border-2 transition-all ${d.mskt==='Ha – o\'tkazildi' ? 'bg-purple-600 text-white border-purple-600' : 'bg-white text-slate-600 border-slate-200 hover:border-purple-400'}">
+              ✅ Ha
+            </button>
+            <button type="button" id="mskt-yoq" onclick="InsultYangiPage.onMsktChange('Yo\\'q – boshqa sabab')"
+              class="flex-1 py-2.5 rounded-xl font-bold text-sm border-2 transition-all ${d.mskt && d.mskt!=='Ha – o\'tkazildi' ? 'bg-slate-600 text-white border-slate-600' : 'bg-white text-slate-600 border-slate-200 hover:border-slate-400'}">
+              ❌ Yo'q
+            </button>
+          </div>`,true)}
 
         <div id="mskt-vaqt-div" style="display:${showMsktVaqt?'block':'none'}">
           ${this.field('kt_vaqti','KT/MSKT o\'tkazilgan vaqt',`
@@ -273,6 +282,11 @@ const InsultYangiPage = {
               </div>
             </div>`,true,'Door-to-CT mezonini hisoblash uchun')}
           <input id="kt_vaqti" type="hidden" value="${d.kt_vaqti||''}"/>
+        </div>
+
+        <!-- ASPECTS bloki — faqat MSKT o'tkazilganda -->
+        <div id="aspects-div" style="display:${showMsktVaqt?'block':'none'}">
+          ${this._renderAspects(d)}
         </div>
 
         ${this.field('muolaja_turi','Muolaja turi',`
@@ -417,6 +431,103 @@ const InsultYangiPage = {
     InsultYangiPage._data.simptom_vaqt = label;
   },
 
+  _renderAspects(d) {
+    const regions = [
+      { key:'aspects_c',  label:'C',  name:'Kaudat yadro',           group:'ganglion' },
+      { key:'aspects_l',  label:'L',  name:'Lentikulyar yadro',      group:'ganglion' },
+      { key:'aspects_ic', label:'IC', name:'Ichki kapsula',           group:'ganglion' },
+      { key:'aspects_i',  label:'I',  name:'Insula',                  group:'ganglion' },
+      { key:'aspects_m1', label:'M1', name:'Frontal operkulum',       group:'ganglion' },
+      { key:'aspects_m2', label:'M2', name:'Oldingi chakka bo\'lagi', group:'ganglion' },
+      { key:'aspects_m3', label:'M3', name:'Orqa chakka bo\'lagi',    group:'ganglion' },
+      { key:'aspects_m4', label:'M4', name:'M1 ustida',               group:'supra' },
+      { key:'aspects_m5', label:'M5', name:'M2 ustida',               group:'supra' },
+      { key:'aspects_m6', label:'M6', name:'M3 ustida',               group:'supra' },
+    ];
+    const ball = this._calcAspects(d);
+    const rec = ball >= 8 ? { text:"Reperfuzion terapiya uchun yaxshi nomzod (kichik infarkt)", color:'#16a34a', bg:'#f0fdf4', border:'#bbf7d0' }
+              : ball >= 6 ? { text:"Reperfuzion terapiya ko'rsatilgan, individual baholash zarur", color:'#2563eb', bg:'#eff6ff', border:'#bfdbfe' }
+              : ball >= 4 ? { text:"Keng infarkt — gemorragik transformatsiya xavfi oshgan", color:'#d97706', bg:'#fffbeb', border:'#fde68a' }
+              :             { text:"Keng shakllangan infarkt — multidisiplinar qaror", color:'#dc2626', bg:'#fef2f2', border:'#fecaca' };
+
+    const mkBox = (r) => `
+      <label style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border-radius:10px;border:1.5px solid ${d[r.key]?'#7c3aed':'#e2e8f0'};background:${d[r.key]?'#f5f3ff':'#fafafa'};cursor:pointer;transition:all 0.15s">
+        <input type="checkbox" id="${r.key}" ${d[r.key]?'checked':''}
+          onchange="InsultYangiPage.onAspectsChange('${r.key}',this.checked)"
+          style="width:18px;height:18px;margin-top:1px;accent-color:#7c3aed;flex-shrink:0"/>
+        <div>
+          <div style="font-size:14px;font-weight:700;color:#1e293b">${r.label} <span style="font-size:12px;font-weight:500;color:#64748b">— ${r.name}</span></div>
+        </div>
+      </label>`;
+
+    const ganglion = regions.filter(r=>r.group==='ganglion');
+    const supra    = regions.filter(r=>r.group==='supra');
+
+    return `
+      <div style="border:2px solid #7c3aed;border-radius:16px;padding:18px 20px;background:linear-gradient(135deg,#faf5ff,#fff);margin-bottom:8px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+          <div style="font-size:15px;font-weight:800;color:#6d28d9">🧮 ASPECTS shkala (OMA havzasi)</div>
+          <div id="aspects-score-badge" style="font-size:20px;font-weight:900;padding:6px 18px;border-radius:30px;background:${rec.bg};color:${rec.color};border:2px solid ${rec.border}">
+            ${ball} / 10
+          </div>
+        </div>
+
+        <div style="margin-bottom:12px">
+          <div style="font-size:11px;font-weight:800;color:#7c3aed;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px">Gangliyonar sath (bazal yadrolar darajasi)</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+            ${ganglion.map(mkBox).join('')}
+          </div>
+        </div>
+
+        <div style="margin-bottom:14px">
+          <div style="font-size:11px;font-weight:800;color:#7c3aed;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px">Supragangliyonar sath (qorinchalar darajasi)</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+            ${supra.map(mkBox).join('')}
+          </div>
+        </div>
+
+        <div id="aspects-rec" style="padding:10px 14px;border-radius:10px;background:${rec.bg};border:1px solid ${rec.border};font-size:13px;font-weight:700;color:${rec.color}">
+          ${ball >= 8 ? '✅' : ball >= 6 ? '🔵' : ball >= 4 ? '⚠️' : '🔴'} ${rec.text}
+        </div>
+      </div>`;
+  },
+
+  _calcAspects(d) {
+    const keys = ['aspects_c','aspects_l','aspects_ic','aspects_i','aspects_m1','aspects_m2','aspects_m3','aspects_m4','aspects_m5','aspects_m6'];
+    return 10 - keys.filter(k => d[k]).length;
+  },
+
+  onAspectsChange(key, checked) {
+    InsultYangiPage._data[key] = checked;
+    const ball = InsultYangiPage._calcAspects(InsultYangiPage._data);
+    const rec = ball >= 8 ? { text:"Reperfuzion terapiya uchun yaxshi nomzod (kichik infarkt)", color:'#16a34a', bg:'#f0fdf4', border:'#bbf7d0', icon:'✅' }
+              : ball >= 6 ? { text:"Reperfuzion terapiya ko'rsatilgan, individual baholash zarur", color:'#2563eb', bg:'#eff6ff', border:'#bfdbfe', icon:'🔵' }
+              : ball >= 4 ? { text:"Keng infarkt — gemorragik transformatsiya xavfi oshgan", color:'#d97706', bg:'#fffbeb', border:'#fde68a', icon:'⚠️' }
+              :             { text:"Keng shakllangan infarkt — multidisiplinar qaror", color:'#dc2626', bg:'#fef2f2', border:'#fecaca', icon:'🔴' };
+    // Badge yangilash
+    const badge = document.getElementById('aspects-score-badge');
+    if (badge) {
+      badge.textContent = `${ball} / 10`;
+      badge.style.background = rec.bg;
+      badge.style.color = rec.color;
+      badge.style.borderColor = rec.border;
+    }
+    // Tavsiya yangilash
+    const recEl = document.getElementById('aspects-rec');
+    if (recEl) {
+      recEl.style.background = rec.bg;
+      recEl.style.borderColor = rec.border;
+      recEl.style.color = rec.color;
+      recEl.textContent = `${rec.icon} ${rec.text}`;
+    }
+    // Checkbox border yangilash
+    const label = document.getElementById(key)?.closest('label');
+    if (label) {
+      label.style.border = `1.5px solid ${checked ? '#7c3aed' : '#e2e8f0'}`;
+      label.style.background = checked ? '#f5f3ff' : '#fafafa';
+    }
+  },
+
   setSimptomUyqu() {
     const label = "Uyquda boshlangan";
     const labelEl = document.getElementById('simptom_vaqt_label');
@@ -435,6 +546,14 @@ const InsultYangiPage = {
     const muolaja = (InsultYangiPage._data.muolaja_turi || '').toLowerCase();
     const show = val === "Ha – o'tkazildi" || muolaja.includes('mskt');
     if (div) div.style.display = show ? 'block' : 'none';
+    // ASPECTS blokini ham ko'rsat/yashir
+    const aspectsDiv = document.getElementById('aspects-div');
+    if (aspectsDiv) aspectsDiv.style.display = show ? 'block' : 'none';
+    // Tugma ranglarini yangilash
+    const haBtn = document.getElementById('mskt-ha');
+    const yoqBtn = document.getElementById('mskt-yoq');
+    if (haBtn) haBtn.className = `flex-1 py-2.5 rounded-xl font-bold text-sm border-2 transition-all ${show ? 'bg-purple-600 text-white border-purple-600' : 'bg-white text-slate-600 border-slate-200 hover:border-purple-400'}`;
+    if (yoqBtn) yoqBtn.className = `flex-1 py-2.5 rounded-xl font-bold text-sm border-2 transition-all ${!show ? 'bg-slate-600 text-white border-slate-600' : 'bg-white text-slate-600 border-slate-200 hover:border-slate-400'}`;
     // Angiografiya muolajasi bo'lsa trombektomiya divni ham ko'rsat
     const trombDiv = document.getElementById('trombektomiya-vaqt-div');
     if (trombDiv) {
@@ -485,6 +604,13 @@ const InsultYangiPage = {
     .forEach(id => {
       const el = document.getElementById(id);
       if (el) InsultYangiPage._data[id] = el.value;
+    });
+
+    // ASPECTS checkboxlarini o'qish
+    ['aspects_c','aspects_l','aspects_ic','aspects_i','aspects_m1','aspects_m2',
+     'aspects_m3','aspects_m4','aspects_m5','aspects_m6'].forEach(k => {
+      const el = document.getElementById(k);
+      if (el) InsultYangiPage._data[k] = el.checked;
     });
 
     // kt_vaqti, trombolizis_vaqti, trombektomiya_vaqti: sana + soat dan yig'ish
@@ -730,6 +856,9 @@ const InsultYangiPage = {
         payload.muassasa = payload.boshqa_muassasa;
       }
       delete payload.boshqa_muassasa;
+      delete payload._simptom_soat_raw;
+      // aspects_ball GENERATED ustun — bazaga yozmaymiz
+      delete payload.aspects_ball;
       if (payload.muolaja_turi === "Boshqa muassasaga o'tkazildi — angiografiya va endovaskulyar muolaja uchun") {
         payload.status = 'otkazildi';
       }

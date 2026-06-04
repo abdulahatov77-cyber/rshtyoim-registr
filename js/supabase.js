@@ -976,6 +976,18 @@ ${e.line}${kritik}`;
         kritik = `\n${e.warn} <b>DIQQAT: OG'IR HOLAT! (NIHSS = ${patient.nihss_qabul})</b>`;
       }
 
+      // ASPECTS qatori
+      let aspectsLine = '';
+      if (patient.mskt === "Ha – o'tkazildi" || patient.aspects_ball != null) {
+        const ball = patient.aspects_ball ?? 10;
+        const sign = ball >= 6 ? '(≥6)' : '(<6 ⚠️)';
+        const keys = ['aspects_c','aspects_l','aspects_ic','aspects_i','aspects_m1','aspects_m2','aspects_m3','aspects_m4','aspects_m5','aspects_m6'];
+        const labels = { aspects_c:'C', aspects_l:'L', aspects_ic:'IC', aspects_i:'I', aspects_m1:'M1', aspects_m2:'M2', aspects_m3:'M3', aspects_m4:'M4', aspects_m5:'M5', aspects_m6:'M6' };
+        const damaged = keys.filter(k => patient[k]).map(k => labels[k]);
+        const hududlar = damaged.length ? ` — ${damaged.join(', ')}` : '';
+        aspectsLine = `\n🧮 <b>ASPECTS:</b> ${ball} ball ${sign}${hududlar}`;
+      }
+
       return `${e.brain} <b>YANGI INSULT BEMOR QABUL QILINDI</b>
 ${e.line}
 ${e.pin} <b>Viloyat:</b> ${patient.viloyat || dash}
@@ -985,7 +997,7 @@ ${e.clip} <b>K/T №:</b> <code>${patient.kt_no || dash}</code>
 ${genderIcon} <b>Bemor:</b> ${patient.fio || dash}, ${age} yosh, ${patient.jins || dash}
 ${e.stetho} <b>Insult turi:</b> ${patient.insult_turi || dash}
 ${e.chart} <b>NIHSS/GCS:</b> ${nihss} / ${gcs}
-${e.clip} <b>AHA:</b> ${patient.aha_bali ?? dash}
+${e.clip} <b>AHA:</b> ${patient.aha_bali ?? dash}${aspectsLine}
 ${e.clock} <b>Simptom:</b> ${patient.simptom_vaqt || dash}
 ${e.inj} <b>Muolaja:</b> ${patient.muolaja_turi || dash}
 ${e.clock2} <b>Qabul:</b> ${qabul}
