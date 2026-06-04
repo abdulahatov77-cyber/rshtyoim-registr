@@ -259,12 +259,12 @@ const InsultYangiPage = {
       <div class="grid grid-cols-1 gap-x-6">
         ${this.field('mskt','MSKT (KT) o\'tkazilganmi?',`
           <div class="flex gap-3">
-            <button type="button" id="mskt-ha" onclick="InsultYangiPage.onMsktChange('Ha – o\\'tkazildi')"
-              class="flex-1 py-2.5 rounded-xl font-bold text-sm border-2 transition-all ${d.mskt==='Ha – o\'tkazildi' ? 'bg-purple-600 text-white border-purple-600' : 'bg-white text-slate-600 border-slate-200 hover:border-purple-400'}">
+            <button type="button" id="mskt-ha" onclick="InsultYangiPage.onMsktChange(&quot;Ha – o&apos;tkazildi&quot;)"
+              class="flex-1 py-2.5 rounded-xl font-bold text-sm border-2 transition-all ${d.mskt==="Ha – o'tkazildi" ? 'bg-purple-600 text-white border-purple-600' : 'bg-white text-slate-600 border-slate-200 hover:border-purple-400'}">
               ✅ Ha
             </button>
-            <button type="button" id="mskt-yoq" onclick="InsultYangiPage.onMsktChange('Yo\\'q – boshqa sabab')"
-              class="flex-1 py-2.5 rounded-xl font-bold text-sm border-2 transition-all ${d.mskt && d.mskt!=='Ha – o\'tkazildi' ? 'bg-slate-600 text-white border-slate-600' : 'bg-white text-slate-600 border-slate-200 hover:border-slate-400'}">
+            <button type="button" id="mskt-yoq" onclick="InsultYangiPage.onMsktChange(&quot;Yo&apos;q – boshqa sabab&quot;)"
+              class="flex-1 py-2.5 rounded-xl font-bold text-sm border-2 transition-all ${d.mskt && d.mskt!=="Ha – o'tkazildi" ? 'bg-slate-600 text-white border-slate-600' : 'bg-white text-slate-600 border-slate-200 hover:border-slate-400'}">
               ❌ Yo'q
             </button>
           </div>`,true)}
