@@ -54,13 +54,21 @@ const DashboardPage = {
         DB.getTrend12Month(ov, om),
         DB.getRecentPatients(10, ov, om),
         om ? Promise.resolve([]) : (ov ? DB.getMuassasaStats(ov, df, dt) : DB.getViloyatStats(ov, df, dt)),
+        // Aktiv bemorlar sana filtrisiz — doim joriy holat
+        (df || dt) ? DB.getDashboardStats(ov, om, null, null) : Promise.resolve(null),
       ]);
       const val1 = (i, def) => phase1[i].status === 'fulfilled' ? phase1[i].value : def;
-      const stats   = val1(0, {});
-      const trend   = val1(1, { labels:[], infData:[], insData:[] });
-      const trend12 = val1(2, { labels:[], infData:[], insData:[] });
-      const recent  = val1(3, []);
-      const viloyat = val1(4, []);
+      const stats     = val1(0, {});
+      const trend     = val1(1, { labels:[], infData:[], insData:[] });
+      const trend12   = val1(2, { labels:[], infData:[], insData:[] });
+      const recent    = val1(3, []);
+      const viloyat   = val1(4, []);
+      const statsNow  = val1(5, null); // sana filtrisiz aktiv bemorlar
+      // Aktiv bemorlarni doim joriy holatdan olamiz
+      if (statsNow) {
+        stats.infarktAktiv = statsNow.infarktAktiv;
+        stats.insultAktiv  = statsNow.insultAktiv;
+      }
       DashboardPage._recentPatients = recent;
       DashboardPage._ageSex = { infarkt: emptyPyramid(), insult: emptyPyramid() };
 
