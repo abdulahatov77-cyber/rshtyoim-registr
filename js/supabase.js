@@ -112,7 +112,7 @@ const DB = {
       'ekg_natija','xavf_omil',
       'muolaja_turi','angio_natija','otkazilgan_muassasa',
       'dinamika_muolaja_turi','dinamika_izoh',
-      'shifokor_fio','status'
+      'shifokor_fio','shifokor_tel','status'
     ];
     const clean = {};
     for (const k of allowed) {
@@ -203,8 +203,10 @@ const DB = {
       'simptom_vaqt','nihss_qabul','gcs_bali','insult_turi','qon_bosimi',
       'xavf_omil','aha_bali',
       'mskt','muolaja_turi','otkazilgan_muassasa',
+      'aspects_c','aspects_l','aspects_ic','aspects_i',
+      'aspects_m1','aspects_m2','aspects_m3','aspects_m4','aspects_m5','aspects_m6',
       'dinamika_muolaja_turi','dinamika_izoh',
-      'shifokor_fio','status'
+      'shifokor_fio','shifokor_tel','status'
     ];
     const clean = {};
     for (const k of allowed) {
@@ -943,6 +945,7 @@ const Telegram = {
     const genderIcon = patient.jins === 'Ayol' ? e.woman : e.man;
     const dash = e.dash;
     const shifokor = patient.shifokor_fio || dash;
+    const shifokorTel = patient.shifokor_tel ? ` · 📞 ${patient.shifokor_tel}` : '';
 
     if (type === 'infarkt') {
       const killip = patient.killip || '';
@@ -957,7 +960,7 @@ const Telegram = {
 ${e.line}
 ${e.pin} <b>Viloyat:</b> ${patient.viloyat || dash}
 ${e.hosp} <b>Muassasa:</b> ${patient.muassasa || dash}
-${e.doc} <b>Shifokor:</b> ${shifokor}
+${e.doc} <b>Shifokor:</b> ${shifokor}${shifokorTel}
 ${e.clip} <b>K/T No:</b> <code>${patient.kt_no || dash}</code>
 ${genderIcon} <b>Bemor:</b> ${patient.fio || dash}, ${age} yosh, ${patient.jins || dash}
 ${e.red} <b>${patient.infarkt_turi || dash}</b>
@@ -978,13 +981,14 @@ ${e.line}${kritik}`;
 
       // ASPECTS qatori
       let aspectsLine = '';
-      if (patient.mskt === "Ha – o'tkazildi" || patient.aspects_ball != null) {
-        const ball = patient.aspects_ball ?? 10;
+      if (patient.mskt === "Ha – o'tkazildi") {
+        const aKeys = ['aspects_c','aspects_l','aspects_ic','aspects_i','aspects_m1','aspects_m2','aspects_m3','aspects_m4','aspects_m5','aspects_m6'];
+        const aLabels = { aspects_c:'C', aspects_l:'L', aspects_ic:'IC', aspects_i:'I', aspects_m1:'M1', aspects_m2:'M2', aspects_m3:'M3', aspects_m4:'M4', aspects_m5:'M5', aspects_m6:'M6' };
+        const damaged = aKeys.filter(k => patient[k]);
+        // aspects_ball GENERATED — qayta hisoblaymiz
+        const ball = (patient.aspects_ball != null) ? patient.aspects_ball : (10 - damaged.length);
         const sign = ball >= 6 ? '(≥6)' : '(<6 ⚠️)';
-        const keys = ['aspects_c','aspects_l','aspects_ic','aspects_i','aspects_m1','aspects_m2','aspects_m3','aspects_m4','aspects_m5','aspects_m6'];
-        const labels = { aspects_c:'C', aspects_l:'L', aspects_ic:'IC', aspects_i:'I', aspects_m1:'M1', aspects_m2:'M2', aspects_m3:'M3', aspects_m4:'M4', aspects_m5:'M5', aspects_m6:'M6' };
-        const damaged = keys.filter(k => patient[k]).map(k => labels[k]);
-        const hududlar = damaged.length ? ` — ${damaged.join(', ')}` : '';
+        const hududlar = damaged.length ? ` — ${damaged.map(k=>aLabels[k]).join(', ')}` : '';
         aspectsLine = `\n🧮 <b>ASPECTS:</b> ${ball} ball ${sign}${hududlar}`;
       }
 
@@ -992,7 +996,7 @@ ${e.line}${kritik}`;
 ${e.line}
 ${e.pin} <b>Viloyat:</b> ${patient.viloyat || dash}
 ${e.hosp} <b>Muassasa:</b> ${patient.muassasa || dash}
-${e.doc} <b>Shifokor:</b> ${shifokor}
+${e.doc} <b>Shifokor:</b> ${shifokor}${shifokorTel}
 ${e.clip} <b>K/T №:</b> <code>${patient.kt_no || dash}</code>
 ${genderIcon} <b>Bemor:</b> ${patient.fio || dash}, ${age} yosh, ${patient.jins || dash}
 ${e.stetho} <b>Insult turi:</b> ${patient.insult_turi || dash}
