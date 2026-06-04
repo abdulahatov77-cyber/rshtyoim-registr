@@ -239,7 +239,8 @@ const DashboardPage = {
           const curY = now.getUTCFullYear();
           const monthNames = ['Yanvar','Fevral','Mart','Aprel','May','Iyun','Iyul','Avgust','Sentabr','Oktabr','Noyabr','Dekabr'];
           const activeFrom = DashboardPage._viewDateFrom;
-          const activeMode = DashboardPage._viewDateMode; // 'year' | 'month' | null
+          const activeMode = DashboardPage._viewDateMode;
+          const selYear = DashboardPage._viewSelectedYear;
 
           // Yillarni aniqlash (2024 dan hozirgi yilgacha)
           const years = [];
@@ -254,7 +255,6 @@ const DashboardPage = {
           }).join('');
 
           // Faqat yil tanlanganda o'sha yilning oylarini ko'rsat
-          const selYear = DashboardPage._viewSelectedYear;
           let monthRow = '';
           if (selYear) {
             const maxM = selYear === curY ? now.getUTCMonth() : 11;
