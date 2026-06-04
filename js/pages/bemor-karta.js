@@ -1002,9 +1002,9 @@ const BemorKartaPage = {
         <div class="border border-gray-200 rounded-xl overflow-hidden hover:shadow-md transition-all group">
           <div class="h-32 bg-gray-100 relative">
             <img src="${f.url}" class="w-full h-full object-cover" onerror="this.src=''; this.parentElement.innerHTML='<div class=\\'flex items-center justify-center h-full text-gray-400\\'>${icon('file-text', 32)}</div>'">
-            <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
-              <a href="${f.url}" target="_blank" class="w-8 h-8 bg-white rounded-full flex items-center justify-center text-blue-600 hover:scale-110 transition-transform">${icon('eye', 16)}</a>
-              <button onclick="BemorKartaPage.deleteMultimedia('${f.id}', '${f.path}')" class="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center text-white hover:scale-110 transition-transform">${icon('trash-2', 16)}</button>
+            <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none flex items-center justify-center gap-3">
+              <a href="${f.url}" target="_blank" class="w-8 h-8 bg-white rounded-full flex items-center justify-center text-blue-600 hover:scale-110 transition-transform pointer-events-auto">${icon('eye', 16)}</a>
+              <button onclick="BemorKartaPage.deleteMultimedia('${f.id}', '${f.path}')" class="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center text-white hover:scale-110 transition-transform pointer-events-auto">${icon('trash-2', 16)}</button>
             </div>
           </div>
           <div class="p-3">
