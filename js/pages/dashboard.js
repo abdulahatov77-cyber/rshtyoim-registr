@@ -6,6 +6,7 @@ const DashboardPage = {
   _viewMuassasa: undefined,
   _viewDateFrom: null,
   _viewDateTo: null,
+  _viewDateMode: null,
   _chartMode: 'abs', // 'abs' | '100k'
   _regionData: [],
   _regionProfile: null,
@@ -231,34 +232,73 @@ const DashboardPage = {
           </button>
         </div>
         <!-- SANA FILTRI -->
-        <div class="flex flex-wrap items-center gap-3 pt-3 border-t border-slate-100">
-          <div class="flex items-center gap-2 mr-2">
-            <div class="w-7 h-7 bg-amber-50 text-amber-600 rounded-lg flex items-center justify-center">${icon('calendar', 14)}</div>
-            <span class="text-xs font-bold text-slate-600 uppercase tracking-wider">Davr:</span>
-          </div>
-          <button onclick="DashboardPage.setDateFilter(null,null)"
-            class="px-3 py-1.5 rounded-xl text-[11px] font-bold border transition-all ${!DashboardPage._viewDateFrom ? 'bg-amber-500 text-white border-amber-500' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'}">
-            Barcha vaqt
-          </button>
-          ${(() => {
-            const now = new Date(new Date().getTime() + 5*60*60*1000);
-            const months = [];
-            for (let i = 0; i < 12; i++) {
-              const d = new Date(now);
-              d.setUTCMonth(d.getUTCMonth() - i);
-              const y = d.getUTCFullYear();
-              const m = d.getUTCMonth();
-              const from = new Date(Date.UTC(y, m, 1)).toISOString();
-              const to   = new Date(Date.UTC(y, m+1, 0, 23, 59, 59)).toISOString();
-              const monthNames = ['Yanvar','Fevral','Mart','Aprel','May','Iyun','Iyul','Avgust','Sentabr','Oktabr','Noyabr','Dekabr'];
-              const label = `${monthNames[m]} ${y}`;
-              const isActive = DashboardPage._viewDateFrom === from;
-              months.push(`<button onclick="DashboardPage.setDateFilter('${from}','${to}')"
-                class="px-3 py-1.5 rounded-xl text-[11px] font-bold border transition-all ${isActive ? 'bg-amber-500 text-white border-amber-500' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'}">${label}</button>`);
-            }
-            return months.join('');
-          })()}
-        </div>
+        <!-- SANA FILTRI: Yillar + Oylar -->
+        ${(() => {
+          const now = new Date(new Date().getTime() + 5*60*60*1000);
+          const curY = now.getUTCFullYear();
+          const monthNames = ['Yanvar','Fevral','Mart','Aprel','May','Iyun','Iyul','Avgust','Sentabr','Oktabr','Noyabr','Dekabr'];
+          const activeFrom = DashboardPage._viewDateFrom;
+          const activeMode = DashboardPage._viewDateMode; // 'year' | 'month' | null
+
+          // Yillarni aniqlash (2024 dan hozirgi yilgacha)
+          const years = [];
+          for (let y = 2024; y <= curY; y++) years.push(y);
+
+          const yearBtns = years.map(y => {
+            const from = new Date(Date.UTC(y, 0, 1)).toISOString();
+            const to   = new Date(Date.UTC(y, 11, 31, 23, 59, 59)).toISOString();
+            const isActive = activeMode === 'year' && activeFrom === from;
+            return `<button onclick="DashboardPage.setDateFilter('${from}','${to}','year')"
+              class="px-3 py-1.5 rounded-xl text-[11px] font-bold border transition-all ${isActive ? 'bg-amber-500 text-white border-amber-500' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'}">${y}</button>`;
+          }).join('');
+
+          // Oylarni aniqlash (oxirgi 24 oy, o'sish tartibida)
+          const months = [];
+          for (let i = 23; i >= 0; i--) {
+            const d = new Date(now);
+            d.setUTCMonth(d.getUTCMonth() - i);
+            const y = d.getUTCFullYear();
+            const m = d.getUTCMonth();
+            if (y < 2024) continue;
+            const from = new Date(Date.UTC(y, m, 1)).toISOString();
+            const to   = new Date(Date.UTC(y, m+1, 0, 23, 59, 59)).toISOString();
+            const label = `${monthNames[m]}`;
+            const isActive = activeMode === 'month' && activeFrom === from;
+            months.push({ y, m, from, to, label, isActive });
+          }
+
+          // Oylarni yil bo'yicha guruhlash
+          const byYear = {};
+          months.forEach(mo => { if (!byYear[mo.y]) byYear[mo.y] = []; byYear[mo.y].push(mo); });
+
+          const monthRows = Object.entries(byYear).map(([y, mos]) => `
+            <div class="flex flex-wrap items-center gap-2">
+              <span class="text-[10px] font-black text-slate-400 uppercase w-8">${y}</span>
+              ${mos.map(mo => `<button onclick="DashboardPage.setDateFilter('${mo.from}','${mo.to}','month')"
+                class="px-2.5 py-1 rounded-lg text-[11px] font-bold border transition-all ${mo.isActive ? 'bg-amber-500 text-white border-amber-500' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'}">${mo.label}</button>`).join('')}
+            </div>`).join('');
+
+          return `
+          <div class="pt-3 border-t border-slate-100 space-y-2">
+            <div class="flex flex-wrap items-center gap-2">
+              <div class="flex items-center gap-2 mr-1">
+                <div class="w-6 h-6 bg-amber-50 text-amber-600 rounded-lg flex items-center justify-center">${icon('calendar', 12)}</div>
+                <span class="text-[10px] font-bold text-slate-500 uppercase">Yil:</span>
+              </div>
+              ${yearBtns}
+              <button onclick="DashboardPage.setDateFilter(null,null,null)"
+                class="px-3 py-1.5 rounded-xl text-[11px] font-bold border transition-all ml-2 ${!activeFrom ? 'bg-amber-500 text-white border-amber-500' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'}">
+                Barcha davr
+              </button>
+            </div>
+            <div class="flex items-start gap-2">
+              <div class="flex items-center gap-1 mr-1 mt-1">
+                <span class="text-[10px] font-bold text-slate-500 uppercase">Oy:</span>
+              </div>
+              <div class="flex flex-col gap-1.5">${monthRows}</div>
+            </div>
+          </div>`;
+        })()}
       </div>
       ` : ''}
 
@@ -500,9 +540,10 @@ const DashboardPage = {
     DashboardPage.loadData();
   },
 
-  setDateFilter(from, to) {
+  setDateFilter(from, to, mode) {
     DashboardPage._viewDateFrom = from;
     DashboardPage._viewDateTo   = to;
+    DashboardPage._viewDateMode = mode || null;
     DashboardPage.loadData();
   },
 
