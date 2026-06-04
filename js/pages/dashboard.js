@@ -53,7 +53,7 @@ const DashboardPage = {
         DB.getTrend30(ov, om),
         DB.getTrend12Month(ov, om),
         DB.getRecentPatients(10, ov, om),
-        om ? Promise.resolve([]) : DB.getViloyatStats(ov, df, dt),
+        om ? Promise.resolve([]) : (ov ? DB.getMuassasaStats(ov, df, dt) : DB.getViloyatStats(ov, df, dt)),
       ]);
       const val1 = (i, def) => phase1[i].status === 'fulfilled' ? phase1[i].value : def;
       const stats   = val1(0, {});
@@ -703,16 +703,23 @@ const DashboardPage = {
       const isSuperAdminView = profile?.role === 'super_admin' && !DashboardPage._viewViloyat;
 
       const regionData = (isSuperAdminView
-        ? (APP_CONFIG.VILOYATLAR || []).map(rName => {
+        ? // Super admin, viloyat tanlanmagan: viloyatlar bo'yicha ko'rsat
+          (APP_CONFIG.VILOYATLAR || []).map(rName => {
             const found = (viloyat || []).find(v => v[0] === rName);
             return found ? { name: rName, total: found[1], inf: found[2]||0, ins: found[3]||0 } : { name: rName, total: 0, inf: 0, ins: 0 };
           }).filter(v => v.total > 0)
         : (() => {
+            // Viloyat tanlangan: o'sha viloyat muassasalarini ko'rsat
+            // viloyat array endi muassasa nomlarini qaytaradi (get_viloyat_stats muassasa bo'yicha)
+            const selectedViloyat = DashboardPage._viewViloyat || profile?.viloyat;
+            const configNames = APP_CONFIG.MUASSASALAR[selectedViloyat] || [];
+            // DB dan kelgan ma'lumotlar (muassasa nomi bo'yicha)
             const fromDb = (viloyat || []).map(v => Array.isArray(v) ? { name: v[0], total: v[1], inf: v[2]||0, ins: v[3]||0 } : v);
-            const dbNames = new Set(fromDb.map(v => v.name));
-            const configNames = APP_CONFIG.MUASSASALAR[DashboardPage._viewViloyat || profile?.viloyat] || [];
+            // Faqat shu viloyat muassasalarini filter qil
+            const dbFiltered = fromDb.filter(v => configNames.includes(v.name));
+            const dbNames = new Set(dbFiltered.map(v => v.name));
             const extra = configNames.filter(n => !dbNames.has(n)).map(n => ({ name: n, total: 0, inf: 0, ins: 0 }));
-            return [...fromDb, ...extra];
+            return [...dbFiltered, ...extra];
           })()
       ).sort((a, b) => b.total - a.total);
 

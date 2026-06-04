@@ -723,6 +723,19 @@ const DB = {
   },
 
   // Viloyat (yoki Muassasa) distribution — RPC orqali
+  async getMuassasaStats(viloyat, dateFrom, dateTo) {
+    // Viloyat tanlanganda muassasalar bo'yicha statistika
+    let qi = getSupabase().from('infarkt_qabul').select('muassasa').eq('viloyat', viloyat);
+    let qins = getSupabase().from('insult_qabul').select('muassasa').eq('viloyat', viloyat);
+    if (dateFrom) { qi = qi.gte('qabul_vaqt', dateFrom); qins = qins.gte('qabul_vaqt', dateFrom); }
+    if (dateTo)   { qi = qi.lte('qabul_vaqt', dateTo);   qins = qins.lte('qabul_vaqt', dateTo); }
+    const [{ data: infData }, { data: insData }] = await Promise.all([qi.range(0,9999), qins.range(0,9999)]);
+    const map = {};
+    (infData||[]).forEach(r => { if (!map[r.muassasa]) map[r.muassasa] = {inf:0,ins:0}; map[r.muassasa].inf++; });
+    (insData||[]).forEach(r => { if (!map[r.muassasa]) map[r.muassasa] = {inf:0,ins:0}; map[r.muassasa].ins++; });
+    return Object.entries(map).map(([nom, v]) => [nom, v.inf+v.ins, v.inf, v.ins]);
+  },
+
   async getViloyatStats(overrideViloyat, dateFrom, dateTo) {
     const p = await Profile.getCurrent();
     const userViloyat = overrideViloyat !== undefined ? overrideViloyat : (p?.role === 'super_admin' ? null : p?.viloyat);
