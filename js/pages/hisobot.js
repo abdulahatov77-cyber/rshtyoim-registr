@@ -62,8 +62,8 @@ const HisobotPage = {
       if (f.to)      { const el = document.getElementById('h-to');      if (el) el.value = f.to; }
       if (f.ageFrom) { const el = document.getElementById('h-age-from'); if (el) el.value = f.ageFrom; }
       if (f.ageTo)   { const el = document.getElementById('h-age-to');   if (el) el.value = f.ageTo; }
-      const { infs, ins, kuzatuv, from, to, ageLabel } = HisobotPage._lastData;
-      HisobotPage.renderReport(infs, ins, kuzatuv, from, to, ageLabel);
+      const { infs, ins, kuzatuv, from, to, ageLabel, locationLabel } = HisobotPage._lastData;
+      HisobotPage.renderReport(infs, ins, kuzatuv, from, to, ageLabel, locationLabel || '');
       if (HisobotPage._lastListType) {
         setTimeout(() => HisobotPage.showPatientList(HisobotPage._lastListType), 150);
       }
@@ -151,6 +151,22 @@ const HisobotPage = {
               class="form-input bg-slate-50 text-blue-900 border-blue-200 font-medium"/>
           </div>
         </div>
+        <!-- Viloyat va Muassasa filtri -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 items-end mb-4">
+          <div>
+            <label class="form-label !text-blue-900 font-semibold mb-1 block">${icon('map-pin', 14)} Viloyat (ixtiyoriy)</label>
+            <select id="h-viloyat" class="form-select bg-slate-50 text-blue-900 border-blue-200 font-medium" onchange="HisobotPage.onHViloyatChange(this.value)">
+              <option value="">— Barcha viloyatlar —</option>
+              ${Object.keys(APP_CONFIG.MUASSASALAR).map(v => `<option value="${v}">${v}</option>`).join('')}
+            </select>
+          </div>
+          <div>
+            <label class="form-label !text-blue-900 font-semibold mb-1 block">${icon('building-2', 14)} Muassasa (ixtiyoriy)</label>
+            <select id="h-muassasa" class="form-select bg-slate-50 text-blue-900 border-blue-200 font-medium">
+              <option value="">— Barcha muassasalar —</option>
+            </select>
+          </div>
+        </div>
         <div class="flex flex-wrap gap-2">
           <button class="btn btn-primary shadow-md hover:shadow-lg flex items-center justify-center gap-2 px-5 rounded-xl" onclick="HisobotPage.loadReport()">
             ${icon('bar-chart-2', 18)} Ko'rish
@@ -194,6 +210,14 @@ const HisobotPage = {
     document.getElementById('h-to').value = today.toISOString().split('T')[0];
   },
 
+  onHViloyatChange(viloyat) {
+    const sel = document.getElementById('h-muassasa');
+    if (!sel) return;
+    const muassasalar = APP_CONFIG.MUASSASALAR[viloyat] || [];
+    sel.innerHTML = `<option value="">— Barcha muassasalar —</option>` +
+      muassasalar.map(m => `<option value="${m}">${m}</option>`).join('');
+  },
+
   async loadReport() {
     const from = document.getElementById('h-from')?.value;
     const to = document.getElementById('h-to')?.value;
@@ -206,8 +230,10 @@ const HisobotPage = {
     HisobotPage._lastListType = null;
     HisobotPage._savedFilters = {
       from, to,
-      ageFrom: document.getElementById('h-age-from')?.value || '',
-      ageTo:   document.getElementById('h-age-to')?.value   || ''
+      ageFrom:   document.getElementById('h-age-from')?.value  || '',
+      ageTo:     document.getElementById('h-age-to')?.value    || '',
+      viloyat:   document.getElementById('h-viloyat')?.value   || '',
+      muassasa:  document.getElementById('h-muassasa')?.value  || ''
     };
     const el = document.getElementById('h-results');
     if (!el) return;
@@ -240,10 +266,15 @@ const HisobotPage = {
       const fromUTC = new Date(from + 'T00:00:00+05:00').toISOString();
       const toUTC   = new Date(to   + 'T23:59:59+05:00').toISOString();
       const filters = { from: fromUTC, to: toUTC };
-      // Faqat oddiy admin uchun viloyat filtri — super_admin hamma ma'lumotni ko'radi
-      if (profile?.role === 'admin' && profile?.viloyat) {
+      // Viloyat filtri: admin uchun majburiy, boshqalar uchun ixtiyoriy
+      const selViloyat  = document.getElementById('h-viloyat')?.value  || '';
+      const selMuassasa = document.getElementById('h-muassasa')?.value || '';
+      if (profile?.role === 'admin' && profile?.viloyat && !selViloyat) {
         filters.viloyat = profile.viloyat;
+      } else if (selViloyat) {
+        filters.viloyat = selViloyat;
       }
+      if (selMuassasa) filters.muassasa = selMuassasa;
 
       const ageFrom = parseInt(document.getElementById('h-age-from')?.value) || 0;
       const ageTo   = parseInt(document.getElementById('h-age-to')?.value)   || 120;
@@ -270,16 +301,17 @@ const HisobotPage = {
       const kuzatuv = kuzatuvAll.filter(k => validKtNos.has(k.kt_no));
 
       const ageLabel = (ageFrom > 0 || ageTo < 120) ? ` · Yosh: ${ageFrom}–${ageTo}` : '';
-      HisobotPage._lastData = { infs, ins, kuzatuv, from, to, ageLabel };
+      const locationLabel = selMuassasa ? ` · ${selMuassasa}` : selViloyat ? ` · ${selViloyat}` : '';
+      HisobotPage._lastData = { infs, ins, kuzatuv, from, to, ageLabel, locationLabel };
       reEnableTg();
-      HisobotPage.renderReport(infs, ins, kuzatuv, from, to, ageLabel);
+      HisobotPage.renderReport(infs, ins, kuzatuv, from, to, ageLabel, locationLabel);
     } catch(err) {
       reEnableTg();
       showErr(err.message || 'Noma\'lum xatolik');
     }
   },
 
-  renderReport(infs, ins, kuzatuv, from, to, ageLabel = '') {
+  renderReport(infs, ins, kuzatuv, from, to, ageLabel = '', locationLabel = '') {
     const el = document.getElementById('h-results');
     // counts
     const stemi = infs.filter(p=>p.infarkt_turi?.toUpperCase().includes('STEMI')&&!p.infarkt_turi?.toUpperCase().includes('NSTEMI')).length;
@@ -826,11 +858,13 @@ const HisobotPage = {
         </div>` : ''}`;
       })()}
 
-      <div class="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-2xl text-sm font-semibold text-blue-900 text-center shadow-sm flex items-center justify-center gap-2">
+      <div class="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-2xl text-sm font-semibold text-blue-900 text-center shadow-sm flex items-center justify-center gap-2 flex-wrap">
         ${icon('calendar', 18)}
         Hisobot davri: <span class="bg-white px-2 py-1 rounded border border-blue-200">${from}</span> dan
         <span class="bg-white px-2 py-1 rounded border border-blue-200">${to}</span> gacha ·
         Jami: <span class="text-blue-600">${infs.length+ins.length}</span> ta bemor
+        ${locationLabel ? `· <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded border border-blue-300">${icon('building-2',14)} ${locationLabel.replace(' · ','')}</span>` : ''}
+        ${ageLabel ? `· <span class="bg-slate-100 text-slate-700 px-2 py-1 rounded border border-slate-200">${ageLabel.replace(' · ','')}</span>` : ''}
       </div>
     `;
 

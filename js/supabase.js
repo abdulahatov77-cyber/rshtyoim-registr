@@ -136,10 +136,11 @@ const DB = {
     const page     = filters.page     || 0;
 
     const applyFilters = (q) => {
-      if (filters.status)  q = q.eq('status',  filters.status);
-      if (filters.viloyat) q = q.eq('viloyat', filters.viloyat);
-      if (filters.from)    q = q.gte('qabul_vaqt', filters.from);
-      if (filters.to)      q = q.lte('qabul_vaqt', filters.to);
+      if (filters.status)   q = q.eq('status',   filters.status);
+      if (filters.viloyat)  q = q.eq('viloyat',  filters.viloyat);
+      if (filters.muassasa) q = q.eq('muassasa', filters.muassasa);
+      if (filters.from)     q = q.gte('qabul_vaqt', filters.from);
+      if (filters.to)       q = q.lte('qabul_vaqt', filters.to);
       if (filters.search) { const s = filters.search.replace(/[,()]/g, '').trim(); if (s) q = q.or(`fio.ilike.%${s}%,kt_no.ilike.%${s}%,muassasa.ilike.%${s}%`); }
       return q;
     };
@@ -226,10 +227,11 @@ const DB = {
     const page     = filters.page     || 0;
 
     const applyFilters = (q) => {
-      if (filters.status)  q = q.eq('status',  filters.status);
-      if (filters.viloyat) q = q.eq('viloyat', filters.viloyat);
-      if (filters.from)    q = q.gte('qabul_vaqt', filters.from);
-      if (filters.to)      q = q.lte('qabul_vaqt', filters.to);
+      if (filters.status)   q = q.eq('status',   filters.status);
+      if (filters.viloyat)  q = q.eq('viloyat',  filters.viloyat);
+      if (filters.muassasa) q = q.eq('muassasa', filters.muassasa);
+      if (filters.from)     q = q.gte('qabul_vaqt', filters.from);
+      if (filters.to)       q = q.lte('qabul_vaqt', filters.to);
       if (filters.search) { const s = filters.search.replace(/[,()]/g, '').trim(); if (s) q = q.or(`fio.ilike.%${s}%,kt_no.ilike.%${s}%,muassasa.ilike.%${s}%`); }
       return q;
     };
