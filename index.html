@@ -112,18 +112,22 @@
       }
       localStorage.setItem(BUILD_KEY, APP_BUILD);
 
-      // Har 5 daqiqada yangi versiya borligini tekshir
+      // Har 60 sekundda yangi versiya borligini tekshir
       setInterval(async () => {
         try {
           const r = await fetch('/index.html?_=' + Date.now(), { cache: 'no-store' });
           const txt = await r.text();
           const m = txt.match(/APP_BUILD\s*=\s*'([^']+)'/);
           if (m && m[1] !== APP_BUILD) {
-            showToast && showToast('Tizim yangilandi — sahifa yangilanmoqda...', 'info');
-            setTimeout(() => location.reload(true), 2000);
+            // Foydalanuvchiga katta bildirishnoma ko'rsat
+            const div = document.createElement('div');
+            div.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:#1d4ed8;color:white;text-align:center;padding:14px 20px;font-size:15px;font-weight:700;box-shadow:0 4px 20px rgba(0,0,0,0.3)';
+            div.innerHTML = '🔄 Tizim yangilandi! Sahifa 3 soniyada avtomatik yangilanadi... &nbsp;<button onclick="location.reload(true)" style="background:white;color:#1d4ed8;border:none;border-radius:8px;padding:6px 16px;font-weight:800;cursor:pointer;font-size:14px">Hozir yangilash</button>';
+            document.body.prepend(div);
+            setTimeout(() => location.reload(true), 3000);
           }
         } catch(e) {}
-      }, 5 * 60 * 1000);
+      }, 60 * 1000);
     })();
   </script>
 </body>
