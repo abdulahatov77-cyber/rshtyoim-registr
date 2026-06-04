@@ -408,7 +408,7 @@ const InsultYangiPage = {
       label = "24 soatdan ortiq";
       isOver = true;
     } else {
-      label = `${soat} soat ichida`;
+      label = `${soat} soat`;
       isOver = false;
     }
     labelEl.textContent = label;

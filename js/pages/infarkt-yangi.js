@@ -307,7 +307,7 @@ const InfarktYangiPage = {
             </div>
           </div>
           <input id="simptom_vaqt" type="hidden" value="${d.simptom_vaqt||''}"/>
-          <p class="text-xs text-slate-400 mt-1">24 soatgacha — aniq soat kiriting. 24 dan ortiq bo'lsa "24 soatdan ko'p" avtomatik ko'rinadi. Noma'lum bo'lsa <span class="underline cursor-pointer text-blue-500" onclick="InfarktYangiPage.setSimptomNoma()">shu yerni bosing</span>.</p>
+          <p class="text-xs text-slate-400 mt-1">Aniq soat kiriting. 24 dan ortiq bo'lsa "24 soatdan ko'p" avtomatik ko'rinadi.</p>
         `,true)}
         ${this.field('birlamchi_yoki_takroriy','Birlamchi yoki takroriy?',`<select id="birlamchi_yoki_takroriy" class="form-select">
           ${this.selectOptions(APP_CONFIG.BIRLAMCHI_TAKROIRIY, d.birlamchi_yoki_takroriy||'')}</select>`,true)}
@@ -435,7 +435,7 @@ const InfarktYangiPage = {
       label = "24 soatdan ko'p";
       isOver = true;
     } else {
-      label = `${soat} soat ichida`;
+      label = `${soat} soat`;
       isOver = false;
     }
     labelEl.textContent = label;
