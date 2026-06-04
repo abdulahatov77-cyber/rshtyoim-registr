@@ -7,6 +7,7 @@ const DashboardPage = {
   _viewDateFrom: null,
   _viewDateTo: null,
   _viewDateMode: null,
+  _viewSelectedYear: null,
   _chartMode: 'abs', // 'abs' | '100k'
   _regionData: [],
   _regionProfile: null,
@@ -247,36 +248,30 @@ const DashboardPage = {
           const yearBtns = years.map(y => {
             const from = new Date(Date.UTC(y, 0, 1)).toISOString();
             const to   = new Date(Date.UTC(y, 11, 31, 23, 59, 59)).toISOString();
-            const isActive = activeMode === 'year' && activeFrom === from;
+            const isActive = (activeMode === 'year' && activeFrom === from) || (selYear === y && activeMode === 'month');
             return `<button onclick="DashboardPage.setDateFilter('${from}','${to}','year')"
               class="px-3 py-1.5 rounded-xl text-[11px] font-bold border transition-all ${isActive ? 'bg-amber-500 text-white border-amber-500' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'}">${y}</button>`;
           }).join('');
 
-          // Oylarni aniqlash (oxirgi 24 oy, o'sish tartibida)
-          const months = [];
-          for (let i = 23; i >= 0; i--) {
-            const d = new Date(now);
-            d.setUTCMonth(d.getUTCMonth() - i);
-            const y = d.getUTCFullYear();
-            const m = d.getUTCMonth();
-            if (y < 2024) continue;
-            const from = new Date(Date.UTC(y, m, 1)).toISOString();
-            const to   = new Date(Date.UTC(y, m+1, 0, 23, 59, 59)).toISOString();
-            const label = `${monthNames[m]}`;
-            const isActive = activeMode === 'month' && activeFrom === from;
-            months.push({ y, m, from, to, label, isActive });
+          // Faqat yil tanlanganda o'sha yilning oylarini ko'rsat
+          const selYear = DashboardPage._viewSelectedYear;
+          let monthRow = '';
+          if (selYear) {
+            const maxM = selYear === curY ? now.getUTCMonth() : 11;
+            const mos = [];
+            for (let m = 0; m <= maxM; m++) {
+              const from = new Date(Date.UTC(selYear, m, 1)).toISOString();
+              const to   = new Date(Date.UTC(selYear, m+1, 0, 23, 59, 59)).toISOString();
+              const isActive = activeMode === 'month' && activeFrom === from;
+              mos.push(`<button onclick="DashboardPage.setDateFilter('${from}','${to}','month')"
+                class="px-2.5 py-1 rounded-lg text-[11px] font-bold border transition-all ${isActive ? 'bg-amber-500 text-white border-amber-500' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'}">${monthNames[m]}</button>`);
+            }
+            monthRow = `
+              <div class="flex flex-wrap items-center gap-2 pt-2">
+                <span class="text-[10px] font-bold text-slate-500 uppercase mr-1">Oy:</span>
+                ${mos.join('')}
+              </div>`;
           }
-
-          // Oylarni yil bo'yicha guruhlash
-          const byYear = {};
-          months.forEach(mo => { if (!byYear[mo.y]) byYear[mo.y] = []; byYear[mo.y].push(mo); });
-
-          const monthRows = Object.entries(byYear).map(([y, mos]) => `
-            <div class="flex flex-wrap items-center gap-2">
-              <span class="text-[10px] font-black text-slate-400 uppercase w-8">${y}</span>
-              ${mos.map(mo => `<button onclick="DashboardPage.setDateFilter('${mo.from}','${mo.to}','month')"
-                class="px-2.5 py-1 rounded-lg text-[11px] font-bold border transition-all ${mo.isActive ? 'bg-amber-500 text-white border-amber-500' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'}">${mo.label}</button>`).join('')}
-            </div>`).join('');
 
           return `
           <div class="pt-3 border-t border-slate-100 space-y-2">
@@ -291,12 +286,7 @@ const DashboardPage = {
                 Barcha davr
               </button>
             </div>
-            <div class="flex items-start gap-2">
-              <div class="flex items-center gap-1 mr-1 mt-1">
-                <span class="text-[10px] font-bold text-slate-500 uppercase">Oy:</span>
-              </div>
-              <div class="flex flex-col gap-1.5">${monthRows}</div>
-            </div>
+            ${monthRow}
           </div>`;
         })()}
       </div>
@@ -544,6 +534,11 @@ const DashboardPage = {
     DashboardPage._viewDateFrom = from;
     DashboardPage._viewDateTo   = to;
     DashboardPage._viewDateMode = mode || null;
+    if (mode === 'year' && from) {
+      DashboardPage._viewSelectedYear = new Date(from).getUTCFullYear();
+    } else if (!from) {
+      DashboardPage._viewSelectedYear = null;
+    }
     DashboardPage.loadData();
   },
 
