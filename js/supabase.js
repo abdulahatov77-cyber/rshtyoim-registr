@@ -415,7 +415,7 @@ const DB = {
   },
 
   // Dashboard stats
-  async getDashboardStats(overrideViloyat, overrideMuassasa) {
+  async getDashboardStats(overrideViloyat, overrideMuassasa, dateFrom, dateTo) {
     const p = await Profile.getCurrent();
     const viloyat = overrideMuassasa ? null : (overrideViloyat !== undefined ? overrideViloyat : (p?.role === 'super_admin' ? null : p?.viloyat));
     const eqViloyat = (q) => overrideMuassasa ? q.eq('muassasa', overrideMuassasa) : (viloyat ? q.eq('viloyat', viloyat) : q);
@@ -434,10 +434,12 @@ const DB = {
 
     // Barcha statistikani bitta RPC chaqiruvida olamiz (14 ta alohida so'rov o'rniga)
     const { data: rpcData, error: rpcErr } = await getSupabase().rpc('get_dashboard_stats', {
-      p_viloyat:   viloyat || null,
-      p_muassasa:  overrideMuassasa || null,
+      p_viloyat:     viloyat || null,
+      p_muassasa:    overrideMuassasa || null,
       p_today_start: todayISO,
-      p_today_end:   todayEndISO
+      p_today_end:   todayEndISO,
+      p_from:        dateFrom || null,
+      p_to:          dateTo   || null
     });
     if (rpcErr) throw rpcErr;
     const s = rpcData || {};

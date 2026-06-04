@@ -251,7 +251,7 @@ const DashboardPage = {
               const from = new Date(Date.UTC(y, m, 1)).toISOString();
               const to   = new Date(Date.UTC(y, m+1, 0, 23, 59, 59)).toISOString();
               const monthNames = ['Yanvar','Fevral','Mart','Aprel','May','Iyun','Iyul','Avgust','Sentabr','Oktabr','Noyabr','Dekabr'];
-              const label = `${monthNames[m]} ${String(y).slice(2)}`;
+              const label = `${monthNames[m]} ${y}`;
               const isActive = DashboardPage._viewDateFrom === from;
               months.push(`<button onclick="DashboardPage.setDateFilter('${from}','${to}')"
                 class="px-3 py-1.5 rounded-xl text-[11px] font-bold border transition-all ${isActive ? 'bg-amber-500 text-white border-amber-500' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'}">${label}</button>`);
