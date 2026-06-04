@@ -392,7 +392,7 @@ const InfarktYangiPage = {
         </div>
         <div class="mt-4 border-t border-dashed border-gray-200 pt-4">
           ${this.field('shifokor_fio','Ushbu formani to\'ldiruvchi shifokor F.I.O',`<input id="shifokor_fio" class="form-input" value="${d.shifokor_fio||''}" placeholder="Familiya Ism Otasining ismi"/>`,true)}
-          ${this.field('shifokor_tel','Shifokor telefon raqami',`<input id="shifokor_tel" class="form-input" value="${d.shifokor_tel||''}" placeholder="+998 90 000 00 00" type="tel"/>`,false)}
+          ${this.field('shifokor_tel','Shifokor telefon raqami',`<input id="shifokor_tel" class="form-input" value="${d.shifokor_tel||''}" placeholder="+998 90 000 00 00" type="tel"/>`,true)}
         </div>
 
         <div class="mt-6 p-4 bg-green-50 border border-green-200 rounded-xl flex items-start gap-3">
@@ -510,7 +510,7 @@ const InfarktYangiPage = {
     if (this._step === 1) required = ['fio','tugilgan_sana','jins'];
     if (this._step === 2) required = ['aha_bali','simptom_vaqt','birlamchi_yoki_takroriy','infarkt_turi','killip','qon_bosimi','puls','ekg_vaqti','troponin','kkfmb','ekg_natija'];
     if (this._step === 3) {
-      required = ['muolaja_turi','shifokor_fio'];
+      required = ['muolaja_turi','shifokor_fio','shifokor_tel'];
       if (this._data.muolaja_turi === "Boshqa muassasaga o'tkazildi") required.push('otkazilgan_muassasa');
       if (this._data.muolaja_turi === 'Faqat KAG (diagnostik koronar angiografiya)') required.push('angio_natija');
     }
