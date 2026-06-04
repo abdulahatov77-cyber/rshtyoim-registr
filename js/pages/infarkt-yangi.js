@@ -392,6 +392,7 @@ const InfarktYangiPage = {
         </div>
         <div class="mt-4 border-t border-dashed border-gray-200 pt-4">
           ${this.field('shifokor_fio','Ushbu formani to\'ldiruvchi shifokor F.I.O',`<input id="shifokor_fio" class="form-input" value="${d.shifokor_fio||''}" placeholder="Familiya Ism Otasining ismi"/>`,true)}
+          ${this.field('shifokor_tel','Shifokor telefon raqami',`<input id="shifokor_tel" class="form-input" value="${d.shifokor_tel||''}" placeholder="+998 90 000 00 00" type="tel"/>`,false)}
         </div>
 
         <div class="mt-6 p-4 bg-green-50 border border-green-200 rounded-xl flex items-start gap-3">
@@ -457,7 +458,7 @@ const InfarktYangiPage = {
      'tez_yordam_kelgan_vaqt','birinchi_murojaat_vaqti',
      'fio','aha_bali','simptom_vaqt','birlamchi_yoki_takroriy',
      'infarkt_turi','killip','qon_bosimi','puls','ekg_vaqti','troponin','kkfmb',
-     'muolaja_turi','angio_natija','otkazilgan_muassasa','shifokor_fio']
+     'muolaja_turi','angio_natija','otkazilgan_muassasa','shifokor_fio','shifokor_tel']
     .forEach(id => {
       const el = document.getElementById(id);
       if (el) InfarktYangiPage._data[id] = el.value;

@@ -427,6 +427,16 @@ const BemorKartaPage = {
               <span class="text-sm text-red-800 font-bold block mb-1 flex items-center gap-2">${icon('alert-circle', 16)} Kuzatilgan asoratlar:</span>
               <span class="text-sm text-red-700">${Array.isArray(p.asoratlar) ? p.asoratlar.join(', ') : p.asoratlar}</span>
             </div>` : ''}
+
+            ${p.shifokor_fio ? `
+            <div class="mt-4 p-4 bg-slate-50 border border-slate-200 rounded-xl flex items-center gap-3">
+              <span class="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 flex-shrink-0">${icon('stethoscope', 18)}</span>
+              <div>
+                <div class="text-xs text-gray-500 font-medium">Ro'yxatga olgan shifokor</div>
+                <div class="text-sm font-bold text-gray-900">${esc(p.shifokor_fio)}</div>
+                ${p.shifokor_tel ? `<div class="text-xs text-blue-600 mt-0.5"><a href="tel:${esc(p.shifokor_tel)}">${esc(p.shifokor_tel)}</a></div>` : ''}
+              </div>
+            </div>` : ''}
           </div>
         </div>
       </div>
