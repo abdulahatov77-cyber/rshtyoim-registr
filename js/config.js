@@ -377,6 +377,7 @@ const APP_CONFIG = {
 
   CHIQARISH_NATIJALARI: [
     "Tuzaldi",
+    "O'zgarishsiz",
     "Reabilitatsiyaga yuborildi",
     "Boshqa shifoxonaga o'tkazildi",
     "Vafot etdi"
