@@ -1211,7 +1211,7 @@ const MuassasaDB = {
 
   async fetchAllRecords() {
     const sb = getSupabase();
-    const cols = 'kt_no,fio,viloyat,muassasa,qabul_vaqt,status';
+    const cols = 'kt_no,fio,tugilgan_yil,viloyat,muassasa,qabul_vaqt,status';
     const fetchAll = async (table) => {
       let all = [], from = 0;
       while (true) {
@@ -1231,6 +1231,24 @@ const MuassasaDB = {
       ...infs.map(p => ({ ...p, _type: 'infarkt' })),
       ...ins.map(p => ({ ...p, _type: 'insult' }))
     ];
+  },
+
+  // Bir xil F.I.O + tug'ilgan yili + qabul sanasi (kun) bilan, bir xil turdagi (infarkt/insult) yozuvlarni topadi
+  findDuplicates(records) {
+    const dupKey = (r) => {
+      const fio = (r.fio || '').trim().toLowerCase();
+      const yil = r.tugilgan_yil || '';
+      const sana = r.qabul_vaqt ? new Date(r.qabul_vaqt).toISOString().slice(0, 10) : '';
+      if (!fio || !sana) return null;
+      return `${r._type}|${fio}|${yil}|${sana}`;
+    };
+    const groups = {};
+    for (const r of records) {
+      const key = dupKey(r);
+      if (!key) continue;
+      (groups[key] = groups[key] || []).push(r);
+    }
+    return Object.values(groups).filter(g => g.length > 1);
   }
 };
 

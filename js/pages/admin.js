@@ -9,6 +9,8 @@ const AdminPage = {
   _selViloyat: '',
   _auditData: null,
   _auditLoading: false,
+  _dupData: null,
+  _dupLoading: false,
 
   async render() {
     const isSuperAdmin = await Profile.isSuperAdmin();
@@ -73,6 +75,7 @@ const AdminPage = {
             ['muassasalar', '🏥 Muassasalar'],
             ['aholi', '👨‍👩‍👧 Aholi soni'],
             ['audit', '🔍 Ma\'lumot sifati'],
+            ['duplikat', '👥 Duplikatlar'],
             ['logs', '📋 Kirish tarixi'],
             ['xabarlar', '💬 Xabarlar']
           ].map(([t, label]) => `
@@ -108,7 +111,7 @@ const AdminPage = {
 
   switchTab(tab) {
     AdminPage._activeTab = tab;
-    ['users','muassasalar','aholi','audit','logs','xabarlar'].forEach(t => {
+    ['users','muassasalar','aholi','audit','duplikat','logs','xabarlar'].forEach(t => {
       const btn = document.getElementById(`tab-btn-${t}`);
       if (!btn) return;
       btn.style.background = t === tab ? '#1e293b' : 'transparent';
@@ -125,6 +128,7 @@ const AdminPage = {
     else if (AdminPage._activeTab === 'muassasalar') el.innerHTML = AdminPage._buildMuassasaTab();
     else if (AdminPage._activeTab === 'aholi') el.innerHTML = AdminPage._buildAholiTab();
     else if (AdminPage._activeTab === 'audit') el.innerHTML = AdminPage._buildAuditTab();
+    else if (AdminPage._activeTab === 'duplikat') el.innerHTML = AdminPage._buildDupTab();
     else if (AdminPage._activeTab === 'logs') { el.innerHTML = '<div style="color:#94a3b8;padding:32px;text-align:center">Yuklanmoqda...</div>'; AdminPage._loadLogs(); }
     else if (AdminPage._activeTab === 'xabarlar') { el.innerHTML = '<div style="color:#94a3b8;padding:32px;text-align:center">Yuklanmoqda...</div>'; AdminPage._loadFeedback(); }
     initIcons();
@@ -826,6 +830,127 @@ const AdminPage = {
       AdminPage._auditLoading = false;
       AdminPage._renderTabContent();
     }
+  },
+
+  _buildDupTab() {
+    const groups = AdminPage._dupData;
+    const loading = AdminPage._dupLoading;
+
+    if (loading) return `
+      <div class="card" style="text-align:center;padding:60px">
+        <div class="spinner" style="width:36px;height:36px;margin:0 auto 16px"></div>
+        <p style="color:#64748b;font-size:14px">Duplikat bemorlar qidirilmoqda...</p>
+      </div>`;
+
+    if (!groups) return `
+      <div class="card" style="text-align:center;padding:60px">
+        <div style="font-size:48px;margin-bottom:16px">👥</div>
+        <h3 style="color:#e2e8f0;font-size:18px;font-weight:700;margin-bottom:8px">Duplikat bemorlarni tekshirish</h3>
+        <p style="color:#64748b;font-size:14px;margin-bottom:24px;max-width:480px;margin-left:auto;margin-right:auto">
+          Bir xil F.I.O, tug'ilgan yili va qabul sanasiga ega (infarkt yoki insult ro'yxatida alohida-alohida) bir nechta yozuvlar topiladi.
+        </p>
+        <button onclick="AdminPage.runDupCheck()"
+          style="padding:12px 32px;background:#2563eb;border:none;border-radius:12px;color:#fff;font-size:14px;font-weight:700;cursor:pointer">
+          Tekshirishni boshlash
+        </button>
+      </div>`;
+
+    if (groups.length === 0) return `
+      <div class="card" style="text-align:center;padding:40px">
+        <div style="font-size:40px;margin-bottom:12px">✅</div>
+        <h3 style="color:#34d399;font-size:16px;font-weight:700">Duplikat topilmadi!</h3>
+        <p style="color:#64748b;font-size:13px;margin-top:8px">Bir xil F.I.O + tug'ilgan yil + qabul sanasiga ega yozuvlar yo'q.</p>
+        <button onclick="AdminPage._dupData=null;AdminPage._renderTabContent()"
+          style="margin-top:20px;padding:8px 20px;background:rgba(99,118,158,0.15);border:1px solid rgba(99,118,158,0.2);border-radius:10px;color:#94a3b8;font-size:13px;cursor:pointer">
+          Qayta tekshirish
+        </button>
+      </div>`;
+
+    const totalRecords = groups.reduce((s, g) => s + g.length, 0);
+
+    return `
+      <div class="stat-grid" style="grid-template-columns:repeat(2,1fr);margin-bottom:16px">
+        <div class="stat-card">
+          <div class="stat-icon" style="background:rgba(245,158,11,0.15);color:#fbbf24">${icon('users',24)}</div>
+          <div><div class="stat-value">${groups.length}</div><div class="stat-label">Duplikat guruhlari</div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:rgba(239,68,68,0.15);color:#f87171">${icon('copy',24)}</div>
+          <div><div class="stat-value">${totalRecords}</div><div class="stat-label">Jami takroriy yozuvlar</div></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header" style="flex-wrap:wrap;gap:8px">
+          <span class="card-title">${icon('alert-triangle',16)} ${groups.length} ta duplikat guruhi topildi</span>
+          <div style="display:flex;gap:8px">
+            <button onclick="AdminPage.runDupCheck()" class="btn btn-ghost btn-sm">${icon('refresh-cw',14)} Yangilash</button>
+            <button onclick="AdminPage._dupData=null;AdminPage._renderTabContent()" class="btn btn-ghost btn-sm">Yopish</button>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:14px;padding:16px">
+          ${groups.map((g, gi) => `
+            <div style="border:1px solid rgba(99,118,158,0.2);border-radius:12px;overflow:hidden">
+              <div style="background:rgba(245,158,11,0.08);padding:8px 14px;font-size:12px;font-weight:700;color:#fbbf24">
+                Guruh ${gi+1}: ${g[0].fio || '—'} • Tug'ilgan yili: ${g[0].tugilgan_yil || '—'} • ${g[0]._type === 'infarkt' ? 'Infarkt' : 'Insult'}
+              </div>
+              <table class="data-table">
+                <thead><tr>
+                  <th>K/T No</th><th>F.I.O</th><th>Tug'ilgan yili</th><th>Viloyat</th><th>Muassasa</th><th>Qabul sanasi</th><th>Amal</th>
+                </tr></thead>
+                <tbody>
+                  ${g.map(r => `<tr>
+                    <td style="font-family:monospace;font-size:12px;color:#64748b">${r.kt_no}</td>
+                    <td style="font-weight:600;font-size:13px">${r.fio||'—'}</td>
+                    <td style="font-size:12px;color:#94a3b8">${r.tugilgan_yil||'—'}</td>
+                    <td style="font-size:12px;color:#94a3b8">${r.viloyat||'—'}</td>
+                    <td style="font-size:12px;color:#94a3b8">${r.muassasa||'—'}</td>
+                    <td style="font-size:12px;color:#94a3b8">${r.qabul_vaqt ? new Date(r.qabul_vaqt).toLocaleString('uz-UZ',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '—'}</td>
+                    <td>
+                      <button onclick="AdminPage.deleteDupRecord('${r.kt_no}','${r._type}')"
+                        style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.2);border-radius:8px;padding:5px 10px;color:#f87171;font-size:12px;cursor:pointer">
+                        O'chirish
+                      </button>
+                    </td>
+                  </tr>`).join('')}
+                </tbody>
+              </table>
+            </div>
+          `).join('')}
+        </div>
+      </div>`;
+  },
+
+  async runDupCheck() {
+    AdminPage._dupLoading = true;
+    AdminPage._dupData = null;
+    AdminPage._renderTabContent();
+    try {
+      const all = await MuassasaDB.fetchAllRecords();
+      AdminPage._dupData = MuassasaDB.findDuplicates(all);
+    } catch(err) {
+      showToast('❌ Tekshirish xatosi: ' + err.message, 'error');
+      AdminPage._dupData = [];
+    } finally {
+      AdminPage._dupLoading = false;
+      AdminPage._renderTabContent();
+    }
+  },
+
+  async deleteDupRecord(kt_no, type) {
+    if (!confirm(`K/T No: ${kt_no} — bu duplikat bemor yozuvini o'chirmoqchimisiz?`)) return;
+    try {
+      const table = type === 'infarkt' ? 'infarkt_qabul' : 'insult_qabul';
+      const { error } = await getSupabase().from(table).delete().eq('kt_no', kt_no);
+      if (error) throw error;
+      showToast(`✅ O'chirildi: ${kt_no}`, 'success');
+      if (AdminPage._dupData) {
+        AdminPage._dupData = AdminPage._dupData
+          .map(g => g.filter(r => !(String(r.kt_no) === String(kt_no) && r._type === type)))
+          .filter(g => g.length > 1);
+        AdminPage._renderTabContent();
+      }
+    } catch(err) { showToast('❌ ' + err.message, 'error'); }
   },
 
   async fixAuditRecord(kt_no, type, newMuassasa, oldMuassasa) {
