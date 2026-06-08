@@ -1211,7 +1211,7 @@ const MuassasaDB = {
 
   async fetchAllRecords() {
     const sb = getSupabase();
-    const cols = 'kt_no,fio,tugilgan_yil,viloyat,muassasa,qabul_vaqt,status';
+    const cols = 'kt_no,fio,tugilgan_yil,viloyat,muassasa,qabul_vaqt,status,otkazilgan_muassasa';
     const fetchAll = async (table) => {
       let all = [], from = 0;
       while (true) {
@@ -1248,7 +1248,14 @@ const MuassasaDB = {
       if (!key) continue;
       (groups[key] = groups[key] || []).push(r);
     }
-    return Object.values(groups).filter(g => g.length > 1);
+    // Agar guruhdagi yozuvlardan biri "boshqa muassasaga o'tkazildi" bo'lsa va
+    // muassasalar har xil bo'lsa — bu bemor harakati (perevod), duplikat emas
+    const isTransferGroup = (g) => {
+      const muassasalar = new Set(g.map(r => r.muassasa));
+      if (muassasalar.size < 2) return false;
+      return g.some(r => r.status === 'otkazildi' || r.otkazilgan_muassasa);
+    };
+    return Object.values(groups).filter(g => g.length > 1 && !isTransferGroup(g));
   }
 };
 
