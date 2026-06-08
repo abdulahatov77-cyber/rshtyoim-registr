@@ -1235,12 +1235,15 @@ const MuassasaDB = {
 
   // Bir xil F.I.O + tug'ilgan yili + qabul sanasi (kun) bilan, bir xil turdagi (infarkt/insult) yozuvlarni topadi
   findDuplicates(records) {
+    // Bir xil F.I.O + tug'ilgan yili + qabul sanasi + BIR XIL muassasa — faqat shu holat duplikat.
+    // Turli muassasalardagi yozuvlar bemor harakati (perevod) bo'lishi mumkin, shuning uchun hisobga olinmaydi.
     const dupKey = (r) => {
       const fio = (r.fio || '').trim().toLowerCase();
       const yil = r.tugilgan_yil || '';
       const sana = r.qabul_vaqt ? new Date(r.qabul_vaqt).toISOString().slice(0, 10) : '';
-      if (!fio || !sana) return null;
-      return `${r._type}|${fio}|${yil}|${sana}`;
+      const muassasa = (r.muassasa || '').trim().toLowerCase();
+      if (!fio || !sana || !muassasa) return null;
+      return `${r._type}|${fio}|${yil}|${sana}|${muassasa}`;
     };
     const groups = {};
     for (const r of records) {
@@ -1248,14 +1251,7 @@ const MuassasaDB = {
       if (!key) continue;
       (groups[key] = groups[key] || []).push(r);
     }
-    // Agar guruhdagi yozuvlardan biri "boshqa muassasaga o'tkazildi" bo'lsa va
-    // muassasalar har xil bo'lsa — bu bemor harakati (perevod), duplikat emas
-    const isTransferGroup = (g) => {
-      const muassasalar = new Set(g.map(r => r.muassasa));
-      if (muassasalar.size < 2) return false;
-      return g.some(r => r.status === 'otkazildi' || r.otkazilgan_muassasa);
-    };
-    return Object.values(groups).filter(g => g.length > 1 && !isTransferGroup(g));
+    return Object.values(groups).filter(g => g.length > 1);
   }
 };
 
