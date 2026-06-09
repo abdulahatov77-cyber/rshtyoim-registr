@@ -120,7 +120,7 @@ const DB = {
     }
     // kt_no takrorlanish ehtimoli bor — duplicate key bo'lsa yangi raqam bilan qayta urinish
     for (let attempt = 0; attempt < 5; attempt++) {
-      if (attempt > 0) clean.kt_no = Utils.generateKtNo();
+      if (attempt > 0) clean.kt_no = Utils.generateKtNo(clean.muassasa || '');
       const { data: result, error } = await getSupabase()
         .from('infarkt_qabul')
         .insert({ ...clean, user_id: user?.id })
@@ -218,7 +218,7 @@ const DB = {
       if (data[k] !== undefined) clean[k] = data[k];
     }
     for (let attempt = 0; attempt < 5; attempt++) {
-      if (attempt > 0) clean.kt_no = Utils.generateKtNo();
+      if (attempt > 0) clean.kt_no = Utils.generateKtNo(clean.muassasa || '');
       const { data: result, error } = await getSupabase()
         .from('insult_qabul')
         .insert({ ...clean, user_id: user?.id })

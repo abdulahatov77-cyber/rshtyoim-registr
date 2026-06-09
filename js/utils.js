@@ -86,13 +86,32 @@ const Utils = {
   },
 
   // Generate KT No suggestion
-  generateKtNo() {
+  // Muassasa nomidan qisqa prefiks olish: "Pop politravma markazi" → "POP"
+  muassasaPrefix(muassasa) {
+    if (!muassasa) return 'KT';
+    const m = muassasa.trim();
+    // RSHTYOIM filiallari uchun: "RSHTYOIM Namangan filiali" → "RSH-NAM"
+    const rshMatch = m.match(/RSHTYOIM\s+(\S+)/i);
+    if (rshMatch) {
+      const loc = rshMatch[1].replace(/filiali?/i,'').trim();
+      return 'RSH-' + loc.slice(0,4).toUpperCase();
+    }
+    // Respublika markazi
+    if (/respublika shoshilinch/i.test(m)) return 'RSHM';
+    // "Pop politravma markazi" → "POP", "Sirdaryo politravma markazi" → "SIR"
+    // Birinchi so'z (shahar/tuman nomi) — 3-4 harf
+    const first = m.split(/\s+/)[0];
+    return first.slice(0, 4).toUpperCase().replace(/[^A-Z0-9]/g, '');
+  },
+
+  generateKtNo(muassasa) {
     const now = new Date();
     const y = now.getFullYear().toString().slice(2);
     const m = (now.getMonth() + 1).toString().padStart(2, '0');
     const d = now.getDate().toString().padStart(2, '0');
     const rand = Math.floor(Math.random() * 900000) + 100000;
-    return `KT-${y}${m}${d}-${rand}`;
+    const prefix = Utils.muassasaPrefix(muassasa);
+    return `${prefix}-${y}${m}${d}-${rand}`;
   },
 
   // Status badge HTML

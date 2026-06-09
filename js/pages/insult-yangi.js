@@ -10,7 +10,7 @@ const InsultYangiPage = {
     InsultYangiPage._profile = profile;
     InsultYangiPage._step = 0;
     InsultYangiPage._data = {
-      kt_no: Utils.generateKtNo(),
+      kt_no: Utils.generateKtNo(profile?.muassasa || ''),
       qabul_vaqt: Utils.formatDateInput(new Date()),
       viloyat: (profile?.role === 'admin' || profile?.role === 'super_admin') ? '' : (profile?.viloyat || '')
     };
@@ -169,6 +169,13 @@ const InsultYangiPage = {
     InsultYangiPage._data.muassasa = val;
     const div = document.getElementById('boshqa-muassasa-div');
     if (div) div.style.display = val === 'Boshqa' ? 'block' : 'none';
+    // Muassasa tanlanganida kt_no prefiksini yangilaymiz (faqat avtomatik raqam bo'lsa)
+    if (val && val !== 'Boshqa' && InsultYangiPage._data.kt_no) {
+      const newKt = Utils.generateKtNo(val);
+      InsultYangiPage._data.kt_no = newKt;
+      const ktEl = document.getElementById('kt_no');
+      if (ktEl) ktEl.value = newKt;
+    }
   },
 
   onViloyatChange(val) {

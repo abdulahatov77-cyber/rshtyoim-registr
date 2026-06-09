@@ -10,7 +10,7 @@ const InfarktYangiPage = {
     InfarktYangiPage._profile = profile;
     InfarktYangiPage._step = 0;
     InfarktYangiPage._data = {
-      kt_no: Utils.generateKtNo(),
+      kt_no: Utils.generateKtNo(profile?.muassasa || ''),
       qabul_vaqt: Utils.formatDateInput(new Date()),
       viloyat: (profile?.role === 'admin' || profile?.role === 'super_admin') ? '' : (profile?.viloyat || '')
     };
@@ -249,6 +249,12 @@ const InfarktYangiPage = {
     InfarktYangiPage._data.muassasa = val;
     const div = document.getElementById('boshqa-muassasa-div');
     if (div) div.style.display = val === 'Boshqa' ? 'block' : 'none';
+    if (val && val !== 'Boshqa' && InfarktYangiPage._data.kt_no) {
+      const newKt = Utils.generateKtNo(val);
+      InfarktYangiPage._data.kt_no = newKt;
+      const ktEl = document.getElementById('kt_no');
+      if (ktEl) ktEl.value = newKt;
+    }
   },
 
   onViloyatChange(val) {
