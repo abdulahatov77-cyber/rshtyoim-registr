@@ -1136,9 +1136,17 @@ const Profile = {
     return p?.role === 'super_admin';
   },
   async listAll() {
-    const { data, error } = await getSupabase().from('profiles').select('*').order('created_at', { ascending: false }).range(0, 9999);
-    if (error) throw error;
-    return data || [];
+    const sb = getSupabase();
+    let all = [], from = 0;
+    while (true) {
+      const { data, error } = await sb.from('profiles').select('*').order('created_at', { ascending: false }).range(from, from + 999);
+      if (error) throw error;
+      if (!data || data.length === 0) break;
+      all = all.concat(data);
+      if (data.length < 1000) break;
+      from += 1000;
+    }
+    return all;
   },
   async setRole(userId, role) {
     const { data, error } = await getSupabase().from('profiles').update({ role }).eq('id', userId).select().single();

@@ -4,6 +4,8 @@ const AdminPage = {
   _totalCount: null,
   _search: '',
   _filterRole: '',
+  _usersPage: 1,
+  _usersPerPage: 50,
   _activeTab: 'users',
   _overrides: [],
   _selViloyat: '',
@@ -229,7 +231,7 @@ const AdminPage = {
               <button class="btn btn-ghost btn-sm" onclick="AdminPage._loadProfiles()">${icon('refresh-cw',14)} Yangilash</button>
             </div>
           </div>
-          <div style="overflow-x:auto" id="admin-table-wrap">${AdminPage._buildTable(filtered)}</div>
+          <div style="overflow-x:auto" id="admin-table-wrap">${AdminPage._buildTable()}</div>
         </div>
         <div class="card" style="width:240px;position:sticky;top:16px">
           <div class="card-header"><span class="card-title">${icon('map',14)} Viloyatlar bo'yicha</span></div>
@@ -245,23 +247,56 @@ const AdminPage = {
       </div>`;
   },
 
-  _buildTable(list) {
+  _buildTable() {
+    const filtered = AdminPage.getFiltered();
+    const perPage = AdminPage._usersPerPage;
+    const page = AdminPage._usersPage || 1;
+    const total = filtered.length;
+    const totalPages = Math.ceil(total / perPage) || 1;
+    const from = (page - 1) * perPage;
+    const pageList = filtered.slice(from, from + perPage);
+
+    const paginationHtml = totalPages > 1 ? `
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-top:1px solid rgba(99,118,158,0.15);flex-wrap:wrap;gap:8px">
+        <span style="font-size:12px;color:#64748b">
+          <b style="color:#e2e8f0">${from+1}–${Math.min(from+perPage,total)}</b> / jami <b style="color:#e2e8f0">${total}</b> ta
+        </span>
+        <div style="display:flex;gap:4px;flex-wrap:wrap">
+          <button onclick="AdminPage._goUsersPage(1)" ${page===1?'disabled':''} style="padding:4px 10px;border-radius:7px;border:1px solid rgba(99,118,158,0.2);background:${page===1?'transparent':'rgba(37,99,235,0.15)'};color:${page===1?'#475569':'#60a5fa'};font-size:12px;cursor:${page===1?'default':'pointer'}">«</button>
+          <button onclick="AdminPage._goUsersPage(${page-1})" ${page===1?'disabled':''} style="padding:4px 10px;border-radius:7px;border:1px solid rgba(99,118,158,0.2);background:${page===1?'transparent':'rgba(37,99,235,0.15)'};color:${page===1?'#475569':'#60a5fa'};font-size:12px;cursor:${page===1?'default':'pointer'}">‹</button>
+          ${Array.from({length:Math.min(5,totalPages)},(_,i)=>{
+            let p2 = page <= 3 ? i+1 : page >= totalPages-2 ? totalPages-4+i : page-2+i;
+            p2 = Math.max(1,Math.min(totalPages,p2));
+            return `<button onclick="AdminPage._goUsersPage(${p2})" style="padding:4px 10px;border-radius:7px;border:1px solid rgba(99,118,158,0.2);background:${p2===page?'#2563eb':'rgba(37,99,235,0.1)'};color:${p2===page?'#fff':'#94a3b8'};font-size:12px;font-weight:${p2===page?'700':'400'};cursor:pointer">${p2}</button>`;
+          }).join('')}
+          <button onclick="AdminPage._goUsersPage(${page+1})" ${page===totalPages?'disabled':''} style="padding:4px 10px;border-radius:7px;border:1px solid rgba(99,118,158,0.2);background:${page===totalPages?'transparent':'rgba(37,99,235,0.15)'};color:${page===totalPages?'#475569':'#60a5fa'};font-size:12px;cursor:${page===totalPages?'default':'pointer'}">›</button>
+          <button onclick="AdminPage._goUsersPage(${totalPages})" ${page===totalPages?'disabled':''} style="padding:4px 10px;border-radius:7px;border:1px solid rgba(99,118,158,0.2);background:${page===totalPages?'transparent':'rgba(37,99,235,0.15)'};color:${page===totalPages?'#475569':'#60a5fa'};font-size:12px;cursor:${page===totalPages?'default':'pointer'}">»</button>
+        </div>
+      </div>` : '';
+
     return `<table class="data-table">
       <thead><tr>
         <th>#</th><th>Email</th><th>F.I.O</th><th>Rol</th>
         <th>Viloyat</th><th>Ro'yxat sanasi</th><th style="min-width:300px">Amallar</th>
       </tr></thead>
       <tbody>
-        ${list.length
-          ? list.map((p,i) => AdminPage.renderRow(p, i+1)).join('')
+        ${pageList.length
+          ? pageList.map((p,i) => AdminPage.renderRow(p, from+i+1)).join('')
           : `<tr><td colspan="7" style="text-align:center;padding:40px;color:#64748b">${icon('inbox',24)}<br><span style="font-size:13px">Foydalanuvchilar yo'q</span></td></tr>`}
       </tbody>
-    </table>`;
+    </table>${paginationHtml}`;
   },
 
   _renderTable() {
+    AdminPage._usersPage = 1;
     const wrap = document.getElementById('admin-table-wrap');
-    if (wrap) { wrap.innerHTML = AdminPage._buildTable(AdminPage.getFiltered()); initIcons(); }
+    if (wrap) { wrap.innerHTML = AdminPage._buildTable(); initIcons(); }
+  },
+
+  _goUsersPage(page) {
+    AdminPage._usersPage = page;
+    const wrap = document.getElementById('admin-table-wrap');
+    if (wrap) { wrap.innerHTML = AdminPage._buildTable(); initIcons(); }
   },
 
   renderRow(p, num) {
