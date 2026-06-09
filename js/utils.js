@@ -91,7 +91,7 @@ const Utils = {
     const y = now.getFullYear().toString().slice(2);
     const m = (now.getMonth() + 1).toString().padStart(2, '0');
     const d = now.getDate().toString().padStart(2, '0');
-    const rand = Math.floor(Math.random() * 9000) + 1000;
+    const rand = Math.floor(Math.random() * 900000) + 100000;
     return `KT-${y}${m}${d}-${rand}`;
   },
 

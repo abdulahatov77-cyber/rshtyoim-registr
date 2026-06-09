@@ -118,13 +118,18 @@ const DB = {
     for (const k of allowed) {
       if (data[k] !== undefined) clean[k] = data[k];
     }
-    const { data: result, error } = await getSupabase()
-      .from('infarkt_qabul')
-      .insert({ ...clean, user_id: user?.id })
-      .select()
-      .single();
-    if (error) throw error;
-    return result;
+    // kt_no takrorlanish ehtimoli bor — duplicate key bo'lsa yangi raqam bilan qayta urinish
+    for (let attempt = 0; attempt < 5; attempt++) {
+      if (attempt > 0) clean.kt_no = Utils.generateKtNo();
+      const { data: result, error } = await getSupabase()
+        .from('infarkt_qabul')
+        .insert({ ...clean, user_id: user?.id })
+        .select()
+        .single();
+      if (!error) return result;
+      if (!error.message?.includes('duplicate key') && !error.message?.includes('unique constraint')) throw error;
+    }
+    throw new Error('K/T raqam yaratishda xatolik — iltimos qayta urinib ko\'ring');
   },
 
   // Ro'yxat uchun faqat kerakli ustunlar (select * emas)
@@ -212,13 +217,17 @@ const DB = {
     for (const k of allowed) {
       if (data[k] !== undefined) clean[k] = data[k];
     }
-    const { data: result, error } = await getSupabase()
-      .from('insult_qabul')
-      .insert({ ...clean, user_id: user?.id })
-      .select()
-      .single();
-    if (error) throw error;
-    return result;
+    for (let attempt = 0; attempt < 5; attempt++) {
+      if (attempt > 0) clean.kt_no = Utils.generateKtNo();
+      const { data: result, error } = await getSupabase()
+        .from('insult_qabul')
+        .insert({ ...clean, user_id: user?.id })
+        .select()
+        .single();
+      if (!error) return result;
+      if (!error.message?.includes('duplicate key') && !error.message?.includes('unique constraint')) throw error;
+    }
+    throw new Error('K/T raqam yaratishda xatolik — iltimos qayta urinib ko\'ring');
   },
 
   _LIST_COLS_INS: 'kt_no,fio,tugilgan_sana,tugilgan_yil,jins,viloyat,muassasa,qabul_vaqt,status,insult_turi,muolaja_turi,nihss_qabul,otkazilgan_muassasa,created_at',
