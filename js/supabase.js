@@ -118,7 +118,7 @@ const DB = {
     for (const k of allowed) {
       if (data[k] !== undefined) clean[k] = data[k];
     }
-    // kt_no takrorlanish ehtimoli bor — duplicate key bo'lsa yangi raqam bilan qayta urinish
+    // (kt_no, muassasa) juftligi takrorlansa — yangi kt_no bilan qayta urinish
     for (let attempt = 0; attempt < 5; attempt++) {
       if (attempt > 0) clean.kt_no = Utils.generateKtNo(clean.muassasa || '');
       const { data: result, error } = await getSupabase()
@@ -127,9 +127,10 @@ const DB = {
         .select()
         .single();
       if (!error) return result;
-      if (!error.message?.includes('duplicate key') && !error.message?.includes('unique constraint')) throw error;
+      const isKtDup = error.message?.includes('infarkt_qabul_kt_no_muassasa_key');
+      if (!isKtDup) throw error;
     }
-    throw new Error('K/T raqam yaratishda xatolik — iltimos qayta urinib ko\'ring');
+    throw new Error(`"${clean.kt_no}" raqami bu muassasada allaqachon mavjud — boshqa raqam kiriting`);
   },
 
   // Ro'yxat uchun faqat kerakli ustunlar (select * emas)
@@ -225,9 +226,10 @@ const DB = {
         .select()
         .single();
       if (!error) return result;
-      if (!error.message?.includes('duplicate key') && !error.message?.includes('unique constraint')) throw error;
+      const isKtDup = error.message?.includes('insult_qabul_kt_no_muassasa_key');
+      if (!isKtDup) throw error;
     }
-    throw new Error('K/T raqam yaratishda xatolik — iltimos qayta urinib ko\'ring');
+    throw new Error(`"${clean.kt_no}" raqami bu muassasada allaqachon mavjud — boshqa raqam kiriting`);
   },
 
   _LIST_COLS_INS: 'kt_no,fio,tugilgan_sana,tugilgan_yil,jins,viloyat,muassasa,qabul_vaqt,status,insult_turi,muolaja_turi,nihss_qabul,otkazilgan_muassasa,created_at',
