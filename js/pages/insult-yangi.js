@@ -613,14 +613,12 @@ const InsultYangiPage = {
       if (el) InsultYangiPage._data[k] = el.checked;
     });
 
-    // kt_vaqti, trombolizis_vaqti, trombektomiya_vaqti: sana + soat dan yig'ish
+    // kt_vaqti, trombolizis_vaqti, trombektomiya_vaqti: sana + soat IKKALASI bo'lganda yig'ish
     for (const [prefix, field] of [['kt','kt_vaqti'],['trombolizis','trombolizis_vaqti'],['trombektomiya','trombektomiya_vaqti']]) {
       const sana = document.getElementById(`${prefix}_sana`)?.value;
       const soat = document.getElementById(`${prefix}_soat`)?.value;
       if (sana && soat) {
         InsultYangiPage._data[field] = `${sana}T${soat}`;
-      } else if (sana && !soat) {
-        InsultYangiPage._data[field] = sana;
       } else {
         InsultYangiPage._data[field] = '';
       }
@@ -739,23 +737,20 @@ const InsultYangiPage = {
       const isTrombektomiya = muolajaL.includes('trombektomiya') || muolajaL.includes('tromboekstraksiya') || muolajaL.includes('tromboaspiratsiya') || muolajaL.includes('kombinatsiya') || muolajaL.includes('angiografiya') || muolajaL.includes('stentlash') || muolajaL.includes('tlbap');
       const isMskt = this._data.mskt === 'Ha – o\'tkazildi' || muolajaL.includes('mskt');
 
-      // KT/MSKT vaqti majburiy (MSKT o'tkazilganda)
-      if (isMskt && !this._data.kt_vaqti) {
-        const sana = document.getElementById('kt_sana')?.value;
-        const soat = document.getElementById('kt_soat')?.value;
-        if (!sana) {
+      // KT/MSKT vaqti majburiy (MSKT o'tkazilganda) — sana VA soat ikkalasi ham shart
+      if (isMskt) {
+        const ktSana = document.getElementById('kt_sana')?.value;
+        const ktSoat = document.getElementById('kt_soat')?.value;
+        if (!ktSana) {
           valid = false;
           document.getElementById('kt_sana')?.classList.add('border-red-500');
           document.getElementById('kt_sana')?.focus();
           showToast('⚠️ KT/MSKT sanasini kiriting!', 'error', 5000);
-        } else if (!soat) {
+        } else if (!ktSoat) {
           valid = false;
           document.getElementById('kt_soat')?.classList.add('border-red-500');
           document.getElementById('kt_soat')?.focus();
           showToast('⚠️ KT/MSKT soatini kiriting!', 'error', 5000);
-        } else {
-          valid = false;
-          showToast('⚠️ KT/MSKT vaqtini kiriting!', 'error', 5000);
         }
       } else if (this._data.kt_vaqti) {
         const kv = new Date(this._data.kt_vaqti + ':00+05:00');
