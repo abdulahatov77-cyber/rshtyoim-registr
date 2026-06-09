@@ -211,6 +211,12 @@ const BemorKartaPage = {
               <p class="text-white/60 text-xs flex items-center gap-1 mt-2">
                 ${icon('clock', 12)} Qabul qilingan: ${Utils.formatDateTime(p.qabul_vaqt)}
               </p>
+              ${(p.status === 'chiqarildi' || p.status === 'otkazildi' || p.status === 'vafot') && p._chiqarish?.chiqish_sana ? `
+              <p class="text-white/60 text-xs flex items-center gap-1 mt-1">
+                ${icon(p.status === 'vafot' ? 'x-circle' : p.status === 'otkazildi' ? 'arrow-right-circle' : 'log-out', 12)}
+                ${p.status === 'chiqarildi' ? 'Chiqarilgan' : p.status === 'otkazildi' ? 'O\'tkazilgan' : 'Vafot etgan'}: <span class="text-white/80 font-semibold">${Utils.formatDateTime(p._chiqarish.chiqish_sana)}</span>
+                ${p._chiqarish.natija ? `<span class="ml-1 opacity-70">— ${p._chiqarish.natija}</span>` : ''}
+              </p>` : ''}
             </div>
           </div>
           <div class="flex items-center gap-3 flex-wrap">

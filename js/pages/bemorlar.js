@@ -210,6 +210,26 @@ const BemorlarPage = {
         totalCount = combined.length;
       }
 
+      // Chiqarilgan/o'tkazilgan bemorlar uchun chiqarish sanasini batch yuklaymiz
+      const exitStatuses = ['chiqarildi', 'otkazildi', 'vafot'];
+      const needsExit = combined.filter(p => exitStatuses.includes(p.status));
+      if (needsExit.length > 0) {
+        const infKts = needsExit.filter(p => p._type === 'infarkt').map(p => p.kt_no);
+        const insKts = needsExit.filter(p => p._type === 'insult').map(p => p.kt_no);
+        const sb = getSupabase();
+        const [infChiq, insChiq] = await Promise.all([
+          infKts.length ? sb.from('infarkt_chiqarish').select('kt_no,chiqish_sana,natija').in('kt_no', infKts) : Promise.resolve({ data: [] }),
+          insKts.length ? sb.from('insult_chiqarish').select('kt_no,chiqish_sana,natija').in('kt_no', insKts) : Promise.resolve({ data: [] })
+        ]);
+        const exitMap = {};
+        (infChiq.data || []).forEach(r => { exitMap['infarkt:' + r.kt_no] = r; });
+        (insChiq.data || []).forEach(r => { exitMap['insult:' + r.kt_no] = r; });
+        combined.forEach(p => {
+          const ex = exitMap[p._type + ':' + p.kt_no];
+          if (ex) p._chiqarish = ex;
+        });
+      }
+
       BemorlarPage._allData = combined;
       BemorlarPage._totalCount = totalCount;
       BemorlarPage.renderTable();
@@ -296,6 +316,7 @@ const BemorlarPage = {
                   <div class="flex flex-col gap-1">
                     ${Utils.statusBadge(p.status)}
                     ${p.status === 'otkazildi' && p.otkazilgan_muassasa ? `<span class="text-xs text-orange-600 font-medium truncate max-w-[140px]" title="${esc(p.otkazilgan_muassasa)}">→ ${esc(p.otkazilgan_muassasa)}</span>` : ''}
+                    ${p._chiqarish?.chiqish_sana ? `<span class="text-xs text-gray-400">${Utils.formatDateTime(p._chiqarish.chiqish_sana)}</span>` : ''}
                   </div>
                 </td>
                 <td class="text-right text-gray-400">${icon('chevron-right', 20)}</td>
