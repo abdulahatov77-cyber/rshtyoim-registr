@@ -163,7 +163,7 @@ const InfarktYangiPage = {
     clearTimeout(this._dupTimer);
     const warn = document.getElementById('fio-dup-warn');
     if (!warn) return;
-    const q = (fio || '').trim();
+    const q = Utils.normalizeFio((fio || '').trim());
     if (q.length < 3) { warn.innerHTML = ''; return; }
     this._dupTimer = setTimeout(async () => {
       try {
@@ -739,6 +739,14 @@ const InfarktYangiPage = {
       // datetime-local qiymatlari Toshkent vaqti (UTC+5) — bazaga UTC ISO sifatida yuboramiz
       for (const f of ['qabul_vaqt', 'tlt_vaqt', 'pci_vaqt', 'tez_yordam_kelgan_vaqt']) {
         if (payload[f]) payload[f] = new Date(payload[f] + ':00+05:00').toISOString();
+      }
+
+      // Duplikat tekshiruv — bir xil bemor (F.I.O + tug'ilgan yili + qabul sanasi) bazada bormi?
+      const dup = await DB.checkDuplicate('infarkt_qabul', payload.fio, payload.tugilgan_yil, payload.qabul_vaqt);
+      if (dup) {
+        showToast(`❌ Bu bemor allaqachon ro'yxatda: ${dup.fio} · ${dup.muassasa} · K/T: ${dup.kt_no}`, 'error', 8000);
+        setLoading(btn, false);
+        return;
       }
 
       const saved = await DB.infarktQabul(payload);

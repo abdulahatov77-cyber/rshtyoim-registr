@@ -100,6 +100,25 @@ const UserLog = {
 
 // ==================== DATABASE ====================
 const DB = {
+  // F.I.O normalize qilingan holda bir xil bemor bazada bormi tekshiradi
+  async checkDuplicate(table, fio, tugilganYil, qabulVaqtIso) {
+    if (!fio || !qabulVaqtIso) return null;
+    const normFio = Utils.normalizeFio(fio);
+    const day = qabulVaqtIso.slice(0, 10);
+    const { data } = await getSupabase()
+      .from(table)
+      .select('kt_no,fio,tugilgan_yil,qabul_vaqt,muassasa')
+      .gte('qabul_vaqt', `${day}T00:00:00`)
+      .lte('qabul_vaqt', `${day}T23:59:59`)
+      .limit(50);
+    if (!data) return null;
+    return data.find(r => {
+      const rFio = Utils.normalizeFio(r.fio || '').toLowerCase();
+      const nFio = normFio.toLowerCase();
+      return rFio === nFio && String(r.tugilgan_yil||'') === String(tugilganYil||'');
+    }) || null;
+  },
+
   // Infarkt CRUD
   async infarktQabul(data) {
     const user = await Auth.getUser();
@@ -118,6 +137,7 @@ const DB = {
     for (const k of allowed) {
       if (data[k] !== undefined) clean[k] = data[k];
     }
+    if (clean.fio) clean.fio = Utils.normalizeFio(clean.fio);
     // (kt_no, muassasa) juftligi takrorlansa — yangi kt_no bilan qayta urinish
     for (let attempt = 0; attempt < 5; attempt++) {
       if (attempt > 0) clean.kt_no = Utils.generateKtNo(clean.muassasa || '');
@@ -218,6 +238,7 @@ const DB = {
     for (const k of allowed) {
       if (data[k] !== undefined) clean[k] = data[k];
     }
+    if (clean.fio) clean.fio = Utils.normalizeFio(clean.fio);
     for (let attempt = 0; attempt < 5; attempt++) {
       if (attempt > 0) clean.kt_no = Utils.generateKtNo(clean.muassasa || '');
       const { data: result, error } = await getSupabase()

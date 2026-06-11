@@ -85,6 +85,38 @@ const Utils = {
     return errors;
   },
 
+  // Kirill → Lotin transliteratsiya (O'zbek alifbosi)
+  cyrToLat(s) {
+    if (!s) return s;
+    const map = {
+      'Қ':'Q','қ':'q','Ҳ':'H','ҳ':'h','Ғ':"G'",'ғ':"g'",'Ў':"O'",'ў':"o'",
+      'Ш':'Sh','ш':'sh','Ч':'Ch','ч':'ch','Ю':'Yu','ю':'yu','Я':'Ya','я':'ya',
+      'Ё':'Yo','ё':'yo','Ъ':"'",'ъ':"'",'Ь':"'",'ь':"'",
+      'А':'A','а':'a','Б':'B','б':'b','В':'V','в':'v','Г':'G','г':'g',
+      'Д':'D','д':'d','Е':'E','е':'e','Ж':'J','ж':'j','З':'Z','з':'z',
+      'И':'I','и':'i','Й':'Y','й':'y','К':'K','к':'k','Л':'L','л':'l',
+      'М':'M','м':'m','Н':'N','н':'n','О':'O','о':'o','П':'P','п':'p',
+      'Р':'R','р':'r','С':'S','с':'s','Т':'T','т':'t','У':'U','у':'u',
+      'Ф':'F','ф':'f','Х':'X','х':'x','Ц':'S','ц':'s','Э':'E','э':'e',
+      'Ӯ':'U','ӯ':'u',
+    };
+    // Ko'p harfli kombinatsiyalarni avval almashtirish
+    let res = '';
+    const chars = Array.from(s);
+    for (let i = 0; i < chars.length; i++) {
+      const c = chars[i];
+      res += (map[c] !== undefined) ? map[c] : c;
+    }
+    return res;
+  },
+
+  // F.I.O ni normallashtirish: Kirill → Lotin, ortiqcha bo'shliqlar olib tashlash, har so'z bosh harfi katta
+  normalizeFio(fio) {
+    if (!fio) return fio;
+    const lat = Utils.cyrToLat(fio.trim());
+    return lat.replace(/\s+/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+  },
+
   // Generate KT No suggestion
   // Muassasa nomidan qisqa prefiks olish: "Pop politravma markazi" → "POP"
   muassasaPrefix(muassasa) {
