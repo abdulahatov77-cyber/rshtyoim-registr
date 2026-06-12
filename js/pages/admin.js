@@ -903,34 +903,73 @@ const AdminPage = {
         </button>
       </div>`;
 
-    if (groups.length === 0) return `
+    // 'all' rejimda guruhlar {records, type} formatida, 'day' da oddiy array
+    const isAllMode = AdminPage._dupMode === 'all';
+    const normalizedGroups = isAllMode
+      ? groups
+      : groups.map(g => ({ records: g, type: 'duplicate' }));
+
+    if (normalizedGroups.length === 0) return `
       <div class="card" style="text-align:center;padding:40px">
         <div style="font-size:40px;margin-bottom:12px">✅</div>
         <h3 style="color:#34d399;font-size:16px;font-weight:700">Duplikat topilmadi!</h3>
-        <p style="color:#64748b;font-size:13px;margin-top:8px">${AdminPage._dupMode==='all'?'Kirill/Lotin normalize qilingan F.I.O + tug\'ilgan yili bo\'yicha duplikat topilmadi.':'Bir xil F.I.O + tug\'ilgan yil + qabul sanasiga ega yozuvlar yo\'q.'}</p>
+        <p style="color:#64748b;font-size:13px;margin-top:8px">${isAllMode?'Kirill/Lotin normalize qilingan F.I.O + tug\'ilgan yili bo\'yicha duplikat topilmadi.':'Bir xil F.I.O + tug\'ilgan yil + qabul sanasiga ega yozuvlar yo\'q.'}</p>
         <button onclick="AdminPage._dupData=null;AdminPage._renderTabContent()"
           style="margin-top:20px;padding:8px 20px;background:rgba(99,118,158,0.15);border:1px solid rgba(99,118,158,0.2);border-radius:10px;color:#94a3b8;font-size:13px;cursor:pointer">
           Qayta tekshirish
         </button>
       </div>`;
 
-    const totalRecords = groups.reduce((s, g) => s + g.length, 0);
+    const dupGroups = normalizedGroups.filter(g => g.type === 'duplicate');
+    const qaytaGroups = normalizedGroups.filter(g => g.type === 'qayta_murojaat');
+    const totalRecords = normalizedGroups.reduce((s, g) => s + g.records.length, 0);
+
+    const renderGroup = (g, gi, showDelete) => `
+      <div style="border:1px solid ${g.type==='duplicate'?'rgba(239,68,68,0.25)':'rgba(99,118,158,0.2)'};border-radius:12px;overflow:hidden;margin-bottom:4px">
+        <div style="background:${g.type==='duplicate'?'rgba(239,68,68,0.08)':'rgba(99,118,158,0.08)'};padding:8px 14px;font-size:12px;font-weight:700;color:${g.type==='duplicate'?'#f87171':'#94a3b8'}">
+          ${gi+1}. ${g.records[0].fio || '—'} • ${g.records[0].tugilgan_yil || '—'} • ${g.type==='duplicate'?'⚠️ Duplikat':'🔄 Qayta murojaat'}
+        </div>
+        <table class="data-table">
+          <thead><tr>
+            <th>K/T No</th><th>F.I.O</th><th>Tur</th><th>Muassasa</th><th>Qabul sanasi</th>${showDelete?'<th>Amal</th>':''}
+          </tr></thead>
+          <tbody>
+            ${g.records.map(r => `<tr>
+              <td style="font-family:monospace;font-size:12px;color:#64748b">${r.kt_no}</td>
+              <td style="font-weight:600;font-size:13px">${r.fio||'—'}</td>
+              <td style="font-size:12px;color:#94a3b8">${r._type==='infarkt'?'Infarkt':'Insult'}</td>
+              <td style="font-size:12px;color:#94a3b8">${r.muassasa||'—'}</td>
+              <td style="font-size:12px;color:#94a3b8">${r.qabul_vaqt ? new Date(r.qabul_vaqt).toLocaleString('uz-UZ',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '—'}</td>
+              ${showDelete?`<td>
+                <button onclick="AdminPage.deleteDupRecord('${r.kt_no}','${r._type}')"
+                  style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.2);border-radius:8px;padding:5px 10px;color:#f87171;font-size:12px;cursor:pointer">
+                  O'chirish
+                </button>
+              </td>`:''}
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>`;
 
     return `
-      <div class="stat-grid" style="grid-template-columns:repeat(2,1fr);margin-bottom:16px">
+      <div class="stat-grid" style="grid-template-columns:repeat(${isAllMode?3:2},1fr);margin-bottom:16px">
         <div class="stat-card">
-          <div class="stat-icon" style="background:rgba(245,158,11,0.15);color:#fbbf24">${icon('users',24)}</div>
-          <div><div class="stat-value">${groups.length}</div><div class="stat-label">Duplikat guruhlari</div></div>
+          <div class="stat-icon" style="background:rgba(239,68,68,0.15);color:#f87171">${icon('alert-triangle',24)}</div>
+          <div><div class="stat-value">${dupGroups.length}</div><div class="stat-label">Duplikat guruh</div></div>
         </div>
+        ${isAllMode?`<div class="stat-card">
+          <div class="stat-icon" style="background:rgba(99,118,158,0.15);color:#94a3b8">${icon('refresh-cw',24)}</div>
+          <div><div class="stat-value">${qaytaGroups.length}</div><div class="stat-label">Qayta murojaat</div></div>
+        </div>`:''}
         <div class="stat-card">
-          <div class="stat-icon" style="background:rgba(239,68,68,0.15);color:#f87171">${icon('copy',24)}</div>
-          <div><div class="stat-value">${totalRecords}</div><div class="stat-label">Jami takroriy yozuvlar</div></div>
+          <div class="stat-icon" style="background:rgba(245,158,11,0.15);color:#fbbf24">${icon('copy',24)}</div>
+          <div><div class="stat-value">${totalRecords}</div><div class="stat-label">Jami yozuvlar</div></div>
         </div>
       </div>
 
       <div class="card">
         <div class="card-header" style="flex-wrap:wrap;gap:8px">
-          <span class="card-title">${icon('alert-triangle',16)} ${groups.length} ta duplikat guruhi — ${AdminPage._dupMode==='all'?'Barcha vaqt (Kirill+Lotin)':'Bir kunda (bir muassasa)'}</span>
+          <span class="card-title">${icon('alert-triangle',16)} ${dupGroups.length} ta duplikat${isAllMode && qaytaGroups.length ? `, ${qaytaGroups.length} ta qayta murojaat` : ''} — ${isAllMode?'Barcha vaqt (Kirill+Lotin)':'Bir kunda (bir muassasa)'}</span>
           <div style="display:flex;gap:8px;flex-wrap:wrap">
             <button onclick="AdminPage._dupMode='day';AdminPage._dupData=null;AdminPage.runDupCheck()" class="btn btn-ghost btn-sm" ${AdminPage._dupMode==='day'?'style="color:#60a5fa"':''}>Bir kunda</button>
             <button onclick="AdminPage._dupMode='all';AdminPage._dupData=null;AdminPage.runDupCheck()" class="btn btn-ghost btn-sm" ${AdminPage._dupMode==='all'?'style="color:#60a5fa"':''}>Barcha vaqt</button>
@@ -938,35 +977,11 @@ const AdminPage = {
             <button onclick="AdminPage._dupData=null;AdminPage._renderTabContent()" class="btn btn-ghost btn-sm">Yopish</button>
           </div>
         </div>
-        <div style="display:flex;flex-direction:column;gap:14px;padding:16px">
-          ${groups.map((g, gi) => `
-            <div style="border:1px solid rgba(99,118,158,0.2);border-radius:12px;overflow:hidden">
-              <div style="background:rgba(245,158,11,0.08);padding:8px 14px;font-size:12px;font-weight:700;color:#fbbf24">
-                Guruh ${gi+1}: ${g[0].fio || '—'} • Tug'ilgan yili: ${g[0].tugilgan_yil || '—'} • ${g[0]._type === 'infarkt' ? 'Infarkt' : 'Insult'}
-              </div>
-              <table class="data-table">
-                <thead><tr>
-                  <th>K/T No</th><th>F.I.O</th><th>Tug'ilgan yili</th><th>Viloyat</th><th>Muassasa</th><th>Qabul sanasi</th><th>Amal</th>
-                </tr></thead>
-                <tbody>
-                  ${g.map(r => `<tr>
-                    <td style="font-family:monospace;font-size:12px;color:#64748b">${r.kt_no}</td>
-                    <td style="font-weight:600;font-size:13px">${r.fio||'—'}</td>
-                    <td style="font-size:12px;color:#94a3b8">${r.tugilgan_yil||'—'}</td>
-                    <td style="font-size:12px;color:#94a3b8">${r.viloyat||'—'}</td>
-                    <td style="font-size:12px;color:#94a3b8">${r.muassasa||'—'}</td>
-                    <td style="font-size:12px;color:#94a3b8">${r.qabul_vaqt ? new Date(r.qabul_vaqt).toLocaleString('uz-UZ',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '—'}</td>
-                    <td>
-                      <button onclick="AdminPage.deleteDupRecord('${r.kt_no}','${r._type}')"
-                        style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.2);border-radius:8px;padding:5px 10px;color:#f87171;font-size:12px;cursor:pointer">
-                        O'chirish
-                      </button>
-                    </td>
-                  </tr>`).join('')}
-                </tbody>
-              </table>
-            </div>
-          `).join('')}
+        <div style="display:flex;flex-direction:column;gap:4px;padding:16px">
+          ${dupGroups.length ? `<div style="font-size:12px;font-weight:700;color:#f87171;margin-bottom:8px">⚠️ DUPLIKATLAR (o'chirish tavsiya etiladi)</div>
+          ${dupGroups.map((g, gi) => renderGroup(g, gi, true)).join('')}` : ''}
+          ${isAllMode && qaytaGroups.length ? `<div style="font-size:12px;font-weight:700;color:#94a3b8;margin-top:16px;margin-bottom:8px">🔄 QAYTA MUROJAATLAR (o'chirish shart emas)</div>
+          ${qaytaGroups.map((g, gi) => renderGroup(g, gi, false)).join('')}` : ''}
         </div>
       </div>`;
   },
@@ -997,9 +1012,16 @@ const AdminPage = {
       if (error) throw error;
       showToast(`✅ O'chirildi: ${kt_no}`, 'success');
       if (AdminPage._dupData) {
-        AdminPage._dupData = AdminPage._dupData
-          .map(g => g.filter(r => !(String(r.kt_no) === String(kt_no) && r._type === type)))
-          .filter(g => g.length > 1);
+        const isAllMode = AdminPage._dupMode === 'all';
+        if (isAllMode) {
+          AdminPage._dupData = AdminPage._dupData
+            .map(g => ({ ...g, records: g.records.filter(r => !(String(r.kt_no) === String(kt_no) && r._type === type)) }))
+            .filter(g => g.records.length > 1);
+        } else {
+          AdminPage._dupData = AdminPage._dupData
+            .map(g => g.filter(r => !(String(r.kt_no) === String(kt_no) && r._type === type)))
+            .filter(g => g.length > 1);
+        }
         AdminPage._renderTabContent();
       }
     } catch(err) { showToast('❌ ' + err.message, 'error'); }

@@ -1292,25 +1292,38 @@ const MuassasaDB = {
     return Object.values(groups).filter(g => g.length > 1);
   },
 
-  // Barcha vaqt uchun: bir xil FIO (Kirill/Lotin normalize) + tug'ilgan yili — sana va muassasadan qat'iy nazar
+  // Barcha vaqt: FIO+tug'ilgan yil bo'yicha guruhlaydi, har guruhni duplicate/qayta_murojaat deb belgilaydi
   findAllDuplicates(records) {
-    const dupKey = (r) => {
+    const normKey = (r) => {
       const fio = Utils.normalizeFio(r.fio || '').toLowerCase().replace(/\s+/g, ' ').trim();
       const yil = String(r.tugilgan_yil || '').slice(0, 4);
       if (!fio || fio.length < 3 || !yil) return null;
-      return `${r._type}|${fio}|${yil}`;
+      return `${fio}|${yil}`;
     };
     const groups = {};
     for (const r of records) {
-      const key = dupKey(r);
+      const key = normKey(r);
       if (!key) continue;
       (groups[key] = groups[key] || []).push(r);
     }
-    // Faqat turli qabul sanalari YOKI turli muassasalar bo'lgan guruhlarni ko'rsat
-    // (bir xil sana+muassasa — findDuplicates da ko'rsatiladi)
     return Object.values(groups)
       .filter(g => g.length > 1)
-      .sort((a, b) => b.length - a.length);
+      .map(g => {
+        const hasDup = g.some((a, i) =>
+          g.slice(i + 1).some(b => {
+            const sanaA = (a.qabul_vaqt || '').slice(0, 10);
+            const sanaB = (b.qabul_vaqt || '').slice(0, 10);
+            const mA = (a.muassasa || '').trim().toLowerCase();
+            const mB = (b.muassasa || '').trim().toLowerCase();
+            return sanaA && sanaB && sanaA === sanaB && mA === mB;
+          })
+        );
+        return { records: g, type: hasDup ? 'duplicate' : 'qayta_murojaat' };
+      })
+      .sort((a, b) => {
+        if (a.type !== b.type) return a.type === 'duplicate' ? -1 : 1;
+        return b.records.length - a.records.length;
+      });
   }
 };
 
