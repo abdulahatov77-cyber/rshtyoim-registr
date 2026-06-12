@@ -13,6 +13,7 @@ const AdminPage = {
   _auditLoading: false,
   _dupData: null,
   _dupLoading: false,
+  _dupMode: 'day',  // 'day' = bir kun ichida, 'all' = barcha vaqt (Kirill/Lotin)
 
   async render() {
     const isSuperAdmin = await Profile.isSuperAdmin();
@@ -877,13 +878,25 @@ const AdminPage = {
         <p style="color:#64748b;font-size:14px">Duplikat bemorlar qidirilmoqda...</p>
       </div>`;
 
+    const modeBtn = (mode, label) => `
+      <button onclick="AdminPage._dupMode='${mode}';AdminPage._dupData=null;AdminPage.runDupCheck()"
+        style="padding:8px 20px;border-radius:10px;border:none;cursor:pointer;font-size:13px;font-weight:700;
+        background:${AdminPage._dupMode===mode?'#2563eb':'rgba(37,99,235,0.12)'};
+        color:${AdminPage._dupMode===mode?'#fff':'#60a5fa'}">
+        ${label}
+      </button>`;
+
     if (!groups) return `
       <div class="card" style="text-align:center;padding:60px">
         <div style="font-size:48px;margin-bottom:16px">👥</div>
         <h3 style="color:#e2e8f0;font-size:18px;font-weight:700;margin-bottom:8px">Duplikat bemorlarni tekshirish</h3>
-        <p style="color:#64748b;font-size:14px;margin-bottom:24px;max-width:480px;margin-left:auto;margin-right:auto">
-          Bir xil F.I.O, tug'ilgan yili va qabul sanasiga ega (infarkt yoki insult ro'yxatida alohida-alohida) bir nechta yozuvlar topiladi.
+        <p style="color:#64748b;font-size:14px;margin-bottom:20px;max-width:480px;margin-left:auto;margin-right:auto">
+          Bir xil F.I.O (Kirill yoki Lotin) va tug'ilgan yiliga ega bemorlar topiladi.
         </p>
+        <div style="display:flex;gap:10px;justify-content:center;margin-bottom:24px">
+          ${modeBtn('day','Bir kunda (bir muassasa)')}
+          ${modeBtn('all','Barcha vaqt (Kirill+Lotin)')}
+        </div>
         <button onclick="AdminPage.runDupCheck()"
           style="padding:12px 32px;background:#2563eb;border:none;border-radius:12px;color:#fff;font-size:14px;font-weight:700;cursor:pointer">
           Tekshirishni boshlash
@@ -894,7 +907,7 @@ const AdminPage = {
       <div class="card" style="text-align:center;padding:40px">
         <div style="font-size:40px;margin-bottom:12px">✅</div>
         <h3 style="color:#34d399;font-size:16px;font-weight:700">Duplikat topilmadi!</h3>
-        <p style="color:#64748b;font-size:13px;margin-top:8px">Bir xil F.I.O + tug'ilgan yil + qabul sanasiga ega yozuvlar yo'q.</p>
+        <p style="color:#64748b;font-size:13px;margin-top:8px">${AdminPage._dupMode==='all'?'Kirill/Lotin normalize qilingan F.I.O + tug\'ilgan yili bo\'yicha duplikat topilmadi.':'Bir xil F.I.O + tug\'ilgan yil + qabul sanasiga ega yozuvlar yo\'q.'}</p>
         <button onclick="AdminPage._dupData=null;AdminPage._renderTabContent()"
           style="margin-top:20px;padding:8px 20px;background:rgba(99,118,158,0.15);border:1px solid rgba(99,118,158,0.2);border-radius:10px;color:#94a3b8;font-size:13px;cursor:pointer">
           Qayta tekshirish
@@ -917,8 +930,10 @@ const AdminPage = {
 
       <div class="card">
         <div class="card-header" style="flex-wrap:wrap;gap:8px">
-          <span class="card-title">${icon('alert-triangle',16)} ${groups.length} ta duplikat guruhi topildi</span>
-          <div style="display:flex;gap:8px">
+          <span class="card-title">${icon('alert-triangle',16)} ${groups.length} ta duplikat guruhi — ${AdminPage._dupMode==='all'?'Barcha vaqt (Kirill+Lotin)':'Bir kunda (bir muassasa)'}</span>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button onclick="AdminPage._dupMode='day';AdminPage._dupData=null;AdminPage.runDupCheck()" class="btn btn-ghost btn-sm" ${AdminPage._dupMode==='day'?'style="color:#60a5fa"':''}>Bir kunda</button>
+            <button onclick="AdminPage._dupMode='all';AdminPage._dupData=null;AdminPage.runDupCheck()" class="btn btn-ghost btn-sm" ${AdminPage._dupMode==='all'?'style="color:#60a5fa"':''}>Barcha vaqt</button>
             <button onclick="AdminPage.runDupCheck()" class="btn btn-ghost btn-sm">${icon('refresh-cw',14)} Yangilash</button>
             <button onclick="AdminPage._dupData=null;AdminPage._renderTabContent()" class="btn btn-ghost btn-sm">Yopish</button>
           </div>
@@ -962,7 +977,9 @@ const AdminPage = {
     AdminPage._renderTabContent();
     try {
       const all = await MuassasaDB.fetchAllRecords();
-      AdminPage._dupData = MuassasaDB.findDuplicates(all);
+      AdminPage._dupData = AdminPage._dupMode === 'all'
+        ? MuassasaDB.findAllDuplicates(all)
+        : MuassasaDB.findDuplicates(all);
     } catch(err) {
       showToast('❌ Tekshirish xatosi: ' + err.message, 'error');
       AdminPage._dupData = [];

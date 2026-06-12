@@ -1273,12 +1273,10 @@ const MuassasaDB = {
     ];
   },
 
-  // Bir xil F.I.O + tug'ilgan yili + qabul sanasi (kun) bilan, bir xil turdagi (infarkt/insult) yozuvlarni topadi
+  // Bir xil F.I.O + tug'ilgan yili + qabul sanasi (kun) bilan, bir xil muassasadagi yozuvlarni topadi
   findDuplicates(records) {
-    // Bir xil F.I.O + tug'ilgan yili + qabul sanasi + BIR XIL muassasa — faqat shu holat duplikat.
-    // Turli muassasalardagi yozuvlar bemor harakati (perevod) bo'lishi mumkin, shuning uchun hisobga olinmaydi.
     const dupKey = (r) => {
-      const fio = (r.fio || '').trim().toLowerCase();
+      const fio = Utils.normalizeFio(r.fio || '').toLowerCase();
       const yil = r.tugilgan_yil || '';
       const sana = r.qabul_vaqt ? new Date(r.qabul_vaqt).toISOString().slice(0, 10) : '';
       const muassasa = (r.muassasa || '').trim().toLowerCase();
@@ -1292,6 +1290,27 @@ const MuassasaDB = {
       (groups[key] = groups[key] || []).push(r);
     }
     return Object.values(groups).filter(g => g.length > 1);
+  },
+
+  // Barcha vaqt uchun: bir xil FIO (Kirill/Lotin normalize) + tug'ilgan yili — sana va muassasadan qat'iy nazar
+  findAllDuplicates(records) {
+    const dupKey = (r) => {
+      const fio = Utils.normalizeFio(r.fio || '').toLowerCase().replace(/\s+/g, ' ').trim();
+      const yil = String(r.tugilgan_yil || '').slice(0, 4);
+      if (!fio || fio.length < 3 || !yil) return null;
+      return `${r._type}|${fio}|${yil}`;
+    };
+    const groups = {};
+    for (const r of records) {
+      const key = dupKey(r);
+      if (!key) continue;
+      (groups[key] = groups[key] || []).push(r);
+    }
+    // Faqat turli qabul sanalari YOKI turli muassasalar bo'lgan guruhlarni ko'rsat
+    // (bir xil sana+muassasa — findDuplicates da ko'rsatiladi)
+    return Object.values(groups)
+      .filter(g => g.length > 1)
+      .sort((a, b) => b.length - a.length);
   }
 };
 
