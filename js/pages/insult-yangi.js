@@ -237,7 +237,7 @@ const InsultYangiPage = {
         `,true)}
         ${this.field('nihss_qabul','NIHSS qabul paytida (0–42 ball)',`<div class="flex gap-2 items-center"><input id="nihss_qabul" type="number" min="0" max="42" class="form-input w-full bg-slate-50 cursor-not-allowed" value="${d.nihss_qabul||''}" placeholder="Kalkulyator orqali to'ldiring" readonly style="pointer-events:none;opacity:0.8"/><button type="button" class="flex-shrink-0 bg-blue-100 text-blue-700 hover:bg-blue-200 px-3 py-2 rounded-lg text-sm font-bold shadow-sm transition-colors border border-blue-200 flex items-center gap-1" onclick="Calculators.openNIHSS('nihss_qabul')">🧮 Hisoblash</button></div>`,true)}
         ${this.field('gcs_bali','Glazgo shkalasi (GCS), (3-15 ball)',`<div class="flex gap-2 items-center"><input id="gcs_bali" type="number" min="3" max="15" class="form-input w-full bg-slate-50 cursor-not-allowed" value="${d.gcs_bali||''}" placeholder="Kalkulyator orqali to'ldiring" readonly style="pointer-events:none;opacity:0.8"/><button type="button" class="flex-shrink-0 bg-purple-100 text-purple-700 hover:bg-purple-200 px-3 py-2 rounded-lg text-sm font-bold shadow-sm transition-colors border border-purple-200 flex items-center gap-1" onclick="Calculators.openGCS('gcs_bali')">🧮 Hisoblash</button></div>`,true)}
-        ${this.field('insult_turi','Insult turi',`<select id="insult_turi" class="form-select border-purple-300 focus:border-purple-500">
+        ${this.field('insult_turi','Insult turi',`<select id="insult_turi" class="form-select border-purple-300 focus:border-purple-500" onchange="InsultYangiPage.saveCurrentStep();InsultYangiPage._updateAspectsVisibility()">
           ${this.selectOptions(APP_CONFIG.INSULT_TURLARI, d.insult_turi||'')}</select>`,true)}
         ${this.field('qon_bosimi','Qon bosimi (qabul paytida)',`<input id="qon_bosimi" class="form-input font-mono" value="${d.qon_bosimi||''}" placeholder="140/90"/>`,true)}
       </div>
@@ -261,6 +261,8 @@ const InsultYangiPage = {
     const showTrombektomiya = muolajaL.includes('trombektomiya') || muolajaL.includes('tromboekstraksiya') || muolajaL.includes('tromboaspiratsiya') || muolajaL.includes('kombinatsiya') || muolajaL.includes('angiografiya') || muolajaL.includes('stentlash') || muolajaL.includes('tlbap');
     const trombektomiyaLabel = (muolajaL.includes('angiografiya') || muolajaL.includes('stentlash') || muolajaL.includes('tlbap')) && !muolajaL.includes('trombektomiya') && !muolajaL.includes('tromboekstraksiya') && !muolajaL.includes('tromboaspiratsiya') ? 'Angiografiya o\'tkazilgan vaqt (Groin time)' : 'Trombektomiya (Groin time)';
     const showMsktVaqt = d.mskt === 'Ha – o\'tkazildi' || muolajaL.includes('mskt');
+    const insultTuri = (d.insult_turi || '').toLowerCase();
+    const showAspects = showMsktVaqt && insultTuri.includes('ishemik') && !insultTuri.includes('tia');
 
     return `
       <div class="grid grid-cols-1 gap-x-6">
@@ -291,8 +293,8 @@ const InsultYangiPage = {
           <input id="kt_vaqti" type="hidden" value="${d.kt_vaqti||''}"/>
         </div>
 
-        <!-- ASPECTS bloki — faqat MSKT o'tkazilganda -->
-        <div id="aspects-div" style="display:${showMsktVaqt?'block':'none'}">
+        <!-- ASPECTS bloki — faqat MSKT o'tkazilgan + Ishemik insult -->
+        <div id="aspects-div" style="display:${showAspects?'block':'none'}">
           ${this._renderAspects(d)}
         </div>
 
@@ -553,9 +555,8 @@ const InsultYangiPage = {
     const muolaja = (InsultYangiPage._data.muolaja_turi || '').toLowerCase();
     const show = val === "Ha – o'tkazildi" || muolaja.includes('mskt');
     if (div) div.style.display = show ? 'block' : 'none';
-    // ASPECTS blokini ham ko'rsat/yashir
-    const aspectsDiv = document.getElementById('aspects-div');
-    if (aspectsDiv) aspectsDiv.style.display = show ? 'block' : 'none';
+    // ASPECTS blokini ham ko'rsat/yashir — faqat ishemik insult uchun
+    InsultYangiPage._updateAspectsVisibility();
     // Tugma ranglarini yangilash
     const haBtn = document.getElementById('mskt-ha');
     const yoqBtn = document.getElementById('mskt-yoq');
@@ -567,6 +568,15 @@ const InsultYangiPage = {
       const isTromb = muolaja.includes('trombektomiya') || muolaja.includes('tromboekstraksiya') || muolaja.includes('tromboaspiratsiya') || muolaja.includes('kombinatsiya') || muolaja.includes('angiografiya') || muolaja.includes('stentlash') || muolaja.includes('tlbap');
       trombDiv.style.display = isTromb ? 'block' : 'none';
     }
+  },
+
+  _updateAspectsVisibility() {
+    const d = InsultYangiPage._data;
+    const msktOk = d.mskt === "Ha – o'tkazildi" || (d.muolaja_turi || '').toLowerCase().includes('mskt');
+    const turi = (d.insult_turi || '').toLowerCase();
+    const show = msktOk && turi.includes('ishemik') && !turi.includes('tia');
+    const aspectsDiv = document.getElementById('aspects-div');
+    if (aspectsDiv) aspectsDiv.style.display = show ? 'block' : 'none';
   },
 
   onMuolajaChange(val) {
