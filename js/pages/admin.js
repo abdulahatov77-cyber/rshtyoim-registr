@@ -177,6 +177,13 @@ const AdminPage = {
     all.forEach(p => { if (p.viloyat) vilMap[p.viloyat] = (vilMap[p.viloyat]||0) + 1; });
     const topVil = Object.entries(vilMap).sort((a,b)=>b[1]-a[1]);
 
+    // Muassasalar bo'yicha foydalanuvchilar soni
+    const muassasaMap = {};
+    all.forEach(p => {
+      if (p.muassasa) muassasaMap[p.muassasa] = (muassasaMap[p.muassasa]||0) + 1;
+    });
+    const topMuassasa = Object.entries(muassasaMap).sort((a,b)=>b[1]-a[1]);
+
     return `
       <div class="stat-grid" style="margin-bottom:20px;grid-template-columns:repeat(4,1fr)">
         <div class="stat-card">
@@ -247,16 +254,39 @@ const AdminPage = {
           </div>
           <div style="overflow-x:auto" id="admin-table-wrap">${AdminPage._buildTable()}</div>
         </div>
-        <div class="card" style="width:240px;position:sticky;top:16px">
-          <div class="card-header"><span class="card-title">${icon('map',14)} Viloyatlar bo'yicha</span></div>
-          <div style="padding:4px 0;max-height:70vh;overflow-y:auto">
-            ${topVil.length ? topVil.map(([v,cnt]) => `
-              <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 4px;border-bottom:1px solid #e2e8f0">
-                <span style="font-size:12px;color:#1e293b;font-weight:700;flex:1;margin-right:8px">${v}</span>
-                <span style="font-size:12px;font-weight:700;color:#60a5fa;background:rgba(59,130,246,0.12);padding:2px 8px;border-radius:20px;white-space:nowrap">${cnt}</span>
-              </div>`).join('')
-            : '<p style="color:#64748b;font-size:12px;text-align:center;padding:16px">Viloyatlar yo\'q</p>'}
+        <div style="display:flex;flex-direction:column;gap:16px;width:260px;position:sticky;top:16px">
+
+          <!-- Viloyatlar -->
+          <div class="card">
+            <div class="card-header"><span class="card-title">${icon('map',14)} Viloyatlar bo'yicha</span></div>
+            <div style="padding:4px 0;max-height:35vh;overflow-y:auto">
+              ${topVil.length ? topVil.map(([v,cnt]) => `
+                <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;border-bottom:1px solid rgba(99,118,158,0.1)">
+                  <span style="font-size:12px;color:#1e293b;font-weight:600;flex:1;margin-right:8px">${v}</span>
+                  <span style="font-size:12px;font-weight:700;color:#60a5fa;background:rgba(59,130,246,0.12);padding:2px 8px;border-radius:20px;white-space:nowrap">${cnt}</span>
+                </div>`).join('')
+              : '<p style="color:#64748b;font-size:12px;text-align:center;padding:16px">Viloyatlar yo\'q</p>'}
+            </div>
           </div>
+
+          <!-- Muassasalar faolligi -->
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">${icon('building-2',14)} Muassasalar</span>
+              <span style="font-size:11px;color:#64748b">${topMuassasa.length} ta</span>
+            </div>
+            <div style="padding:4px 0;max-height:35vh;overflow-y:auto">
+              ${topMuassasa.length ? topMuassasa.map(([m,cnt], i) => `
+                <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 12px;border-bottom:1px solid rgba(99,118,158,0.1)">
+                  <div style="flex:1;margin-right:8px;min-width:0">
+                    <div style="font-size:11px;color:#e2e8f0;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${m}">${i+1}. ${m}</div>
+                  </div>
+                  <span style="font-size:12px;font-weight:700;color:#34d399;background:rgba(16,185,129,0.12);padding:2px 8px;border-radius:20px;white-space:nowrap;flex-shrink:0">${cnt}</span>
+                </div>`).join('')
+              : '<p style="color:#64748b;font-size:12px;text-align:center;padding:16px">Ma\'lumot yo\'q</p>'}
+            </div>
+          </div>
+
         </div>
       </div>`;
   },
