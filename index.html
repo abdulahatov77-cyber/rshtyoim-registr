@@ -99,7 +99,7 @@
   <!-- App init -->
   <script src="js/app.js?v=64"></script>
 
-  <!-- Auto-reload: checks for new version every 5 minutes -->
+  <!-- Auto-reload: checks for new version every 30 seconds -->
   <script>
     (function() {
       const APP_BUILD = '20260615-01';
@@ -112,22 +112,35 @@
       }
       localStorage.setItem(BUILD_KEY, APP_BUILD);
 
-      // Har 60 sekundda yangi versiya borligini tekshir
-      setInterval(async () => {
+      let _reloadBannerShown = false;
+
+      async function checkVersion() {
         try {
-          const r = await fetch('/index.html?_=' + Date.now(), { cache: 'no-store' });
+          const r = await fetch('/index.html?_=' + Date.now(), {
+            cache: 'no-store',
+            headers: { 'Pragma': 'no-cache', 'Cache-Control': 'no-cache' }
+          });
           const txt = await r.text();
           const m = txt.match(/APP_BUILD\s*=\s*'([^']+)'/);
-          if (m && m[1] !== APP_BUILD) {
-            // Foydalanuvchiga katta bildirishnoma ko'rsat
+          if (m && m[1] !== APP_BUILD && !_reloadBannerShown) {
+            _reloadBannerShown = true;
             const div = document.createElement('div');
-            div.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:#1d4ed8;color:white;text-align:center;padding:14px 20px;font-size:15px;font-weight:700;box-shadow:0 4px 20px rgba(0,0,0,0.3)';
-            div.innerHTML = '🔄 Tizim yangilandi! Sahifa 3 soniyada avtomatik yangilanadi... &nbsp;<button onclick="location.reload(true)" style="background:white;color:#1d4ed8;border:none;border-radius:8px;padding:6px 16px;font-weight:800;cursor:pointer;font-size:14px">Hozir yangilash</button>';
+            div.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:#1d4ed8;color:white;text-align:center;padding:16px 20px;font-size:15px;font-weight:700;box-shadow:0 4px 24px rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;gap:16px';
+            div.innerHTML = '<span>🔄 Tizim yangilandi! Iltimos sahifani yangilang.</span><button onclick="location.reload(true)" style="background:white;color:#1d4ed8;border:none;border-radius:8px;padding:8px 20px;font-weight:800;cursor:pointer;font-size:14px;flex-shrink:0">Hozir yangilash ↺</button>';
             document.body.prepend(div);
-            setTimeout(() => location.reload(true), 3000);
+            // 5 sekunddan keyin avtomatik reload
+            setTimeout(() => location.reload(true), 5000);
           }
         } catch(e) {}
-      }, 60 * 1000);
+      }
+
+      // Har 30 sekundda tekshir
+      setInterval(checkVersion, 30 * 1000);
+
+      // Sahifa focus bo'lganda ham tekshir (boshqa tabdan qaytganda)
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') checkVersion();
+      });
     })();
   </script>
 </body>
