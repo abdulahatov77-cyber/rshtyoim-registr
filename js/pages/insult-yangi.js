@@ -261,8 +261,7 @@ const InsultYangiPage = {
     const showTrombektomiya = muolajaL.includes('trombektomiya') || muolajaL.includes('tromboekstraksiya') || muolajaL.includes('tromboaspiratsiya') || muolajaL.includes('kombinatsiya') || muolajaL.includes('angiografiya') || muolajaL.includes('stentlash') || muolajaL.includes('tlbap');
     const trombektomiyaLabel = (muolajaL.includes('angiografiya') || muolajaL.includes('stentlash') || muolajaL.includes('tlbap')) && !muolajaL.includes('trombektomiya') && !muolajaL.includes('tromboekstraksiya') && !muolajaL.includes('tromboaspiratsiya') ? 'Angiografiya o\'tkazilgan vaqt (Groin time)' : 'Trombektomiya (Groin time)';
     const showMsktVaqt = d.mskt === 'Ha – o\'tkazildi' || muolajaL.includes('mskt');
-    const insultTuri = (d.insult_turi || '').toLowerCase();
-    const showAspects = showMsktVaqt && insultTuri.includes('ishemik') && !insultTuri.includes('tia');
+    const showAspects = showMsktVaqt && (d.insult_turi || '') === 'Ishemik insult';
 
     return `
       <div class="grid grid-cols-1 gap-x-6">
@@ -573,8 +572,7 @@ const InsultYangiPage = {
   _updateAspectsVisibility() {
     const d = InsultYangiPage._data;
     const msktOk = d.mskt === "Ha – o'tkazildi" || (d.muolaja_turi || '').toLowerCase().includes('mskt');
-    const turi = (d.insult_turi || '').toLowerCase();
-    const show = msktOk && turi.includes('ishemik') && !turi.includes('tia');
+    const show = msktOk && (d.insult_turi || '') === 'Ishemik insult';
     const aspectsDiv = document.getElementById('aspects-div');
     if (aspectsDiv) aspectsDiv.style.display = show ? 'block' : 'none';
   },
