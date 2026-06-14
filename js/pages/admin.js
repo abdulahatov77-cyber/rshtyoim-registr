@@ -16,19 +16,24 @@ const AdminPage = {
   _dupMode: 'day',  // 'day' = bir kun ichida, 'all' = barcha vaqt (Kirill/Lotin)
 
   async render() {
-    const isSuperAdmin = await Profile.isSuperAdmin();
-    if (!isSuperAdmin) {
+    const profile = await Profile.getCurrent();
+    const isSuperAdmin = profile?.role === 'super_admin';
+    const isViloyatAdmin = profile?.role === 'admin';
+    if (!isSuperAdmin && !isViloyatAdmin) {
       document.getElementById('app').innerHTML = `
         <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:#0f172a">
           <div style="text-align:center">
             <div style="font-size:64px;margin-bottom:16px">🚫</div>
             <h2 style="color:#f87171;font-size:22px;font-weight:700;margin-bottom:8px">Ruxsat yo'q</h2>
-            <p style="color:#64748b;margin:8px 0 24px">Bu sahifa faqat Super Administrator uchun</p>
+            <p style="color:#64748b;margin:8px 0 24px">Bu sahifa faqat Administrator uchun</p>
             <button class="btn btn-ghost" onclick="Router.go('dashboard')">← Bosh sahifaga</button>
           </div>
         </div>`;
       return;
     }
+    AdminPage._isSuperAdmin = isSuperAdmin;
+    AdminPage._isViloyatAdmin = isViloyatAdmin;
+    AdminPage._myViloyat = profile?.viloyat || '';
 
     if (!AdminPage._selViloyat) {
       AdminPage._selViloyat = Object.keys(APP_CONFIG.MUASSASALAR)[0] || '';
@@ -70,18 +75,26 @@ const AdminPage = {
   renderContent() {
     const inner = document.getElementById('admin-content');
     if (!inner) return;
+    const allTabs = [
+      ['users', '👥 Foydalanuvchilar'],
+      ['muassasalar', '🏥 Muassasalar'],
+      ['aholi', '👨‍👩‍👧 Aholi soni'],
+      ['audit', '🔍 Ma\'lumot sifati'],
+      ['duplikat', '👥 Duplikatlar'],
+      ['logs', '📋 Kirish tarixi'],
+      ['xabarlar', '💬 Xabarlar']
+    ];
+    const visibleTabs = AdminPage._isViloyatAdmin
+      ? allTabs.filter(([t]) => t === 'duplikat')
+      : allTabs;
+    if (AdminPage._isViloyatAdmin) AdminPage._activeTab = 'duplikat';
     inner.innerHTML = `
       <div class="animate-fadein">
+        ${AdminPage._isViloyatAdmin ? `<div style="padding:10px 16px;background:rgba(37,99,235,0.1);border:1px solid rgba(37,99,235,0.2);border-radius:12px;margin-bottom:20px;font-size:13px;color:#60a5fa;font-weight:600">
+          🛡 Viloyat Admin — ${AdminPage._myViloyat || ''} viloyati duplikat boshqaruvi
+        </div>` : ''}
         <div style="display:flex;gap:3px;margin-bottom:24px;background:rgba(15,23,42,0.8);border-radius:14px;padding:5px;width:fit-content;border:1px solid rgba(99,118,158,0.15)">
-          ${[
-            ['users', '👥 Foydalanuvchilar'],
-            ['muassasalar', '🏥 Muassasalar'],
-            ['aholi', '👨‍👩‍👧 Aholi soni'],
-            ['audit', '🔍 Ma\'lumot sifati'],
-            ['duplikat', '👥 Duplikatlar'],
-            ['logs', '📋 Kirish tarixi'],
-            ['xabarlar', '💬 Xabarlar']
-          ].map(([t, label]) => `
+          ${visibleTabs.map(([t, label]) => `
             <button onclick="AdminPage.switchTab('${t}')" id="tab-btn-${t}"
               style="padding:9px 20px;border-radius:10px;border:none;cursor:pointer;font-size:13px;font-weight:700;transition:all 0.2s;display:flex;align-items:center;gap:6px;
               ${AdminPage._activeTab === t ? 'background:#1e293b;color:#e2e8f0;box-shadow:0 2px 8px rgba(0,0,0,0.3)' : 'background:transparent;color:#64748b;'}">
@@ -924,7 +937,13 @@ const AdminPage = {
     const qaytaGroups = normalizedGroups.filter(g => g.type === 'qayta_murojaat');
     const totalRecords = normalizedGroups.reduce((s, g) => s + g.records.length, 0);
 
-    const renderGroup = (g, gi, showDelete) => `
+    const myViloyat = (AdminPage._myViloyat || '').toLowerCase();
+    const renderGroup = (g, gi, showDelete) => {
+      const visibleRecords = AdminPage._isViloyatAdmin
+        ? g.records.filter(r => (r.viloyat || '').toLowerCase() === myViloyat)
+        : g.records;
+      if (visibleRecords.length === 0) return '';
+      return `
       <div style="border:1px solid ${g.type==='duplicate'?'rgba(239,68,68,0.25)':'rgba(99,118,158,0.2)'};border-radius:12px;overflow:hidden;margin-bottom:4px">
         <div style="background:${g.type==='duplicate'?'rgba(239,68,68,0.08)':'rgba(99,118,158,0.08)'};padding:8px 14px;font-size:12px;font-weight:700;color:${g.type==='duplicate'?'#f87171':'#94a3b8'}">
           ${gi+1}. ${g.records[0].fio || '—'} • ${g.records[0].tugilgan_yil || '—'} • ${g.type==='duplicate'?'⚠️ Duplikat':'🔄 Qayta murojaat'}
@@ -934,7 +953,7 @@ const AdminPage = {
             <th>K/T No</th><th>F.I.O</th><th>Tur</th><th>Muassasa</th><th>Qabul sanasi</th>${showDelete?'<th>Amal</th>':''}
           </tr></thead>
           <tbody>
-            ${g.records.map(r => `<tr>
+            ${visibleRecords.map(r => `<tr>
               <td style="font-family:monospace;font-size:12px;color:#64748b">${r.kt_no}</td>
               <td style="font-weight:600;font-size:13px">${r.fio||'—'}</td>
               <td style="font-size:12px;color:#94a3b8">${r._type==='infarkt'?'Infarkt':'Insult'}</td>
@@ -950,6 +969,7 @@ const AdminPage = {
           </tbody>
         </table>
       </div>`;
+    };
 
     return `
       <div class="stat-grid" style="grid-template-columns:repeat(${isAllMode?3:2},1fr);margin-bottom:16px">
@@ -1008,6 +1028,14 @@ const AdminPage = {
     if (!confirm(`K/T No: ${kt_no} — bu duplikat bemor yozuvini o'chirmoqchimisiz?`)) return;
     try {
       const table = type === 'infarkt' ? 'infarkt_qabul' : 'insult_qabul';
+      // Viloyat admin faqat o'z viloyatidagi bemorni o'chira oladi
+      if (AdminPage._isViloyatAdmin && AdminPage._myViloyat) {
+        const { data: rec } = await getSupabase().from(table).select('viloyat').eq('kt_no', kt_no).single();
+        if (!rec || (rec.viloyat || '').toLowerCase() !== AdminPage._myViloyat.toLowerCase()) {
+          showToast('❌ Siz faqat o\'z viloyatingizdagi bemorlarni o\'chira olasiz', 'error');
+          return;
+        }
+      }
       const { error } = await getSupabase().from(table).delete().eq('kt_no', kt_no);
       if (error) throw error;
       showToast(`✅ O'chirildi: ${kt_no}`, 'success');
