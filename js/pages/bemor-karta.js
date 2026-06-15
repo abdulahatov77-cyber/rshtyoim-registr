@@ -1606,7 +1606,7 @@ const BemorKartaPage = {
 
     try {
       const kt_no = BemorKartaPage._patient.kt_no;
-      const chiqish_sana = `${sana}T${vaqt || '00:00'}`;
+      const chiqish_sana = new Date(`${sana}T${vaqt || '00:00'}:00+05:00`).toISOString();
 
       const otkazilganMuassasa = natija === "Boshqa shifoxonaga o'tkazildi" ? boshqaShifoxona : null;
 
