@@ -218,11 +218,11 @@ const BemorlarPage = {
         const insKts = needsExit.filter(p => p._type === 'insult').map(p => p.kt_no);
         const sb = getSupabase();
         const [infChiq, insChiq] = await Promise.all([
-          infKts.length ? sb.from('infarkt_chiqarish').select('kt_no,chiqish_sana,natija').in('kt_no', infKts) : Promise.resolve({ data: [] }),
+          infKts.length ? sb.from('infarkt_chiqarish').select('kt_no,chiqish_sana,chiqish_holat').in('kt_no', infKts) : Promise.resolve({ data: [] }),
           insKts.length ? sb.from('insult_chiqarish').select('kt_no,chiqish_sana,natija').in('kt_no', insKts) : Promise.resolve({ data: [] })
         ]);
         const exitMap = {};
-        (infChiq.data || []).forEach(r => { exitMap['infarkt:' + r.kt_no] = r; });
+        (infChiq.data || []).forEach(r => { exitMap['infarkt:' + r.kt_no] = { kt_no: r.kt_no, chiqish_sana: r.chiqish_sana, natija: r.chiqish_holat }; });
         (insChiq.data || []).forEach(r => { exitMap['insult:' + r.kt_no] = r; });
         combined.forEach(p => {
           const ex = exitMap[p._type + ':' + p.kt_no];

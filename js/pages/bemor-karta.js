@@ -50,9 +50,15 @@ const BemorKartaPage = {
       // O'tkazilgan sana — avval chiqarish jadvalidan, bo'lmasa dinamika jadvalidan
       try {
         const tbl = type === 'infarkt' ? 'infarkt_chiqarish' : 'insult_chiqarish';
-        const { data: chiq } = await getSupabase().from(tbl).select('chiqish_sana,chiqish_holat,natija').eq('kt_no', kt_no).order('chiqish_sana', { ascending: false }).limit(1);
+        const cols = type === 'infarkt' ? 'chiqish_sana,chiqish_holat' : 'chiqish_sana,natija';
+        const { data: chiq } = await getSupabase().from(tbl).select(cols).eq('kt_no', kt_no).order('chiqish_sana', { ascending: false }).limit(1);
         if (chiq && chiq.length > 0) {
-          patient._chiqarish = chiq[0];
+          // infarkt da chiqish_holat, insult da natija — ikkalasini natija ga normalize qil
+          const row = chiq[0];
+          patient._chiqarish = {
+            chiqish_sana: row.chiqish_sana,
+            natija: row.natija || row.chiqish_holat || null
+          };
         } else if (patient.otkazilgan_muassasa) {
           // Dinamika jadvalidan o'tkazilgan yozuvni topamiz
           const { data: din } = await getSupabase()
