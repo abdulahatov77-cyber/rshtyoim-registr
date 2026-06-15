@@ -357,10 +357,9 @@ body { overflow: hidden; } /* Let layout handles scrolling */
 /* Table enhancements */
 .data-table thead th { position: sticky; top: 0; z-index: 10; }
 
-/* Admin panel dark background uchun jadval matn ranglari */
-#admin-content .data-table tbody td { color: #cbd5e1; }
-#admin-content .data-table tbody tr:hover { background: rgba(37,99,235,0.08); }
-#admin-content .data-table thead th { background: #0f172a; color: #64748b; border-bottom-color: rgba(99,118,158,0.2); }
+/* Admin panel jadval matn ranglari */
+#admin-content .data-table tbody td { color: #0f172a; }
+#admin-content .data-table tbody tr:hover { background: rgba(37,99,235,0.06); }
 
 /* Status Badges refinement */
 .badge-status { padding: 4px 12px; border-radius: 8px; font-weight: 700; font-size: 11px; text-transform: uppercase; }
