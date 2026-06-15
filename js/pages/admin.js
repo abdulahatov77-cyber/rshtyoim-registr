@@ -177,12 +177,10 @@ const AdminPage = {
     all.forEach(p => { if (p.viloyat) vilMap[p.viloyat] = (vilMap[p.viloyat]||0) + 1; });
     const topVil = Object.entries(vilMap).sort((a,b)=>b[1]-a[1]);
 
-    // Muassasalar bo'yicha foydalanuvchilar soni
-    const muassasaMap = {};
-    all.forEach(p => {
-      if (p.muassasa) muassasaMap[p.muassasa] = (muassasaMap[p.muassasa]||0) + 1;
-    });
-    const topMuassasa = Object.entries(muassasaMap).sort((a,b)=>b[1]-a[1]);
+    // Viloyat bo'yicha config dagi muassasalar soni
+    const topMuassasa = Object.entries(APP_CONFIG.MUASSASALAR)
+      .map(([vil, list]) => [vil, list.length])
+      .sort((a,b) => b[1]-a[1]);
 
     return `
       <div class="stat-grid" style="margin-bottom:20px;grid-template-columns:repeat(4,1fr)">
@@ -261,29 +259,26 @@ const AdminPage = {
             <div class="card-header"><span class="card-title">${icon('map',14)} Viloyatlar bo'yicha</span></div>
             <div style="padding:4px 0;max-height:35vh;overflow-y:auto">
               ${topVil.length ? topVil.map(([v,cnt]) => `
-                <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;border-bottom:1px solid rgba(99,118,158,0.1)">
-                  <span style="font-size:12px;color:#e2e8f0;font-weight:600;flex:1;margin-right:8px">${v}</span>
-                  <span style="font-size:12px;font-weight:700;color:#60a5fa;background:rgba(59,130,246,0.12);padding:2px 8px;border-radius:20px;white-space:nowrap">${cnt}</span>
+                <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;border-bottom:1px solid #e2e8f0">
+                  <span style="font-size:12px;color:#0f172a;font-weight:600;flex:1;margin-right:8px">${v}</span>
+                  <span style="font-size:12px;font-weight:700;color:#2563eb;background:rgba(37,99,235,0.1);padding:2px 8px;border-radius:20px;white-space:nowrap">${cnt} ta</span>
                 </div>`).join('')
               : '<p style="color:#64748b;font-size:12px;text-align:center;padding:16px">Viloyatlar yo\'q</p>'}
             </div>
           </div>
 
-          <!-- Muassasalar faolligi -->
+          <!-- Viloyat muassasalari soni -->
           <div class="card">
             <div class="card-header">
-              <span class="card-title">${icon('building-2',14)} Muassasalar</span>
-              <span style="font-size:11px;color:#64748b">${topMuassasa.length} ta</span>
+              <span class="card-title">${icon('building-2',14)} Viloyat muassasalari</span>
+              <span style="font-size:11px;color:#64748b">Jami ${topMuassasa.reduce((s,[,c])=>s+c,0)} ta</span>
             </div>
             <div style="padding:4px 0;max-height:35vh;overflow-y:auto">
-              ${topMuassasa.length ? topMuassasa.map(([m,cnt], i) => `
-                <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 12px;border-bottom:1px solid rgba(99,118,158,0.1)">
-                  <div style="flex:1;margin-right:8px;min-width:0">
-                    <div style="font-size:11px;color:#e2e8f0;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${m}">${i+1}. ${m}</div>
-                  </div>
-                  <span style="font-size:12px;font-weight:700;color:#34d399;background:rgba(16,185,129,0.12);padding:2px 8px;border-radius:20px;white-space:nowrap;flex-shrink:0">${cnt}</span>
-                </div>`).join('')
-              : '<p style="color:#64748b;font-size:12px;text-align:center;padding:16px">Ma\'lumot yo\'q</p>'}
+              ${topMuassasa.map(([vil, cnt]) => `
+                <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 12px;border-bottom:1px solid #e2e8f0">
+                  <span style="font-size:12px;color:#0f172a;font-weight:600;flex:1;margin-right:8px">${vil}</span>
+                  <span style="font-size:12px;font-weight:700;color:#16a34a;background:rgba(22,163,74,0.1);padding:2px 8px;border-radius:20px;white-space:nowrap;flex-shrink:0">${cnt} ta</span>
+                </div>`).join('')}
             </div>
           </div>
 
