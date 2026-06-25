@@ -879,75 +879,41 @@ const TransferLog = {
 const Telegram = {
 
   async notify(patient, type) {
-    const token = type === 'infarkt'
-      ? APP_CONFIG.TELEGRAM_INFARKT_TOKEN
-      : APP_CONFIG.TELEGRAM_INSULT_TOKEN;
-
-    // Chat ID вЂ” integer bo'lishi kerak
-    const chatId = parseInt(
-      type === 'infarkt'
-        ? APP_CONFIG.TELEGRAM_INFARKT_CHAT
-        : APP_CONFIG.TELEGRAM_INSULT_CHAT
-    );
-
     try {
       const text = Telegram.buildMessage(patient, type);
 
-      const res = await fetch(
-        `https://api.telegram.org/bot${token}/sendMessage`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            chat_id: chatId,
-            text: text,
-            parse_mode: 'HTML'
-          })
-        }
-      );
+      const res = await fetch('/api/telegram', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type, text })
+      });
 
       const json = await res.json();
 
-      if (json.ok) {
-        showToast('рџ“± Telegram xabar yuborildi!', 'success', 3000);
+      if (res.ok && json.ok) {
+        showToast('📱 Telegram xabar yuborildi!', 'success', 3000);
       } else {
-        const errMsg = json.description || 'Noma\'lum xato';
-        showToast(`вљ пёЏ Telegram xato: ${errMsg}`, 'warning', 6000);
+        const errMsg = json.error || 'Noma'lum xato';
+        showToast(`⚠️ Telegram xato: ${errMsg}`, 'warning', 6000);
       }
     } catch (e) {
-      showToast(`вљ пёЏ Telegram ulanmadi: ${e.message}`, 'warning', 6000);
+      showToast(`⚠️ Telegram ulanmadi: ${e.message}`, 'warning', 6000);
     }
   },
 
-  // Test funksiyasi вЂ” brauzer konsolidan chaqirish uchun: Telegram.test('infarkt')
+  // Test funksiyasi — brauzer konsolidan chaqirish uchun: Telegram.test('infarkt')
   async test(type = 'infarkt') {
-    const token = type === 'infarkt'
-      ? APP_CONFIG.TELEGRAM_INFARKT_TOKEN
-      : APP_CONFIG.TELEGRAM_INSULT_TOKEN;
-    const chatId = parseInt(
-      type === 'infarkt'
-        ? APP_CONFIG.TELEGRAM_INFARKT_CHAT
-        : APP_CONFIG.TELEGRAM_INSULT_CHAT
-    );
-
-
-    const res = await fetch(
-      `https://api.telegram.org/bot${token}/sendMessage`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          chat_id: chatId,
-          text: `вњ… RSHTYOIM test xabari вЂ” ${new Date().toLocaleString('uz-UZ')}`,
-          parse_mode: 'HTML'
-        })
-      }
-    );
+    const text = `✅ RSHTYOIM test xabari — ${new Date().toLocaleString('uz-UZ')}`; 
+    const res = await fetch('/api/telegram', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type, text })
+    });
     const json = await res.json();
-    if (json.ok) {
-      showToast('вњ… Test xabar yuborildi!', 'success');
+    if (res.ok && json.ok) {
+      showToast('✅ Test xabar yuborildi!', 'success');
     } else {
-      showToast(`вќЊ Test xato: ${json.description}`, 'error', 8000);
+      showToast(`❌ Test xato: ${json.error || ''}`, 'error', 8000);
     }
     return json;
   },

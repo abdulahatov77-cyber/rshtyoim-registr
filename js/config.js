@@ -1,16 +1,10 @@
-// ==================== CONFIG ====================
+﻿// ==================== CONFIG ====================
 const APP_CONFIG = {
   // Supabase
   SUPABASE_URL: 'https://udayvbywwnulbxrvxknm.supabase.co',
   SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVkYXl2Ynl3d251bGJ4cnZ4a25tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY2Njk0NTYsImV4cCI6MjA5MjI0NTQ1Nn0.9lgD_V2H2TRKgdtPD0BO1jmE71st45JsOtlCIhmtP8U',
 
-  // Telegram — Infarkt uchun
-  TELEGRAM_INFARKT_TOKEN: '8737545108:AAF9kV7MvVfD9OZBXDaLBYb1lkjWqpLVdnY',
-  TELEGRAM_INFARKT_CHAT:  '-1003239299995',
-
-  // Telegram — Insult uchun
-  TELEGRAM_INSULT_TOKEN: '8737545108:AAF9kV7MvVfD9OZBXDaLBYb1lkjWqpLVdnY',
-  TELEGRAM_INSULT_CHAT:  '-1003239299995',
+  // Telegram tokenlar Vercel Environment Variables da saqlanadi (api/telegram.js ishlatadi)
 
   APP_NAME: 'RSHTYOIM Registr',
   VERSION: '1.0.0',
