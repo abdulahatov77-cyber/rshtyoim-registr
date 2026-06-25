@@ -75,6 +75,13 @@ const HisobotPage = {
     const monthAgo = new Date(Date.now()-30*864e5).toISOString().split('T')[0];
     const inner = document.getElementById('hisobot-inner');
     if (!inner) return;
+    const isSuperAdmin = user?.role === 'super_admin';
+    const isViloyatAdmin = user?.role === 'admin';
+    const isShifokor = user?.role === 'user';
+    const myViloyat = user?.viloyat || '';
+    // Viloyat admini va shifokor uchun viloyat filtri qullangan
+    HisobotPage._myViloyat = myViloyat;
+    HisobotPage._isSuperAdmin = isSuperAdmin;
     inner.innerHTML = `
       <style>
         .h-card {
@@ -154,16 +161,20 @@ const HisobotPage = {
         <!-- Viloyat va Muassasa filtri -->
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 items-end mb-4">
           <div>
-            <label class="form-label !text-blue-900 font-semibold mb-1 block">${icon('map-pin', 14)} Viloyat (ixtiyoriy)</label>
+            <label class="form-label !text-blue-900 font-semibold mb-1 block">${icon('map-pin', 14)} Viloyat</label>
+            ${isSuperAdmin ? `
             <select id="h-viloyat" class="form-select bg-slate-50 text-blue-900 border-blue-200 font-medium" onchange="HisobotPage.onHViloyatChange(this.value)">
               <option value="">— Barcha viloyatlar —</option>
               ${Object.keys(APP_CONFIG.MUASSASALAR).map(v => `<option value="${v}">${v}</option>`).join('')}
-            </select>
+            </select>` : `
+            <input id="h-viloyat" type="hidden" value="${myViloyat}"/>
+            <div class="form-input bg-slate-100 text-blue-900 border-blue-200 font-semibold cursor-not-allowed opacity-80">${myViloyat || '—'} <span style="font-size:11px;color:#64748b">(qullangan)</span></div>`}
           </div>
           <div>
             <label class="form-label !text-blue-900 font-semibold mb-1 block">${icon('building-2', 14)} Muassasa (ixtiyoriy)</label>
             <select id="h-muassasa" class="form-select bg-slate-50 text-blue-900 border-blue-200 font-medium">
               <option value="">— Barcha muassasalar —</option>
+              ${(!isSuperAdmin && myViloyat) ? (APP_CONFIG.MUASSASALAR[myViloyat]||[]).map(m=>`<option value="${m}">${m}</option>`).join('') : ''}
             </select>
           </div>
         </div>
@@ -222,6 +233,11 @@ const HisobotPage = {
     const from = document.getElementById('h-from')?.value;
     const to = document.getElementById('h-to')?.value;
     if (!from||!to) { showToast('Sana oralig\'ini tanlang','warning'); return; }
+    // Viloyat admin o'z viloyatini majburiy ko'rsin
+    if (!HisobotPage._isSuperAdmin && HisobotPage._myViloyat) {
+      const vilEl = document.getElementById('h-viloyat');
+      if (vilEl && vilEl.tagName === 'SELECT') vilEl.value = HisobotPage._myViloyat;
+    }
     // Clear stale data so Telegram button won't send previous period's report
     HisobotPage._lastData = null;
     // Disable Telegram button while loading
