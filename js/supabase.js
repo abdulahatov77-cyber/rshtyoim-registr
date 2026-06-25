@@ -893,7 +893,7 @@ const Telegram = {
       if (res.ok && json.ok) {
         showToast('📱 Telegram xabar yuborildi!', 'success', 3000);
       } else {
-        const errMsg = json.error || 'Noma\\'lum xato';
+        const errMsg = json.error || "Noma'lum xato";
         showToast(`⚠️ Telegram xato: ${errMsg}`, 'warning', 6000);
       }
     } catch (e) {
