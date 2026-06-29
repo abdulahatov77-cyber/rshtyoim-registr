@@ -1437,7 +1437,7 @@ const BemorKartaPage = {
     const p = BemorKartaPage._patient;
     const type = BemorKartaPage._type;
     const isInf = type === 'infarkt';
-    const fio = document.getElementById('edit-fio')?.value?.trim();
+    const fio = Utils.toTitleCase(document.getElementById('edit-fio')?.value?.trim());
     if (!fio) { showToast('F.I.O ni kiriting', 'warning'); return; }
     const g = id => document.getElementById(id);
     const now = new Date();

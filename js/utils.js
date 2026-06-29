@@ -117,6 +117,14 @@ const Utils = {
     return lat.replace(/\s+/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
   },
 
+  // Har qanday yozuvni Title Case ga o'tkazish (saqlashdan oldin ishlatiladi)
+  // "KARIMOV JASUR" → "Karimov Jasur", "karimov jasur" → "Karimov Jasur"
+  toTitleCase(str) {
+    if (!str) return str;
+    return str.trim().replace(/\s+/g, ' ')
+      .replace(/\S+/g, w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
+  },
+
   // Generate KT No suggestion
   // Muassasa nomidan qisqa prefiks olish: "Pop politravma markazi" → "POP"
   muassasaPrefix(muassasa) {

@@ -741,6 +741,10 @@ const InfarktYangiPage = {
         if (payload[f]) payload[f] = new Date(payload[f] + ':00+05:00').toISOString();
       }
 
+      // FIO ni normalize qil: KARIMOV JASUR → Karimov Jasur
+      if (payload.fio) payload.fio = Utils.toTitleCase(payload.fio);
+      if (payload.shifokor_fio) payload.shifokor_fio = Utils.toTitleCase(payload.shifokor_fio);
+
       // Duplikat tekshiruv — bir xil bemor (F.I.O + tug'ilgan yili + qabul sanasi) bazada bormi?
       const dup = await DB.checkDuplicate('infarkt_qabul', payload.fio, payload.tugilgan_yil, payload.qabul_vaqt);
       if (dup) {
