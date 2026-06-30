@@ -215,6 +215,7 @@ const HisobotPage = {
           </div>
         </div>
         <div id="vh-results"></div>
+        <div id="vh-route-results" class="mt-6"></div>
       </div>` : ''}
 
       <div id="h-results">
@@ -306,6 +307,50 @@ const HisobotPage = {
         return acc;
       }, {});
 
+      // Marshrutizatsiya zanjiri: bir xil bemor (FIO+tug'ilgan yil) bir nechta muassasada
+      // qayd etilgan bo'lsa — TTB -> Politravma -> Angiograf markaz kabi zanjir hisoblanadi
+      const routeKey = p => {
+        const fio = Utils.normalizeFio((p.fio||'').trim()).toLowerCase().replace(/\s+/g,' ');
+        const yil = String(p.tugilgan_yil||'').slice(0,4);
+        if (!fio || fio.length < 3 || !yil) return null;
+        return `${fio}|${yil}`;
+      };
+      const allPatients = [
+        ...infs.map(p => ({ ...p, _turi: 'infarkt' })),
+        ...ins.map(p => ({ ...p, _turi: 'insult' }))
+      ];
+      const routeGroups = {};
+      allPatients.forEach(p => {
+        const key = routeKey(p);
+        if (!key) return;
+        (routeGroups[key] = routeGroups[key] || []).push(p);
+      });
+      const chains = Object.values(routeGroups)
+        .filter(g => g.length > 1)
+        .map(g => g.sort((a,b) => new Date(a.qabul_vaqt) - new Date(b.qabul_vaqt)))
+        .filter(g => {
+          // Faqat turli muassasalardagi yozuvlar — bitta muassasada qayta kiritilgan xato emas
+          const muassasalar = new Set(g.map(p => p.muassasa));
+          return muassasalar.size > 1;
+        });
+      const chainStats = chains.map(g => {
+        const first = g[0], last = g[g.length-1];
+        const totalMin = (new Date(last.qabul_vaqt) - new Date(first.qabul_vaqt)) / 60000;
+        return {
+          fio: first.fio,
+          viloyat: first.viloyat,
+          bosqichlar: g.map(p => p.muassasa),
+          son: g.length,
+          totalMin: totalMin > 0 && totalMin < 2880 ? Math.round(totalMin) : null
+        };
+      });
+      const chainsByViloyat = {};
+      chainStats.forEach(c => {
+        (chainsByViloyat[c.viloyat] = chainsByViloyat[c.viloyat] || []).push(c);
+      });
+
+      HisobotPage._lastChainData = chainStats;
+
       HisobotPage._lastViloyatData = { rows, totals, from, to };
 
       el.innerHTML = `
@@ -360,6 +405,50 @@ const HisobotPage = {
             </tbody>
           </table>
         </div>`;
+
+      const routeEl = document.getElementById('vh-route-results');
+      if (routeEl) {
+        const viloyatlarBoFlows = Object.keys(chainsByViloyat).sort();
+        if (viloyatlarBoFlows.length === 0) {
+          routeEl.innerHTML = `
+            <div class="h-card">
+              <h3 class="h-title">${icon('route', 18)} Marshrutizatsiya zanjirlari (TTB → Politravma → Angiograf markaz)</h3>
+              <p class="text-sm text-slate-500 py-4 text-center">Tanlangan davrda bir nechta muassasadan o'tgan bemor topilmadi</p>
+            </div>`;
+        } else {
+          routeEl.innerHTML = `
+            <div class="h-card">
+              <h3 class="h-title">${icon('route', 18)} Marshrutizatsiya zanjirlari (TTB → Politravma → Angiograf markaz)</h3>
+              <p class="text-sm text-slate-500 mb-3">Bir xil bemor (F.I.O + tug'ilgan yil) bo'yicha bir nechta muassasada qayd etilgan yozuvlar — birinchi qabuldan oxirgi qabulgacha o'tgan vaqt bilan</p>
+              ${viloyatlarBoFlows.map(vil => `
+                <div class="mb-4">
+                  <div class="font-bold text-blue-900 text-sm mb-2">${vil} — ${chainsByViloyat[vil].length} ta zanjir</div>
+                  <div class="overflow-x-auto">
+                    <table class="w-full text-sm border-collapse">
+                      <thead>
+                        <tr style="background:#f1f5f9">
+                          <th class="p-2 text-left font-bold text-slate-600">F.I.O</th>
+                          <th class="p-2 text-left font-bold text-slate-600">Bosqichlar</th>
+                          <th class="p-2 text-center font-bold text-slate-600">Soni</th>
+                          <th class="p-2 text-center font-bold text-slate-600">Jami vaqt</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        ${chainsByViloyat[vil].map(c => `
+                          <tr class="border-b border-slate-100">
+                            <td class="p-2 font-semibold text-slate-800">${esc(c.fio)}</td>
+                            <td class="p-2 text-slate-600 text-xs">${c.bosqichlar.map(esc).join(' → ')}</td>
+                            <td class="p-2 text-center font-bold text-blue-700">${c.son}</td>
+                            <td class="p-2 text-center ${c.totalMin && c.totalMin <= 120 ? 'text-green-600' : 'text-orange-600'} font-semibold">${c.totalMin !== null ? c.totalMin + ' daq' : '—'}</td>
+                          </tr>`).join('')}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>`).join('')}
+            </div>`;
+        }
+        initIcons();
+      }
 
       if (exportBtn) { exportBtn.disabled = false; exportBtn.style.opacity = ''; }
     } catch (err) {
