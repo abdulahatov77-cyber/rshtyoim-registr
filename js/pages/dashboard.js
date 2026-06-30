@@ -119,8 +119,8 @@ const DashboardPage = {
     }
     // Age-Sex pyramidlarni yangilaymiz
     if (ageSex && typeof AgePyramid !== 'undefined') {
-      AgePyramid.render('pyramid-infarkt', ageSex.infarkt, 'INFARKT', '#dc2626', stats?.jamiInfarkt);
-      AgePyramid.render('pyramid-insult',  ageSex.insult,  'INSULT',  '#2563eb', stats?.jamiInsult);
+      AgePyramid.render('pyramid-infarkt', ageSex.infarkt, 'INFARKT', '#dc2626', stats?.jamiInfarkt, 'infarkt');
+      AgePyramid.render('pyramid-insult',  ageSex.insult,  'INSULT',  '#2563eb', stats?.jamiInsult, 'insult');
     }
     // 15+ kun jadvalini yangilaymiz
     DashboardPage._longStayData = longStay;
@@ -524,8 +524,8 @@ const DashboardPage = {
         // Age-Sex Pyramids
         const ageSex = DashboardPage._ageSex;
         if (ageSex && typeof AgePyramid !== 'undefined') {
-          AgePyramid.render('pyramid-infarkt', ageSex.infarkt, 'INFARKT', '#dc2626', stats.jamiInfarkt);
-          AgePyramid.render('pyramid-insult',  ageSex.insult,  'INSULT',  '#2563eb', stats.jamiInsult);
+          AgePyramid.render('pyramid-infarkt', ageSex.infarkt, 'INFARKT', '#dc2626', stats.jamiInfarkt, 'infarkt');
+          AgePyramid.render('pyramid-insult',  ageSex.insult,  'INSULT',  '#2563eb', stats.jamiInsult, 'insult');
         }
       }, 300);
     });
@@ -1297,8 +1297,8 @@ const DashboardPage = {
 
       // Yosh piramidasi
       if (ageSex && typeof AgePyramid !== 'undefined') {
-        AgePyramid.render('pyramid-infarkt', ageSex.infarkt, 'INFARKT', '#dc2626', stats.jamiInfarkt);
-        AgePyramid.render('pyramid-insult',  ageSex.insult,  'INSULT',  '#2563eb', stats.jamiInsult);
+        AgePyramid.render('pyramid-infarkt', ageSex.infarkt, 'INFARKT', '#dc2626', stats.jamiInfarkt, 'infarkt');
+        AgePyramid.render('pyramid-insult',  ageSex.insult,  'INSULT',  '#2563eb', stats.jamiInsult, 'insult');
       }
     } catch(e) {
       console.warn('Dashboard refresh xato:', e.message);

@@ -9,7 +9,7 @@ const AgePyramid = {
   COLOR_FEMALE: '#EF4444',  // yorqin qizil
   COLOR_DEATH: 'rgba(0,0,0,0.38)',
 
-  render(containerId, pyramidData, title, dotColor, totalCount) {
+  render(containerId, pyramidData, title, dotColor, totalCount, registr) {
     const el = document.getElementById(containerId);
     if (!el || !pyramidData) return;
 
@@ -76,29 +76,38 @@ const AgePyramid = {
 
       const midY = barY + BAR_H / 2;
 
+      const mClickable = d.mTotal > 0 && registr;
+      const fClickable = d.fTotal > 0 && registr;
+      const mClick = mClickable ? `onclick="AgePyramid.onBarClick('${registr}','male','${group}','${title}')"` : '';
+      const fClick = fClickable ? `onclick="AgePyramid.onBarClick('${registr}','female','${group}','${title}')"` : '';
+
       return `
         <g style="cursor:default">
           <!-- Erkak -->
-          <g class="pyramid-bar-m" style="opacity:1;transition:opacity .15s">
-            <title>Erkak ${group}: ${d.mTotal} ta · vafot ${d.mDeath} (${mDP||0}%)</title>
+          <g class="pyramid-bar-m" style="opacity:1;transition:opacity .15s;${mClickable?'cursor:pointer':''}" ${mClick}>
+            <title>Erkak ${group}: ${d.mTotal} ta · vafot ${d.mDeath} (${mDP||0}%)${mClickable?' — bosing, ro\'yxatni ko\'rish':''}</title>
             <rect x="${mBarX}" y="${barY}" width="${mW}" height="${BAR_H}" rx="4" fill="${this.COLOR_MALE}"/>
             ${mDW > 0 ? `<rect x="${mDeathX}" y="${barY}" width="${mDW}" height="${BAR_H}" rx="4" fill="${this.COLOR_DEATH}"/>` : ''}
           </g>
           <!-- Erkak label -->
           ${d.mTotal > 0 ? `
-            <text x="${mLabelX}" y="${midY - 3}" text-anchor="end" font-size="11" font-weight="700" fill="#1e293b">${d.mTotal}</text>
-            ${mDP ? `<text x="${mLabelX}" y="${midY + 10}" text-anchor="end" font-size="9" fill="#b91c1c">vafot ${mDP}%</text>` : ''}
+            <g style="${mClickable?'cursor:pointer':''}" ${mClick}>
+              <text x="${mLabelX}" y="${midY - 3}" text-anchor="end" font-size="11" font-weight="700" fill="${mClickable?'#1d4ed8':'#1e293b'}" ${mClickable?'text-decoration="underline"':''}>${d.mTotal}</text>
+              ${mDP ? `<text x="${mLabelX}" y="${midY + 10}" text-anchor="end" font-size="9" fill="#b91c1c">vafot ${mDP}%</text>` : ''}
+            </g>
           ` : ''}
           <!-- Ayol -->
-          <g class="pyramid-bar-f" style="opacity:1;transition:opacity .15s">
-            <title>Ayol ${group}: ${d.fTotal} ta · vafot ${d.fDeath} (${fDP||0}%)</title>
+          <g class="pyramid-bar-f" style="opacity:1;transition:opacity .15s;${fClickable?'cursor:pointer':''}" ${fClick}>
+            <title>Ayol ${group}: ${d.fTotal} ta · vafot ${d.fDeath} (${fDP||0}%)${fClickable?' — bosing, ro\'yxatni ko\'rish':''}</title>
             <rect x="${fBarX}" y="${barY}" width="${fW}" height="${BAR_H}" rx="4" fill="${this.COLOR_FEMALE}"/>
             ${fDW > 0 ? `<rect x="${fDeathX}" y="${barY}" width="${fDW}" height="${BAR_H}" rx="4" fill="${this.COLOR_DEATH}"/>` : ''}
           </g>
           <!-- Ayol label -->
           ${d.fTotal > 0 ? `
-            <text x="${fLabelX}" y="${midY - 3}" text-anchor="start" font-size="11" font-weight="700" fill="#1e293b">${d.fTotal}</text>
-            ${fDP ? `<text x="${fLabelX}" y="${midY + 10}" text-anchor="start" font-size="9" fill="#b91c1c">vafot ${fDP}%</text>` : ''}
+            <g style="${fClickable?'cursor:pointer':''}" ${fClick}>
+              <text x="${fLabelX}" y="${midY - 3}" text-anchor="start" font-size="11" font-weight="700" fill="${fClickable?'#b91c1c':'#1e293b'}" ${fClickable?'text-decoration="underline"':''}>${d.fTotal}</text>
+              ${fDP ? `<text x="${fLabelX}" y="${midY + 10}" text-anchor="start" font-size="9" fill="#b91c1c">vafot ${fDP}%</text>` : ''}
+            </g>
           ` : ''}
           <!-- Yosh label (markaz) -->
           <rect x="${cx - CENTER_W/2}" y="${barY}" width="${CENTER_W}" height="${BAR_H}" rx="4" fill="#f1f5f9"/>
@@ -151,5 +160,72 @@ const AgePyramid = {
       g.addEventListener('mouseenter', () => { g.style.opacity = '0.72'; });
       g.addEventListener('mouseleave', () => { g.style.opacity = '1'; });
     });
+  },
+
+  _ageRangeFor(group) {
+    if (group === '≤29')  return [0, 29];
+    if (group === '30-44') return [30, 44];
+    if (group === '45-59') return [45, 59];
+    if (group === '60-74') return [60, 74];
+    return [75, 130]; // 75+
+  },
+
+  async onBarClick(registr, jinsKey, group, title) {
+    const [ageFrom, ageTo] = AgePyramid._ageRangeFor(group);
+    const jinsLabel = jinsKey === 'male' ? 'Erkak' : 'Ayol';
+    showModal({
+      title: `${title} — ${jinsLabel}, ${group} yosh`,
+      body: `<div class="flex items-center justify-center py-10">
+        <div class="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+      </div>`
+    });
+    try {
+      const profile = await Profile.getCurrent();
+      const viloyat  = DashboardPage._viewViloyat  !== undefined ? DashboardPage._viewViloyat  : (profile?.role === 'super_admin' ? '' : profile?.viloyat);
+      const muassasa = DashboardPage._viewMuassasa !== undefined ? DashboardPage._viewMuassasa : '';
+      const filters = { allCols: false, from: '2000-01-01T00:00:00Z' };
+      if (viloyat)  filters.viloyat  = viloyat;
+      if (muassasa) filters.muassasa = muassasa;
+
+      const { data } = registr === 'infarkt'
+        ? await DB.infarktList(filters)
+        : await DB.insultList(filters);
+
+      const jinsMatch = (j) => {
+        const v = (j || '').toLowerCase();
+        return jinsKey === 'male' ? ['erkak','e','m','male'].includes(v) : ['ayol','a','f','female'].includes(v);
+      };
+      const list = (data || []).filter(p => {
+        if (!jinsMatch(p.jins)) return false;
+        const age = Utils.calculateAge(p.tugilgan_sana || p.tugilgan_yil);
+        return age !== null && age !== undefined && !isNaN(age) && age >= ageFrom && age <= ageTo;
+      }).sort((a,b) => new Date(b.qabul_vaqt) - new Date(a.qabul_vaqt));
+
+      const rows = list.map(p => `
+        <tr class="border-b border-gray-100 hover:bg-gray-50 cursor-pointer" onclick="closeModal();Router.go('bemor-karta',{kt_no:'${p.kt_no}',type:'${registr}'})">
+          <td class="py-2 px-2 font-semibold text-gray-900">${esc(p.fio)}</td>
+          <td class="py-2 px-2 text-gray-600">${esc(p.muassasa)}</td>
+          <td class="py-2 px-2 text-gray-600">${Utils.formatDate(p.qabul_vaqt)}</td>
+          <td class="py-2 px-2">
+            <span class="px-2 py-0.5 rounded-full text-xs font-bold ${p.status==='vafot'?'bg-red-100 text-red-700':p.status==='active'?'bg-green-100 text-green-700':'bg-blue-100 text-blue-700'}">${p.status==='vafot'?'Vafot':p.status==='active'?'Faol':'Chiqarilgan'}</span>
+          </td>
+        </tr>`).join('');
+
+      const body = list.length === 0
+        ? `<p class="text-center text-gray-400 py-8">Bu guruhda bemor topilmadi</p>`
+        : `<div class="overflow-x-auto max-h-[60vh] overflow-y-auto">
+            <table class="w-full text-sm">
+              <thead><tr class="text-left text-gray-500 text-xs uppercase border-b border-gray-200">
+                <th class="py-2 px-2">F.I.O</th><th class="py-2 px-2">Muassasa</th><th class="py-2 px-2">Qabul</th><th class="py-2 px-2">Holat</th>
+              </tr></thead>
+              <tbody>${rows}</tbody>
+            </table>
+          </div>
+          <p class="text-xs text-gray-400 mt-3">${list.length} ta bemor</p>`;
+
+      showModal({ title: `${title} — ${jinsLabel}, ${group} yosh (${list.length} ta)`, body });
+    } catch (err) {
+      showModal({ title: 'Xatolik', body: `<p class="text-red-600">${err.message}</p>` });
+    }
   }
 };
