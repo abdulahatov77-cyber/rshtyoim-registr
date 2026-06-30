@@ -255,15 +255,15 @@ const HisobotPage = {
       const infs = infResult.value?.data || [];
       const ins  = insResult.value?.data || [];
 
-      // Mutually exclusive — har bir bemor faqat bitta toifaga tushadi (tartib muhim)
+      // Mutually exclusive va to'liq qamrovli — har bir bemor aniq bitta toifaga tushadi, "aniqlanmagan" qolmaydi
       const isSTEMI = p => p.infarkt_turi?.toUpperCase().includes('STEMI') && !p.infarkt_turi?.toUpperCase().includes('NSTEMI');
       const isNSTEMI = p => p.infarkt_turi?.toUpperCase().includes('NSTEMI');
-      const isAMI = p => !isSTEMI(p) && !isNSTEMI(p) && p.infarkt_turi?.toLowerCase().includes('miokard');
-      const isInfAniqlanmagan = p => !isSTEMI(p) && !isNSTEMI(p) && !isAMI(p);
-      const isIshemik    = p => /^ishemik insult$/i.test((p.insult_turi||'').trim());
+      // Qolgan barcha infarkt yozuvlari (bo'sh yoki noaniq matn) AMI hisoblanadi
+      const isAMI = p => !isSTEMI(p) && !isNSTEMI(p);
       const isGemorragik = p => /^gemorragik insult$/i.test((p.insult_turi||'').trim());
       const isTIA        = p => /^tia\b/i.test((p.insult_turi||'').trim());
-      const isInsAniqlanmagan = p => !isIshemik(p) && !isGemorragik(p) && !isTIA(p);
+      // Qolgan barcha insult yozuvlari (bo'sh yoki noaniq matn) Ishemik hisoblanadi
+      const isIshemik = p => !isGemorragik(p) && !isTIA(p);
 
       const viloyatlar = APP_CONFIG.VILOYATLAR;
       const rows = viloyatlar.map(vil => {
@@ -274,12 +274,10 @@ const HisobotPage = {
           stemi: vInfs.filter(isSTEMI).length,
           nstemi: vInfs.filter(isNSTEMI).length,
           ami: vInfs.filter(isAMI).length,
-          infAniqlanmagan: vInfs.filter(isInfAniqlanmagan).length,
           jamiInfarkt: vInfs.length,
           ishemik: vIns.filter(isIshemik).length,
           gemorragik: vIns.filter(isGemorragik).length,
           tia: vIns.filter(isTIA).length,
-          insAniqlanmagan: vIns.filter(isInsAniqlanmagan).length,
           jamiInsult: vIns.length,
           otkazilganInf: vInfs.filter(p => p.otkazilgan_muassasa).length,
           otkazilganIns: vIns.filter(p => p.otkazilgan_muassasa).length
@@ -287,7 +285,7 @@ const HisobotPage = {
       });
 
       const totals = rows.reduce((acc, r) => {
-        for (const k of ['stemi','nstemi','ami','infAniqlanmagan','jamiInfarkt','ishemik','gemorragik','tia','insAniqlanmagan','jamiInsult','otkazilganInf','otkazilganIns']) {
+        for (const k of ['stemi','nstemi','ami','jamiInfarkt','ishemik','gemorragik','tia','jamiInsult','otkazilganInf','otkazilganIns']) {
           acc[k] = (acc[k]||0) + r[k];
         }
         return acc;
@@ -304,12 +302,10 @@ const HisobotPage = {
                 <th class="p-2.5 text-center text-white font-bold">STEMI</th>
                 <th class="p-2.5 text-center text-white font-bold">NSTEMI</th>
                 <th class="p-2.5 text-center text-white font-bold">AMI</th>
-                <th class="p-2.5 text-center text-white font-bold" style="background:#475569">Aniqlanmagan</th>
                 <th class="p-2.5 text-center text-white font-bold" style="background:#1d4ed8">Jami infarkt</th>
                 <th class="p-2.5 text-center text-white font-bold">Ishemik</th>
                 <th class="p-2.5 text-center text-white font-bold">Gemorragik</th>
                 <th class="p-2.5 text-center text-white font-bold">TIA</th>
-                <th class="p-2.5 text-center text-white font-bold" style="background:#475569">Aniqlanmagan</th>
                 <th class="p-2.5 text-center text-white font-bold" style="background:#1d4ed8">Jami insult</th>
                 <th class="p-2.5 text-center text-white font-bold">O'tkazilgan (inf.)</th>
                 <th class="p-2.5 text-center text-white font-bold rounded-tr-lg">O'tkazilgan (ins.)</th>
@@ -322,12 +318,10 @@ const HisobotPage = {
                   <td class="p-2.5 text-center text-slate-700 border-b border-slate-200">${r.stemi}</td>
                   <td class="p-2.5 text-center text-slate-700 border-b border-slate-200">${r.nstemi}</td>
                   <td class="p-2.5 text-center text-slate-700 border-b border-slate-200">${r.ami}</td>
-                  <td class="p-2.5 text-center text-slate-400 border-b border-slate-200">${r.infAniqlanmagan}</td>
                   <td class="p-2.5 text-center font-bold text-blue-700 border-b border-slate-200">${r.jamiInfarkt}</td>
                   <td class="p-2.5 text-center text-slate-700 border-b border-slate-200">${r.ishemik}</td>
                   <td class="p-2.5 text-center text-slate-700 border-b border-slate-200">${r.gemorragik}</td>
                   <td class="p-2.5 text-center text-slate-700 border-b border-slate-200">${r.tia}</td>
-                  <td class="p-2.5 text-center text-slate-400 border-b border-slate-200">${r.insAniqlanmagan}</td>
                   <td class="p-2.5 text-center font-bold text-blue-700 border-b border-slate-200">${r.jamiInsult}</td>
                   <td class="p-2.5 text-center text-orange-600 font-semibold border-b border-slate-200">${r.otkazilganInf}</td>
                   <td class="p-2.5 text-center text-orange-600 font-semibold border-b border-slate-200">${r.otkazilganIns}</td>
@@ -337,12 +331,10 @@ const HisobotPage = {
                 <td class="p-2.5 text-center font-bold text-blue-900">${totals.stemi}</td>
                 <td class="p-2.5 text-center font-bold text-blue-900">${totals.nstemi}</td>
                 <td class="p-2.5 text-center font-bold text-blue-900">${totals.ami}</td>
-                <td class="p-2.5 text-center font-bold text-slate-600">${totals.infAniqlanmagan}</td>
                 <td class="p-2.5 text-center font-bold text-blue-900">${totals.jamiInfarkt}</td>
                 <td class="p-2.5 text-center font-bold text-blue-900">${totals.ishemik}</td>
                 <td class="p-2.5 text-center font-bold text-blue-900">${totals.gemorragik}</td>
                 <td class="p-2.5 text-center font-bold text-blue-900">${totals.tia}</td>
-                <td class="p-2.5 text-center font-bold text-slate-600">${totals.insAniqlanmagan}</td>
                 <td class="p-2.5 text-center font-bold text-blue-900">${totals.jamiInsult}</td>
                 <td class="p-2.5 text-center font-bold text-blue-900">${totals.otkazilganInf}</td>
                 <td class="p-2.5 text-center font-bold text-blue-900">${totals.otkazilganIns}</td>
@@ -365,12 +357,10 @@ const HisobotPage = {
       'STEMI': r.stemi,
       'NSTEMI': r.nstemi,
       'AMI': r.ami,
-      'Aniqlanmagan (infarkt)': r.infAniqlanmagan,
       'Jami infarkt': r.jamiInfarkt,
       'Ishemik insult': r.ishemik,
       'Gemorragik insult': r.gemorragik,
       'TIA': r.tia,
-      'Aniqlanmagan (insult)': r.insAniqlanmagan,
       'Jami insult': r.jamiInsult,
       "O'tkazilgan (infarkt)": r.otkazilganInf,
       "O'tkazilgan (insult)": r.otkazilganIns
@@ -380,12 +370,10 @@ const HisobotPage = {
       'STEMI': d.totals.stemi,
       'NSTEMI': d.totals.nstemi,
       'AMI': d.totals.ami,
-      'Aniqlanmagan (infarkt)': d.totals.infAniqlanmagan,
       'Jami infarkt': d.totals.jamiInfarkt,
       'Ishemik insult': d.totals.ishemik,
       'Gemorragik insult': d.totals.gemorragik,
       'TIA': d.totals.tia,
-      'Aniqlanmagan (insult)': d.totals.insAniqlanmagan,
       'Jami insult': d.totals.jamiInsult,
       "O'tkazilgan (infarkt)": d.totals.otkazilganInf,
       "O'tkazilgan (insult)": d.totals.otkazilganIns
