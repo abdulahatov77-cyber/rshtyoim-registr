@@ -401,6 +401,8 @@ const InfarktYangiPage = {
         </div>
 
         <div id="otkazilgan-div" style="display:${showOtkazilgan?'block':'none'}">
+          ${this.field('otkazish_sababi','O\'tkazish sababi',`<select id="otkazish_sababi" class="form-select">
+            ${this.selectOptions(['Koronarografiya (KAG) uchun', 'Boshqa sabab'], d.otkazish_sababi||'')}</select>`,true)}
           ${this.field('otkazilgan_muassasa','O\'tkazilgan muassasa nomi',`<select id="otkazilgan_muassasa" class="form-select">
             <option value="">Muassasani tanlang...</option>
             ${this.getAllMuassasalar().map(m => `<option value="${m}" ${d.otkazilgan_muassasa===m?'selected':''}>${m}</option>`).join('')}
@@ -514,7 +516,7 @@ const InfarktYangiPage = {
      'tez_yordam_kelgan_vaqt','birinchi_murojaat_vaqti',
      'fio','aha_bali','simptom_vaqt','birlamchi_yoki_takroriy',
      'infarkt_turi','killip','qon_bosimi','puls','ekg_vaqti','troponin','kkfmb',
-     'muolaja_turi','angio_natija','otkazilgan_muassasa','shifokor_fio','shifokor_tel']
+     'muolaja_turi','angio_natija','otkazilgan_muassasa','otkazish_sababi','shifokor_fio','shifokor_tel']
     .forEach(id => {
       const el = document.getElementById(id);
       if (el) InfarktYangiPage._data[id] = el.value;
@@ -567,7 +569,7 @@ const InfarktYangiPage = {
     if (this._step === 2) required = ['aha_bali','simptom_vaqt','birlamchi_yoki_takroriy','infarkt_turi','killip','qon_bosimi','puls','ekg_vaqti','troponin','kkfmb','ekg_natija'];
     if (this._step === 3) {
       required = ['muolaja_turi','shifokor_fio','shifokor_tel'];
-      if (this._data.muolaja_turi === "Boshqa muassasaga o'tkazildi") required.push('otkazilgan_muassasa');
+      if (this._data.muolaja_turi === "Boshqa muassasaga o'tkazildi") required.push('otkazilgan_muassasa', 'otkazish_sababi');
       if (this._data.muolaja_turi === 'Faqat KAG (diagnostik koronar angiografiya)') required.push('angio_natija');
     }
 

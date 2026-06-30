@@ -294,6 +294,7 @@ const HisobotPage = {
           tia: vIns.filter(isTIA).length,
           jamiInsult: vIns.length,
           otkazilganInf: vInfs.filter(p => p.otkazilgan_muassasa).length,
+          otkazilganKAG: vInfs.filter(p => p.otkazilgan_muassasa && p.otkazish_sababi === 'Koronarografiya (KAG) uchun').length,
           otkazilganIns: vIns.filter(p => p.otkazilgan_muassasa).length,
           stemi120n: stemiUnder120.length,
           stemi120total: stemiPciFilled.length
@@ -301,7 +302,7 @@ const HisobotPage = {
       });
 
       const totals = rows.reduce((acc, r) => {
-        for (const k of ['stemi','nstemi','ami','jamiInfarkt','ishemik','gemorragik','tia','jamiInsult','otkazilganInf','otkazilganIns','stemi120n','stemi120total']) {
+        for (const k of ['stemi','nstemi','ami','jamiInfarkt','ishemik','gemorragik','tia','jamiInsult','otkazilganInf','otkazilganKAG','otkazilganIns','stemi120n','stemi120total']) {
           acc[k] = (acc[k]||0) + r[k];
         }
         return acc;
@@ -368,6 +369,7 @@ const HisobotPage = {
                 <th class="p-2.5 text-center text-white font-bold">TIA</th>
                 <th class="p-2.5 text-center text-white font-bold" style="background:#1d4ed8">Jami insult</th>
                 <th class="p-2.5 text-center text-white font-bold">O'tkazilgan (inf.)</th>
+                <th class="p-2.5 text-center text-white font-bold" style="background:#7c3aed" title="O'tkazilgan (inf.) ichidan aniq KAG/koronarografiya sababi bilan belgilanganlar">— KAG uchun</th>
                 <th class="p-2.5 text-center text-white font-bold">O'tkazilgan (ins.)</th>
                 <th class="p-2.5 text-center text-white font-bold rounded-tr-lg" style="background:#16a34a" title="STEMI bemorlardan necha foizi qabuldan PCI gacha 120 daqiqa ichida yetkazilgan">STEMI ≤120 daq (D2B)</th>
               </tr>
@@ -385,6 +387,7 @@ const HisobotPage = {
                   <td class="p-2.5 text-center text-slate-700 border-b border-slate-200">${r.tia}</td>
                   <td class="p-2.5 text-center font-bold text-blue-700 border-b border-slate-200">${r.jamiInsult}</td>
                   <td class="p-2.5 text-center text-orange-600 font-semibold border-b border-slate-200">${r.otkazilganInf}</td>
+                  <td class="p-2.5 text-center text-purple-700 font-semibold border-b border-slate-200">${r.otkazilganKAG}</td>
                   <td class="p-2.5 text-center text-orange-600 font-semibold border-b border-slate-200">${r.otkazilganIns}</td>
                   <td class="p-2.5 text-center font-semibold border-b border-slate-200" style="color:${r.stemi120total===0?'#94a3b8':(r.stemi120n/r.stemi120total>=0.8?'#16a34a':'#dc2626')}">${r.stemi120total>0 ? `${r.stemi120n}/${r.stemi120total} (${Math.round(r.stemi120n/r.stemi120total*100)}%)` : '—'}</td>
                 </tr>`).join('')}
@@ -399,6 +402,7 @@ const HisobotPage = {
                 <td class="p-2.5 text-center font-bold text-blue-900">${totals.tia}</td>
                 <td class="p-2.5 text-center font-bold text-blue-900">${totals.jamiInsult}</td>
                 <td class="p-2.5 text-center font-bold text-blue-900">${totals.otkazilganInf}</td>
+                <td class="p-2.5 text-center font-bold text-purple-700">${totals.otkazilganKAG}</td>
                 <td class="p-2.5 text-center font-bold text-blue-900">${totals.otkazilganIns}</td>
                 <td class="p-2.5 text-center font-bold text-blue-900">${totals.stemi120total>0 ? `${totals.stemi120n}/${totals.stemi120total} (${Math.round(totals.stemi120n/totals.stemi120total*100)}%)` : '—'}</td>
               </tr>
@@ -470,6 +474,7 @@ const HisobotPage = {
       'TIA': r.tia,
       'Jami insult': r.jamiInsult,
       "O'tkazilgan (infarkt)": r.otkazilganInf,
+      "— KAG uchun": r.otkazilganKAG,
       "O'tkazilgan (insult)": r.otkazilganIns,
       "STEMI ≤120 daq (D2B)": r.stemi120total>0 ? `${r.stemi120n}/${r.stemi120total} (${Math.round(r.stemi120n/r.stemi120total*100)}%)` : '—'
     }));
@@ -484,6 +489,7 @@ const HisobotPage = {
       'TIA': d.totals.tia,
       'Jami insult': d.totals.jamiInsult,
       "O'tkazilgan (infarkt)": d.totals.otkazilganInf,
+      "— KAG uchun": d.totals.otkazilganKAG,
       "O'tkazilgan (insult)": d.totals.otkazilganIns,
       "STEMI ≤120 daq (D2B)": d.totals.stemi120total>0 ? `${d.totals.stemi120n}/${d.totals.stemi120total} (${Math.round(d.totals.stemi120n/d.totals.stemi120total*100)}%)` : '—'
     });

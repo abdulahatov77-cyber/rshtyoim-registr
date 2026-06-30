@@ -129,7 +129,7 @@ const DB = {
       'aha_bali','simptom_vaqt','birlamchi_yoki_takroriy',
       'infarkt_turi','killip','qon_bosimi','puls','ekg_vaqti','troponin','kkfmb',
       'ekg_natija','xavf_omil',
-      'muolaja_turi','angio_natija','otkazilgan_muassasa',
+      'muolaja_turi','angio_natija','otkazilgan_muassasa','otkazish_sababi',
       'dinamika_muolaja_turi','dinamika_izoh',
       'shifokor_fio','shifokor_tel','status'
     ];
