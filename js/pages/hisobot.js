@@ -370,7 +370,7 @@ const HisobotPage = {
                 <th class="p-2.5 text-center text-white font-bold" style="background:#1d4ed8">Jami insult</th>
                 <th class="p-2.5 text-center text-white font-bold">O'tkazilgan (inf.)</th>
                 <th class="p-2.5 text-center text-white font-bold" style="background:#7c3aed" title="O'tkazilgan (inf.) ichidan aniq KAG/koronarografiya sababi bilan belgilanganlar">— KAG uchun</th>
-                <th class="p-2.5 text-center text-white font-bold">O'tkazilgan (ins.)</th>
+                <th class="p-2.5 text-center text-white font-bold" title="Barchasi angiografiya/endovaskulyar muolaja (trombektomiya) uchun o'tkazilgan">O'tkazilgan (ins.)</th>
                 <th class="p-2.5 text-center text-white font-bold rounded-tr-lg" style="background:#16a34a" title="STEMI bemorlardan necha foizi qabuldan PCI gacha 120 daqiqa ichida yetkazilgan">STEMI ≤120 daq (D2B)</th>
               </tr>
             </thead>
