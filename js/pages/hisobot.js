@@ -195,6 +195,28 @@ const HisobotPage = {
         </div>
       </div>
 
+      ${isSuperAdmin ? `
+      <div class="h-card">
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-2">
+          <div>
+            <h3 class="h-title !mb-1">${icon('table', 18)} Viloyatlar kesimida hisobot</h3>
+            <p class="text-sm text-slate-500">Har bir viloyat bo'yicha STEMI/NSTEMI, Ishemik/Gemorragik/TIA va marshrutizatsiya statistikasi</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <input id="vh-from" type="date" class="form-input bg-slate-50 text-blue-900 border-blue-200 font-medium" value="${new Date(Date.now()-90*864e5).toISOString().split('T')[0]}"/>
+            <span class="text-slate-400">—</span>
+            <input id="vh-to" type="date" class="form-input bg-slate-50 text-blue-900 border-blue-200 font-medium" value="${today}"/>
+            <button class="btn btn-primary shadow-md hover:shadow-lg flex items-center gap-2 px-4 rounded-xl" onclick="HisobotPage.loadViloyatReport()">
+              ${icon('bar-chart-2', 16)} Shakllantirish
+            </button>
+            <button id="vh-export-btn" class="btn btn-success shadow-md hover:shadow-lg flex items-center gap-2 px-4 rounded-xl" onclick="HisobotPage.exportViloyatReport()" disabled style="opacity:0.5">
+              ${icon('download', 16)} Excel
+            </button>
+          </div>
+        </div>
+        <div id="vh-results"></div>
+      </div>` : ''}
+
       <div id="h-results">
         <div class="h-card text-center py-20 flex flex-col items-center justify-center">
           <div class="text-blue-200 mb-4 animate-pulse">${icon('pie-chart', 64)}</div>
@@ -204,6 +226,160 @@ const HisobotPage = {
       </div>
     `;
     initIcons();
+  },
+
+  async loadViloyatReport() {
+    const from = document.getElementById('vh-from')?.value;
+    const to   = document.getElementById('vh-to')?.value;
+    if (!from || !to) { showToast('Sana oralig\'ini tanlang', 'warning'); return; }
+    const el = document.getElementById('vh-results');
+    if (!el) return;
+    el.innerHTML = `
+      <div class="flex flex-col items-center justify-center py-12">
+        <div class="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-3"></div>
+        <p class="text-blue-900 font-semibold text-sm">Yuklanmoqda...</p>
+      </div>`;
+    const exportBtn = document.getElementById('vh-export-btn');
+    if (exportBtn) { exportBtn.disabled = true; exportBtn.style.opacity = '0.5'; }
+
+    try {
+      const fromUTC = new Date(from + 'T00:00:00+05:00').toISOString();
+      const toUTC   = new Date(to   + 'T23:59:59+05:00').toISOString();
+      const [infResult, insResult] = await Promise.allSettled([
+        DB.infarktList({ from: fromUTC, to: toUTC, allCols: true }),
+        DB.insultList({ from: fromUTC, to: toUTC, allCols: true })
+      ]);
+      if (infResult.status === 'rejected') throw new Error('Infarkt ma\'lumotlari yuklanmadi: ' + infResult.reason?.message);
+      if (insResult.status === 'rejected') throw new Error('Insult ma\'lumotlari yuklanmadi: ' + insResult.reason?.message);
+
+      const infs = infResult.value?.data || [];
+      const ins  = insResult.value?.data || [];
+
+      const isSTEMI = p => p.infarkt_turi?.toUpperCase().includes('STEMI') && !p.infarkt_turi?.toUpperCase().includes('NSTEMI');
+      const isNSTEMI = p => p.infarkt_turi?.toUpperCase().includes('NSTEMI');
+      const isAMI = p => p.infarkt_turi?.toLowerCase().includes('miokard');
+      const isIshemik    = p => /^ishemik insult$/i.test((p.insult_turi||'').trim());
+      const isGemorragik = p => /^gemorragik insult$/i.test((p.insult_turi||'').trim());
+      const isTIA        = p => /^tia\b/i.test((p.insult_turi||'').trim());
+
+      const viloyatlar = APP_CONFIG.VILOYATLAR;
+      const rows = viloyatlar.map(vil => {
+        const vInfs = infs.filter(p => p.viloyat === vil);
+        const vIns  = ins.filter(p => p.viloyat === vil);
+        return {
+          viloyat: vil,
+          stemi: vInfs.filter(isSTEMI).length,
+          nstemi: vInfs.filter(isNSTEMI).length,
+          ami: vInfs.filter(isAMI).length,
+          jamiInfarkt: vInfs.length,
+          ishemik: vIns.filter(isIshemik).length,
+          gemorragik: vIns.filter(isGemorragik).length,
+          tia: vIns.filter(isTIA).length,
+          jamiInsult: vIns.length,
+          otkazilganInf: vInfs.filter(p => p.otkazilgan_muassasa).length,
+          otkazilganIns: vIns.filter(p => p.otkazilgan_muassasa).length
+        };
+      });
+
+      const totals = rows.reduce((acc, r) => {
+        for (const k of ['stemi','nstemi','ami','jamiInfarkt','ishemik','gemorragik','tia','jamiInsult','otkazilganInf','otkazilganIns']) {
+          acc[k] = (acc[k]||0) + r[k];
+        }
+        return acc;
+      }, {});
+
+      HisobotPage._lastViloyatData = { rows, totals, from, to };
+
+      el.innerHTML = `
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm border-collapse">
+            <thead>
+              <tr style="background:#1e3a8a">
+                <th class="p-2.5 text-left text-white font-bold rounded-tl-lg">Viloyat</th>
+                <th class="p-2.5 text-center text-white font-bold">STEMI</th>
+                <th class="p-2.5 text-center text-white font-bold">NSTEMI</th>
+                <th class="p-2.5 text-center text-white font-bold">AMI</th>
+                <th class="p-2.5 text-center text-white font-bold" style="background:#1d4ed8">Jami infarkt</th>
+                <th class="p-2.5 text-center text-white font-bold">Ishemik</th>
+                <th class="p-2.5 text-center text-white font-bold">Gemorragik</th>
+                <th class="p-2.5 text-center text-white font-bold">TIA</th>
+                <th class="p-2.5 text-center text-white font-bold" style="background:#1d4ed8">Jami insult</th>
+                <th class="p-2.5 text-center text-white font-bold">O'tkazilgan (inf.)</th>
+                <th class="p-2.5 text-center text-white font-bold rounded-tr-lg">O'tkazilgan (ins.)</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rows.map((r,i) => `
+                <tr style="background:${i%2===0?'#f8fafc':'#ffffff'}" class="hover:bg-blue-50 transition-colors">
+                  <td class="p-2.5 font-semibold text-slate-800 border-b border-slate-200">${r.viloyat}</td>
+                  <td class="p-2.5 text-center text-slate-700 border-b border-slate-200">${r.stemi}</td>
+                  <td class="p-2.5 text-center text-slate-700 border-b border-slate-200">${r.nstemi}</td>
+                  <td class="p-2.5 text-center text-slate-700 border-b border-slate-200">${r.ami}</td>
+                  <td class="p-2.5 text-center font-bold text-blue-700 border-b border-slate-200">${r.jamiInfarkt}</td>
+                  <td class="p-2.5 text-center text-slate-700 border-b border-slate-200">${r.ishemik}</td>
+                  <td class="p-2.5 text-center text-slate-700 border-b border-slate-200">${r.gemorragik}</td>
+                  <td class="p-2.5 text-center text-slate-700 border-b border-slate-200">${r.tia}</td>
+                  <td class="p-2.5 text-center font-bold text-blue-700 border-b border-slate-200">${r.jamiInsult}</td>
+                  <td class="p-2.5 text-center text-orange-600 font-semibold border-b border-slate-200">${r.otkazilganInf}</td>
+                  <td class="p-2.5 text-center text-orange-600 font-semibold border-b border-slate-200">${r.otkazilganIns}</td>
+                </tr>`).join('')}
+              <tr style="background:#dbeafe">
+                <td class="p-2.5 font-bold text-blue-900">JAMI</td>
+                <td class="p-2.5 text-center font-bold text-blue-900">${totals.stemi}</td>
+                <td class="p-2.5 text-center font-bold text-blue-900">${totals.nstemi}</td>
+                <td class="p-2.5 text-center font-bold text-blue-900">${totals.ami}</td>
+                <td class="p-2.5 text-center font-bold text-blue-900">${totals.jamiInfarkt}</td>
+                <td class="p-2.5 text-center font-bold text-blue-900">${totals.ishemik}</td>
+                <td class="p-2.5 text-center font-bold text-blue-900">${totals.gemorragik}</td>
+                <td class="p-2.5 text-center font-bold text-blue-900">${totals.tia}</td>
+                <td class="p-2.5 text-center font-bold text-blue-900">${totals.jamiInsult}</td>
+                <td class="p-2.5 text-center font-bold text-blue-900">${totals.otkazilganInf}</td>
+                <td class="p-2.5 text-center font-bold text-blue-900">${totals.otkazilganIns}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>`;
+
+      if (exportBtn) { exportBtn.disabled = false; exportBtn.style.opacity = ''; }
+    } catch (err) {
+      el.innerHTML = `<div class="text-center text-red-600 py-8">${err.message || 'Xatolik yuz berdi'}</div>`;
+    }
+  },
+
+  exportViloyatReport() {
+    const d = HisobotPage._lastViloyatData;
+    if (!d) { showToast('Avval hisobotni shakllantiring', 'warning'); return; }
+    const data = d.rows.map(r => ({
+      'Viloyat': r.viloyat,
+      'STEMI': r.stemi,
+      'NSTEMI': r.nstemi,
+      'AMI': r.ami,
+      'Jami infarkt': r.jamiInfarkt,
+      'Ishemik insult': r.ishemik,
+      'Gemorragik insult': r.gemorragik,
+      'TIA': r.tia,
+      'Jami insult': r.jamiInsult,
+      "O'tkazilgan (infarkt)": r.otkazilganInf,
+      "O'tkazilgan (insult)": r.otkazilganIns
+    }));
+    data.push({
+      'Viloyat': 'JAMI',
+      'STEMI': d.totals.stemi,
+      'NSTEMI': d.totals.nstemi,
+      'AMI': d.totals.ami,
+      'Jami infarkt': d.totals.jamiInfarkt,
+      'Ishemik insult': d.totals.ishemik,
+      'Gemorragik insult': d.totals.gemorragik,
+      'TIA': d.totals.tia,
+      'Jami insult': d.totals.jamiInsult,
+      "O'tkazilgan (infarkt)": d.totals.otkazilganInf,
+      "O'tkazilgan (insult)": d.totals.otkazilganIns
+    });
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Viloyatlar hisoboti');
+    XLSX.writeFile(wb, `viloyatlar_hisobot_${d.from}_${d.to}.xlsx`);
+    showToast('✅ Excel fayl yuklab olindi', 'success');
   },
 
   onPeriodChange() {
