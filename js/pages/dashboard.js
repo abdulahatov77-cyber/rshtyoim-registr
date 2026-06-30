@@ -350,7 +350,7 @@ const DashboardPage = {
              </div>
            </div>
         </div>
-        <div class="w-full" style="height:540px"><canvas id="regionChart"></canvas></div>
+        <div class="w-full" style="height:480px"><canvas id="regionChart"></canvas></div>
       </div>
 
       <!-- ROW 5: AGE-SEX PYRAMID -->
@@ -771,11 +771,10 @@ const DashboardPage = {
         const d = getChartData(mode);
         const is100k = mode === '100k18' || mode === '100k' || mode === '100k30';
         const titleText = mode === '100k30' ? '100 000 aholiga nisbatan (30+)' : '100 000 aholiga nisbatan (18+)';
-        const shortenLabel = (name, max = 18) => name.length > max ? name.slice(0, max - 1) + '…' : name;
         DashboardPage._charts.region = new Chart(ctxR, {
           type: 'bar',
           data: {
-            labels: regionData.map(v => shortenLabel(v.name)),
+            labels: regionData.map(v => v.name),
             datasets: [
               { label: 'Infarkt', data: d.map(v => v.inf), backgroundColor: '#dc2626', borderRadius: 4, borderSkipped: false },
               { label: 'Insult',  data: d.map(v => v.ins), backgroundColor: '#2563eb', borderRadius: 4, borderSkipped: false }
@@ -792,10 +791,6 @@ const DashboardPage = {
               },
               tooltip: {
                 callbacks: {
-                  title: (items) => {
-                    const idx = items[0]?.dataIndex;
-                    return regionData[idx]?.name || '';
-                  },
                   afterBody: (items) => {
                     if (!is100k) return [];
                     const idx = items[0]?.dataIndex;
@@ -816,7 +811,7 @@ const DashboardPage = {
             scales: {
               x: {
                 grid: { display: false },
-                ticks: { font: { size: 11, weight: '600' }, maxRotation: 60, minRotation: 60, autoSkip: false, color: '#475569' }
+                ticks: { font: { size: 12, weight: '600' }, maxRotation: 45, minRotation: 45, autoSkip: false, color: '#475569' }
               },
               y: {
                 grid: { borderDash: [5,5], color: '#e2e8f0' },
