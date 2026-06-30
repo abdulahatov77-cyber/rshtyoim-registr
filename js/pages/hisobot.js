@@ -265,13 +265,26 @@ const HisobotPage = {
       // Qolgan barcha insult yozuvlari (bo'sh yoki noaniq matn) Ishemik hisoblanadi
       const isIshemik = p => !isGemorragik(p) && !isTIA(p);
 
+      // STEMI uchun 120 daqiqa (Door-to-Balloon) me'yori: qabul_vaqt -> pci_vaqt farqi
+      const pciMinutes = p => {
+        if (!p.qabul_vaqt || !p.pci_vaqt) return null;
+        const d1 = new Date(p.qabul_vaqt);
+        const d2 = new Date(p.pci_vaqt);
+        if (isNaN(d1) || isNaN(d2)) return null;
+        const diff = (d2 - d1) / 60000;
+        return (diff > 0 && diff < 1440) ? diff : null;
+      };
+
       const viloyatlar = APP_CONFIG.VILOYATLAR;
       const rows = viloyatlar.map(vil => {
         const vInfs = infs.filter(p => p.viloyat === vil);
         const vIns  = ins.filter(p => p.viloyat === vil);
+        const vStemi = vInfs.filter(isSTEMI);
+        const stemiPciFilled = vStemi.filter(p => pciMinutes(p) !== null);
+        const stemiUnder120 = stemiPciFilled.filter(p => pciMinutes(p) <= 120);
         return {
           viloyat: vil,
-          stemi: vInfs.filter(isSTEMI).length,
+          stemi: vStemi.length,
           nstemi: vInfs.filter(isNSTEMI).length,
           ami: vInfs.filter(isAMI).length,
           jamiInfarkt: vInfs.length,
@@ -280,12 +293,14 @@ const HisobotPage = {
           tia: vIns.filter(isTIA).length,
           jamiInsult: vIns.length,
           otkazilganInf: vInfs.filter(p => p.otkazilgan_muassasa).length,
-          otkazilganIns: vIns.filter(p => p.otkazilgan_muassasa).length
+          otkazilganIns: vIns.filter(p => p.otkazilgan_muassasa).length,
+          stemi120n: stemiUnder120.length,
+          stemi120total: stemiPciFilled.length
         };
       });
 
       const totals = rows.reduce((acc, r) => {
-        for (const k of ['stemi','nstemi','ami','jamiInfarkt','ishemik','gemorragik','tia','jamiInsult','otkazilganInf','otkazilganIns']) {
+        for (const k of ['stemi','nstemi','ami','jamiInfarkt','ishemik','gemorragik','tia','jamiInsult','otkazilganInf','otkazilganIns','stemi120n','stemi120total']) {
           acc[k] = (acc[k]||0) + r[k];
         }
         return acc;
@@ -308,7 +323,8 @@ const HisobotPage = {
                 <th class="p-2.5 text-center text-white font-bold">TIA</th>
                 <th class="p-2.5 text-center text-white font-bold" style="background:#1d4ed8">Jami insult</th>
                 <th class="p-2.5 text-center text-white font-bold">O'tkazilgan (inf.)</th>
-                <th class="p-2.5 text-center text-white font-bold rounded-tr-lg">O'tkazilgan (ins.)</th>
+                <th class="p-2.5 text-center text-white font-bold">O'tkazilgan (ins.)</th>
+                <th class="p-2.5 text-center text-white font-bold rounded-tr-lg" style="background:#16a34a" title="STEMI bemorlardan necha foizi qabuldan PCI gacha 120 daqiqa ichida yetkazilgan">STEMI ≤120 daq (D2B)</th>
               </tr>
             </thead>
             <tbody>
@@ -325,6 +341,7 @@ const HisobotPage = {
                   <td class="p-2.5 text-center font-bold text-blue-700 border-b border-slate-200">${r.jamiInsult}</td>
                   <td class="p-2.5 text-center text-orange-600 font-semibold border-b border-slate-200">${r.otkazilganInf}</td>
                   <td class="p-2.5 text-center text-orange-600 font-semibold border-b border-slate-200">${r.otkazilganIns}</td>
+                  <td class="p-2.5 text-center font-semibold border-b border-slate-200" style="color:${r.stemi120total===0?'#94a3b8':(r.stemi120n/r.stemi120total>=0.8?'#16a34a':'#dc2626')}">${r.stemi120total>0 ? `${r.stemi120n}/${r.stemi120total} (${Math.round(r.stemi120n/r.stemi120total*100)}%)` : '—'}</td>
                 </tr>`).join('')}
               <tr style="background:#dbeafe">
                 <td class="p-2.5 font-bold text-blue-900">JAMI</td>
@@ -338,6 +355,7 @@ const HisobotPage = {
                 <td class="p-2.5 text-center font-bold text-blue-900">${totals.jamiInsult}</td>
                 <td class="p-2.5 text-center font-bold text-blue-900">${totals.otkazilganInf}</td>
                 <td class="p-2.5 text-center font-bold text-blue-900">${totals.otkazilganIns}</td>
+                <td class="p-2.5 text-center font-bold text-blue-900">${totals.stemi120total>0 ? `${totals.stemi120n}/${totals.stemi120total} (${Math.round(totals.stemi120n/totals.stemi120total*100)}%)` : '—'}</td>
               </tr>
             </tbody>
           </table>
@@ -363,7 +381,8 @@ const HisobotPage = {
       'TIA': r.tia,
       'Jami insult': r.jamiInsult,
       "O'tkazilgan (infarkt)": r.otkazilganInf,
-      "O'tkazilgan (insult)": r.otkazilganIns
+      "O'tkazilgan (insult)": r.otkazilganIns,
+      "STEMI ≤120 daq (D2B)": r.stemi120total>0 ? `${r.stemi120n}/${r.stemi120total} (${Math.round(r.stemi120n/r.stemi120total*100)}%)` : '—'
     }));
     data.push({
       'Viloyat': 'JAMI',
@@ -376,7 +395,8 @@ const HisobotPage = {
       'TIA': d.totals.tia,
       'Jami insult': d.totals.jamiInsult,
       "O'tkazilgan (infarkt)": d.totals.otkazilganInf,
-      "O'tkazilgan (insult)": d.totals.otkazilganIns
+      "O'tkazilgan (insult)": d.totals.otkazilganIns,
+      "STEMI ≤120 daq (D2B)": d.totals.stemi120total>0 ? `${d.totals.stemi120n}/${d.totals.stemi120total} (${Math.round(d.totals.stemi120n/d.totals.stemi120total*100)}%)` : '—'
     });
     const ws = XLSX.utils.json_to_sheet(data);
     const wb = XLSX.utils.book_new();
