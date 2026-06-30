@@ -255,9 +255,10 @@ const HisobotPage = {
       const infs = infResult.value?.data || [];
       const ins  = insResult.value?.data || [];
 
+      // Mutually exclusive — har bir bemor faqat bitta toifaga tushadi (tartib muhim)
       const isSTEMI = p => p.infarkt_turi?.toUpperCase().includes('STEMI') && !p.infarkt_turi?.toUpperCase().includes('NSTEMI');
       const isNSTEMI = p => p.infarkt_turi?.toUpperCase().includes('NSTEMI');
-      const isAMI = p => p.infarkt_turi?.toLowerCase().includes('miokard');
+      const isAMI = p => !isSTEMI(p) && !isNSTEMI(p) && p.infarkt_turi?.toLowerCase().includes('miokard');
       const isInfAniqlanmagan = p => !isSTEMI(p) && !isNSTEMI(p) && !isAMI(p);
       const isIshemik    = p => /^ishemik insult$/i.test((p.insult_turi||'').trim());
       const isGemorragik = p => /^gemorragik insult$/i.test((p.insult_turi||'').trim());
