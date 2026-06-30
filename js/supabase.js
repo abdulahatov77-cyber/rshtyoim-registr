@@ -996,9 +996,9 @@ ${e.line}${kritik}`;
         kritik = `\n${e.warn} <b>DIQQAT: OG'IR HOLAT! (NIHSS = ${patient.nihss_qabul})</b>`;
       }
 
-      // ASPECTS qatori
+      // ASPECTS qatori — faqat Ishemik insult uchun
       let aspectsLine = '';
-      if (patient.mskt === "Ha – o'tkazildi") {
+      if (patient.mskt === "Ha – o'tkazildi" && (patient.insult_turi || '') === 'Ishemik insult') {
         const aKeys = ['aspects_c','aspects_l','aspects_ic','aspects_i','aspects_m1','aspects_m2','aspects_m3','aspects_m4','aspects_m5','aspects_m6'];
         const aLabels = { aspects_c:'C', aspects_l:'L', aspects_ic:'IC', aspects_i:'I', aspects_m1:'M1', aspects_m2:'M2', aspects_m3:'M3', aspects_m4:'M4', aspects_m5:'M5', aspects_m6:'M6' };
         const damaged = aKeys.filter(k => patient[k]);
