@@ -99,8 +99,10 @@ const Utils = {
       'Р':'R','р':'r','С':'S','с':'s','Т':'T','т':'t','У':'U','у':'u',
       'Ф':'F','ф':'f','Х':'X','х':'x','Ц':'S','ц':'s','Э':'E','э':'e',
       'Ӯ':'U','ӯ':'u',
+      // Qozoq/boshqa kirill harflari
+      'Ы':'I','ы':'i','І':'I','і':'i','Ң':'N','ң':'n','Ә':'A','ә':'a',
+      'Ү':'U','ү':'u','Ұ':'U','ұ':'u','Қ':'Q','Ӛ':'O','ӛ':'o',
     };
-    // Ko'p harfli kombinatsiyalarni avval almashtirish
     let res = '';
     const chars = Array.from(s);
     for (let i = 0; i < chars.length; i++) {
@@ -110,19 +112,30 @@ const Utils = {
     return res;
   },
 
-  // F.I.O ni normallashtirish: Kirill → Lotin, ortiqcha bo'shliqlar olib tashlash, har so'z bosh harfi katta
+  // Har qanday FIO so’zini to’g’ri Title Case ga o’tkazish
+  // Apostrof (‘, `) so’z o’rtasida — undan keyingi harf KICHIK: O’rinova, G’ulomov, o’g’li
+  _titleWord(word) {
+    if (!word) return word;
+    word = word.replace(/`/g, "’");
+    // Hammani kichik qilamiz, keyin faqat birinchi harfni katta
+    const lower = word.toLowerCase();
+    return lower.charAt(0).toUpperCase() + lower.slice(1);
+  },
+
+  // F.I.O ni normallashtirish: Kirill → Lotin, ortiqcha bo'shliqlar, Title Case
   normalizeFio(fio) {
     if (!fio) return fio;
     const lat = Utils.cyrToLat(fio.trim());
-    return lat.replace(/\s+/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+    return lat.replace(/\s+/g, ' ')
+      .split(' ').map(w => Utils._titleWord(w)).join(' ');
   },
 
   // Har qanday yozuvni Title Case ga o'tkazish (saqlashdan oldin ishlatiladi)
-  // "KARIMOV JASUR" → "Karimov Jasur", "karimov jasur" → "Karimov Jasur"
   toTitleCase(str) {
     if (!str) return str;
-    return str.trim().replace(/\s+/g, ' ')
-      .replace(/\S+/g, w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
+    const lat = Utils.cyrToLat(str.trim());
+    return lat.replace(/\s+/g, ' ')
+      .split(' ').map(w => Utils._titleWord(w)).join(' ');
   },
 
   // Generate KT No suggestion
