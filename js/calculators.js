@@ -393,6 +393,10 @@ const Calculators = {
 
   openGRACE(targetInputId) {
     this._currentInputId = targetInputId;
+    // Formadagi joriy qiymatlarni _data ga saqlash (puls, AD, killip yangi kiritilgan bo'lishi mumkin)
+    if (typeof InfarktYangiPage !== 'undefined' && typeof InfarktYangiPage.saveCurrentStep === 'function') {
+      InfarktYangiPage.saveCurrentStep();
+    }
     const d = (typeof InfarktYangiPage !== 'undefined') ? (InfarktYangiPage._data || {}) : {};
 
     // Yosh
