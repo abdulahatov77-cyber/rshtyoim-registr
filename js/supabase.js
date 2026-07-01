@@ -139,7 +139,7 @@ const DB = {
       'viloyat','muassasa','kt_no','qabul_vaqt','murojaat_yoli','yuborgan_muassasa',
       'fio','tugilgan_yil','jins',
       'aha_bali','simptom_vaqt','birlamchi_yoki_takroriy',
-      'infarkt_turi','killip','qon_bosimi','puls','ekg_vaqti','troponin','kkfmb',
+      'infarkt_turi','killip','qon_bosimi','puls','ekg_vaqti','troponin','kkfmb','grace_bali',
       'ekg_natija','xavf_omil',
       'muolaja_turi','angio_natija','otkazilgan_muassasa','otkazish_sababi',
       'dinamika_muolaja_turi','dinamika_izoh',
@@ -985,6 +985,18 @@ const Telegram = {
       const kagLine = patient.angio_natija
         ? `\n${e.test} <b>KAG natijasi:</b> ${patient.angio_natija}` : '';
 
+      // GRACE Score — faqat NSTEMI uchun
+      let graceLine = '';
+      const isNSTEMI = (patient.infarkt_turi || '').toUpperCase().includes('NSTEMI');
+      if (isNSTEMI && patient.grace_bali) {
+        const g = parseInt(patient.grace_bali);
+        let graceLevel, graceIcon;
+        if (g <= 108)      { graceLevel = "Past xavf (< 1%)";   graceIcon = '🟢'; }
+        else if (g <= 140) { graceLevel = "O'rta xavf (1–3%)";  graceIcon = '🟡'; }
+        else               { graceLevel = "Yuqori xavf (> 3%)"; graceIcon = '🔴'; }
+        graceLine = `\n${graceIcon} <b>GRACE Score:</b> ${g} ball — ${graceLevel}`;
+      }
+
       return `${e.heart} <b>YANGI INFARKT BEMOR QABUL QILINDI</b>
 ${e.line}
 ${e.pin} <b>Viloyat:</b> ${tesc(patient.viloyat) || dash}
@@ -993,7 +1005,7 @@ ${e.doc} <b>Shifokor:</b> ${shifokor}${shifokorTel}
 ${e.clip} <b>K/T No:</b> <code>${tesc(patient.kt_no) || dash}</code>
 ${genderIcon} <b>Bemor:</b> ${tesc(patient.fio) || dash}, ${age} yosh, ${tesc(patient.jins) || dash}
 ${e.red} <b>${tesc(patient.infarkt_turi) || dash}</b>
-${e.stetho} <b>Killip:</b> ${tesc(killip) || dash}
+${e.stetho} <b>Killip:</b> ${tesc(killip) || dash}${graceLine}
 ${e.pill} <b>Muolaja:</b> ${tesc(patient.muolaja_turi) || dash}${kagLine}
 ${e.chart} <b>AHA bali:</b> ${patient.aha_bali ?? dash}
 ${e.clock} <b>Simptom:</b> ${tesc(patient.simptom_vaqt) || dash}
