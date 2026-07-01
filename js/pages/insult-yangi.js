@@ -261,7 +261,9 @@ const InsultYangiPage = {
     const showTrombektomiya = muolajaL.includes('trombektomiya') || muolajaL.includes('tromboekstraksiya') || muolajaL.includes('tromboaspiratsiya') || muolajaL.includes('kombinatsiya') || muolajaL.includes('angiografiya') || muolajaL.includes('stentlash') || muolajaL.includes('tlbap');
     const trombektomiyaLabel = (muolajaL.includes('angiografiya') || muolajaL.includes('stentlash') || muolajaL.includes('tlbap')) && !muolajaL.includes('trombektomiya') && !muolajaL.includes('tromboekstraksiya') && !muolajaL.includes('tromboaspiratsiya') ? 'Angiografiya o\'tkazilgan vaqt (Groin time)' : 'Trombektomiya (Groin time)';
     const showMsktVaqt = d.mskt === 'Ha – o\'tkazildi' || muolajaL.includes('mskt');
-    const showAspects = showMsktVaqt && (d.insult_turi || '') === 'Ishemik insult';
+    const isIshemik = (d.insult_turi || '') === 'Ishemik insult';
+    const showAngio = showMsktVaqt && isIshemik;
+    const showAspects = showAngio && d.mskt_angiografiya === 'Ha';
 
     return `
       <div class="grid grid-cols-1 gap-x-6">
@@ -292,7 +294,22 @@ const InsultYangiPage = {
           <input id="kt_vaqti" type="hidden" value="${d.kt_vaqti||''}"/>
         </div>
 
-        <!-- ASPECTS bloki — faqat MSKT o'tkazilgan + Ishemik insult -->
+        <!-- MSKT Angiografiya savoli — faqat MSKT o'tkazilgan + Ishemik insult -->
+        <div id="mskt-angio-div" style="display:${showAngio?'block':'none'}">
+          ${this.field('mskt_angiografiya','MSKT Angiografiya qilindimi?',`
+            <div class="flex gap-3">
+              <button type="button" id="mskt-angio-ha" onclick="InsultYangiPage.onMsktAngioChange('Ha')"
+                class="flex-1 py-2.5 rounded-xl font-bold text-sm border-2 transition-all ${d.mskt_angiografiya==='Ha' ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-slate-600 border-slate-200 hover:border-indigo-400'}">
+                ✅ Ha
+              </button>
+              <button type="button" id="mskt-angio-yoq" onclick="InsultYangiPage.onMsktAngioChange('Yo\'q')"
+                class="flex-1 py-2.5 rounded-xl font-bold text-sm border-2 transition-all ${d.mskt_angiografiya==='Yo\'q' ? 'bg-slate-600 text-white border-slate-600' : 'bg-white text-slate-600 border-slate-200 hover:border-slate-400'}">
+                ❌ Yo'q
+              </button>
+            </div>`,true)}
+        </div>
+
+        <!-- ASPECTS bloki — faqat MSKT Angiografiya Ha + Ishemik insult -->
         <div id="aspects-div" style="display:${showAspects?'block':'none'}">
           ${this._renderAspects(d)}
         </div>
@@ -550,18 +567,19 @@ const InsultYangiPage = {
 
   onMsktChange(val) {
     InsultYangiPage._data.mskt = val;
-    const div = document.getElementById('mskt-vaqt-div');
+    // MSKT "Yo'q" bosilsa angiografiya va ASPECTS ni ham tozalaymiz
+    if (val !== "Ha – o'tkazildi") {
+      InsultYangiPage._data.mskt_angiografiya = '';
+    }
     const muolaja = (InsultYangiPage._data.muolaja_turi || '').toLowerCase();
     const show = val === "Ha – o'tkazildi" || muolaja.includes('mskt');
+    const div = document.getElementById('mskt-vaqt-div');
     if (div) div.style.display = show ? 'block' : 'none';
-    // ASPECTS blokini ham ko'rsat/yashir — faqat ishemik insult uchun
     InsultYangiPage._updateAspectsVisibility();
-    // Tugma ranglarini yangilash
     const haBtn = document.getElementById('mskt-ha');
     const yoqBtn = document.getElementById('mskt-yoq');
     if (haBtn) haBtn.className = `flex-1 py-2.5 rounded-xl font-bold text-sm border-2 transition-all ${show ? 'bg-purple-600 text-white border-purple-600' : 'bg-white text-slate-600 border-slate-200 hover:border-purple-400'}`;
     if (yoqBtn) yoqBtn.className = `flex-1 py-2.5 rounded-xl font-bold text-sm border-2 transition-all ${!show ? 'bg-slate-600 text-white border-slate-600' : 'bg-white text-slate-600 border-slate-200 hover:border-slate-400'}`;
-    // Angiografiya muolajasi bo'lsa trombektomiya divni ham ko'rsat
     const trombDiv = document.getElementById('trombektomiya-vaqt-div');
     if (trombDiv) {
       const isTromb = muolaja.includes('trombektomiya') || muolaja.includes('tromboekstraksiya') || muolaja.includes('tromboaspiratsiya') || muolaja.includes('kombinatsiya') || muolaja.includes('angiografiya') || muolaja.includes('stentlash') || muolaja.includes('tlbap');
@@ -569,10 +587,22 @@ const InsultYangiPage = {
     }
   },
 
+  onMsktAngioChange(val) {
+    InsultYangiPage._data.mskt_angiografiya = val;
+    const haBtn = document.getElementById('mskt-angio-ha');
+    const yoqBtn = document.getElementById('mskt-angio-yoq');
+    if (haBtn) haBtn.className = `flex-1 py-2.5 rounded-xl font-bold text-sm border-2 transition-all ${val === 'Ha' ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-slate-600 border-slate-200 hover:border-indigo-400'}`;
+    if (yoqBtn) yoqBtn.className = `flex-1 py-2.5 rounded-xl font-bold text-sm border-2 transition-all ${val === "Yo'q" ? 'bg-slate-600 text-white border-slate-600' : 'bg-white text-slate-600 border-slate-200 hover:border-slate-400'}`;
+    InsultYangiPage._updateAspectsVisibility();
+  },
+
   _updateAspectsVisibility() {
     const d = InsultYangiPage._data;
     const msktOk = d.mskt === "Ha – o'tkazildi" || (d.muolaja_turi || '').toLowerCase().includes('mskt');
-    const show = msktOk && (d.insult_turi || '') === 'Ishemik insult';
+    const isIshemik = (d.insult_turi || '') === 'Ishemik insult';
+    const angioDiv = document.getElementById('mskt-angio-div');
+    if (angioDiv) angioDiv.style.display = (msktOk && isIshemik) ? 'block' : 'none';
+    const show = msktOk && isIshemik && d.mskt_angiografiya === 'Ha';
     const aspectsDiv = document.getElementById('aspects-div');
     if (aspectsDiv) aspectsDiv.style.display = show ? 'block' : 'none';
   },
@@ -615,7 +645,7 @@ const InsultYangiPage = {
     ['viloyat','muassasa','boshqa_muassasa','kt_no','qabul_vaqt','murojaat_yoli','yuborgan_muassasa',
      'tez_yordam_kelgan_vaqt','birinchi_murojaat_vaqti',
      'fio','simptom_vaqt','gcs_bali','insult_turi','qon_bosimi','aha_bali','nihss_qabul',
-     'mskt','otkazilgan_muassasa','shifokor_fio','shifokor_tel']
+     'mskt','mskt_angiografiya','otkazilgan_muassasa','shifokor_fio','shifokor_tel']
     .forEach(id => {
       const el = document.getElementById(id);
       if (el) InsultYangiPage._data[id] = el.value;
