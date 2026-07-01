@@ -257,6 +257,12 @@ const InfarktYangiPage = {
     }
   },
 
+  onInfarktTuriChange(val) {
+    InfarktYangiPage._data.infarkt_turi = val;
+    const graceDiv = document.getElementById('grace-bali-div');
+    if (graceDiv) graceDiv.style.display = (val === "O'KS ST elevatsiyasiz (NSTEMI)") ? 'block' : 'none';
+  },
+
   onViloyatChange(val) {
     InfarktYangiPage._data.viloyat = val;
     InfarktYangiPage._data.muassasa = '';
@@ -317,7 +323,7 @@ const InfarktYangiPage = {
         `,true)}
         ${this.field('birlamchi_yoki_takroriy','Birlamchi yoki takroriy?',`<select id="birlamchi_yoki_takroriy" class="form-select">
           ${this.selectOptions(APP_CONFIG.BIRLAMCHI_TAKROIRIY, d.birlamchi_yoki_takroriy||'')}</select>`,true)}
-        ${this.field('infarkt_turi','Tashxis',`<select id="infarkt_turi" class="form-select border-red-300 focus:border-red-500">
+        ${this.field('infarkt_turi','Tashxis',`<select id="infarkt_turi" class="form-select border-red-300 focus:border-red-500" onchange="InfarktYangiPage.onInfarktTuriChange(this.value)">
           ${this.selectOptions(APP_CONFIG.INFARKT_TURLARI, d.infarkt_turi||'')}</select>`,true)}
         ${this.field('killip','Killip klassifikatsiyasi',`<select id="killip" class="form-select">
           ${this.selectOptions(APP_CONFIG.KILLIP_KLASSLAR, d.killip||'')}</select>`,true)}
@@ -328,6 +334,16 @@ const InfarktYangiPage = {
           ${this.selectOptions(['Normal','Yuqori','O\'lchanmagan'], d.troponin||'')}</select>`,true)}
         ${this.field('kkfmb','KFK-MB natijasi',`<select id="kkfmb" class="form-select">
           ${this.selectOptions(['Normal','Yuqori','O\'lchanmagan'], d.kkfmb||'')}</select>`,true)}
+
+        <div id="grace-bali-div" class="col-span-1 sm:col-span-2" style="display:${d.infarkt_turi === "O'KS ST elevatsiyasiz (NSTEMI)" ? 'block' : 'none'}">
+          ${this.field('grace_bali','GRACE Score (NSTEMI xavf baholash)',`
+            <div class="flex gap-2 items-center">
+              <input id="grace_bali" type="number" class="form-input w-full bg-slate-50 cursor-not-allowed" value="${d.grace_bali||''}" placeholder="Kalkulyator orqali to'ldiring" readonly style="pointer-events:none;opacity:0.8"/>
+              <button type="button" class="flex-shrink-0 bg-indigo-100 text-indigo-700 hover:bg-indigo-200 px-3 py-2 rounded-lg text-sm font-bold shadow-sm transition-colors border border-indigo-200 flex items-center gap-1" onclick="Calculators.openGRACE('grace_bali')">🧮 Hisoblash</button>
+            </div>
+            <div id="grace-result-box">${d.grace_bali ? Calculators.graceResultBadgeHtml(parseInt(d.grace_bali)) : ''}</div>
+          `,true)}
+        </div>
       </div>
       <div class="mt-4 border-t border-dashed border-gray-200 pt-4">
         ${this.field('ekg_natija','EKG natijasi (faqat bittasini tanlang)',
@@ -515,7 +531,7 @@ const InfarktYangiPage = {
     ['viloyat','muassasa','boshqa_muassasa','kt_no','qabul_vaqt','murojaat_yoli','yuborgan_muassasa',
      'tez_yordam_kelgan_vaqt','birinchi_murojaat_vaqti',
      'fio','aha_bali','simptom_vaqt','birlamchi_yoki_takroriy',
-     'infarkt_turi','killip','qon_bosimi','puls','ekg_vaqti','troponin','kkfmb',
+     'infarkt_turi','killip','qon_bosimi','puls','ekg_vaqti','troponin','kkfmb','grace_bali',
      'muolaja_turi','angio_natija','otkazilgan_muassasa','otkazish_sababi','shifokor_fio','shifokor_tel']
     .forEach(id => {
       const el = document.getElementById(id);
@@ -633,6 +649,12 @@ const InfarktYangiPage = {
       if (!this._data.xavf_omil || this._data.xavf_omil.length === 0) {
         valid = false;
         showToast('Xavf omillarini belgilang (kamida bittasini)', 'warning');
+      }
+    }
+    if (this._step === 2 && valid && this._data.infarkt_turi === "O'KS ST elevatsiyasiz (NSTEMI)") {
+      if (!this._data.grace_bali) {
+        valid = false;
+        showToast("⚠️ NSTEMI tashxisi uchun GRACE Score hisoblang!", 'warning');
       }
     }
     // Step 3: vaqt mezonlari validatsiyasi

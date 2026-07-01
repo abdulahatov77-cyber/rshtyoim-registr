@@ -311,6 +311,222 @@ const Calculators = {
     setTimeout(() => this.updateTotal('aha-radio'), 50);
   },
 
+  // ==================== GRACE SCORE ====================
+  GRACE_KILLIP_MAP: {
+    "Killip I (yo'q)": 1,
+    "Killip II (yengil)": 2,
+    "Killip III (o'pka shishi)": 3,
+    "Killip IV (kardiogen shok)": 4
+  },
+
+  _gracePoints: {
+    age(v) {
+      if (v < 30) return 0; if (v < 40) return 8; if (v < 50) return 25;
+      if (v < 60) return 41; if (v < 70) return 58; if (v < 80) return 75; return 91;
+    },
+    hr(v) {
+      if (v < 50) return 0; if (v < 70) return 3; if (v < 90) return 9;
+      if (v < 110) return 15; if (v < 150) return 24; if (v < 200) return 38; return 46;
+    },
+    sbp(v) {
+      if (v < 80) return 58; if (v < 100) return 53; if (v < 120) return 43;
+      if (v < 140) return 34; if (v < 160) return 24; if (v < 200) return 10; return 0;
+    },
+    cr(v) {
+      if (v < 0.4) return 1; if (v < 0.8) return 3; if (v < 1.2) return 5;
+      if (v < 1.6) return 7; if (v < 2.0) return 9; if (v < 4.0) return 15; return 20;
+    },
+    killip: { 1: 0, 2: 20, 3: 39, 4: 59 }
+  },
+
+  graceRiskInfo(total) {
+    if (total <= 108) return { level: "Past xavf", percent: "< 1%", color: "text-green-700", bg: "bg-green-50", border: "border-green-200", tavsiya: "Konservativ yondashuv mumkin" };
+    if (total <= 140) return { level: "O'rta xavf", percent: "1–3%", color: "text-amber-700", bg: "bg-amber-50", border: "border-amber-200", tavsiya: "Erta invaziv strategiya — 72 soat ichida" };
+    return { level: "Yuqori xavf", percent: "> 3%", color: "text-red-700", bg: "bg-red-50", border: "border-red-200", tavsiya: "Erta invaziv strategiya — 24 soat ichida (og'ir holatda < 2 soat)" };
+  },
+
+  graceResultBadgeHtml(total) {
+    if (!total || isNaN(total)) return '';
+    const r = this.graceRiskInfo(total);
+    return `<div class="mt-3 p-4 rounded-xl border ${r.border} ${r.bg}">
+      <div class="flex items-center justify-between flex-wrap gap-2">
+        <div>
+          <div class="text-xs font-bold uppercase tracking-wide ${r.color} mb-1">GRACE Score natijasi</div>
+          <div class="text-2xl font-black ${r.color}">${total} ball — ${r.level}</div>
+          <div class="text-sm font-semibold ${r.color} mt-0.5">Gospital o'lim xavfi: ${r.percent}</div>
+        </div>
+        <div class="text-xs font-bold ${r.color} bg-white/70 px-3 py-2 rounded-lg border ${r.border} max-w-xs">${r.tavsiya}</div>
+      </div>
+    </div>`;
+  },
+
+  updateGraceTotal() {
+    const age = parseInt(document.getElementById('g_age')?.value);
+    const hr  = parseInt(document.getElementById('g_hr')?.value);
+    const sbp = parseInt(document.getElementById('g_sbp')?.value);
+    const cr  = parseFloat(document.getElementById('g_cr')?.value);
+    const killipVal = parseInt(document.getElementById('g_killip')?.value || '1');
+    const arrest = document.getElementById('g_arrest')?.checked ? 39 : 0;
+    const stDev  = document.getElementById('g_stdev')?.checked  ? 28 : 0;
+    const enzymes= document.getElementById('g_enzymes')?.checked ? 14 : 0;
+
+    const totalEl = document.getElementById('calc-total');
+    const riskBox = document.getElementById('grace-risk-box');
+
+    if (isNaN(age) || isNaN(hr) || isNaN(sbp) || isNaN(cr)) {
+      if (totalEl) totalEl.textContent = '—';
+      if (riskBox) riskBox.innerHTML = '<span class="text-gray-400 text-sm">Barcha majburiy maydonlarni to\'ldiring</span>';
+      return null;
+    }
+
+    const gp = this._gracePoints;
+    const total = gp.age(age) + gp.hr(hr) + gp.sbp(sbp) + gp.cr(cr) +
+                  (gp.killip[killipVal] || 0) + arrest + stDev + enzymes;
+
+    if (totalEl) {
+      const r = this.graceRiskInfo(total);
+      totalEl.innerHTML = `<span class="${r.color}">${total} (${r.level})</span>`;
+    }
+    if (riskBox) riskBox.innerHTML = this.graceResultBadgeHtml(total);
+    return total;
+  },
+
+  openGRACE(targetInputId) {
+    this._currentInputId = targetInputId;
+    const d = (typeof InfarktYangiPage !== 'undefined') ? (InfarktYangiPage._data || {}) : {};
+
+    // Yosh
+    let defaultAge = '';
+    if (d.tugilgan_sana) {
+      const birth = new Date(d.tugilgan_sana);
+      const today = new Date();
+      defaultAge = today.getFullYear() - birth.getFullYear() -
+        (today < new Date(today.getFullYear(), birth.getMonth(), birth.getDate()) ? 1 : 0);
+    }
+
+    // Killip
+    const killipNum = this.GRACE_KILLIP_MAP[d.killip] || 1;
+
+    // Sistolik AD
+    let defaultSbp = '';
+    if (d.qon_bosimi && d.qon_bosimi.includes('/')) {
+      const sbpStr = d.qon_bosimi.split('/')[0].trim();
+      if (!isNaN(parseInt(sbpStr))) defaultSbp = parseInt(sbpStr);
+    }
+
+    // Puls
+    const defaultHr = d.puls ? parseInt(d.puls) : '';
+
+    // Kardiomarkerlar default
+    const defaultEnzymes = (d.troponin === 'Yuqori' || d.kkfmb === 'Yuqori');
+
+    // ST deviatsiya default
+    const ekg = Array.isArray(d.ekg_natija) ? d.ekg_natija : (d.ekg_natija ? [d.ekg_natija] : []);
+    const defaultSt = ekg.some(e => e && (e.toLowerCase().includes('st pasayishi') || e.toLowerCase().includes("st ko'tarilishi")));
+
+    const killipOpts = Object.entries(this.GRACE_KILLIP_MAP).map(([label, num]) =>
+      `<option value="${num}" ${num === killipNum ? 'selected' : ''}>${label}</option>`
+    ).join('');
+
+    const html = `
+      <div class="space-y-5">
+        <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 text-sm text-blue-800 font-medium">
+          GRACE 2.0 — NSTEMI bemorlar uchun gospital ichi o'lim xavfini baholash shkalasi
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div class="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+            <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Yosh (yil) *</label>
+            <input id="g_age" type="number" min="18" max="120" class="form-input w-full"
+              value="${defaultAge}" placeholder="Masalan: 65" oninput="Calculators.updateGraceTotal()"/>
+          </div>
+          <div class="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+            <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Puls (zarbalar/min) *</label>
+            <input id="g_hr" type="number" min="20" max="300" class="form-input w-full"
+              value="${defaultHr}" placeholder="Masalan: 80" oninput="Calculators.updateGraceTotal()"/>
+          </div>
+          <div class="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+            <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Sistolik AD (mmHg) *</label>
+            <input id="g_sbp" type="number" min="40" max="300" class="form-input w-full"
+              value="${defaultSbp}" placeholder="Masalan: 130" oninput="Calculators.updateGraceTotal()"/>
+          </div>
+          <div class="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+            <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Serum kreatinin (mg/dL) *</label>
+            <input id="g_cr" type="number" min="0" max="20" step="0.1" class="form-input w-full"
+              value="" placeholder="Masalan: 1.0" oninput="Calculators.updateGraceTotal()"/>
+          </div>
+        </div>
+
+        <div class="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+          <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Killip klassifikatsiyasi</label>
+          <select id="g_killip" class="form-select" onchange="Calculators.updateGraceTotal()">
+            ${killipOpts}
+          </select>
+        </div>
+
+        <div class="grid grid-cols-1 gap-3">
+          <label class="flex items-center gap-3 p-4 bg-white border border-gray-200 rounded-xl cursor-pointer hover:bg-indigo-50 transition-all">
+            <input type="checkbox" id="g_arrest" class="w-5 h-5 rounded text-indigo-600"
+              ${false ? 'checked' : ''} onchange="Calculators.updateGraceTotal()"/>
+            <div>
+              <div class="font-bold text-gray-800 text-sm">Kardioarest bo'lganmi?</div>
+              <div class="text-xs text-gray-500">Qabul paytida yoki oldin yurak to'xtashi</div>
+            </div>
+            <span class="ml-auto text-xs font-black text-indigo-600 bg-indigo-50 px-2 py-1 rounded">+39 ball</span>
+          </label>
+          <label class="flex items-center gap-3 p-4 bg-white border border-gray-200 rounded-xl cursor-pointer hover:bg-indigo-50 transition-all">
+            <input type="checkbox" id="g_stdev" class="w-5 h-5 rounded text-indigo-600"
+              ${defaultSt ? 'checked' : ''} onchange="Calculators.updateGraceTotal()"/>
+            <div>
+              <div class="font-bold text-gray-800 text-sm">ST segment deviatsiyasi</div>
+              <div class="text-xs text-gray-500">EKG da ST ko'tarilishi yoki pasayishi</div>
+            </div>
+            <span class="ml-auto text-xs font-black text-indigo-600 bg-indigo-50 px-2 py-1 rounded">+28 ball</span>
+          </label>
+          <label class="flex items-center gap-3 p-4 bg-white border border-gray-200 rounded-xl cursor-pointer hover:bg-indigo-50 transition-all">
+            <input type="checkbox" id="g_enzymes" class="w-5 h-5 rounded text-indigo-600"
+              ${defaultEnzymes ? 'checked' : ''} onchange="Calculators.updateGraceTotal()"/>
+            <div>
+              <div class="font-bold text-gray-800 text-sm">Kardiomarkerlar ko'tarilgan</div>
+              <div class="text-xs text-gray-500">Troponin yoki KFK-MB yuqori</div>
+            </div>
+            <span class="ml-auto text-xs font-black text-indigo-600 bg-indigo-50 px-2 py-1 rounded">+14 ball</span>
+          </label>
+        </div>
+
+        <div id="grace-risk-box" class="min-h-[60px] flex items-center">
+          <span class="text-gray-400 text-sm">Barcha majburiy maydonlarni to'ldiring</span>
+        </div>
+      </div>
+    `;
+
+    this.openModal('GRACE Score Kalkulyatori (NSTEMI)', html, "Calculators.saveGraceResult()");
+    setTimeout(() => this.updateGraceTotal(), 50);
+  },
+
+  saveGraceResult() {
+    const total = this.updateGraceTotal();
+    if (total === null || isNaN(total)) {
+      showToast('⚠️ Barcha majburiy maydonlarni (yosh, puls, AD, kreatinin) to\'ldiring!', 'warning');
+      return;
+    }
+    const input = document.getElementById(this._currentInputId);
+    if (input) {
+      const wasReadonly = input.hasAttribute('readonly');
+      if (wasReadonly) input.removeAttribute('readonly');
+      input.value = total;
+      if (wasReadonly) input.setAttribute('readonly', '');
+      input.classList.add('bg-indigo-50', 'border-indigo-500', 'text-indigo-800');
+      setTimeout(() => input.classList.remove('bg-indigo-50', 'border-indigo-500', 'text-indigo-800'), 1000);
+    }
+    if (typeof InfarktYangiPage !== 'undefined' && InfarktYangiPage._data) {
+      InfarktYangiPage._data[this._currentInputId] = String(total);
+    }
+    const resultBox = document.getElementById('grace-result-box');
+    if (resultBox) resultBox.innerHTML = this.graceResultBadgeHtml(total);
+    this.closeModal();
+  },
+
   saveResult(groupClass) {
     let total = 0;
     document.querySelectorAll('.' + groupClass + ':checked').forEach(el => {
