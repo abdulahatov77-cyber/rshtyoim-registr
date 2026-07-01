@@ -20,10 +20,13 @@ function getSupabase() {
 
 // ==================== AUTH ====================
 const Auth = {
+  _userCache: null,
+
   async signIn(email, password) {
     const sb = getSupabase();
     const { data, error } = await sb.auth.signInWithPassword({ email, password });
     if (error) throw error;
+    Auth._userCache = data?.user || null;
     return data;
   },
 
@@ -42,12 +45,17 @@ const Auth = {
     const sb = getSupabase();
     const { error } = await sb.auth.signOut();
     if (error) throw error;
+    Auth._userCache = null;
+    Profile._cache = {};
   },
 
+  // getSession() local localStorage dan o'qiydi — network so'rovsiz, tez
   async getUser() {
+    if (Auth._userCache) return Auth._userCache;
     const sb = getSupabase();
-    const { data: { user } } = await sb.auth.getUser();
-    return user;
+    const { data: { session } } = await sb.auth.getSession();
+    Auth._userCache = session?.user || null;
+    return Auth._userCache;
   },
 
   async getSession() {
@@ -57,7 +65,11 @@ const Auth = {
   },
 
   onAuthStateChange(callback) {
-    return getSupabase().auth.onAuthStateChange(callback);
+    return getSupabase().auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN') Auth._userCache = session?.user || null;
+      if (event === 'SIGNED_OUT') { Auth._userCache = null; Profile._cache = {}; }
+      callback(event, session);
+    });
   },
 
   async updatePassword(newPassword) {
