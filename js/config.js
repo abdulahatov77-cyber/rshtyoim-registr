@@ -324,7 +324,6 @@ const APP_CONFIG = {
 
   INSULT_MUOLAJALARI: [
     "Medikamentoz (konservativ) davo",
-    "MSKT angiografiya",
     "Faqat serebral angiografiya",
     "Serebral angiografiya + Trombolitik terapiya (TLT, trombolizis)",
     "Serebral angiografiya + tromboaspiratsiya",
