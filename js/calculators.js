@@ -364,7 +364,8 @@ const Calculators = {
     const age = parseInt(document.getElementById('g_age')?.value);
     const hr  = parseInt(document.getElementById('g_hr')?.value);
     const sbp = parseInt(document.getElementById('g_sbp')?.value);
-    const cr  = parseFloat(document.getElementById('g_cr')?.value);
+    const crRaw = parseFloat(document.getElementById('g_cr')?.value);
+    const cr  = isNaN(crRaw) ? 1.0 : crRaw;
     const killipVal = parseInt(document.getElementById('g_killip')?.value || '1');
     const arrest = document.getElementById('g_arrest')?.checked ? 39 : 0;
     const stDev  = document.getElementById('g_stdev')?.checked  ? 28 : 0;
@@ -373,9 +374,9 @@ const Calculators = {
     const totalEl = document.getElementById('calc-total');
     const riskBox = document.getElementById('grace-risk-box');
 
-    if (isNaN(age) || isNaN(hr) || isNaN(sbp) || isNaN(cr)) {
+    if (isNaN(age) || isNaN(hr) || isNaN(sbp)) {
       if (totalEl) totalEl.textContent = '—';
-      if (riskBox) riskBox.innerHTML = '<span class="text-gray-400 text-sm">Barcha majburiy maydonlarni to\'ldiring</span>';
+      if (riskBox) riskBox.innerHTML = '<span class="text-gray-400 text-sm">Yosh, puls va AD ni kiriting</span>';
       return null;
     }
 
@@ -457,7 +458,7 @@ const Calculators = {
           <div class="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
             <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Serum kreatinin (mg/dL) *</label>
             <input id="g_cr" type="number" min="0" max="20" step="0.1" class="form-input w-full"
-              value="" placeholder="Masalan: 1.0" oninput="Calculators.updateGraceTotal()"/>
+              value="1.0" placeholder="Masalan: 1.0" oninput="Calculators.updateGraceTotal()"/>
           </div>
         </div>
 
@@ -511,7 +512,7 @@ const Calculators = {
   saveGraceResult() {
     const total = this.updateGraceTotal();
     if (total === null || isNaN(total)) {
-      showToast('⚠️ Barcha majburiy maydonlarni (yosh, puls, AD, kreatinin) to\'ldiring!', 'warning');
+      showToast('⚠️ Yosh, puls va sistolik AD ni kiriting!', 'warning');
       return;
     }
     const input = document.getElementById(this._currentInputId);
