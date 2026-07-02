@@ -531,12 +531,19 @@ const InfarktYangiPage = {
     ['viloyat','muassasa','boshqa_muassasa','kt_no','qabul_vaqt','murojaat_yoli','yuborgan_muassasa',
      'tez_yordam_kelgan_vaqt','birinchi_murojaat_vaqti',
      'fio','aha_bali','simptom_vaqt','birlamchi_yoki_takroriy',
-     'infarkt_turi','killip','qon_bosimi','puls','ekg_vaqti','troponin','kkfmb','grace_bali',
+     'infarkt_turi','killip','qon_bosimi','puls','ekg_vaqti','troponin','kkfmb',
      'muolaja_turi','angio_natija','otkazilgan_muassasa','otkazish_sababi','shifokor_fio','shifokor_tel']
     .forEach(id => {
       const el = document.getElementById(id);
       if (el) InfarktYangiPage._data[id] = el.value;
     });
+    // grace_bali faqat NSTEMI uchun
+    const graceEl = document.getElementById('grace_bali');
+    if (graceEl && InfarktYangiPage._data.infarkt_turi === "O'KS ST elevatsiyasiz (NSTEMI)") {
+      InfarktYangiPage._data.grace_bali = graceEl.value;
+    } else {
+      delete InfarktYangiPage._data.grace_bali;
+    }
 
     // tlt_vaqt va pci_vaqt: sana + soat dan yig'ish
     for (const [prefix, field] of [['tlt','tlt_vaqt'],['pci','pci_vaqt']]) {
