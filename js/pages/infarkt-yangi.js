@@ -231,10 +231,24 @@ const InfarktYangiPage = {
           ${this.field('yuborgan_muassasa','Yuborgan muassasa nomi',`<input id="yuborgan_muassasa" class="form-input" value="${d.yuborgan_muassasa||''}" placeholder="Muassasa nomini kiriting"/>`)}
         </div>
         <div id="tez-yordam-div" style="display:${d.murojaat_yoli==='Tez tibbiy yordam bilan'?'block':'none'}">
-          ${this.field('tez_yordam_kelgan_vaqt','Tez yordam yetib keldi (vaqt)',`<input id="tez_yordam_kelgan_vaqt" type="datetime-local" class="form-input" value="${d.tez_yordam_kelgan_vaqt||''}"/>`,true)}
+          ${this.field('tez_yordam_kelgan_vaqt','Tez yordam yetib keldi (vaqt)',`
+            <div class="flex gap-2">
+              <input id="tez_yordam_kelgan_sana" type="date" class="form-input" value="${d.tez_yordam_kelgan_vaqt?d.tez_yordam_kelgan_vaqt.slice(0,10):''}" onchange="InfarktYangiPage.onTezYordamChange()"/>
+              <input id="tez_yordam_kelgan_soat" type="time" class="form-input" value="${d.tez_yordam_kelgan_vaqt?d.tez_yordam_kelgan_vaqt.slice(11,16):''}" onchange="InfarktYangiPage.onTezYordamChange()"/>
+              <input id="tez_yordam_kelgan_vaqt" type="hidden" value="${d.tez_yordam_kelgan_vaqt||''}"/>
+            </div>`,true)}
         </div>
       </div>
     `;
+  },
+
+  onTezYordamChange() {
+    const sana = document.getElementById('tez_yordam_kelgan_sana')?.value || '';
+    const soat = document.getElementById('tez_yordam_kelgan_soat')?.value || '';
+    const combined = sana && soat ? `${sana}T${soat}` : (sana ? `${sana}T00:00` : '');
+    const hidden = document.getElementById('tez_yordam_kelgan_vaqt');
+    if (hidden) hidden.value = combined;
+    InfarktYangiPage._data.tez_yordam_kelgan_vaqt = combined;
   },
 
   onMurojaatChange(val) {
