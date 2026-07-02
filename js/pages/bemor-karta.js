@@ -1601,6 +1601,17 @@ const BemorKartaPage = {
     if (natija === "Boshqa shifoxonaga o'tkazildi" && !boshqaShifoxona.trim()) return showToast('Boshqa shifoxona nomini kiriting', 'warning');
     if (natija === 'Reabilitatsiyaga yuborildi' && !reabilMarkaz.trim()) return showToast('Reabilitatsiya markazi nomini kiriting', 'warning');
 
+    // Chiqish vaqti qabul vaqtidan oldin bo'lmasligi kerak
+    const qabulVaqt = BemorKartaPage._patient?.qabul_vaqt;
+    if (qabulVaqt) {
+      const chiqishDt = new Date(`${sana}T${vaqt || '00:00'}:00+05:00`);
+      const qabulDt   = new Date(qabulVaqt);
+      if (chiqishDt < qabulDt) {
+        const qabulStr = Utils.formatDateTime(qabulVaqt);
+        return showToast(`⚠️ Chiqish vaqti (${sana} ${vaqt}) qabul vaqtidan (${qabulStr}) oldin bo'lishi mumkin emas!`, 'error', 7000);
+      }
+    }
+
     if (!confirm('Rostdan ham bemorni shifoxonadan chiqarmoqchimisiz?')) return;
 
     const btn = document.getElementById('btn-chiqarish');
