@@ -1,6 +1,6 @@
 // ==================== BEMORLAR RO'YXATI ====================
 const BemorlarPage = {
-  _filters: { type: 'all', status: '', viloyat: '', search: '', date: '', dateTo: '', missingTime: false },
+  _filters: { type: 'all', status: '', viloyat: '', muassasa: '', search: '', date: '', dateTo: '', missingTime: false },
   _currentPage: 1,
   _perPage: 20,
   _selected: new Set(),
@@ -74,6 +74,13 @@ const BemorlarPage = {
             </select>
           </div>
           ` : ''}
+          <div>
+            <label class="form-label">${icon('building-2', 14)} Muassasa</label>
+            <select id="f-muassasa" class="form-select" onchange="BemorlarPage.applyFilter()">
+              <option value="">Barchasi</option>
+              ${Object.values(APP_CONFIG.MUASSASALAR || {}).flat().sort().map(m=>`<option value="${m}" ${f.muassasa===m?'selected':''}>${m}</option>`).join('')}
+            </select>
+          </div>
           <div>
             <label class="form-label">${icon('calendar', 14)} Sana (dan)</label>
             <input type="date" id="f-date" class="form-input" onchange="BemorlarPage.applyFilter()" value="${f.date}"/>
@@ -150,6 +157,7 @@ const BemorlarPage = {
     } else {
       BemorlarPage._filters.viloyat = BemorlarPage._profile?.viloyat || '';
     }
+    BemorlarPage._filters.muassasa = document.getElementById('f-muassasa')?.value || '';
     BemorlarPage._filters.date = document.getElementById('f-date')?.value || '';
     BemorlarPage._filters.dateTo = document.getElementById('f-date-to')?.value || '';
     BemorlarPage._filters.search = document.getElementById('f-search')?.value || '';
@@ -160,7 +168,7 @@ const BemorlarPage = {
 
   resetFilters() {
     BemorlarPage._filters = {
-      type: 'all', status: '', search: '', date: '', dateTo: '', missingTime: false,
+      type: 'all', status: '', muassasa: '', search: '', date: '', dateTo: '', missingTime: false,
       viloyat: BemorlarPage._profile?.role === 'super_admin' ? '' : (BemorlarPage._profile?.viloyat || '')
     };
     BemorlarPage._currentPage = 1;
@@ -176,6 +184,7 @@ const BemorlarPage = {
     const fObj = {
       status:   f.status   || undefined,
       viloyat:  f.viloyat  || undefined,
+      muassasa: f.muassasa || undefined,
       search:   f.search   || undefined,
       page, pageSize
     };

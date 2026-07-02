@@ -204,7 +204,7 @@ const DB = {
     }
 
     const q = applyFilters(
-      getSupabase().from('infarkt_qabul').select(cols, { count: 'estimated' }).order('created_at', { ascending: false })
+      getSupabase().from('infarkt_qabul').select(cols, { count: 'exact' }).order('created_at', { ascending: false })
     ).range(page * pageSize, page * pageSize + pageSize - 1);
     const { data, error, count } = await q;
     if (error) {
@@ -303,7 +303,7 @@ const DB = {
     }
 
     const q = applyFilters(
-      getSupabase().from('insult_qabul').select(cols, { count: 'estimated' }).order('created_at', { ascending: false })
+      getSupabase().from('insult_qabul').select(cols, { count: 'exact' }).order('created_at', { ascending: false })
     ).range(page * pageSize, page * pageSize + pageSize - 1);
     const { data, error, count } = await q;
     if (error) {

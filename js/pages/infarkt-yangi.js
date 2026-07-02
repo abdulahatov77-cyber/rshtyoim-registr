@@ -756,6 +756,10 @@ const InfarktYangiPage = {
 
   async save() {
     if (!this.validateStep()) return;
+    if (this._data.infarkt_turi === "O'KS ST elevatsiyasiz (NSTEMI)" && !this._data.grace_bali) {
+      showToast("⚠️ NSTEMI tashxisi uchun GRACE Score hisoblang!", 'warning', 5000);
+      return;
+    }
     const btn = document.getElementById('save-btn');
     setLoading(btn, true);
     try {
