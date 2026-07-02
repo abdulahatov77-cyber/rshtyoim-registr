@@ -150,6 +150,9 @@ const DB = {
       if (data[k] !== undefined) clean[k] = data[k];
     }
     if (clean.fio) clean.fio = Utils.normalizeFio(clean.fio);
+    // INTEGER maydonlar: bo'sh string → null
+    if (clean.grace_bali === '' || clean.grace_bali === null) delete clean.grace_bali;
+    else if (clean.grace_bali !== undefined) clean.grace_bali = parseInt(clean.grace_bali) || null;
     // (kt_no, muassasa) juftligi takrorlansa — yangi kt_no bilan qayta urinish
     for (let attempt = 0; attempt < 5; attempt++) {
       if (attempt > 0) clean.kt_no = Utils.generateKtNo(clean.muassasa || '');
