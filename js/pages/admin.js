@@ -1251,7 +1251,7 @@ const AdminPage = {
               </div>
               <div style="flex:1;min-width:0">
                 <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px">
-                  <span style="font-weight:700;font-size:14px;color:#f1f5f9">${esc(item.sender_name||'Noma\'lum')}</span>
+                  <span style="font-weight:700;font-size:14px;color:#1e293b">${esc(item.sender_name||'Noma\'lum')}</span>
                   ${turBadge(item.tur)}
                   ${!item.o_qildi ? `<span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700">YANGI</span>` : ''}
                 </div>
@@ -1271,7 +1271,7 @@ const AdminPage = {
               </div>` : ''}
             <div style="padding:12px 20px;border-top:1px solid #f1f5f9;display:flex;gap:8px;align-items:flex-end">
               <textarea id="javob-${item.id}" rows="2" placeholder="Javob yozing..."
-                style="flex:1;border:1px solid #e2e8f0;border-radius:10px;padding:8px 12px;font-size:13px;resize:none;outline:none;font-family:inherit">${item.javob ? esc(item.javob) : ''}</textarea>
+                style="flex:1;border:1px solid #e2e8f0;border-radius:10px;padding:8px 12px;font-size:13px;resize:none;outline:none;font-family:inherit;color:#1e293b;background:#fff">${item.javob ? esc(item.javob) : ''}</textarea>
               <button onclick="AdminPage._sendJavob('${item.id}')"
                 style="padding:8px 16px;background:#2563eb;color:white;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:6px">
                 ${icon('send',14)} ${item.javob ? 'Yangilash' : 'Javob berish'}
