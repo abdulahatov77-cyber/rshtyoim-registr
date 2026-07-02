@@ -68,7 +68,7 @@ const BemorlarPage = {
           ${BemorlarPage._profile?.role === 'super_admin' ? `
           <div>
             <label class="form-label">${icon('map-pin', 14)} Viloyat</label>
-            <select id="f-viloyat" class="form-select" onchange="BemorlarPage.applyFilter()">
+            <select id="f-viloyat" class="form-select" onchange="BemorlarPage.onViloyatChange()">
               <option value="">Barchasi</option>
               ${APP_CONFIG.VILOYATLAR.map(v=>`<option value="${v}" ${f.viloyat===v?'selected':''}>${v}</option>`).join('')}
             </select>
@@ -78,7 +78,7 @@ const BemorlarPage = {
             <label class="form-label">${icon('building-2', 14)} Muassasa</label>
             <select id="f-muassasa" class="form-select" onchange="BemorlarPage.applyFilter()">
               <option value="">Barchasi</option>
-              ${Object.values(APP_CONFIG.MUASSASALAR || {}).flat().sort().map(m=>`<option value="${m}" ${f.muassasa===m?'selected':''}>${m}</option>`).join('')}
+              ${BemorlarPage._getMuassasaOptions(f.viloyat, f.muassasa)}
             </select>
           </div>
           <div>
@@ -147,6 +147,24 @@ const BemorlarPage = {
     `;
     BemorlarPage.searchDebounced = Utils.debounce(BemorlarPage.applyFilter, 500);
     initIcons();
+  },
+
+  _getMuassasaOptions(viloyat, selected) {
+    const list = viloyat
+      ? (APP_CONFIG.MUASSASALAR[viloyat] || [])
+      : Object.values(APP_CONFIG.MUASSASALAR || {}).flat().sort();
+    return list.map(m => `<option value="${m}" ${selected===m?'selected':''}>${m}</option>`).join('');
+  },
+
+  onViloyatChange() {
+    BemorlarPage._filters.viloyat = document.getElementById('f-viloyat')?.value || '';
+    BemorlarPage._filters.muassasa = '';
+    const sel = document.getElementById('f-muassasa');
+    if (sel) {
+      sel.innerHTML = '<option value="">Barchasi</option>' + BemorlarPage._getMuassasaOptions(BemorlarPage._filters.viloyat, '');
+    }
+    BemorlarPage._currentPage = 1;
+    BemorlarPage.loadData();
   },
 
   applyFilter() {
