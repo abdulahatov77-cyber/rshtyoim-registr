@@ -667,6 +667,12 @@ const HisobotPage = {
     const nihss15 = ins.filter(p=>p.nihss_qabul>=15).length;
     const vafot_inf = infs.filter(p=>p.status==='vafot').length;
     const vafot_ins = ins.filter(p=>p.status==='vafot').length;
+    const koronarAngio = infs.filter(p=>p.angio_natija && p.angio_natija !== '').length;
+    const koronarAngioDavol = infs.filter(p=>p.angio_natija && p.angio_natija !== '' && p.status==='chiqarildi').length;
+    const koronarAngioVafot = infs.filter(p=>p.angio_natija && p.angio_natija !== '' && p.status==='vafot').length;
+    const msktAngio = ins.filter(p=>p.mskt_angiografiya?.toLowerCase().includes('ha')).length;
+    const msktAngioDavol = ins.filter(p=>p.mskt_angiografiya?.toLowerCase().includes('ha')&&p.status==='chiqarildi').length;
+    const msktAngioVafot = ins.filter(p=>p.mskt_angiografiya?.toLowerCase().includes('ha')&&p.status==='vafot').length;
 
     // Timing metrics — timestamptz vs timestamptz
     // Median va IQR hisoblash (skewed ED times uchun median to'g'riroq)
@@ -810,6 +816,7 @@ const HisobotPage = {
             ${statRow('NSTEMI', nstemi, 'pulse', 'text-orange-600', nstemiDavol, nstemiVafot)}
             ${statRow("O'tkir miokard infarkti (AMI)", ami, 'heart', 'text-rose-700', amiDavol, amiVafot)}
             ${statRow('Koronarangiografiya', koronar, 'syringe', 'text-blue-700', koronarDavol, koronarVafot)}
+            ${statRow('Koronar angiografiya (angio_natija)', koronarAngio, 'scan-line', 'text-indigo-700', koronarAngioDavol, koronarAngioVafot)}
             ${statRow('Trombolitik terapiya (TLT)', tlt_inf, 'droplets', 'text-purple-700', tltDavol, tltVafot)}
             ${statRow('Medikamentoz davo', medInf, 'pill', 'text-teal-700', medInfDavol, medInfVafot)}
             ${statRow('Vafot', vafot_inf, 'heart-crack', 'text-slate-700')}
@@ -829,6 +836,7 @@ const HisobotPage = {
             ${statRow('Gemorragik insult', gemorragik, 'droplet', 'text-red-700', gemorragikDavol, gemorragikVafot)}
             ${statRow('Tranzitor ishemik ataka (TIA)', tia, 'zap', 'text-amber-600', tiaDavol, tiaVafot)}
             ${statRow('MSKT bosh miya', mskt, 'scan', 'text-indigo-700', msktDavol, msktVafot)}
+            ${statRow('MSKT Angiografiya', msktAngio, 'scan-line', 'text-violet-700', msktAngioDavol, msktAngioVafot)}
             ${statRow('Trombektomiya', trombektomiya, 'scissors', 'text-pink-700', trombektomiyaDavol, trombektomiyaVafot)}
             ${statRow('Medikamentoz davo', medIns, 'pill', 'text-teal-700', medInsDavol, medInsVafot)}
             ${statRow('Vafot', vafot_ins, 'heart-crack', 'text-slate-700')}
