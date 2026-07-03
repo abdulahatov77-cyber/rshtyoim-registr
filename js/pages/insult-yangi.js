@@ -758,11 +758,15 @@ const InsultYangiPage = {
         showToast('⚠️ Tug\'ilgan sana noto\'g\'ri kiritilgan!', 'error', 5000);
       }
     }
-    // Qabul vaqti kelajakda bo'lmasligi kerak
-    // Qabul vaqti — soat ham kiritilishi shart
-    if (this._step === 0 && this._data.qabul_vaqt) {
+    // Qabul vaqti — sana VA soat majburiy
+    if (this._step === 0) {
       const hasTime = v => v && v.includes('T') && v.split('T')[1] && v.split('T')[1] !== '--:--';
-      if (!hasTime(this._data.qabul_vaqt)) {
+      if (!this._data.qabul_vaqt) {
+        valid = false;
+        const el = document.getElementById('qabul_vaqt');
+        if (el) { el.classList.add('border-red-500'); el.focus(); }
+        showToast('⚠️ Qabul qilingan sana va vaqtni kiriting!', 'error', 5000);
+      } else if (!hasTime(this._data.qabul_vaqt)) {
         valid = false;
         const el = document.getElementById('qabul_vaqt');
         if (el) { el.classList.add('border-red-500'); el.focus(); }
