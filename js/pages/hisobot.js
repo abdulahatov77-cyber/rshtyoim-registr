@@ -655,9 +655,9 @@ const HisobotPage = {
     const tia = ins.filter(isTIA).length;
     const tiaDavol = ins.filter(p=>isTIA(p)&&p.status==='chiqarildi').length;
     const tiaVafot = ins.filter(p=>isTIA(p)&&p.status==='vafot').length;
-    const mskt = ins.filter(p=>p.muolaja_turi?.toUpperCase().includes('MSKT')).length;
-    const msktDavol = ins.filter(p=>p.muolaja_turi?.toUpperCase().includes('MSKT')&&p.status==='chiqarildi').length;
-    const msktVafot = ins.filter(p=>p.muolaja_turi?.toUpperCase().includes('MSKT')&&p.status==='vafot').length;
+    const mskt = ins.filter(p=>p.mskt==="Ha – o'tkazildi").length;
+    const msktDavol = ins.filter(p=>p.mskt==="Ha – o'tkazildi"&&p.status==='chiqarildi').length;
+    const msktVafot = ins.filter(p=>p.mskt==="Ha – o'tkazildi"&&p.status==='vafot').length;
     const trombektomiya = ins.filter(p=>p.muolaja_turi?.toLowerCase().includes('trombektom')||p.muolaja_turi?.toLowerCase().includes('tromboekstraksiya')).length;
     const trombektomiyaDavol = ins.filter(p=>(p.muolaja_turi?.toLowerCase().includes('trombektom')||p.muolaja_turi?.toLowerCase().includes('tromboekstraksiya'))&&p.status==='chiqarildi').length;
     const trombektomiyaVafot = ins.filter(p=>(p.muolaja_turi?.toLowerCase().includes('trombektom')||p.muolaja_turi?.toLowerCase().includes('tromboekstraksiya'))&&p.status==='vafot').length;
@@ -1417,9 +1417,9 @@ const HisobotPage = {
     const tia = ins.filter(isTIA).length;
     const tiaDavol = ins.filter(p=>isTIA(p)&&p.status==='chiqarildi').length;
     const tiaVafot = ins.filter(p=>isTIA(p)&&p.status==='vafot').length;
-    const mskt = ins.filter(p=>p.muolaja_turi?.toUpperCase().includes('MSKT')).length;
-    const msktDavol = ins.filter(p=>p.muolaja_turi?.toUpperCase().includes('MSKT')&&p.status==='chiqarildi').length;
-    const msktVafot = ins.filter(p=>p.muolaja_turi?.toUpperCase().includes('MSKT')&&p.status==='vafot').length;
+    const mskt = ins.filter(p=>p.mskt==="Ha – o'tkazildi").length;
+    const msktDavol = ins.filter(p=>p.mskt==="Ha – o'tkazildi"&&p.status==='chiqarildi').length;
+    const msktVafot = ins.filter(p=>p.mskt==="Ha – o'tkazildi"&&p.status==='vafot').length;
     const trombektomiya = ins.filter(p=>p.muolaja_turi?.toLowerCase().includes('trombektom')||p.muolaja_turi?.toLowerCase().includes('tromboekstraksiya')).length;
     const trombektomiyaDavol = ins.filter(p=>(p.muolaja_turi?.toLowerCase().includes('trombektom')||p.muolaja_turi?.toLowerCase().includes('tromboekstraksiya'))&&p.status==='chiqarildi').length;
     const trombektomiyaVafot = ins.filter(p=>(p.muolaja_turi?.toLowerCase().includes('trombektom')||p.muolaja_turi?.toLowerCase().includes('tromboekstraksiya'))&&p.status==='vafot').length;
