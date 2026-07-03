@@ -551,10 +551,11 @@ const InfarktYangiPage = {
       const el = document.getElementById(id);
       if (el) InfarktYangiPage._data[id] = el.value;
     });
-    // grace_bali faqat NSTEMI uchun
+    // grace_bali faqat NSTEMI uchun — _data da allaqachon to'g'ri qiymat bor (kalkulyator yozgan)
     const graceEl = document.getElementById('grace_bali');
-    if (graceEl && InfarktYangiPage._data.infarkt_turi === "O'KS ST elevatsiyasiz (NSTEMI)") {
-      InfarktYangiPage._data.grace_bali = graceEl.value;
+    if (InfarktYangiPage._data.infarkt_turi === "O'KS ST elevatsiyasiz (NSTEMI)") {
+      // graceEl.value bo'sh bo'lsa _data ni o'zgartirmaymiz
+      if (graceEl && graceEl.value) InfarktYangiPage._data.grace_bali = graceEl.value;
     } else {
       delete InfarktYangiPage._data.grace_bali;
     }
