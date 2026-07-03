@@ -658,6 +658,9 @@ const HisobotPage = {
     const mskt = ins.filter(p=>p.mskt==="Ha – o'tkazildi").length;
     const msktDavol = ins.filter(p=>p.mskt==="Ha – o'tkazildi"&&p.status==='chiqarildi').length;
     const msktVafot = ins.filter(p=>p.mskt==="Ha – o'tkazildi"&&p.status==='vafot').length;
+    const tlt_ins = ins.filter(p=>p.muolaja_turi?.toLowerCase().includes('tromboliz')||p.muolaja_turi?.toLowerCase().includes('tlt')||p.muolaja_turi?.toLowerCase().includes('trombolitik')).length;
+    const tltInsDavol = ins.filter(p=>(p.muolaja_turi?.toLowerCase().includes('tromboliz')||p.muolaja_turi?.toLowerCase().includes('tlt')||p.muolaja_turi?.toLowerCase().includes('trombolitik'))&&p.status==='chiqarildi').length;
+    const tltInsVafot = ins.filter(p=>(p.muolaja_turi?.toLowerCase().includes('tromboliz')||p.muolaja_turi?.toLowerCase().includes('tlt')||p.muolaja_turi?.toLowerCase().includes('trombolitik'))&&p.status==='vafot').length;
     const isTromb = p => p.muolaja_turi?.toLowerCase().includes('trombektom')||p.muolaja_turi?.toLowerCase().includes('tromboekstraksiya')||p.muolaja_turi?.toLowerCase().includes('tromboaspiratsiya');
     const trombektomiya = ins.filter(isTromb).length;
     const trombektomiyaDavol = ins.filter(p=>isTromb(p)&&p.status==='chiqarildi').length;
@@ -837,6 +840,7 @@ const HisobotPage = {
             ${statRow('Tranzitor ishemik ataka (TIA)', tia, 'zap', 'text-amber-600', tiaDavol, tiaVafot)}
             ${statRow('MSKT bosh miya', mskt, 'scan', 'text-indigo-700', msktDavol, msktVafot)}
             ${statRow('MSKT Angiografiya', msktAngio, 'scan-line', 'text-violet-700', msktAngioDavol, msktAngioVafot)}
+            ${statRow('Trombolizis (TLT)', tlt_ins, 'droplets', 'text-blue-600', tltInsDavol, tltInsVafot)}
             ${statRow('Trombektomiya', trombektomiya, 'scissors', 'text-pink-700', trombektomiyaDavol, trombektomiyaVafot)}
             ${statRow('Medikamentoz davo', medIns, 'pill', 'text-teal-700', medInsDavol, medInsVafot)}
             ${statRow('Vafot', vafot_ins, 'heart-crack', 'text-slate-700')}
@@ -1420,6 +1424,9 @@ const HisobotPage = {
     const mskt = ins.filter(p=>p.mskt==="Ha – o'tkazildi").length;
     const msktDavol = ins.filter(p=>p.mskt==="Ha – o'tkazildi"&&p.status==='chiqarildi').length;
     const msktVafot = ins.filter(p=>p.mskt==="Ha – o'tkazildi"&&p.status==='vafot').length;
+    const tlt_ins = ins.filter(p=>p.muolaja_turi?.toLowerCase().includes('tromboliz')||p.muolaja_turi?.toLowerCase().includes('tlt')||p.muolaja_turi?.toLowerCase().includes('trombolitik')).length;
+    const tltInsDavol = ins.filter(p=>(p.muolaja_turi?.toLowerCase().includes('tromboliz')||p.muolaja_turi?.toLowerCase().includes('tlt')||p.muolaja_turi?.toLowerCase().includes('trombolitik'))&&p.status==='chiqarildi').length;
+    const tltInsVafot = ins.filter(p=>(p.muolaja_turi?.toLowerCase().includes('tromboliz')||p.muolaja_turi?.toLowerCase().includes('tlt')||p.muolaja_turi?.toLowerCase().includes('trombolitik'))&&p.status==='vafot').length;
     const isTromb = p => p.muolaja_turi?.toLowerCase().includes('trombektom')||p.muolaja_turi?.toLowerCase().includes('tromboekstraksiya')||p.muolaja_turi?.toLowerCase().includes('tromboaspiratsiya');
     const trombektomiya = ins.filter(isTromb).length;
     const trombektomiyaDavol = ins.filter(p=>isTromb(p)&&p.status==='chiqarildi').length;
@@ -1485,6 +1492,7 @@ const HisobotPage = {
       ${row('Gemorragik insult', gemorragik, gemorragikDavol, gemorragikVafot)}
       ${row('Tranzitor ishemik ataka (TIA)', tia, tiaDavol, tiaVafot)}
       ${row('MSKT bosh miya', mskt, msktDavol, msktVafot)}
+      ${row('Trombolizis (TLT)', tlt_ins, tltInsDavol, tltInsVafot)}
       ${row('Trombektomiya', trombektomiya, trombektomiyaDavol, trombektomiyaVafot)}
       ${row('Medikamentoz davo', medIns, medInsDavol, medInsVafot)}
       ${row('Vafot', vafot_ins)}
