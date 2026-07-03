@@ -1604,9 +1604,20 @@ const BemorKartaPage = {
     // Chiqish vaqti qabul vaqtidan oldin bo'lmasligi kerak
     const qabulVaqt = BemorKartaPage._patient?.qabul_vaqt;
     if (qabulVaqt) {
-      const chiqishDt = new Date(`${sana}T${vaqt || '00:00'}:00+05:00`);
-      const qabulDt   = new Date(qabulVaqt);
-      if (chiqishDt < qabulDt) {
+      const qabulDt = new Date(qabulVaqt);
+      // Vaqt kiritilgan bo'lsa — aniq solishtir; kiritilmagan bo'lsa — faqat kun darajasida
+      const chiqishDt = vaqt
+        ? new Date(`${sana}T${vaqt}:00+05:00`)
+        : new Date(`${sana}T00:00:00+05:00`);
+      const qabulSana = qabulDt.toISOString().slice(0, 10);
+      const chiqishSana = sana;
+      // Faqat chiqish SANASI qabul SANASIDAN oldin bo'lsa xato
+      if (chiqishSana < qabulSana) {
+        const qabulStr = Utils.formatDateTime(qabulVaqt);
+        return showToast(`⚠️ Chiqish sanasi (${sana}) qabul sanasidan (${qabulStr}) oldin bo'lishi mumkin emas!`, 'error', 7000);
+      }
+      // Bir xil sana bo'lsa va vaqt kiritilgan bo'lsa — vaqtni ham solishtir
+      if (vaqt && chiqishSana === qabulSana && chiqishDt < qabulDt) {
         const qabulStr = Utils.formatDateTime(qabulVaqt);
         return showToast(`⚠️ Chiqish vaqti (${sana} ${vaqt}) qabul vaqtidan (${qabulStr}) oldin bo'lishi mumkin emas!`, 'error', 7000);
       }
