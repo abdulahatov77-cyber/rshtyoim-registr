@@ -1169,8 +1169,8 @@ const BemorKartaPage = {
             <div class="form-group">
               <label class="form-label required">Chiqarilgan sana</label>
               <div class="grid grid-cols-2 gap-3">
-                <input type="date" id="ch-sana" class="form-input" value="${new Date().toISOString().split('T')[0]}"/>
-                <input type="time" id="ch-vaqt" class="form-input" value="${new Date().toTimeString().slice(0,5)}"/>
+                <input type="date" id="ch-sana" class="form-input" required value="${new Date(Date.now()+5*3600000).toISOString().slice(0,10)}"/>
+                <input type="time" id="ch-vaqt" class="form-input" required value="${new Date(Date.now()+5*3600000).toISOString().slice(11,16)}"/>
               </div>
             </div>
 
