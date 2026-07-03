@@ -816,7 +816,6 @@ const HisobotPage = {
             ${statRow('NSTEMI', nstemi, 'pulse', 'text-orange-600', nstemiDavol, nstemiVafot)}
             ${statRow("O'tkir miokard infarkti (AMI)", ami, 'heart', 'text-rose-700', amiDavol, amiVafot)}
             ${statRow('Koronarangiografiya', koronar, 'syringe', 'text-blue-700', koronarDavol, koronarVafot)}
-            ${statRow('Koronar angiografiya (angio_natija)', koronarAngio, 'scan-line', 'text-indigo-700', koronarAngioDavol, koronarAngioVafot)}
             ${statRow('Trombolitik terapiya (TLT)', tlt_inf, 'droplets', 'text-purple-700', tltDavol, tltVafot)}
             ${statRow('Medikamentoz davo', medInf, 'pill', 'text-teal-700', medInfDavol, medInfVafot)}
             ${statRow('Vafot', vafot_inf, 'heart-crack', 'text-slate-700')}
