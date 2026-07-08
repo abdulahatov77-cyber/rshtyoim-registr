@@ -1283,7 +1283,12 @@ const BemorKartaPage = {
           </div>
           <div class="form-group">
             <label class="form-label">Kasalxonaga yotgan sana/vaqt</label>
-            <input id="edit-qabul-vaqt" type="datetime-local" class="form-input" value="${Utils.formatDateInput(p.qabul_vaqt)||''}"/>
+            <div class="flex gap-2">
+              <input id="edit-qabul-vaqt-d" type="date" class="form-input" max="${new Date().toISOString().slice(0,10)}"
+                value="${Utils.formatDateInput(p.qabul_vaqt)?.slice(0,10)||''}"/>
+              <input id="edit-qabul-vaqt-t" type="time" class="form-input"
+                value="${Utils.formatDateInput(p.qabul_vaqt)?.slice(11,16)||''}"/>
+            </div>
           </div>
           <div class="form-group">
             <label class="form-label">Tug'ilgan sanasi</label>
@@ -1376,14 +1381,21 @@ const BemorKartaPage = {
             const mt = (p.muolaja_turi||'').toLowerCase();
             const showTlt = mt.includes('tlt') || mt.includes('trombolitik');
             const showPci = mt.includes('pci') || mt.includes('stentlash') || mt.includes('kag') || mt.includes('tlbap') || mt.includes('ballon') || mt.includes('angioplastika');
+            const today = new Date().toISOString().slice(0,10);
             return `
           ${showTlt ? `<div class="form-group">
             <label class="form-label">TLT vaqti</label>
-            <input id="edit-tlt-vaqt" type="datetime-local" class="form-input" value="${Utils.formatDateInput(p.tlt_vaqt)||''}"/>
+            <div class="flex gap-2">
+              <input id="edit-tlt-vaqt-d" type="date" class="form-input" max="${today}" value="${Utils.formatDateInput(p.tlt_vaqt)?.slice(0,10)||''}"/>
+              <input id="edit-tlt-vaqt-t" type="time" class="form-input" value="${Utils.formatDateInput(p.tlt_vaqt)?.slice(11,16)||''}"/>
+            </div>
           </div>` : ''}
           ${showPci ? `<div class="form-group">
             <label class="form-label">PCI/Groin vaqti</label>
-            <input id="edit-pci-vaqt" type="datetime-local" class="form-input" value="${Utils.formatDateInput(p.pci_vaqt)||''}"/>
+            <div class="flex gap-2">
+              <input id="edit-pci-vaqt-d" type="date" class="form-input" max="${today}" value="${Utils.formatDateInput(p.pci_vaqt)?.slice(0,10)||''}"/>
+              <input id="edit-pci-vaqt-t" type="time" class="form-input" value="${Utils.formatDateInput(p.pci_vaqt)?.slice(11,16)||''}"/>
+            </div>
           </div>` : ''}`;
           })()}
           ` : `
@@ -1400,18 +1412,28 @@ const BemorKartaPage = {
             const showKt = p.mskt === "Ha – o'tkazildi" || mt.includes('mskt') || mt.includes('angiografiya');
             const showTlt = mt.includes('trombolizis') || mt.includes('tlt') || mt.includes('trombolitik');
             const showTromb = mt.includes('trombektomiya') || mt.includes('tromboekstraksiya') || mt.includes('tromboaspiratsiya') || mt.includes('kombinatsiyalangan');
+            const today2 = new Date().toISOString().slice(0,10);
             return `
           ${showKt ? `<div class="form-group">
             <label class="form-label">KT/MSKT vaqti</label>
-            <input id="edit-kt-vaqti" type="datetime-local" class="form-input" value="${Utils.formatDateInput(p.kt_vaqti)||''}"/>
+            <div class="flex gap-2">
+              <input id="edit-kt-vaqti-d" type="date" class="form-input" max="${today2}" value="${Utils.formatDateInput(p.kt_vaqti)?.slice(0,10)||''}"/>
+              <input id="edit-kt-vaqti-t" type="time" class="form-input" value="${Utils.formatDateInput(p.kt_vaqti)?.slice(11,16)||''}"/>
+            </div>
           </div>` : ''}
           ${showTlt ? `<div class="form-group">
             <label class="form-label">Trombolizis vaqti</label>
-            <input id="edit-trombolizis-vaqti" type="datetime-local" class="form-input" value="${Utils.formatDateInput(p.trombolizis_vaqti)||''}"/>
+            <div class="flex gap-2">
+              <input id="edit-trombolizis-vaqti-d" type="date" class="form-input" max="${today2}" value="${Utils.formatDateInput(p.trombolizis_vaqti)?.slice(0,10)||''}"/>
+              <input id="edit-trombolizis-vaqti-t" type="time" class="form-input" value="${Utils.formatDateInput(p.trombolizis_vaqti)?.slice(11,16)||''}"/>
+            </div>
           </div>` : ''}
           ${showTromb ? `<div class="form-group">
             <label class="form-label">Trombektomiya vaqti</label>
-            <input id="edit-trombektomiya-vaqti" type="datetime-local" class="form-input" value="${Utils.formatDateInput(p.trombektomiya_vaqti)||''}"/>
+            <div class="flex gap-2">
+              <input id="edit-trombektomiya-vaqti-d" type="date" class="form-input" max="${today2}" value="${Utils.formatDateInput(p.trombektomiya_vaqti)?.slice(0,10)||''}"/>
+              <input id="edit-trombektomiya-vaqti-t" type="time" class="form-input" value="${Utils.formatDateInput(p.trombektomiya_vaqti)?.slice(11,16)||''}"/>
+            </div>
           </div>` : ''}`;
           })()}
           `}
@@ -1441,33 +1463,32 @@ const BemorKartaPage = {
     if (!fio) { showToast('F.I.O ni kiriting', 'warning'); return; }
     const g = id => document.getElementById(id);
     const now = new Date();
-    const qabulVaqtRaw = g('edit-qabul-vaqt')?.value;
-    const qv = qabulVaqtRaw ? new Date(qabulVaqtRaw + ':00+05:00') : null;
-    // Qabul vaqti validatsiyasi
+    const qabulD = g('edit-qabul-vaqt-d')?.value;
+    const qabulT = g('edit-qabul-vaqt-t')?.value;
+    const qv = (qabulD && qabulT) ? new Date(`${qabulD}T${qabulT}:00+05:00`) : null;
     if (qv && qv > now) {
-      g('edit-qabul-vaqt')?.classList.add('border-red-500');
       showToast('⚠️ Qabul vaqti kelajakda bo\'lishi mumkin emas!', 'error', 5000);
       return;
     }
-    // Vaqt mezonlari validatsiyasi (faqat DOM da mavjud inputlarni tekshirish)
+    // Sana+vaqt inputlardan UTC ISO string olish
+    const splitToUTC = (dId, tId) => {
+      const d = g(dId)?.value, t = g(tId)?.value;
+      if (!d || !t) return null;
+      return new Date(`${d}T${t}:00+05:00`).toISOString();
+    };
+    // Vaqt mezonlari validatsiyasi
     const vaqtFields = (isInf
-      ? [['edit-tlt-vaqt','TLT vaqti'],['edit-pci-vaqt','PCI vaqti']]
-      : [['edit-kt-vaqti','KT/MSKT vaqti'],['edit-trombolizis-vaqti','Trombolizis vaqti'],['edit-trombektomiya-vaqti','Trombektomiya vaqti']]
-    ).filter(([fId]) => !!g(fId));
-    for (const [fieldId, label] of vaqtFields) {
-      const raw = g(fieldId)?.value;
-      if (!raw) continue;
-      const vt = new Date(raw + ':00+05:00');
-      if (vt > now) {
-        g(fieldId)?.classList.add('border-red-500');
-        showToast(`⚠️ ${label} kelajakda bo'lishi mumkin emas!`, 'error', 5000);
-        return;
-      }
-      if (qv && vt < qv) {
-        g(fieldId)?.classList.add('border-red-500');
-        showToast(`⚠️ ${label} bemor qabul vaqtidan oldin bo'lishi mumkin emas!`, 'error', 5000);
-        return;
-      }
+      ? [['edit-tlt-vaqt-d','edit-tlt-vaqt-t','TLT vaqti'],['edit-pci-vaqt-d','edit-pci-vaqt-t','PCI vaqti']]
+      : [['edit-kt-vaqti-d','edit-kt-vaqti-t','KT/MSKT vaqti'],['edit-trombolizis-vaqti-d','edit-trombolizis-vaqti-t','Trombolizis vaqti'],['edit-trombektomiya-vaqti-d','edit-trombektomiya-vaqti-t','Trombektomiya vaqti']]
+    ).filter(([dId]) => !!g(dId));
+    for (const [dId, tId, label] of vaqtFields) {
+      const d = g(dId)?.value, t = g(tId)?.value;
+      if (!d && !t) continue;
+      if (d && !t) { showToast(`⚠️ ${label} vaqtini kiriting`, 'error', 4000); return; }
+      if (!d && t) { showToast(`⚠️ ${label} sanasini kiriting`, 'error', 4000); return; }
+      const vt = new Date(`${d}T${t}:00+05:00`);
+      if (vt > now) { showToast(`⚠️ ${label} kelajakda bo'lishi mumkin emas!`, 'error', 5000); return; }
+      if (qv && vt < qv) { showToast(`⚠️ ${label} bemor qabul vaqtidan oldin bo'lishi mumkin emas!`, 'error', 5000); return; }
     }
     const btn = document.getElementById('btn-edit-save');
     setLoading(btn, true);
@@ -1487,7 +1508,6 @@ const BemorKartaPage = {
       simptom_vaqt:  g('edit-simptom')?.value || null,
       muolaja_turi:  g('edit-muolaja')?.value || null,
     };
-    const toUTC = raw => raw ? new Date(raw + ':00+05:00').toISOString() : null;
     if (isInf) {
       updates.puls         = g('edit-puls')?.value ? parseInt(g('edit-puls').value) : null;
       updates.infarkt_turi = g('edit-turi')?.value || null;
@@ -1495,15 +1515,15 @@ const BemorKartaPage = {
       updates.troponin     = g('edit-troponin')?.value || null;
       updates.kkfmb        = g('edit-kkfmb')?.value || null;
       updates.ekg_vaqti    = g('edit-ekg-vaqti')?.value || null;
-      updates.tlt_vaqt     = toUTC(g('edit-tlt-vaqt')?.value);
-      updates.pci_vaqt     = toUTC(g('edit-pci-vaqt')?.value);
+      updates.tlt_vaqt     = splitToUTC('edit-tlt-vaqt-d', 'edit-tlt-vaqt-t');
+      updates.pci_vaqt     = splitToUTC('edit-pci-vaqt-d', 'edit-pci-vaqt-t');
     } else {
-      updates.insult_turi       = g('edit-turi')?.value || null;
-      updates.nihss_qabul       = g('edit-nihss')?.value ? parseInt(g('edit-nihss').value) : null;
-      updates.gcs_bali          = g('edit-gcs')?.value ? parseInt(g('edit-gcs').value) : null;
-      updates.kt_vaqti          = toUTC(g('edit-kt-vaqti')?.value);
-      updates.trombolizis_vaqti = toUTC(g('edit-trombolizis-vaqti')?.value);
-      updates.trombektomiya_vaqti = toUTC(g('edit-trombektomiya-vaqti')?.value);
+      updates.insult_turi         = g('edit-turi')?.value || null;
+      updates.nihss_qabul         = g('edit-nihss')?.value ? parseInt(g('edit-nihss').value) : null;
+      updates.gcs_bali            = g('edit-gcs')?.value ? parseInt(g('edit-gcs').value) : null;
+      updates.kt_vaqti            = splitToUTC('edit-kt-vaqti-d', 'edit-kt-vaqti-t');
+      updates.trombolizis_vaqti   = splitToUTC('edit-trombolizis-vaqti-d', 'edit-trombolizis-vaqti-t');
+      updates.trombektomiya_vaqti = splitToUTC('edit-trombektomiya-vaqti-d', 'edit-trombektomiya-vaqti-t');
     }
     try {
       const result = isInf
