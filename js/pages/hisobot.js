@@ -594,10 +594,11 @@ const HisobotPage = {
         return age >= ageFrom && age <= ageTo;
       });
 
-      const [infResult, insResult, kuzatuvResult] = await Promise.allSettled([
+      const [infResult, insResult, kuzatuvResult, dinamikaResult] = await Promise.allSettled([
         DB.infarktList({ ...filters, allCols: true }),
         DB.insultList({ ...filters, allCols: true }),
-        getSupabase().from('kuzatuv').select('*').gte('created_at', filters.from).lte('created_at', filters.to).range(0, 9999)
+        getSupabase().from('kuzatuv').select('*').gte('created_at', filters.from).lte('created_at', filters.to).range(0, 9999),
+        getSupabase().from('dinamika_muolajalar').select('kt_no,registr_turi,muolaja_turi').range(0, 99999)
       ]);
 
       if (infResult.status === 'rejected') throw new Error('Infarkt ma\'lumotlari yuklanmadi: ' + infResult.reason?.message);
@@ -606,6 +607,28 @@ const HisobotPage = {
       const infs = byAge((infResult.value?.data) || []);
       const ins  = byAge((insResult.value?.data) || []);
       const kuzatuvAll = kuzatuvResult.status === 'fulfilled' ? (kuzatuvResult.value?.data || []) : [];
+      const dinamikaAll = dinamikaResult.status === 'fulfilled' ? (dinamikaResult.value?.data || []) : [];
+
+      // Dinamik muolajalarni kt_no bo'yicha guruhlash
+      const dinamikaInfMap = {};
+      const dinamikaInsMap = {};
+      dinamikaAll.forEach(d => {
+        if (d.registr_turi === 'infarkt') {
+          if (!dinamikaInfMap[d.kt_no]) dinamikaInfMap[d.kt_no] = [];
+          dinamikaInfMap[d.kt_no].push(d.muolaja_turi);
+        } else {
+          if (!dinamikaInsMap[d.kt_no]) dinamikaInsMap[d.kt_no] = [];
+          dinamikaInsMap[d.kt_no].push(d.muolaja_turi);
+        }
+      });
+
+      // Bemorning barcha muolajalarini (birlamchi + dinamik) birlashtirib tekshirish
+      const hasAnyMuolaja = (p, map, keyword) => {
+        const birlamchi = p.muolaja_turi || '';
+        const dinamik = (map[p.kt_no] || []).join(' ');
+        const all = (birlamchi + ' ' + dinamik).toLowerCase();
+        return keyword.some(k => all.includes(k.toLowerCase()));
+      };
 
       const validKtNos = new Set([...infs.map(p => p.kt_no), ...ins.map(p => p.kt_no)]);
       const kuzatuv = kuzatuvAll.filter(k => validKtNos.has(k.kt_no));
@@ -731,13 +754,13 @@ const HisobotPage = {
     // n — muolaja tanlangan bemorlar (vaqt to'ldirilishi kerak bo'lganlar)
     const nEKG_total      = infs.length;
     const nEKG_filled     = infs.filter(p=>p.ekg_vaqti).length;
-    const nTLT_inf_total  = infs.filter(p=>p.muolaja_turi?.includes('TLT')||p.muolaja_turi?.includes('trombolitik')).length;
+    const nTLT_inf_total  = infs.filter(p=>hasAnyMuolaja(p, dinamikaInfMap, ['TLT','trombolitik'])).length;
     const nTLT_inf_filled = infs.filter(p=>p.tlt_vaqt).length;
-    const nPCI_total      = infs.filter(p=>p.muolaja_turi?.includes('PCI')||p.muolaja_turi?.includes('stentlash')||p.muolaja_turi?.includes('TLBAP')).length;
+    const nPCI_total      = infs.filter(p=>hasAnyMuolaja(p, dinamikaInfMap, ['PCI','stentlash','TLBAP'])).length;
     const nPCI_filled     = infs.filter(p=>p.pci_vaqt).length;
-    const nTLT_ins_total  = ins.filter(p=>p.muolaja_turi?.toLowerCase().includes('trombolizis')||p.muolaja_turi?.toLowerCase().includes('tlt')).length;
+    const nTLT_ins_total  = ins.filter(p=>hasAnyMuolaja(p, dinamikaInsMap, ['trombolizis','tlt'])).length;
     const nTLT_ins_filled = ins.filter(p=>p.trombolizis_vaqti).length;
-    const nTromb_total    = ins.filter(p=>p.muolaja_turi?.toLowerCase().includes('trombektomiya')||p.muolaja_turi?.toLowerCase().includes('tromboekstraksiya')).length;
+    const nTromb_total    = ins.filter(p=>hasAnyMuolaja(p, dinamikaInsMap, ['trombektomiya','tromboekstraksiya','tromboaspiratsiya'])).length;
     const nTromb_filled   = ins.filter(p=>p.trombektomiya_vaqti).length;
     const nCT_total       = ins.filter(p=>p.mskt==='Ha – o\'tkazildi').length;
     const nCT_filled      = ins.filter(p=>p.kt_vaqti).length;
