@@ -525,15 +525,20 @@ const BemorlarPage = {
       const qabulTime = toLocalTime(p.qabul_vaqt);
       const fieldHtml = p._fields.map(f => {
         if (f.splitType === 'time') {
-          // Faqat vaqt (EKG) — sana yo'q, lekin qabul_vaqt dan oldin bo'lmasligi kerak
+          // EKG: qabul_vaqt + 10 daqiqa avtomatik to'ldirish
+          const ekgAuto = (() => {
+            if (!p.qabul_vaqt) return '';
+            const d = new Date(new Date(p.qabul_vaqt).getTime() + 10*60000 + 5*3600000);
+            return d.toISOString().slice(11,16);
+          })();
           return `
             <div class="flex items-start gap-2 mt-2">
               <label class="text-xs text-gray-500 w-32 shrink-0 pt-1">${f.label}</label>
               <div class="flex gap-2 flex-1">
                 <div class="flex-1">
-                  <div class="text-xs text-gray-400 mb-0.5">Vaqt</div>
+                  <div class="text-xs text-gray-400 mb-0.5">Vaqt <span class="text-amber-500">(qabul+10 daq)</span></div>
                   <input type="time" class="form-input !py-1 !text-sm w-full" required
-                    id="bulk-${i}-${f.id}-t" min="${qabulTime}"/>
+                    id="bulk-${i}-${f.id}-t" min="${qabulTime}" value="${ekgAuto}"/>
                 </div>
               </div>
             </div>`;
