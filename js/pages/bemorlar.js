@@ -573,7 +573,7 @@ const BemorlarPage = {
             </div>
             <div class="flex items-center gap-2">
               <span class="text-xs text-gray-500">Qabul: ${Utils.formatDateTime(p.qabul_vaqt)}</span>
-              <button class="btn btn-primary !py-1 !px-3 !text-xs" onclick="BemorlarPage.saveBulkRow(${i})">
+              <button class="btn btn-primary !py-1 !px-3 !text-xs" onclick="BemorlarPage.saveBulkRow(${i},this)">
                 ${icon('save',13)} Saqlash
               </button>
             </div>
@@ -588,7 +588,7 @@ const BemorlarPage = {
         <span class="text-sm text-amber-700 font-semibold bg-amber-50 border border-amber-200 rounded px-3 py-1">
           ${icon('alert-triangle',14)} ${missing.length} ta bemorda vaqt kiritilmagan
         </span>
-        <button class="btn btn-primary flex items-center gap-2 !text-sm" onclick="BemorlarPage.saveAllBulk()">
+        <button class="btn btn-primary flex items-center gap-2 !text-sm" onclick="BemorlarPage.saveAllBulk(this)">
           ${icon('save',15)} Hammasini saqlash
         </button>
       </div>
@@ -642,14 +642,14 @@ const BemorlarPage = {
     return { updates };
   },
 
-  async saveBulkRow(i) {
+  async saveBulkRow(i, btnEl) {
     const p = BemorlarPage._bulkList[i];
     if (!p) return;
     const result = BemorlarPage._readBulkFields(i);
     if (!result) return;
     if (result.error) { showToast(result.error, 'warning'); return; }
     if (!Object.keys(result.updates).length) { showToast('Vaqt kiritilmagan', 'warning'); return; }
-    const btn = event.target.closest('button');
+    const btn = btnEl || null;
     if (btn) { btn.disabled = true; btn.innerHTML = '...'; }
     try {
       const sb = getSupabase();
@@ -665,10 +665,10 @@ const BemorlarPage = {
     }
   },
 
-  async saveAllBulk() {
+  async saveAllBulk(btnEl) {
     const list = BemorlarPage._bulkList;
     if (!list?.length) return;
-    const btn = event.target.closest('button');
+    const btn = btnEl || null;
     if (btn) { btn.disabled = true; btn.textContent = 'Saqlanmoqda...'; }
     let saved = 0, skipped = 0;
     for (let i = 0; i < list.length; i++) {
