@@ -1528,23 +1528,17 @@ const BemorKartaPage = {
     try {
       const sb = getSupabase();
       const kt = BemorKartaPage._patient.kt_no;
-      if (BemorKartaPage._type === 'infarkt') {
-        // Child jadvallarni avval o'chirish (FK constraint)
-        await sb.from('infarkt_chiqarish').delete().eq('kt_no', kt);
-        await sb.from('infarkt_holat').delete().eq('kt_no', kt);
-        await sb.from('infarkt_davolash').delete().eq('kt_no', kt);
-        await sb.from('infarkt_kuzatuv').delete().eq('kt_no', kt);
-        const { error } = await sb.from('infarkt_qabul').delete().eq('kt_no', kt);
-        if (error) throw error;
-      } else {
-        // Child jadvallarni avval o'chirish (FK constraint)
-        await sb.from('insult_chiqarish').delete().eq('kt_no', kt);
-        await sb.from('insult_holat').delete().eq('kt_no', kt);
-        await sb.from('insult_davolash').delete().eq('kt_no', kt);
-        await sb.from('insult_kuzatuv').delete().eq('kt_no', kt);
-        const { error } = await sb.from('insult_qabul').delete().eq('kt_no', kt);
-        if (error) throw error;
-      }
+      const mainTable = BemorKartaPage._type === 'infarkt' ? 'infarkt_qabul' : 'insult_qabul';
+      const chiqarishTable = BemorKartaPage._type === 'infarkt' ? 'infarkt_chiqarish' : 'insult_chiqarish';
+      // Child jadvallarni avval o'chirish (FK constraint)
+      await sb.from(chiqarishTable).delete().eq('kt_no', kt);
+      await sb.from('holat_dinamikasi').delete().eq('kt_no', kt);
+      await sb.from('navbatchi_jurnal').delete().eq('kt_no', kt);
+      await sb.from('dinamika_muolajalar').delete().eq('kt_no', kt);
+      await sb.from('holat_baxolash').delete().eq('kt_no', kt);
+      await sb.from('kuzatuv').delete().eq('kt_no', kt);
+      const { error } = await sb.from(mainTable).delete().eq('kt_no', kt);
+      if (error) throw error;
       showToast("Bemor muvaffaqiyatli o'chirildi", 'success');
       // Keshlarni tozalash — hisobot va bemorlar ro'yxati yangilansin
       if (window.HisobotPage) { HisobotPage._lastData = null; HisobotPage._lastListType = null; }
