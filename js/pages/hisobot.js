@@ -635,7 +635,7 @@ const HisobotPage = {
 
       const ageLabel = (ageFrom > 0 || ageTo < 120) ? ` · Yosh: ${ageFrom}–${ageTo}` : '';
       const locationLabel = selMuassasa ? ` · ${selMuassasa}` : selViloyat ? ` · ${selViloyat}` : '';
-      HisobotPage._lastData = { infs, ins, kuzatuv, from, to, ageLabel, locationLabel };
+      HisobotPage._lastData = { infs, ins, kuzatuv, from, to, ageLabel, locationLabel, dinamikaInfMap, dinamikaInsMap };
       reEnableTg();
       HisobotPage.renderReport(infs, ins, kuzatuv, from, to, ageLabel, locationLabel);
     } catch(err) {
@@ -645,6 +645,13 @@ const HisobotPage = {
   },
 
   renderReport(infs, ins, kuzatuv, from, to, ageLabel = '', locationLabel = '') {
+    const { dinamikaInfMap = {}, dinamikaInsMap = {} } = HisobotPage._lastData || {};
+    const hasAnyMuolaja = (p, map, keywords) => {
+      const birlamchi = p.muolaja_turi || '';
+      const dinamik = (map[p.kt_no] || []).join(' ');
+      const all = (birlamchi + ' ' + dinamik).toLowerCase();
+      return keywords.some(k => all.includes(k.toLowerCase()));
+    };
     const el = document.getElementById('h-results');
     // counts
     const stemi = infs.filter(p=>p.infarkt_turi?.toUpperCase().includes('STEMI')&&!p.infarkt_turi?.toUpperCase().includes('NSTEMI')).length;
