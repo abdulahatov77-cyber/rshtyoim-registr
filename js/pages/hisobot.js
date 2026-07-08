@@ -1181,7 +1181,7 @@ const HisobotPage = {
             <h3 class="h-title !mb-0 text-teal-900">${icon('stethoscope', 20)} Shifokorlar bo'yicha — ${shifokorlar.length} ta</h3>
             <p class="text-xs text-teal-600 mt-1">Raqam ustiga bosing — o'sha shifokor kiritgan bemorlar ro'yxatini ko'rish uchun</p>
           </div>
-          <div class="overflow-x-auto">
+          <div style="max-height:500px;overflow-y:auto;overflow-x:auto">
             <table class="w-full text-sm">
               ${tableHead([{label:'#'},{label:'Viloyat'},{label:'Shifokor F.I.Sh'},{label:'Infarkt',align:'center'},{label:'Insult',align:'center'},{label:'Jami',align:'center'},{label:'Davolandi',align:'center'},{label:'Vafot',align:'center'}])}
               <tbody>${shifokorlar.map((s,i)=>`
