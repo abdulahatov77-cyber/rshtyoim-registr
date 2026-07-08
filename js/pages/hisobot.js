@@ -1101,22 +1101,24 @@ const HisobotPage = {
             <h3 class="h-title !mb-0 text-green-900">${icon('arrow-down-to-line', 20)} Boshqa muassasadan kelgan bemorlar — ${kelgan.length} ta</h3>
           </div>
           <div class="grid grid-cols-1 lg:grid-cols-2">
-            <div class="border-r border-slate-100">
-              <div class="p-3 bg-slate-50 border-b border-slate-100 text-[11px] font-bold text-slate-400 uppercase">Yuborgan muassasa</div>
-              <table class="w-full text-sm">
-                ${tableHead([{label:'Muassasa'},{label:'Infarkt',align:'center'},{label:'Insult',align:'center'},{label:'Jami',align:'center'}])}
-                <tbody>${kelganMuassasalar.map((m,i)=>`
-                  <tr class="${i%2===0?'bg-white':'bg-slate-50/50'} hover:bg-green-50">
-                    <td class="p-3 font-semibold text-slate-700">${esc(m.nomi)}</td>
-                    <td class="p-3 text-center">${badge(m.infarkt,'bg-red-100 text-red-700')}</td>
-                    <td class="p-3 text-center">${badge(m.insult,'bg-purple-100 text-purple-700')}</td>
-                    <td class="p-3 text-center font-black">${m.infarkt+m.insult}</td>
-                  </tr>`).join('')}</tbody>
-              </table>
+            <div class="border-r border-slate-100 flex flex-col">
+              <div class="p-3 bg-slate-50 border-b border-slate-100 text-[11px] font-bold text-slate-400 uppercase sticky top-0 z-10">Yuborgan muassasa</div>
+              <div style="max-height:400px;overflow-y:auto">
+                <table class="w-full text-sm">
+                  ${tableHead([{label:'Muassasa'},{label:'Infarkt',align:'center'},{label:'Insult',align:'center'},{label:'Jami',align:'center'}])}
+                  <tbody>${kelganMuassasalar.map((m,i)=>`
+                    <tr class="${i%2===0?'bg-white':'bg-slate-50/50'} hover:bg-green-50">
+                      <td class="p-3 font-semibold text-slate-700">${esc(m.nomi)}</td>
+                      <td class="p-3 text-center">${badge(m.infarkt,'bg-red-100 text-red-700')}</td>
+                      <td class="p-3 text-center">${badge(m.insult,'bg-purple-100 text-purple-700')}</td>
+                      <td class="p-3 text-center font-black">${m.infarkt+m.insult}</td>
+                    </tr>`).join('')}</tbody>
+                </table>
+              </div>
             </div>
-            <div>
-              <div class="p-3 bg-slate-50 border-b border-slate-100 text-[11px] font-bold text-slate-400 uppercase">Bemorlar ro'yxati</div>
-              <div style="max-height:320px;overflow-y:auto">
+            <div class="flex flex-col">
+              <div class="p-3 bg-slate-50 border-b border-slate-100 text-[11px] font-bold text-slate-400 uppercase sticky top-0 z-10">Bemorlar ro'yxati</div>
+              <div style="max-height:400px;overflow-y:auto">
                 <table class="w-full text-sm">
                   ${tableHead([{label:'F.I.Sh'},{label:'Turi'},{label:'Qabul'},{label:'Yuborgan muassasa'}])}
                   <tbody>${kelgan.map((p,i)=>`
