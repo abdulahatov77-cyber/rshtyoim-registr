@@ -863,136 +863,6 @@ const DashboardPage = {
       });
     }
 
-    // 3. Butterfly Chart — oylar bo'yicha infarkt (chapga, ko'k) va insult (o'ngga, qizil)
-    const ctxB = document.getElementById('butterflyChart')?.getContext('2d');
-    if (ctxB && trend12) {
-      const bLabels = trend12.labels.slice().reverse();
-      const bInf   = trend12.infData.slice().reverse();
-      const bIns   = trend12.insData.slice().reverse();
-      new Chart(ctxB, {
-        type: 'bar',
-        data: {
-          labels: bLabels,
-          datasets: [
-            {
-              label: 'Infarkt',
-              data: bInf.map(v => -v),
-              backgroundColor: '#1e3a8a',
-              borderRadius: 3,
-              borderSkipped: false,
-              barPercentage: 0.7
-            },
-            {
-              label: 'Insult',
-              data: bIns,
-              backgroundColor: '#dc2626',
-              borderRadius: 3,
-              borderSkipped: false,
-              barPercentage: 0.7
-            }
-          ]
-        },
-        plugins: window.ChartDataLabels ? [window.ChartDataLabels] : [],
-        options: {
-          indexAxis: 'y',
-          responsive: true,
-          maintainAspectRatio: false,
-          layout: { padding: { left: 10, right: 10, top: 4, bottom: 4 } },
-          plugins: {
-            legend: { display: false },
-            tooltip: {
-              callbacks: {
-                label: ctx => {
-                  const v = Math.abs(ctx.parsed.x);
-                  return `${ctx.dataset.label}: ${v} ta`;
-                }
-              }
-            },
-            datalabels: window.ChartDataLabels ? {
-              display: ctx => Math.abs(ctx.dataset.data[ctx.dataIndex]) > 0,
-              formatter: v => Math.abs(v),
-              color: '#fff',
-              font: { weight: 'bold', size: 10 },
-              anchor: ctx => ctx.datasetIndex === 0 ? 'start' : 'end',
-              align: ctx => ctx.datasetIndex === 0 ? 'right' : 'left',
-              offset: 4
-            } : { display: false }
-          },
-          scales: {
-            x: {
-              stacked: false,
-              ticks: {
-                callback: v => Math.abs(v),
-                font: { size: 10 },
-                color: '#64748b'
-              },
-              grid: { color: '#f1f5f9' }
-            },
-            y: {
-              stacked: false,
-              ticks: { font: { size: 11, weight: '600' }, color: '#334155' },
-              grid: { display: false }
-            }
-          }
-        }
-      });
-    }
-
-    // 3b. Age Groups Chart (hidden canvas — kept for compatibility)
-    const ctxA = document.getElementById('ageChart')?.getContext('2d');
-    if (ctxA && demo) {
-      const ageLabels = ['≤29', '30-44', '45-59', '60-74', '75+'];
-      const insData = ageLabels.map(k => demo.insult.ages[k]  || 0);
-      const infData = ageLabels.map(k => demo.infarkt.ages[k] || 0);
-      new Chart(ctxA, {
-        type: 'bar',
-        data: {
-          labels: ageLabels,
-          datasets: [
-            { label: 'Insult',  data: insData, backgroundColor: '#2563eb', borderRadius: 5, borderSkipped: false },
-            { label: 'Infarkt', data: infData, backgroundColor: '#dc2626', borderRadius: 5, borderSkipped: false }
-          ]
-        },
-        plugins: window.ChartDataLabels ? [window.ChartDataLabels] : [],
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          layout: { padding: { top: 30, left: 4, right: 4, bottom: 4 } },
-          plugins: {
-            legend: { display: false },
-            tooltip: {
-              callbacks: {
-                footer: (items) => {
-                  const total = items.reduce((s, i) => s + i.parsed.y, 0);
-                  return `Jami: ${total} ta`;
-                }
-              }
-            },
-            datalabels: window.ChartDataLabels ? {
-              anchor: 'end', align: 'top',
-              offset: 2,
-              display: ctx => ctx.dataset.data[ctx.dataIndex] > 0,
-              color: ctx => ctx.datasetIndex === 0 ? '#1d4ed8' : '#b91c1c',
-              font: { weight: '900', size: 15 },
-              formatter: v => v > 0 ? v.toLocaleString() : ''
-            } : { display: false }
-          },
-          scales: {
-            x: {
-              grid: { display: false },
-              border: { display: false },
-              ticks: { font: { size: 13, weight: '700' }, color: '#475569' }
-            },
-            y: {
-              grid: { color: '#f1f5f9', lineWidth: 1 },
-              border: { display: false, dash: [4, 4] },
-              ticks: { font: { size: 11 }, color: '#94a3b8' },
-              beginAtZero: true
-            }
-          }
-        }
-      });
-    }
   },
 
   _drawDonut(canvasId, legendId, data, baseColor, patientCount) {
@@ -1278,7 +1148,7 @@ const DashboardPage = {
       }
 
       // Grafiklarni yangilash — mavjud chartlarni destroy qilib qayta qurish
-      ['dynamicsChart','regionChart','monthlyChart','butterflyChart','ageChart','riskInfarktChart','riskInsultChart'].forEach(id => {
+      ['dynamicsChart','regionChart','monthlyChart','riskInfarktChart','riskInsultChart'].forEach(id => {
         const canvas = document.getElementById(id);
         if (canvas) {
           const existing = Chart.getChart(canvas);

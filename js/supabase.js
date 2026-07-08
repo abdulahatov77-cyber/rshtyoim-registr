@@ -710,65 +710,6 @@ const DB = {
     return { infarkt: buildPyramid('infarkt'), insult: buildPyramid('insult') };
   },
 
-  // _getAgeSexPyramid_OLD — eskirgan, faqat zaxira sifatida saqlanadi
-  async _getAgeSexPyramid_OLD(overrideViloyat, overrideMuassasa) {
-    const p = await Profile.getCurrent();
-    const viloyat = overrideMuassasa ? null : (overrideViloyat !== undefined ? overrideViloyat : (p?.role === 'super_admin' ? null : p?.viloyat));
-    const sb = getSupabase();
-    const eqV = (q) => overrideMuassasa ? q.eq('muassasa', overrideMuassasa) : (viloyat ? q.eq('viloyat', viloyat) : q);
-    const AGE_GROUPS = ['75+', '60-74', '45-59', '30-44', '≤29'];
-    const norm = (s) => {
-      const v = (s||'').toLowerCase();
-      if (['erkak','e','m','male'].includes(v)) return 'male';
-      if (['ayol','a','f','female'].includes(v)) return 'female';
-      return null;
-    };
-    const getAge = (row) => {
-      const born = row.tugilgan_sana || row.tugilgan_yil;
-      if (!born) return null;
-      const b = new Date(born);
-      if (isNaN(b)) return null;
-      const ref = row.qabul_vaqt ? new Date(row.qabul_vaqt) : new Date();
-      let age = ref.getFullYear() - b.getFullYear();
-      if (ref.getMonth() < b.getMonth() || (ref.getMonth() === b.getMonth() && ref.getDate() < b.getDate())) age--;
-      return age;
-    };
-    const ageGroup = (age) => {
-      if (age === null) return null;
-      if (age <= 29) return '≤29';
-      if (age <= 44) return '30-44';
-      if (age <= 59) return '45-59';
-      if (age <= 74) return '60-74';
-      return '75+';
-    };
-    const fetchAll = async (table) => {
-      let all = [], offset = 0;
-      while (true) {
-        const { data, error } = await eqV(sb.from(table).select('jins,status,tugilgan_sana,tugilgan_yil,qabul_vaqt')).range(offset, offset + 999);
-        if (error || !data || data.length === 0) break;
-        all = all.concat(data);
-        if (data.length < 1000) break;
-        offset += 1000;
-      }
-      return all;
-    };
-    const buildPyramid = (rows) => {
-      const res = {};
-      AGE_GROUPS.forEach(g => { res[g] = { mTotal: 0, fTotal: 0, mDeath: 0, fDeath: 0 }; });
-      rows.forEach(row => {
-        const g = norm(row.jins);
-        const ag = ageGroup(getAge(row));
-        if (!g || !ag) return;
-        const isDead = row.status === 'vafot';
-        if (g === 'male') { res[ag].mTotal++; if (isDead) res[ag].mDeath++; }
-        else { res[ag].fTotal++; if (isDead) res[ag].fDeath++; }
-      });
-      return { groups: AGE_GROUPS, data: res };
-    };
-    const [inf, ins] = await Promise.all([fetchAll('infarkt_qabul'), fetchAll('insult_qabul')]);
-    return { infarkt: buildPyramid(inf), insult: buildPyramid(ins) };
-  },
-
   // Viloyat (yoki Muassasa) distribution — RPC orqali
   async getMuassasaStats(viloyat, dateFrom, dateTo) {
     // Viloyat tanlanganda muassasalar bo'yicha statistika
