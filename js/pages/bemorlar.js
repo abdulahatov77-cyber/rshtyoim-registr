@@ -468,15 +468,28 @@ const BemorlarPage = {
     ]);
 
     // Filtrlash: faqat vaqt kiritilmaganlar
+    // qabul_vaqt dan local sana olish (UTC+5)
+    const toLocalDate = iso => {
+      if (!iso) return '';
+      const d = new Date(new Date(iso).getTime() + 5*3600000);
+      return d.toISOString().slice(0,10);
+    };
+    // qabul_vaqt dan local vaqt (HH:MM) olish
+    const toLocalTime = iso => {
+      if (!iso) return '';
+      const d = new Date(new Date(iso).getTime() + 5*3600000);
+      return d.toISOString().slice(11,16);
+    };
+
     const missing = [];
     infRows.forEach(p => {
       const mt = (p.muolaja_turi||'').toLowerCase();
       const needsTLT = mt.includes('tlt') || mt.includes('trombolitik');
       const needsPCI = mt.includes('pci') || mt.includes('stentlash') || mt.includes('kag') || mt.includes('tlbap');
       const fields = [];
-      if (!p.ekg_vaqti) fields.push({ id:'ekg_vaqti', label:'EKG vaqti', type:'time', val:'' });
-      if (needsTLT && !p.tlt_vaqt) fields.push({ id:'tlt_vaqt', label:'TLT vaqti', type:'datetime-local', val:'' });
-      if (needsPCI && !p.pci_vaqt) fields.push({ id:'pci_vaqt', label:'PCI/Groin vaqti', type:'datetime-local', val:'' });
+      if (!p.ekg_vaqti) fields.push({ id:'ekg_vaqti', label:'EKG vaqti', splitType:'time' });
+      if (needsTLT && !p.tlt_vaqt) fields.push({ id:'tlt_vaqt', label:'TLT vaqti', splitType:'datetime' });
+      if (needsPCI && !p.pci_vaqt) fields.push({ id:'pci_vaqt', label:'PCI/Groin vaqti', splitType:'datetime' });
       if (fields.length) missing.push({ ...p, _type:'infarkt', _fields: fields });
     });
     insRows.forEach(p => {
@@ -485,15 +498,14 @@ const BemorlarPage = {
       const needsTLT = mt.includes('trombolizis') || mt.includes('tlt');
       const needsTromb = mt.includes('trombektomiya') || mt.includes('tromboekstraksiya') || mt.includes('tromboaspiratsiya') || mt.includes('kombinatsiya');
       const fields = [];
-      if (isMskt && !p.kt_vaqti) fields.push({ id:'kt_vaqti', label:'KT/MSKT vaqti', type:'datetime-local', val:'' });
-      if (needsTLT && !p.trombolizis_vaqti) fields.push({ id:'trombolizis_vaqti', label:'Trombolizis vaqti', type:'datetime-local', val:'' });
-      if (needsTromb && !p.trombektomiya_vaqti) fields.push({ id:'trombektomiya_vaqti', label:'Trombektomiya vaqti', type:'datetime-local', val:'' });
+      if (isMskt && !p.kt_vaqti) fields.push({ id:'kt_vaqti', label:'KT/MSKT vaqti', splitType:'datetime' });
+      if (needsTLT && !p.trombolizis_vaqti) fields.push({ id:'trombolizis_vaqti', label:'Trombolizis vaqti', splitType:'datetime' });
+      if (needsTromb && !p.trombektomiya_vaqti) fields.push({ id:'trombektomiya_vaqti', label:'Trombektomiya vaqti', splitType:'datetime' });
       if (fields.length) missing.push({ ...p, _type:'insult', _fields: fields });
     });
 
     BemorlarPage._bulkList = missing;
 
-    const modalBody = document.querySelector('#modal-container .modal-body, #modal-container [class*="modal"]');
     const bodyEl = document.querySelector('#modal-container .overflow-y-auto') || document.querySelector('#modal-container .modal-body');
 
     if (!missing.length) {
@@ -502,17 +514,50 @@ const BemorlarPage = {
       return;
     }
 
+    const today = toLocalDate(new Date().toISOString());
+
     const rows = missing.map((p, i) => {
       const isInf = p._type === 'infarkt';
       const badge = isInf
         ? `<span class="badge badge-red text-xs">Infarkt</span>`
         : `<span class="badge badge-purple text-xs">Insult</span>`;
-      const fieldHtml = p._fields.map(f => `
-        <div class="flex items-center gap-2 mt-1">
-          <label class="text-xs text-gray-500 w-32 shrink-0">${f.label}</label>
-          <input type="${f.type}" class="form-input !py-1 !text-sm flex-1"
-            id="bulk-${i}-${f.id}" placeholder="${f.label}"/>
-        </div>`).join('');
+      const qabulDate = toLocalDate(p.qabul_vaqt);
+      const qabulTime = toLocalTime(p.qabul_vaqt);
+      const fieldHtml = p._fields.map(f => {
+        if (f.splitType === 'time') {
+          // Faqat vaqt (EKG) — sana yo'q, lekin qabul_vaqt dan oldin bo'lmasligi kerak
+          return `
+            <div class="flex items-start gap-2 mt-2">
+              <label class="text-xs text-gray-500 w-32 shrink-0 pt-1">${f.label}</label>
+              <div class="flex gap-2 flex-1">
+                <div class="flex-1">
+                  <div class="text-xs text-gray-400 mb-0.5">Vaqt</div>
+                  <input type="time" class="form-input !py-1 !text-sm w-full" required
+                    id="bulk-${i}-${f.id}-t" min="${qabulTime}"/>
+                </div>
+              </div>
+            </div>`;
+        } else {
+          return `
+            <div class="flex items-start gap-2 mt-2">
+              <label class="text-xs text-gray-500 w-32 shrink-0 pt-1">${f.label}</label>
+              <div class="flex gap-2 flex-1">
+                <div>
+                  <div class="text-xs text-gray-400 mb-0.5">Sana</div>
+                  <input type="date" class="form-input !py-1 !text-sm" required
+                    id="bulk-${i}-${f.id}-d"
+                    min="${qabulDate}" max="${today}"
+                    onchange="BemorlarPage._bulkDateChange(this,'bulk-${i}-${f.id}-t','${qabulDate}','${qabulTime}','${today}')"/>
+                </div>
+                <div class="flex-1">
+                  <div class="text-xs text-gray-400 mb-0.5">Vaqt</div>
+                  <input type="time" class="form-input !py-1 !text-sm w-full" required
+                    id="bulk-${i}-${f.id}-t"/>
+                </div>
+              </div>
+            </div>`;
+        }
+      }).join('');
       return `
         <div class="border border-gray-200 rounded-lg p-3 mb-2" id="bulk-row-${i}">
           <div class="flex items-center justify-between mb-2">
@@ -522,7 +567,7 @@ const BemorlarPage = {
               <span class="text-xs text-gray-400 font-mono">${esc(p.kt_no)}</span>
             </div>
             <div class="flex items-center gap-2">
-              <span class="text-xs text-gray-500">${Utils.formatDateTime(p.qabul_vaqt)}</span>
+              <span class="text-xs text-gray-500">Qabul: ${Utils.formatDateTime(p.qabul_vaqt)}</span>
               <button class="btn btn-primary !py-1 !px-3 !text-xs" onclick="BemorlarPage.saveBulkRow(${i})">
                 ${icon('save',13)} Saqlash
               </button>
@@ -546,23 +591,65 @@ const BemorlarPage = {
     initIcons();
   },
 
+  // sana o'zgarganda time min/max ni yangilash
+  _bulkDateChange(dateEl, timeId, qabulDate, qabulTime, today) {
+    const timeEl = document.getElementById(timeId);
+    if (!timeEl) return;
+    const chosen = dateEl.value;
+    if (chosen === qabulDate) {
+      timeEl.min = qabulTime;
+    } else {
+      timeEl.removeAttribute('min');
+    }
+    // Agar tanlangan sana bugundan katta bo'lsa — reset
+    if (chosen > today) { dateEl.value = today; }
+  },
+
+  _readBulkFields(i) {
+    const p = BemorlarPage._bulkList[i];
+    if (!p) return null;
+    const updates = {};
+    const qabulISO = p.qabul_vaqt;
+    let valid = true;
+    let errMsg = '';
+
+    p._fields.forEach(f => {
+      if (!valid) return;
+      if (f.splitType === 'time') {
+        const tEl = document.getElementById(`bulk-${i}-${f.id}-t`);
+        if (!tEl || !tEl.value) { valid = false; errMsg = `${f.label} vaqti kiritilmagan`; return; }
+        updates[f.id] = tEl.value;
+      } else {
+        const dEl = document.getElementById(`bulk-${i}-${f.id}-d`);
+        const tEl = document.getElementById(`bulk-${i}-${f.id}-t`);
+        if (!dEl || !dEl.value) { valid = false; errMsg = `${f.label} sanasi kiritilmagan`; return; }
+        if (!tEl || !tEl.value) { valid = false; errMsg = `${f.label} vaqti kiritilmagan`; return; }
+        const combined = `${dEl.value}T${tEl.value}:00+05:00`;
+        const entered = new Date(combined);
+        const now = new Date();
+        if (entered > now) { valid = false; errMsg = `${f.label} kelajak vaqt bo'lishi mumkin emas`; return; }
+        if (qabulISO && entered < new Date(qabulISO)) { valid = false; errMsg = `${f.label} bemorning qabul vaqtidan oldin bo'lishi mumkin emas`; return; }
+        updates[f.id] = entered.toISOString();
+      }
+    });
+
+    if (!valid) return { error: errMsg };
+    return { updates };
+  },
+
   async saveBulkRow(i) {
     const p = BemorlarPage._bulkList[i];
     if (!p) return;
-    const updates = {};
-    const toUTC = raw => raw ? new Date(raw + ':00+05:00').toISOString() : null;
-    p._fields.forEach(f => {
-      const el = document.getElementById(`bulk-${i}-${f.id}`);
-      if (!el || !el.value) return;
-      updates[f.id] = f.type === 'time' ? el.value : toUTC(el.value);
-    });
-    if (!Object.keys(updates).length) { showToast('Vaqt kiritilmagan', 'warning'); return; }
+    const result = BemorlarPage._readBulkFields(i);
+    if (!result) return;
+    if (result.error) { showToast(result.error, 'warning'); return; }
+    if (!Object.keys(result.updates).length) { showToast('Vaqt kiritilmagan', 'warning'); return; }
     const btn = event.target.closest('button');
     if (btn) { btn.disabled = true; btn.innerHTML = '...'; }
     try {
       const sb = getSupabase();
       const table = p._type === 'infarkt' ? 'infarkt_qabul' : 'insult_qabul';
-      const { error } = await sb.from(table).update(updates).eq('kt_no', p.kt_no);
+      const { error } = await sb.from(table).update(result.updates).eq('kt_no', p.kt_no);
       if (error) throw error;
       const row = document.getElementById(`bulk-row-${i}`);
       if (row) row.innerHTML = `<div class="flex items-center gap-2 py-1 text-green-600 text-sm">${icon('check-circle',16)} <b>${esc(p.fio)}</b> — saqlandi</div>`;
@@ -581,18 +668,12 @@ const BemorlarPage = {
     let saved = 0, skipped = 0;
     for (let i = 0; i < list.length; i++) {
       const p = list[i];
-      const updates = {};
-      const toUTC = raw => raw ? new Date(raw + ':00+05:00').toISOString() : null;
-      p._fields.forEach(f => {
-        const el = document.getElementById(`bulk-${i}-${f.id}`);
-        if (!el || !el.value) return;
-        updates[f.id] = f.type === 'time' ? el.value : toUTC(el.value);
-      });
-      if (!Object.keys(updates).length) { skipped++; continue; }
+      const result = BemorlarPage._readBulkFields(i);
+      if (!result || result.error || !Object.keys(result.updates).length) { skipped++; continue; }
       try {
         const sb = getSupabase();
         const table = p._type === 'infarkt' ? 'infarkt_qabul' : 'insult_qabul';
-        const { error } = await sb.from(table).update(updates).eq('kt_no', p.kt_no);
+        const { error } = await sb.from(table).update(result.updates).eq('kt_no', p.kt_no);
         if (!error) {
           saved++;
           const row = document.getElementById(`bulk-row-${i}`);
