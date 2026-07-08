@@ -700,7 +700,9 @@ const BemorlarPage = {
     const sb = getSupabase();
     const errors = [];
     for (const key of BemorlarPage._selected) {
-      const [kt_no, type] = key.split(':');
+      const lastColon = key.lastIndexOf(':');
+      const kt_no = key.slice(0, lastColon);
+      const type = key.slice(lastColon + 1);
       const table = type === 'infarkt' ? 'infarkt_qabul' : 'insult_qabul';
       const { error } = await sb.from(table).delete().eq('kt_no', kt_no);
       if (error) errors.push(kt_no);
