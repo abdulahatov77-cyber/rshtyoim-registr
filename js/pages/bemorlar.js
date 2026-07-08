@@ -536,7 +536,7 @@ const BemorlarPage = {
               <label class="text-xs text-gray-500 w-32 shrink-0 pt-1">${f.label}</label>
               <div class="flex gap-2 flex-1">
                 <div class="flex-1">
-                  <div class="text-xs text-gray-400 mb-0.5">Vaqt <span class="text-amber-500">(qabul+10 daq)</span></div>
+                  <div class="text-xs text-gray-400 mb-0.5">Vaqt</div>
                   <input type="time" class="form-input !py-1 !text-sm w-full" required
                     id="bulk-${i}-${f.id}-t" min="${qabulTime}" value="${ekgAuto}"/>
                 </div>
