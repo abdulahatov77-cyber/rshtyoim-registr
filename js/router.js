@@ -3,6 +3,7 @@ const Router = {
   _current: null,
   _prev: null,
   _params: {},
+  _fromPopState: false,
 
   routes: {
     'login':            () => LoginPage.render(),
@@ -20,8 +21,11 @@ const Router = {
   },
 
   back() {
-    const prev = Router._prev || 'bemorlar';
-    Router.go(prev);
+    if (window.history.length > 1) {
+      window.history.back();
+    } else {
+      Router.go(Router._prev || 'bemorlar');
+    }
   },
 
   async go(route, params = {}) {
@@ -33,6 +37,16 @@ const Router = {
 
     Router._current = route;
     Router._params = params;
+
+    // History API — popstate dan kelgan bo'lsa pushState qilmaymiz
+    if (!Router._fromPopState) {
+      const state = { route, params };
+      const url = '/' + (route === 'dashboard' ? '' : route) +
+        (params.id ? '?id=' + encodeURIComponent(params.id) : '') +
+        (params.kt_no ? (params.id ? '&' : '?') + 'kt=' + encodeURIComponent(params.kt_no) : '');
+      window.history.pushState(state, '', url);
+    }
+    Router._fromPopState = false;
 
     const app = document.getElementById('app');
     app.innerHTML = `<div class="flex items-center justify-center min-h-screen">
@@ -60,5 +74,19 @@ const Router = {
         </div>
       </div>`;
     }
+  },
+
+  init() {
+    // Brauzer "Orqaga"/"Oldinga" tugmasi bosilganda
+    window.addEventListener('popstate', async (e) => {
+      const state = e.state;
+      if (state?.route) {
+        Router._fromPopState = true;
+        await Router.go(state.route, state.params || {});
+      } else {
+        Router._fromPopState = true;
+        await Router.go('dashboard');
+      }
+    });
   }
 };

@@ -65,4 +65,7 @@ const App = {
 };
 
 // Start app
-document.addEventListener('DOMContentLoaded', () => App.init());
+document.addEventListener('DOMContentLoaded', () => {
+  Router.init();
+  App.init();
+});
