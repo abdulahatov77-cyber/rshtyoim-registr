@@ -1031,21 +1031,6 @@ const HisobotPage = {
         </div>
       </div>
 
-      <!-- Charts -->
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div class="h-card">
-          <h3 class="h-title">${icon('bar-chart-2', 20)} Infarkt muolajalar</h3>
-          <div style="height:250px; position:relative;">
-            <canvas id="h-inf-chart"></canvas>
-          </div>
-        </div>
-        <div class="h-card">
-          <h3 class="h-title">${icon('bar-chart-2', 20)} Insult muolajalar</h3>
-          <div style="height:250px; position:relative;">
-            <canvas id="h-ins-chart"></canvas>
-          </div>
-        </div>
-      </div>
 
       ${(() => {
         // Har bir bemor uchun to'g'ri turi belgilash yordamchisi
@@ -1225,64 +1210,6 @@ const HisobotPage = {
 
     initIcons();
 
-    // Make charts render in next frame to ensure DOM is ready
-    requestAnimationFrame(() => {
-      // Infarkt muolajalar — normalized via MUOLAJA_STD
-      const infMCounts = normMuolajaCounts(infs);
-      const infMLabels = Object.keys(infMCounts);
-      const infMVals = Object.values(infMCounts);
-      const ctx1 = document.getElementById('h-inf-chart')?.getContext('2d');
-      if (ctx1 && infMLabels.length) {
-        new Chart(ctx1, {
-          type: 'bar',
-          data: {
-            labels: infMLabels.map(k => k.slice(0, 20)),
-            datasets: [{
-              data: infMVals,
-              backgroundColor: 'rgba(59, 130, 246, 0.8)',
-              hoverBackgroundColor: 'rgba(37, 99, 235, 1)',
-              borderRadius: 6
-            }]
-          },
-          options: {
-            plugins: { legend: { display: false } },
-            scales: {
-              x: { grid: { display: false }, ticks: { font: { size: 11, family: 'Inter' }, color: '#1e3a8a' } },
-              y: { border: { display: false }, grid: { color: '#f1f5f9' }, beginAtZero: true, ticks: { stepSize: 1, font: { size: 11, family: 'Inter' }, color: '#64748b' } }
-            },
-            responsive: true, maintainAspectRatio: false
-          }
-        });
-      }
-
-      // Insult muolajalar — normalized via MUOLAJA_STD
-      const insMCounts = normMuolajaCounts(ins);
-      const insMLabels = Object.keys(insMCounts);
-      const insMVals = Object.values(insMCounts);
-      const ctx2 = document.getElementById('h-ins-chart')?.getContext('2d');
-      if (ctx2 && insMLabels.length) {
-        new Chart(ctx2, {
-          type: 'bar',
-          data: {
-            labels: insMLabels.map(k => k.slice(0, 20)),
-            datasets: [{
-              data: insMVals,
-              backgroundColor: 'rgba(139, 92, 246, 0.8)',
-              hoverBackgroundColor: 'rgba(109, 40, 217, 1)',
-              borderRadius: 6
-            }]
-          },
-          options: {
-            plugins: { legend: { display: false } },
-            scales: {
-              x: { grid: { display: false }, ticks: { font: { size: 11, family: 'Inter' }, color: '#6d28d9' } },
-              y: { border: { display: false }, grid: { color: '#f5f3ff' }, beginAtZero: true, ticks: { stepSize: 1, font: { size: 11, family: 'Inter' }, color: '#64748b' } }
-            },
-            responsive: true, maintainAspectRatio: false
-          }
-        });
-      }
-    });
   },
 
   showPatientList(type) {
