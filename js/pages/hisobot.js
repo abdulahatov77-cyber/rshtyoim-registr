@@ -594,11 +594,10 @@ const HisobotPage = {
         return age >= ageFrom && age <= ageTo;
       });
 
-      const [infResult, insResult, kuzatuvResult, dinamikaResult] = await Promise.allSettled([
+      const [infResult, insResult, kuzatuvResult] = await Promise.allSettled([
         DB.infarktList({ ...filters, allCols: true }),
         DB.insultList({ ...filters, allCols: true }),
         getSupabase().from('kuzatuv').select('*').gte('created_at', filters.from).lte('created_at', filters.to).range(0, 9999),
-        getSupabase().from('dinamika_muolajalar').select('kt_no,registr_turi,muolaja_turi').range(0, 99999)
       ]);
 
       if (infResult.status === 'rejected') throw new Error('Infarkt ma\'lumotlari yuklanmadi: ' + infResult.reason?.message);
@@ -607,7 +606,17 @@ const HisobotPage = {
       const infs = byAge((infResult.value?.data) || []);
       const ins  = byAge((insResult.value?.data) || []);
       const kuzatuvAll = kuzatuvResult.status === 'fulfilled' ? (kuzatuvResult.value?.data || []) : [];
-      const dinamikaAll = dinamikaResult.status === 'fulfilled' ? (dinamikaResult.value?.data || []) : [];
+
+      // Faqat tanlangan bemorlarning kt_no lari bo'yicha dinamik muolajalarni yuklash
+      const allKtNos = [...infs.map(p => p.kt_no), ...ins.map(p => p.kt_no)];
+      let dinamikaAll = [];
+      if (allKtNos.length) {
+        const { data: dData } = await getSupabase()
+          .from('dinamika_muolajalar')
+          .select('kt_no,registr_turi,muolaja_turi')
+          .in('kt_no', allKtNos);
+        dinamikaAll = dData || [];
+      }
 
       // Dinamik muolajalarni kt_no bo'yicha guruhlash
       const dinamikaInfMap = {};
