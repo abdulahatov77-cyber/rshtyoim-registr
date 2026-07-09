@@ -590,9 +590,7 @@ const DB = {
     const viloyat = overrideMuassasa ? null : (overrideViloyat !== undefined ? overrideViloyat : (p?.role === 'super_admin' ? null : p?.viloyat));
     const { data, error } = await getSupabase().rpc('get_risk_factors', {
       p_viloyat:  viloyat || null,
-      p_muassasa: overrideMuassasa || null,
-      p_from:     dateFrom || null,
-      p_to:       dateTo   || null
+      p_muassasa: overrideMuassasa || null
     });
     if (error) throw error;
     const rows = data || [];
