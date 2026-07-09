@@ -936,47 +936,18 @@ const Telegram = {
       const isNSTEMI = (patient.infarkt_turi || '').toUpperCase().includes('NSTEMI');
       if (isNSTEMI && patient.grace_bali) {
         const g = parseInt(patient.grace_bali);
-        let graceIcon, graceTitle, kagSoat, tavsiyaLines;
+        let graceIcon, graceTavsiya;
         if (g > 140) {
-          graceIcon  = '🔴';
-          graceTitle = `Yuqori xavf (>3%) — Erta invaziv strategiya`;
-          kagSoat    = 24;
-          tavsiyaLines = [
-            '• KAG 24 soat ichida o\'tkazilishi qat\'iy tavsiya etiladi',
-            '• Ko\'rsatmaga asosan revaskulyarizatsiya (stentlash yoki AShK)'
-          ];
+          graceIcon    = '🔴';
+          graceTavsiya = `Yuqori xavf (>3%) — KAG 24 soat ichida o'tkazilishi tavsiya etiladi`;
         } else if (g >= 109) {
-          graceIcon  = '🟡';
-          graceTitle = `O'rta xavf (1–3%) — Kechiktirilgan invaziv strategiya`;
-          kagSoat    = 72;
-          tavsiyaLines = [
-            '• KAG 72 soat ichida tavsiya etiladi',
-            '• Qaytalanuvchi ishemiya yo\'q bo\'lsa kechiktirish mumkin',
-            '• Dastlab exokardiografiya o\'tkazilishi mumkin'
-          ];
+          graceIcon    = '🟡';
+          graceTavsiya = `O'rta xavf (1–3%) — KAG 72 soat ichida tavsiya etiladi`;
         } else {
-          graceIcon  = '🟢';
-          graceTitle = `Past xavf (<1%) — Konservativ strategiya`;
-          kagSoat    = null;
-          tavsiyaLines = [
-            '• Medikamentoz davolash: antikoagulyant + antianginal',
-            '• Holat barqaror bo\'lsa zudlik bilan KAG talab etilmaydi',
-            '• Chiqarishdan oldin stress-test (tredmil/veloergometriya)',
-            '• Test ijobiy bo\'lsa — invaziv tekshiruvga yo\'naltiring'
-          ];
+          graceIcon    = '🟢';
+          graceTavsiya = `Past xavf (<1%) — Konservativ davolash tavsiya etiladi`;
         }
-        // Qabul vaqtidan KAG muddatini hisoblash
-        let kagDeadline = '';
-        if (kagSoat && patient.qabul_vaqt) {
-          const qv = new Date(patient.qabul_vaqt);
-          if (!isNaN(qv)) {
-            const kag = new Date(qv.getTime() + kagSoat * 3600000);
-            const tz  = new Date(kag.getTime() + 5 * 3600000);
-            const pad = n => String(n).padStart(2, '0');
-            kagDeadline = `\n⏰ <b>KAG muddati:</b> ${pad(tz.getUTCDate())}.${pad(tz.getUTCMonth()+1)}.${tz.getUTCFullYear()} soat ${pad(tz.getUTCHours())}:${pad(tz.getUTCMinutes())} gacha`;
-          }
-        }
-        graceLine = `\n🧮 <b>GRACE Score: ${g} ball</b>\n${graceIcon} ${graceTitle}${kagDeadline}\n${tavsiyaLines.join('\n')}`;
+        graceLine = `\n🧮${graceIcon} <b>GRACE Score: ${g} ball.</b> ${graceTavsiya}`;
       }
 
       return `${e.heart} <b>YANGI INFARKT BEMOR QABUL QILINDI</b>
