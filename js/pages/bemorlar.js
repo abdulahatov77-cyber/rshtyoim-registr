@@ -466,8 +466,8 @@ const BemorlarPage = {
     };
 
     const [infRows, insRows] = await Promise.all([
-      fetchAll('infarkt_qabul', 'kt_no,fio,muolaja_turi,qabul_vaqt,ekg_vaqti,tlt_vaqt,pci_vaqt,viloyat'),
-      fetchAll('insult_qabul', 'kt_no,fio,muolaja_turi,mskt,qabul_vaqt,kt_vaqti,trombolizis_vaqti,trombektomiya_vaqti,viloyat')
+      fetchAll('infarkt_qabul', 'kt_no,fio,muolaja_turi,qabul_vaqt,ekg_vaqti,ekg_vaqti_ts,tlt_vaqt,pci_vaqt,viloyat,status'),
+      fetchAll('insult_qabul', 'kt_no,fio,muolaja_turi,mskt,qabul_vaqt,kt_vaqti,trombolizis_vaqti,trombektomiya_vaqti,viloyat,status')
     ]);
 
     // Filtrlash: faqat vaqt kiritilmaganlar
@@ -485,7 +485,7 @@ const BemorlarPage = {
     };
 
     const missing = [];
-    infRows.forEach(p => {
+    infRows.filter(p => p.status === 'active').forEach(p => {
       const mt = (p.muolaja_turi||'').toLowerCase();
       const needsTLT = mt.includes('tlt') || mt.includes('trombolitik');
       const needsPCI = mt.includes('pci') || mt.includes('stentlash') || mt.includes('tlbap');
@@ -495,7 +495,7 @@ const BemorlarPage = {
       if (needsPCI && !p.pci_vaqt) fields.push({ id:'pci_vaqt', label:'PCI/Groin vaqti', splitType:'datetime' });
       if (fields.length) missing.push({ ...p, _type:'infarkt', _fields: fields });
     });
-    insRows.forEach(p => {
+    insRows.filter(p => p.status === 'active').forEach(p => {
       const mt = (p.muolaja_turi||'').toLowerCase();
       const isMskt = p.mskt?.startsWith('Ha');
       const needsTLT = mt.includes('trombolizis') || mt.includes('tlt');
