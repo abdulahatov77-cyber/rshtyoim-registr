@@ -237,8 +237,8 @@ const InfarktYangiPage = {
         <div id="tez-yordam-div" style="display:${d.murojaat_yoli==='Tez tibbiy yordam bilan'?'block':'none'}">
           ${this.field('tez_yordam_kelgan_vaqt','Tez yordam yetib keldi (vaqt)',`
             <div class="flex gap-2">
-              <input id="tez_yordam_kelgan_sana" type="date" class="form-input" value="${d.tez_yordam_kelgan_vaqt?d.tez_yordam_kelgan_vaqt.slice(0,10):''}" onchange="InfarktYangiPage.onTezYordamChange()"/>
-              <input id="tez_yordam_kelgan_soat" type="time" class="form-input" value="${d.tez_yordam_kelgan_vaqt?d.tez_yordam_kelgan_vaqt.slice(11,16):''}" onchange="InfarktYangiPage.onTezYordamChange()"/>
+              <input id="tez_yordam_kelgan_sana" type="date" class="form-input" value="${d.tez_yordam_kelgan_vaqt?Utils.formatDateInput(d.tez_yordam_kelgan_vaqt).slice(0,10):''}" onchange="InfarktYangiPage.onTezYordamChange()"/>
+              <input id="tez_yordam_kelgan_soat" type="time" class="form-input" value="${d.tez_yordam_kelgan_vaqt?Utils.formatDateInput(d.tez_yordam_kelgan_vaqt).slice(11,16):''}" onchange="InfarktYangiPage.onTezYordamChange()"/>
               <input id="tez_yordam_kelgan_vaqt" type="hidden" value="${d.tez_yordam_kelgan_vaqt||''}"/>
             </div>`,true)}
         </div>
@@ -405,11 +405,11 @@ const InfarktYangiPage = {
             <div class="flex gap-2">
               <div class="flex-1">
                 <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Sana *</label>
-                <input id="tlt_sana" type="date" class="form-input w-full" value="${d.tlt_vaqt?d.tlt_vaqt.split('T')[0]:''}"/>
+                <input id="tlt_sana" type="date" class="form-input w-full" value="${d.tlt_vaqt?Utils.formatDateInput(d.tlt_vaqt).slice(0,10):''}"/>
               </div>
               <div class="flex-1">
                 <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Soat * (HH:MM)</label>
-                <input id="tlt_soat" type="time" class="form-input w-full" value="${d.tlt_vaqt?d.tlt_vaqt.split('T')[1]?.slice(0,5):''}"/>
+                <input id="tlt_soat" type="time" class="form-input w-full" value="${d.tlt_vaqt?Utils.formatDateInput(d.tlt_vaqt).slice(11,16):''}"/>
               </div>
             </div>`,true,'Door-to-needle mezonini hisoblash uchun')}
           <input id="tlt_vaqt" type="hidden" value="${d.tlt_vaqt||''}"/>
@@ -420,11 +420,11 @@ const InfarktYangiPage = {
             <div class="flex gap-2">
               <div class="flex-1">
                 <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Sana *</label>
-                <input id="pci_sana" type="date" class="form-input w-full" value="${d.pci_vaqt?d.pci_vaqt.split('T')[0]:''}"/>
+                <input id="pci_sana" type="date" class="form-input w-full" value="${d.pci_vaqt?Utils.formatDateInput(d.pci_vaqt).slice(0,10):''}"/>
               </div>
               <div class="flex-1">
                 <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Soat * (HH:MM)</label>
-                <input id="pci_soat" type="time" class="form-input w-full" value="${d.pci_vaqt?d.pci_vaqt.split('T')[1]?.slice(0,5):''}"/>
+                <input id="pci_soat" type="time" class="form-input w-full" value="${d.pci_vaqt?Utils.formatDateInput(d.pci_vaqt).slice(11,16):''}"/>
               </div>
             </div>`,true,'Door-to-groin mezonini hisoblash uchun')}
           <input id="pci_vaqt" type="hidden" value="${d.pci_vaqt||''}"/>
@@ -818,8 +818,13 @@ const InfarktYangiPage = {
         payload.status = 'otkazildi';
       }
       // datetime-local qiymatlari Toshkent vaqti (UTC+5) — bazaga UTC ISO sifatida yuboramiz
+      // Agar allaqachon ISO UTC bo'lsa (Z yoki +00:00) — qayta o'zgartirmaymiz
       for (const f of ['qabul_vaqt', 'tlt_vaqt', 'pci_vaqt', 'tez_yordam_kelgan_vaqt', 'birinchi_murojaat_vaqti']) {
-        if (payload[f]) payload[f] = new Date(payload[f] + ':00+05:00').toISOString();
+        if (payload[f] && !payload[f].endsWith('Z') && !payload[f].includes('+05:00')) {
+          payload[f] = new Date(payload[f] + ':00+05:00').toISOString();
+        } else if (payload[f] && payload[f].includes('+05:00')) {
+          payload[f] = new Date(payload[f]).toISOString();
+        }
       }
 
       // FIO ni normalize qil: KARIMOV JASUR → Karimov Jasur
