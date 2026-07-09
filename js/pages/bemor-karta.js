@@ -220,7 +220,7 @@ const BemorKartaPage = {
               ${(p.status === 'chiqarildi' || p.status === 'otkazildi' || p.status === 'vafot') && p._chiqarish?.chiqish_sana ? `
               <p class="text-white/60 text-xs flex items-center gap-1 mt-1">
                 ${icon(p.status === 'vafot' ? 'x-circle' : p.status === 'otkazildi' ? 'arrow-right-circle' : 'log-out', 12)}
-                ${p.status === 'chiqarildi' ? 'Chiqarilgan' : p.status === 'otkazildi' ? 'O\'tkazilgan' : 'Vafot etgan'}: <span class="text-white/80 font-semibold">${p._chiqarish.chiqish_sana?.length <= 10 ? Utils.formatDate(p._chiqarish.chiqish_sana) : Utils.formatDateTime(p._chiqarish.chiqish_sana)}</span>
+                ${p.status === 'chiqarildi' ? 'Chiqarilgan' : p.status === 'otkazildi' ? 'O\'tkazilgan' : 'Vafot etgan'}: <span class="text-white/80 font-semibold">${Utils.formatDateTime(p._chiqarish.chiqish_sana)}</span>
                 ${p._chiqarish.natija ? `<span class="ml-1 opacity-70">— ${p._chiqarish.natija}</span>` : ''}
               </p>` : ''}
             </div>
@@ -428,7 +428,7 @@ const BemorKartaPage = {
                 <div class="relative">
                   <div class="absolute -left-[31px] top-1 w-4 h-4 bg-orange-500 rounded-full border-2 border-white shadow-sm"></div>
                   <div class="font-bold text-gray-900 text-sm">Yo'naltirildi</div>
-                  <div class="text-xs text-gray-500">${p.otkazilgan_muassasa}${p._chiqarish?.chiqish_sana ? ` (${p._chiqarish.chiqish_sana.length <= 10 ? Utils.formatDate(p._chiqarish.chiqish_sana) : Utils.formatDateTime(p._chiqarish.chiqish_sana)})` : ''}</div>
+                  <div class="text-xs text-gray-500">${p.otkazilgan_muassasa}${p._chiqarish?.chiqish_sana ? ` (${Utils.formatDateTime(p._chiqarish.chiqish_sana)})` : ''}</div>
                 </div>
               </div>
             </div>
