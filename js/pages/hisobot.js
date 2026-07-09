@@ -597,7 +597,7 @@ const HisobotPage = {
       const [infResult, insResult, kuzatuvResult] = await Promise.allSettled([
         DB.infarktList({ ...filters, allCols: true }),
         DB.insultList({ ...filters, allCols: true }),
-        (() => { let q = getSupabase().from('kuzatuv').select('*').gte('created_at', filters.from).lte('created_at', filters.to); if (filters.viloyat) q = q.eq('viloyat', filters.viloyat); if (filters.muassasa) q = q.eq('muassasa', filters.muassasa); return q.range(0, 9999); })(),
+        getSupabase().from('kuzatuv').select('*').gte('created_at', filters.from).lte('created_at', filters.to).range(0, 9999),
       ]);
 
       if (infResult.status === 'rejected') throw new Error('Infarkt ma\'lumotlari yuklanmadi: ' + infResult.reason?.message);
@@ -743,13 +743,19 @@ const HisobotPage = {
     };
 
     // ekg_vaqti — time type ("HH:MM"), qabul_vaqt — timestamptz
+    // UZT (UTC+5) da sanani olamiz, chunki ekg_vaqti UZT dagi vaqt
     const calcTimeStatsMixed = (items, tsField, timeField) => {
       const diffs = items.map(p => {
         if (!p[tsField] || !p[timeField]) return null;
         const d1 = new Date(p[tsField]);
         if (isNaN(d1)) return null;
-        const dateStr = d1.toISOString().split('T')[0];
-        const d2 = new Date(dateStr + 'T' + p[timeField] + (p[timeField].length === 5 ? ':00Z' : 'Z'));
+        // UZT (UTC+5) da sana olish
+        const uztMs = d1.getTime() + 5 * 60 * 60 * 1000;
+        const uztDate = new Date(uztMs);
+        const pad = n => String(n).padStart(2, '0');
+        const dateStrUzt = `${uztDate.getUTCFullYear()}-${pad(uztDate.getUTCMonth()+1)}-${pad(uztDate.getUTCDate())}`;
+        // ekg_vaqti UZT da berilgan, shuning uchun +05:00 qo'shamiz
+        const d2 = new Date(dateStrUzt + 'T' + p[timeField] + (p[timeField].length === 5 ? ':00+05:00' : '+05:00'));
         if (isNaN(d2)) return null;
         let diff = (d2 - d1) / 60000;
         if (diff < 0) diff += 24 * 60;
@@ -1243,13 +1249,13 @@ const HisobotPage = {
       const age = Utils.calculateAge(p.tugilgan_sana || p.tugilgan_yil) || '—';
       const statusColors = { active: '#16a34a', vafot: '#dc2626', chiqarildi: '#2563eb', otkazildi: '#d97706' };
       const sc = statusColors[p.status] || '#64748b';
-      return `<tr style="border-bottom:1px solid #f1f5f9;cursor:pointer" onclick="document.getElementById('h-modal')?.remove();Router.go('bemor-karta',{kt_no:'${p.kt_no}',type:'${type}'})"  >
-        <td style="padding:10px 14px;font-family:monospace;font-size:12px;color:#64748b">${p.kt_no}</td>
-        <td style="padding:10px 14px;font-weight:700;color:#0f172a">${p.fio || '—'}</td>
-        <td style="padding:10px 14px;color:#475569">${age} yosh · ${p.jins || '—'}</td>
-        <td style="padding:10px 14px;color:#475569;font-size:12px">${p.viloyat || '—'}</td>
+      return `<tr style="border-bottom:1px solid #f1f5f9;cursor:pointer" onclick="document.getElementById('h-modal')?.remove();Router.go('bemor-karta',{kt_no:'${esc(p.kt_no)}',type:'${esc(type)}'})"  >
+        <td style="padding:10px 14px;font-family:monospace;font-size:12px;color:#64748b">${esc(p.kt_no)}</td>
+        <td style="padding:10px 14px;font-weight:700;color:#0f172a">${esc(p.fio) || '—'}</td>
+        <td style="padding:10px 14px;color:#475569">${age} yosh · ${esc(p.jins) || '—'}</td>
+        <td style="padding:10px 14px;color:#475569;font-size:12px">${esc(p.viloyat) || '—'}</td>
         <td style="padding:10px 14px;font-size:12px;color:#475569">${Utils.formatDate(p.qabul_vaqt)}</td>
-        <td style="padding:10px 14px"><span style="background:${sc}20;color:${sc};font-size:11px;font-weight:800;padding:3px 10px;border-radius:8px;text-transform:uppercase">${p.status || '—'}</span></td>
+        <td style="padding:10px 14px"><span style="background:${sc}20;color:${sc};font-size:11px;font-weight:800;padding:3px 10px;border-radius:8px;text-transform:uppercase">${esc(p.status) || '—'}</span></td>
       </tr>`;
     }).join('');
 
@@ -1496,10 +1502,15 @@ const HisobotPage = {
     try {
       const sb = getSupabase();
 
-      // Hozir shifoxonada (status = active, barcha vaqt)
+      // Hozir shifoxonada (status = active, barcha vaqt) — faqat shu muassasa/viloyat
+      const _applyScope = (q) => {
+        if (filters.muassasa) return q.eq('muassasa', filters.muassasa);
+        if (filters.viloyat)  return q.eq('viloyat', filters.viloyat);
+        return q;
+      };
       const [infActive, insActive] = await Promise.all([
-        sb.from('infarkt_qabul').select('*', { count: 'exact', head: true }).eq('status', 'active'),
-        sb.from('insult_qabul').select('*', { count: 'exact', head: true }).eq('status', 'active')
+        _applyScope(sb.from('infarkt_qabul').select('*', { count: 'exact', head: true }).eq('status', 'active')),
+        _applyScope(sb.from('insult_qabul').select('*', { count: 'exact', head: true }).eq('status', 'active'))
       ]);
       const infActiveCount = infActive.count ?? 0;
       const insActiveCount = insActive.count ?? 0;

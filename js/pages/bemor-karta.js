@@ -544,7 +544,7 @@ const BemorKartaPage = {
       initIcons();
     } catch(err) {
       const el2 = document.getElementById('holat-history');
-      if (el2) el2.innerHTML = `<div class="p-6 text-center text-red-500">Xatolik: ${err.message}</div>`;
+      if (el2) el2.innerHTML = `<div class="p-6 text-center text-red-500">Xatolik: ${esc(err.message)}</div>`;
     }
   },
 
@@ -701,7 +701,7 @@ const BemorKartaPage = {
       initIcons();
     } catch(err) {
       const histEl = document.getElementById('din-history');
-      if (histEl) histEl.innerHTML = `<div class="p-6 text-center text-red-500">Xatolik: ${err.message}</div>`;
+      if (histEl) histEl.innerHTML = `<div class="p-6 text-center text-red-500">Xatolik: ${esc(err.message)}</div>`;
     }
   },
 
@@ -825,7 +825,7 @@ const BemorKartaPage = {
       `;
       initIcons();
     } catch(err) {
-      el.innerHTML = `<div class="p-10 text-center text-red-500">Xatolik: ${err.message}</div>`;
+      el.innerHTML = `<div class="p-10 text-center text-red-500">Xatolik: ${esc(err.message)}</div>`;
     }
   },
 
@@ -913,13 +913,13 @@ const BemorKartaPage = {
             </div>
             <span class="text-xs text-gray-400">${Utils.formatDateTime(r.created_at)}</span>
           </div>
-          ${r.izoh ? `<p class="text-sm text-gray-700 mt-2">${r.izoh}</p>` : ''}
+          ${r.izoh ? `<p class="text-sm text-gray-700 mt-2">${esc(r.izoh)}</p>` : ''}
           <div class="text-xs text-gray-400 mt-2 text-right">— Dr. ${r.shifokor_fio||'Noma\'lum'}</div>
         </div>`).join('');
       initIcons();
     } catch(err) {
       const el2 = document.getElementById('shift-history');
-      if (el2) el2.innerHTML = `<div class="p-6 text-center text-red-500">Xatolik: ${err.message}</div>`;
+      if (el2) el2.innerHTML = `<div class="p-6 text-center text-red-500">Xatolik: ${esc(err.message)}</div>`;
     }
   },
 

@@ -343,7 +343,7 @@ function showToast(message, type = 'info', duration = 4000) {
   toast.className = `toast toast-${type}`;
   toast.innerHTML = `
     <span class="toast-icon">${icons[type]}</span>
-    <span class="toast-message">${message}</span>
+    <span class="toast-message">${esc(message)}</span>
     <span class="toast-close" onclick="this.parentElement.remove()">✕</span>
   `;
   container.appendChild(toast);

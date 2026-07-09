@@ -8,6 +8,7 @@ const InfarktYangiPage = {
     const user = await Auth.getUser();
     const profile = await Profile.getCurrent();
     InfarktYangiPage._profile = profile;
+    InfarktYangiPage._saving = false;
     InfarktYangiPage._step = 0;
     InfarktYangiPage._data = {
       kt_no: Utils.generateKtNo(profile?.muassasa || ''),
@@ -786,11 +787,13 @@ const InfarktYangiPage = {
   },
 
   async save() {
+    if (InfarktYangiPage._saving) return;
     if (!this.validateStep()) return;
     if (this._data.infarkt_turi === "O'KS ST elevatsiyasiz (NSTEMI)" && !this._data.grace_bali) {
       showToast("⚠️ NSTEMI tashxisi uchun GRACE Score hisoblang!", 'warning', 5000);
       return;
     }
+    InfarktYangiPage._saving = true;
     const btn = document.getElementById('save-btn');
     setLoading(btn, true);
     try {
@@ -827,6 +830,7 @@ const InfarktYangiPage = {
     } catch(err) {
       showToast(err.message, 'error');
       setLoading(btn, false);
+      InfarktYangiPage._saving = false;
     }
   }
 };

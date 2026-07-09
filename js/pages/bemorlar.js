@@ -398,6 +398,9 @@ const BemorlarPage = {
 
   exportData() {
     if (!BemorlarPage._allData?.length) { showToast('Eksport uchun ma\'lumot yo\'q', 'warning'); return; }
+    if (BemorlarPage._totalCount > BemorlarPage._allData.length) {
+      showToast(`⚠️ Faqat ko\'rinayotgan ${BemorlarPage._allData.length} ta bemor eksport qilinadi (jami: ${BemorlarPage._totalCount}). To\'liq eksport uchun barcha sahifalarni ko\'ring yoki sana filtri bilan cheklang.`, 'warning', 8000);
+    }
     Utils.exportCSV(BemorlarPage._allData.map(p=>({
       Turi: p._type, 'K/T No': p.kt_no, 'F.I.O': p.fio,
       Viloyat: p.viloyat, Muassasa: p.muassasa,

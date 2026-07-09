@@ -12,6 +12,7 @@ const DashboardPage = {
   _regionData: [],
   _regionProfile: null,
   _pollTimer: null,
+  _loadSeq: 0, // race condition guard
 
   async render() {
     if (DashboardPage._pollTimer) { clearInterval(DashboardPage._pollTimer); DashboardPage._pollTimer = null; }
@@ -37,8 +38,10 @@ const DashboardPage = {
   },
 
   async loadData() {
+    const seq = ++DashboardPage._loadSeq;
     try {
       const profile = await Profile.getCurrent();
+      if (seq !== DashboardPage._loadSeq) return;
       const ov = DashboardPage._viewViloyat;
       const om = DashboardPage._viewMuassasa;
       const df = DashboardPage._viewDateFrom;
@@ -76,6 +79,7 @@ const DashboardPage = {
       DashboardPage._recentPatients = recent;
       DashboardPage._ageSex = { infarkt: emptyPyramid(), insult: emptyPyramid() };
 
+      if (seq !== DashboardPage._loadSeq) return;
       // Sahifani darhol ko'rsatamiz
       DashboardPage.renderContent(stats, trend, trend12, recent, viloyat, profile, emptyDemo, [], [], null);
 
@@ -86,6 +90,7 @@ const DashboardPage = {
         DB.getLongStayPatients(ov, om),
         DB.getAgeSexPyramid(ov, om)
       ]);
+      if (seq !== DashboardPage._loadSeq) return;
       const val2 = (i, def) => phase2[i].status === 'fulfilled' ? phase2[i].value : def;
       const demo      = val2(0, emptyDemo);
       const riskFactors = val2(1, []);
@@ -638,7 +643,8 @@ const DashboardPage = {
     // 1. Dynamics Chart
     const ctxD = document.getElementById('dynamicsChart')?.getContext('2d');
     if (ctxD) {
-      new Chart(ctxD, {
+      if (DashboardPage._charts.dynamics) { DashboardPage._charts.dynamics.destroy(); delete DashboardPage._charts.dynamics; }
+      DashboardPage._charts.dynamics = new Chart(ctxD, {
         type: 'line',
         data: {
           labels: trend.labels,
@@ -791,7 +797,8 @@ const DashboardPage = {
     // 2b. Monthly Trend Chart
     const ctxM = document.getElementById('monthlyChart')?.getContext('2d');
     if (ctxM && trend12) {
-      new Chart(ctxM, {
+      if (DashboardPage._charts.monthly) { DashboardPage._charts.monthly.destroy(); delete DashboardPage._charts.monthly; }
+      DashboardPage._charts.monthly = new Chart(ctxM, {
         type: 'bar',
         data: {
           labels: trend12.labels,
@@ -1079,7 +1086,7 @@ const DashboardPage = {
       else if (t.includes('GEMORRAGIK')) fDiag = "GEMORRAGIK INSULT";
       else if (t.includes('ISHEMIK')) fDiag = "ISHEMIK INSULT";
       return `
-      <tr class="border-b border-slate-50 hover:bg-slate-50/50 cursor-pointer transition-colors" onclick="Router.go('bemor-karta',{kt_no:'${p.kt_no}', type:'${p._type}'})">
+      <tr class="border-b border-slate-50 hover:bg-slate-50/50 cursor-pointer transition-colors" onclick="Router.go('bemor-karta',{kt_no:'${esc(p.kt_no)}', type:'${esc(p._type)}'})">
         <td class="p-4 text-slate-500 font-mono text-[11px]">${p.kt_no}</td>
         <td class="p-4">
           <div class="font-bold text-slate-800">${p.fio || '—'}</div>
