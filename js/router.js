@@ -38,13 +38,16 @@ const Router = {
     Router._current = route;
     Router._params = params;
 
-    // History API — popstate dan kelgan bo'lsa pushState qilmaymiz
+    // History API — popstate dan kelgan bo'lsa yoki bir xil route bo'lsa pushState qilmaymiz
     if (!Router._fromPopState) {
       const state = { route, params };
       const url = '/' + (route === 'dashboard' ? '' : route) +
         (params.id ? '?id=' + encodeURIComponent(params.id) : '') +
         (params.kt_no ? (params.id ? '&' : '?') + 'kt=' + encodeURIComponent(params.kt_no) : '');
-      window.history.pushState(state, '', url);
+      const current = window.history.state;
+      if (!current || current.route !== route || JSON.stringify(current.params) !== JSON.stringify(params)) {
+        window.history.pushState(state, '', url);
+      }
     }
     Router._fromPopState = false;
 

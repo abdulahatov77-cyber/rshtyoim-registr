@@ -827,19 +827,9 @@ const InsultYangiPage = {
           document.getElementById('kt_soat')?.focus();
           showToast('⚠️ KT/MSKT soatini kiriting!', 'error', 5000);
         }
-      } else if (this._data.kt_vaqti) {
-        const kv = new Date(this._data.kt_vaqti + ':00+05:00');
-        if (kv > now) {
-          valid = false;
-          const el = document.getElementById('kt_vaqti');
-          if (el) { el.classList.add('border-red-500'); el.focus(); }
-          showToast('⚠️ KT/MSKT vaqti kelajakda bo\'lishi mumkin emas!', 'error', 5000);
-        } else if (qv && kv < qv) {
-          valid = false;
-          const el = document.getElementById('kt_vaqti');
-          if (el) { el.classList.add('border-red-500'); el.focus(); }
-          showToast('⚠️ KT/MSKT vaqti bemor qabul vaqtidan oldin bo\'lishi mumkin emas!', 'error', 5000);
-        }
+      } else {
+        // MSKT tanlanmagan — stale qiymatni tozalaymiz
+        InsultYangiPage._data.kt_vaqti = '';
       }
 
       // Trombolizis vaqti majburiy (TLT muolajasi tanlanganda)

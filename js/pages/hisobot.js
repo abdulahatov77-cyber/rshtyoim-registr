@@ -597,7 +597,7 @@ const HisobotPage = {
       const [infResult, insResult, kuzatuvResult] = await Promise.allSettled([
         DB.infarktList({ ...filters, allCols: true }),
         DB.insultList({ ...filters, allCols: true }),
-        getSupabase().from('kuzatuv').select('*').gte('created_at', filters.from).lte('created_at', filters.to).range(0, 9999),
+        (() => { let q = getSupabase().from('kuzatuv').select('*').gte('created_at', filters.from).lte('created_at', filters.to); if (filters.viloyat) q = q.eq('viloyat', filters.viloyat); if (filters.muassasa) q = q.eq('muassasa', filters.muassasa); return q.range(0, 9999); })(),
       ]);
 
       if (infResult.status === 'rejected') throw new Error('Infarkt ma\'lumotlari yuklanmadi: ' + infResult.reason?.message);
@@ -1577,7 +1577,7 @@ ${muolajaStr(insMuolajaNorm)}
         const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ chat_id: parseInt(chatId), text, parse_mode: 'HTML' })
+          body: JSON.stringify({ chat_id: parseInt(chatId), text })
         });
         return res.json();
       };

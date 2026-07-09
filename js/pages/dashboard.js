@@ -607,22 +607,6 @@ const DashboardPage = {
     initIcons();
   },
 
-  renderAlertItem(ic, title, count, color) {
-    const bg = color === 'red' ? 'bg-red-50 text-red-500' : color === 'blue' ? 'bg-blue-50 text-blue-500' : 'bg-slate-100 text-slate-500';
-    const text = color === 'red' ? 'text-red-600' : 'text-slate-800';
-    return `
-      <div class="flex items-center justify-between p-3 hover:bg-slate-50 rounded-xl cursor-pointer group transition-all">
-        <div class="flex items-center gap-3">
-          <div class="w-8 h-8 ${bg} rounded-lg flex items-center justify-center">${icon(ic, 16)}</div>
-          <span class="text-xs font-semibold text-slate-700">${title}</span>
-        </div>
-        <div class="flex items-center gap-2">
-          <span class="text-sm font-black ${text}">${count}</span>
-          <i data-lucide="chevron-right" class="w-4 h-4 text-slate-300 group-hover:text-slate-500 transition-colors"></i>
-        </div>
-      </div>
-    `;
-  },
 
   renderDetailCard(label, val, davol = null, vafot = null) {
     const hasSub = davol !== null && vafot !== null;
@@ -645,30 +629,6 @@ const DashboardPage = {
     `;
   },
 
-  renderGoalCard(label, val, target, color) {
-    const isGood = color === 'green' ? val <= target : val >= target;
-    const barColor = isGood ? 'bg-green-500' : 'bg-red-500';
-    const textColor = isGood ? 'text-green-600' : 'text-red-600';
-    const percent = Math.min(100, (val / target) * 100);
-    return `
-      <div class="bg-slate-50 p-4 rounded-xl border border-slate-100">
-        <p class="text-[9px] font-bold ${textColor} uppercase mb-1 italic">${label}</p>
-        <p class="text-lg font-black text-slate-800">${val} <span class="text-[10px] text-slate-400 font-normal">MIN</span></p>
-        <div class="mt-2 h-1 bg-slate-200 rounded-full overflow-hidden"><div class="h-full ${barColor}" style="width:${percent}%"></div></div>
-        <p class="text-[8px] text-slate-400 mt-1 uppercase font-bold">Maqsad: ${color==='green'?'<':'>'}${target} min</p>
-      </div>
-    `;
-  },
-
-  renderDQInfo(title, val, color) {
-    const text = color === 'red' ? 'text-red-500' : color === 'orange' ? 'text-orange-500' : 'text-slate-700';
-    return `
-      <div class="flex items-center justify-between text-[11px]">
-        <span class="text-slate-500 font-medium">${title}</span>
-        <span class="font-black ${text}">${val}</span>
-      </div>
-    `;
-  },
 
   drawNewCharts(trend, trend12, stats, viloyat, demo, profile, riskFactors) {
     if (window.ChartDataLabels) {
@@ -1105,74 +1065,6 @@ const DashboardPage = {
   subscribeRealtime() {
     // Realtime va polling o'chirildi — resurs tejash uchun (Nano plan)
     // Ma'lumotlarni yangilash uchun sahifadagi "Yangilash" tugmasini ishlating
-  },
-
-  async refreshKpi() {
-    try {
-      const profile = await Profile.getCurrent();
-      const ov = DashboardPage._viewViloyat;
-      const om = DashboardPage._viewMuassasa;
-      const AGE_GROUPS2 = ['75+', '60-74', '45-59', '30-44', '≤29'];
-      const emptyPyramid2 = () => { const r = {}; AGE_GROUPS2.forEach(g => { r[g] = { mTotal:0, fTotal:0, mDeath:0, fDeath:0 }; }); return { groups: AGE_GROUPS2, data: r }; };
-      const res2 = await Promise.allSettled([
-        DB.getDashboardStats(ov, om),
-        DB.getTrend30(ov, om),
-        DB.getTrend12Month(ov, om),
-        DB.getRecentPatients(10, ov, om),
-        om ? Promise.resolve([]) : DB.getViloyatStats(ov),
-        DB.getDemographics(ov, om),
-        DB.getRiskFactors(ov, om),
-        DB.getLongStayPatients(ov, om),
-        DB.getGenderMortality(ov, om),
-        DB.getAgeSexPyramid(ov, om)
-      ]);
-      const val2 = (i, def) => res2[i].status === 'fulfilled' ? res2[i].value : def;
-      const stats      = val2(0, {});
-      const trend      = val2(1, { labels:[], infData:[], insData:[] });
-      const trend12    = val2(2, { labels:[], infData:[], insData:[] });
-      const recent     = val2(3, []);
-      const viloyat    = val2(4, []);
-      const demo       = val2(5, { infarkt:{male:0,female:0,ages:{}}, insult:{male:0,female:0,ages:{}} });
-      const riskFactors= val2(6, []);
-      const longStay   = val2(7, []);
-      const genderMort = val2(8, null);
-      const ageSex     = val2(9, { infarkt: emptyPyramid2(), insult: emptyPyramid2() });
-      DashboardPage._recentPatients = recent;
-      DashboardPage._ageSex = ageSex;
-
-      // KPI kartalar
-      const grid = document.getElementById('kpi-cards-grid');
-      if (grid) {
-        grid.innerHTML = DashboardPage.renderKpiCards(stats, trend, demo);
-        initIcons();
-      }
-
-      // Grafiklarni yangilash — mavjud chartlarni destroy qilib qayta qurish
-      ['dynamicsChart','regionChart','monthlyChart','riskInfarktChart','riskInsultChart'].forEach(id => {
-        const canvas = document.getElementById(id);
-        if (canvas) {
-          const existing = Chart.getChart(canvas);
-          if (existing) existing.destroy();
-        }
-      });
-      DashboardPage._charts = {};
-      DashboardPage.drawNewCharts(trend, trend12, stats, viloyat, demo, profile, riskFactors);
-
-      // Yaqinda qabul qilinganlar jadvalini yangilash
-      const recentEl = document.getElementById('recent-patients-body');
-      if (recentEl && recent) {
-        recentEl.innerHTML = DashboardPage._renderRecentRows(recent);
-        initIcons();
-      }
-
-      // Yosh piramidasi
-      if (ageSex && typeof AgePyramid !== 'undefined') {
-        AgePyramid.render('pyramid-infarkt', ageSex.infarkt, 'INFARKT', '#dc2626', stats.jamiInfarkt, 'infarkt');
-        AgePyramid.render('pyramid-insult',  ageSex.insult,  'INSULT',  '#2563eb', stats.jamiInsult, 'insult');
-      }
-    } catch(e) {
-      console.warn('Dashboard refresh xato:', e.message);
-    }
   },
 
   _renderRecentRows(patients) {
