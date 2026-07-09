@@ -758,10 +758,10 @@ const HisobotPage = {
         const d2 = new Date(dateStrUzt + 'T' + p[timeField] + (p[timeField].length === 5 ? ':00+05:00' : '+05:00'));
         if (isNaN(d2)) return null;
         let diff = (d2 - d1) / 60000;
-        // Tun o'tish: -5 dan kichik bo'lsa keyingi kun deb hisobla
-        if (diff < -5) diff += 24 * 60;
-        // 0 va undan kichik (5 daqiqalik tolerans): EKG darhol olingan deb hisobla
-        if (diff < 0) diff = 0;
+        // Tun o'tish: manfiy bo'lsa keyingi kun deb hisobla
+        if (diff < 0) diff += 24 * 60;
+        // Hali ham manfiy yoki 0: vaqt noto'g'ri kiritilgan, hisobga olma
+        if (diff <= 0) return null;
         // 720 daqiqadan (12 soat) ko'p bo'lsa noto'g'ri kiritilgan
         if (diff > 720) return null;
         return diff;
