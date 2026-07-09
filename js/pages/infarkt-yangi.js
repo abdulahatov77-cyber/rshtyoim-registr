@@ -241,6 +241,13 @@ const InfarktYangiPage = {
               <input id="tez_yordam_kelgan_vaqt" type="hidden" value="${d.tez_yordam_kelgan_vaqt||''}"/>
             </div>`,true)}
         </div>
+        <div>
+          ${this.field('birinchi_murojaat_vaqti','Birinchi murojaat vaqti (ixtiyoriy)',`
+            <div class="flex gap-2">
+              <input id="birinchi_murojaat_sana" type="date" class="form-input" max="${new Date().toISOString().slice(0,10)}" value="${d.birinchi_murojaat_vaqti?d.birinchi_murojaat_vaqti.slice(0,10):''}"/>
+              <input id="birinchi_murojaat_soat" type="time" class="form-input" value="${d.birinchi_murojaat_vaqti?d.birinchi_murojaat_vaqti.slice(11,16):''}"/>
+            </div>`)}
+        </div>
       </div>
     `;
   },
@@ -552,8 +559,15 @@ const InfarktYangiPage = {
     else if (qabulSana) InfarktYangiPage._data.qabul_vaqt = qabulSana;
     else if (document.getElementById('qabul_sana')) InfarktYangiPage._data.qabul_vaqt = '';
 
+    // birinchi_murojaat_vaqti: alohida sana + soat dan yig'ish
+    const bmSana = document.getElementById('birinchi_murojaat_sana')?.value;
+    const bmSoat = document.getElementById('birinchi_murojaat_soat')?.value;
+    if (bmSana && bmSoat) InfarktYangiPage._data.birinchi_murojaat_vaqti = `${bmSana}T${bmSoat}`;
+    else if (bmSana) InfarktYangiPage._data.birinchi_murojaat_vaqti = bmSana;
+    else if (document.getElementById('birinchi_murojaat_sana')) InfarktYangiPage._data.birinchi_murojaat_vaqti = '';
+
     ['viloyat','muassasa','boshqa_muassasa','kt_no','murojaat_yoli','yuborgan_muassasa',
-     'tez_yordam_kelgan_vaqt','birinchi_murojaat_vaqti',
+     'tez_yordam_kelgan_vaqt',
      'fio','aha_bali','simptom_vaqt','birlamchi_yoki_takroriy',
      'infarkt_turi','killip','qon_bosimi','puls','ekg_vaqti','troponin','kkfmb',
      'muolaja_turi','angio_natija','otkazilgan_muassasa','otkazish_sababi','shifokor_fio','shifokor_tel']
@@ -800,7 +814,7 @@ const InfarktYangiPage = {
         payload.status = 'otkazildi';
       }
       // datetime-local qiymatlari Toshkent vaqti (UTC+5) — bazaga UTC ISO sifatida yuboramiz
-      for (const f of ['qabul_vaqt', 'tlt_vaqt', 'pci_vaqt', 'tez_yordam_kelgan_vaqt']) {
+      for (const f of ['qabul_vaqt', 'tlt_vaqt', 'pci_vaqt', 'tez_yordam_kelgan_vaqt', 'birinchi_murojaat_vaqti']) {
         if (payload[f]) payload[f] = new Date(payload[f] + ':00+05:00').toISOString();
       }
 
