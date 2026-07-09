@@ -241,13 +241,6 @@ const InfarktYangiPage = {
               <input id="tez_yordam_kelgan_vaqt" type="hidden" value="${d.tez_yordam_kelgan_vaqt||''}"/>
             </div>`,true)}
         </div>
-        <div>
-          ${this.field('birinchi_murojaat_vaqti','Birinchi murojaat vaqti (ixtiyoriy)',`
-            <div class="flex gap-2">
-              <input id="birinchi_murojaat_sana" type="date" class="form-input" max="${new Date().toISOString().slice(0,10)}" value="${d.birinchi_murojaat_vaqti?d.birinchi_murojaat_vaqti.slice(0,10):''}"/>
-              <input id="birinchi_murojaat_soat" type="time" class="form-input" value="${d.birinchi_murojaat_vaqti?d.birinchi_murojaat_vaqti.slice(11,16):''}"/>
-            </div>`)}
-        </div>
       </div>
     `;
   },
@@ -559,12 +552,8 @@ const InfarktYangiPage = {
     else if (qabulSana) InfarktYangiPage._data.qabul_vaqt = qabulSana;
     else if (document.getElementById('qabul_sana')) InfarktYangiPage._data.qabul_vaqt = '';
 
-    // birinchi_murojaat_vaqti: alohida sana + soat dan yig'ish
-    const bmSana = document.getElementById('birinchi_murojaat_sana')?.value;
-    const bmSoat = document.getElementById('birinchi_murojaat_soat')?.value;
-    if (bmSana && bmSoat) InfarktYangiPage._data.birinchi_murojaat_vaqti = `${bmSana}T${bmSoat}`;
-    else if (bmSana) InfarktYangiPage._data.birinchi_murojaat_vaqti = bmSana;
-    else if (document.getElementById('birinchi_murojaat_sana')) InfarktYangiPage._data.birinchi_murojaat_vaqti = '';
+    // birinchi_murojaat_vaqti = qabul_vaqt bilan bir xil
+    if (InfarktYangiPage._data.qabul_vaqt) InfarktYangiPage._data.birinchi_murojaat_vaqti = InfarktYangiPage._data.qabul_vaqt;
 
     ['viloyat','muassasa','boshqa_muassasa','kt_no','murojaat_yoli','yuborgan_muassasa',
      'tez_yordam_kelgan_vaqt',
