@@ -256,7 +256,7 @@ const Calculators = {
       { id: 'a5', title: "5. Xolesterin darajasi yuqorimi yoki statinlar qabul qilasizmi?", opts: [
         {val:0, text:"Yo'q"},
         {val:2, text:"Ha, umumiy xolesterin > 5,2 mmol/l"},
-        {val:2, text:"Ha, statinlar qabul qilaman"},
+        {val:3, text:"Ha, statinlar qabul qilaman (nazorat ostida)"},
         {val:1, text:"Bilmadim / oxirgi 1 yilda tekshirmaganman"}
       ]},
       { id: 'a6', title: "6. TMI (tana massasi indeksi) yoki bel aylanangiz ortiqcha vaznni ko'rsatadimi?", opts: [

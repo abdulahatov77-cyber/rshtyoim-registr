@@ -61,7 +61,7 @@ const AdminPage = {
       AdminPage.renderContent();
     } catch (err) {
       const inner = document.getElementById('admin-content');
-      if (inner) inner.innerHTML = `<div class="empty-state"><div class="empty-state-title" style="color:#f87171">❌ ${err.message}</div></div>`;
+      if (inner) inner.innerHTML = `<div class="empty-state"><div class="empty-state-title" style="color:#f87171">❌ ${esc(err.message)}</div></div>`;
     }
   },
 
@@ -1103,7 +1103,7 @@ const AdminPage = {
       if (el) { el.innerHTML = AdminPage._buildLogsTab(logs); initIcons(); }
     } catch(err) {
       const el = document.getElementById('admin-tab-content');
-      if (el) el.innerHTML = `<div class="card" style="color:#f87171;padding:32px;text-align:center">❌ ${err.message}</div>`;
+      if (el) el.innerHTML = `<div class="card" style="color:#f87171;padding:32px;text-align:center">❌ ${esc(err.message)}</div>`;
     }
   },
 
@@ -1200,7 +1200,7 @@ const AdminPage = {
       if (el) { el.innerHTML = AdminPage._buildFeedbackTab(data || []); initIcons(); }
     } catch(err) {
       const el = document.getElementById('admin-tab-content');
-      if (el) el.innerHTML = `<div class="card" style="color:#f87171;padding:32px;text-align:center">❌ ${err.message}</div>`;
+      if (el) el.innerHTML = `<div class="card" style="color:#f87171;padding:32px;text-align:center">❌ ${esc(err.message)}</div>`;
     }
   },
 

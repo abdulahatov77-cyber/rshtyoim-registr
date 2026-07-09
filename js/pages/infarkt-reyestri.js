@@ -47,7 +47,7 @@ const InfarktReyestriPage = {
       this._currentData = data;
       this.renderContent(data);
     } catch (err) {
-      wrap.innerHTML = `<div class="p-10 text-red-500 bg-red-50 rounded-2xl border border-red-100">Xatolik: ${err.message}</div>`;
+      wrap.innerHTML = `<div class="p-10 text-red-500 bg-red-50 rounded-2xl border border-red-100">Xatolik: ${esc(err.message)}</div>`;
     }
   },
 

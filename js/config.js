@@ -111,7 +111,7 @@ const APP_CONFIG = {
       "Yozyovon politravma markazi", "Quva politravma markazi"
     ],
     "Xorazm viloyati": [
-      "RSHTYOIM Xorazm filiali", "Urganch TTB", "Tuproqqal'a TTB", "Tuproqqa'la TTB",
+      "RSHTYOIM Xorazm filiali", "Urganch TTB", "Tuproqqal'a TTB",
       "Bog'ot TTB", "Qo'shko'pir TTB", "Xonqa TTB",
       "Xiva TTB", "Shovot TTB", "Yangiariq TTB",
       "Yangibozor TTB", "Gurlan politravma markazi", "Xazorasp politravma markazi",

@@ -1,4 +1,13 @@
 // ==================== DASHBOARD PAGE ====================
+function _dashSparkline(data, color) {
+  if (!data || data.length < 2) return '';
+  const max = Math.max(...data, 1);
+  const w = 80, h = 28;
+  const pts = data.map((v,i) => `${Math.round(i*(w/(data.length-1)))},${Math.round(h - (v/max)*h)}`).join(' ');
+  const last = pts.split(' ').filter(Boolean).pop()?.split(',') || ['0','0'];
+  return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" fill="none"><polyline points="${pts}" stroke="${color}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/><circle cx="${last[0]}" cy="${last[1]}" r="3" fill="${color}"/></svg>`;
+}
+
 const DashboardPage = {
   _charts: {},
   _realtimeSub: null,
@@ -210,16 +219,7 @@ const DashboardPage = {
     const weekTrend = weekDiff !== null ? (weekDiff > 0 ? `↑${weekDiff}%` : weekDiff < 0 ? `↓${Math.abs(weekDiff)}%` : '→0%') : null;
     const weekTrendColor = weekDiff > 0 ? 'text-red-300' : weekDiff < 0 ? 'text-emerald-300' : 'text-slate-400';
 
-    // Sparkline SVG (7 kun)
-    const renderSparkline = (data, color) => {
-      if (!data || data.length < 2) return '';
-      const max = Math.max(...data, 1);
-      const w = 80, h = 28, pts = data.map((v,i) => `${Math.round(i*(w/(data.length-1)))},${Math.round(h - (v/max)*h)}`).join(' ');
-      const lastPt = pts.split(' ').filter(Boolean);
-      const last = lastPt.length ? lastPt[lastPt.length-1].split(',') : ['0','0'];
-      const cx = last[0] || '0', cy = last[1] || '0';
-      return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" fill="none"><polyline points="${pts}" stroke="${color}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/><circle cx="${cx}" cy="${cy}" r="3" fill="${color}"/></svg>`;
-    };
+    const renderSparkline = _dashSparkline;
 
     const isSuperAdmin = profile?.role === 'super_admin';
     const viewViloyat = DashboardPage._viewViloyat;
@@ -1103,10 +1103,7 @@ const DashboardPage = {
         </td>
         <td class="p-4">${Utils.statusBadge(p.status)}</td>
         <td class="p-4">
-          <div class="flex items-center gap-2">
-            <div class="w-12 h-1.5 bg-slate-100 rounded-full overflow-hidden"><div class="h-full bg-green-500 w-[90%]"></div></div>
-            <span class="text-[10px] font-bold text-slate-400">90%</span>
-          </div>
+          <span class="text-[10px] font-bold text-slate-300">—</span>
         </td>
         <td class="p-4 text-right text-slate-300">${icon('chevron-right', 20)}</td>
       </tr>`;
@@ -1153,16 +1150,7 @@ const DashboardPage = {
     const prevWeek = trend ? (trend.infData.slice(-14,-7).map((v,i) => v + (trend.insData[trend.insData.length-14+i]||0))).reduce((a,b)=>a+b,0) : 0;
     const weekDiff = prevWeek > 0 ? Math.round(((thisWeek - prevWeek) / prevWeek) * 100) : null;
 
-    // Sparkline SVG
-    const renderSparkline = (data, color) => {
-      if (!data || data.length < 2) return '';
-      const max = Math.max(...data, 1);
-      const w = 80, h = 28, pts = data.map((v,i) => `${Math.round(i*(w/(data.length-1)))},${Math.round(h - (v/max)*h)}`).join(' ');
-      const lastPt2 = pts.split(' ').filter(Boolean);
-      const last2 = lastPt2.length ? lastPt2[lastPt2.length-1].split(',') : ['0','0'];
-      const cx2 = last2[0] || '0', cy2 = last2[1] || '0';
-      return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" fill="none"><polyline points="${pts}" stroke="${color}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/><circle cx="${cx2}" cy="${cy2}" r="3" fill="${color}"/></svg>`;
-    };
+    const renderSparkline = _dashSparkline;
 
     return `
         <!-- 1. Jami Qabul Qilingan Bemorlar -->

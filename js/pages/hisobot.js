@@ -456,7 +456,7 @@ const HisobotPage = {
 
       if (exportBtn) { exportBtn.disabled = false; exportBtn.style.opacity = ''; }
     } catch (err) {
-      el.innerHTML = `<div class="text-center text-red-600 py-8">${err.message || 'Xatolik yuz berdi'}</div>`;
+      el.innerHTML = `<div class="text-center text-red-600 py-8">${esc(err.message || 'Xatolik yuz berdi')}</div>`;
     }
   },
 
