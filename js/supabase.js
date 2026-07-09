@@ -936,11 +936,25 @@ const Telegram = {
       const isNSTEMI = (patient.infarkt_turi || '').toUpperCase().includes('NSTEMI');
       if (isNSTEMI && patient.grace_bali) {
         const g = parseInt(patient.grace_bali);
-        let graceLevel, graceIcon, graceTavsiya;
-        if (g <= 108)      { graceLevel = "Past xavf (<1%)";    graceIcon = '🟢'; graceTavsiya = "Konservativ davolash mumkin"; }
-        else if (g <= 140) { graceLevel = "O'rta xavf (1–3%)";  graceIcon = '🟡'; graceTavsiya = "72 soat ichida KAG tavsiya etiladi"; }
-        else               { graceLevel = "Yuqori xavf (>3%)";  graceIcon = '🔴'; graceTavsiya = "Zudlik bilan invaziv muolaja!"; }
-        graceLine = `\n🧮 <b>GRACE Score:</b> ${g} ball\n${graceIcon} <b>Xavf:</b> ${graceLevel}\n   ↳ ${graceTavsiya}`;
+        let graceLevel, graceIcon, kagSoat, kagLabel;
+        if (g <= 108)      { graceLevel = "Past xavf (<1%)";    graceIcon = '🟢'; kagSoat = 72;  kagLabel = "72 soat"; }
+        else if (g <= 140) { graceLevel = "O'rta xavf (1–3%)";  graceIcon = '🟡'; kagSoat = 24;  kagLabel = "24 soat"; }
+        else               { graceLevel = "Yuqori xavf (>3%)";  graceIcon = '🔴'; kagSoat = 2;   kagLabel = "2 soat"; }
+        // Qabul vaqtidan KAG muddatini hisoblash
+        let kagDeadline = '';
+        if (patient.qabul_vaqt) {
+          const qv = new Date(patient.qabul_vaqt);
+          if (!isNaN(qv)) {
+            const kag = new Date(qv.getTime() + kagSoat * 3600000);
+            const tz = new Date(kag.getTime() + 5 * 60 * 60 * 1000);
+            const pad = n => String(n).padStart(2, '0');
+            kagDeadline = ` — ${pad(tz.getUTCDate())}.${pad(tz.getUTCMonth()+1)} soat ${pad(tz.getUTCHours())}:${pad(tz.getUTCMinutes())} gacha`;
+          }
+        }
+        const tavsiya = g > 140
+          ? `⚡ KAG zudlik bilan (${kagLabel} ichida)${kagDeadline}`
+          : `🗓 KAG ${kagLabel} ichida bajarilsin${kagDeadline}`;
+        graceLine = `\n🧮 <b>GRACE Score:</b> ${g} ball\n${graceIcon} <b>Xavf:</b> ${graceLevel}\n   ↳ ${tavsiya}`;
       }
 
       return `${e.heart} <b>YANGI INFARKT BEMOR QABUL QILINDI</b>
