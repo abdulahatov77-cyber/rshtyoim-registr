@@ -835,9 +835,10 @@ const InfarktYangiPage = {
       // datetime-local qiymatlari Toshkent vaqti (UTC+5) — bazaga UTC ISO sifatida yuboramiz
       // Agar allaqachon ISO UTC bo'lsa (Z yoki +00:00) — qayta o'zgartirmaymiz
       for (const f of ['qabul_vaqt', 'tlt_vaqt', 'pci_vaqt', 'tez_yordam_kelgan_vaqt', 'birinchi_murojaat_vaqti']) {
-        if (payload[f] && !payload[f].endsWith('Z') && !payload[f].includes('+05:00')) {
+        if (!payload[f]) { payload[f] = null; continue; }
+        if (!payload[f].endsWith('Z') && !payload[f].includes('+05:00')) {
           payload[f] = new Date(payload[f] + ':00+05:00').toISOString();
-        } else if (payload[f] && payload[f].includes('+05:00')) {
+        } else if (payload[f].includes('+05:00')) {
           payload[f] = new Date(payload[f]).toISOString();
         }
       }
