@@ -225,7 +225,7 @@ const BemorlarPage = {
         combined = combined.filter(p => {
           if (p._type === 'infarkt') {
             const needsTLT = p.muolaja_turi?.includes('TLT') || p.muolaja_turi?.toLowerCase().includes('trombolitik');
-            const needsPCI = p.muolaja_turi?.includes('PCI') || p.muolaja_turi?.includes('stentlash') || p.muolaja_turi?.includes('TLBAP');
+            const needsPCI = (p.muolaja_turi?.includes('PCI') || p.muolaja_turi?.includes('stentlash') || p.muolaja_turi?.includes('TLBAP')) && !p.muolaja_turi?.toLowerCase().includes('faqat kag');
             return !p.ekg_vaqti || (needsTLT && !p.tlt_vaqt) || (needsPCI && !p.pci_vaqt);
           } else {
             const needsTLT = p.muolaja_turi?.toLowerCase().includes('trombolizis') || p.muolaja_turi?.toLowerCase().includes('tlt');
@@ -488,7 +488,7 @@ const BemorlarPage = {
     infRows.forEach(p => {
       const mt = (p.muolaja_turi||'').toLowerCase();
       const needsTLT = mt.includes('tlt') || mt.includes('trombolitik');
-      const needsPCI = mt.includes('pci') || mt.includes('stentlash') || mt.includes('kag') || mt.includes('tlbap');
+      const needsPCI = mt.includes('pci') || mt.includes('stentlash') || mt.includes('tlbap');
       const fields = [];
       if (!p.ekg_vaqti) fields.push({ id:'ekg_vaqti', label:'EKG vaqti', splitType:'time' });
       if (needsTLT && !p.tlt_vaqt) fields.push({ id:'tlt_vaqt', label:'TLT vaqti', splitType:'datetime' });
