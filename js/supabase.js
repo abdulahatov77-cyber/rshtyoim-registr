@@ -936,11 +936,11 @@ const Telegram = {
       const isNSTEMI = (patient.infarkt_turi || '').toUpperCase().includes('NSTEMI');
       if (isNSTEMI && patient.grace_bali) {
         const g = parseInt(patient.grace_bali);
-        let graceLevel, graceIcon;
-        if (g <= 108)      { graceLevel = "Past xavf (< 1%)";   graceIcon = '🟢'; }
-        else if (g <= 140) { graceLevel = "O'rta xavf (1–3%)";  graceIcon = '🟡'; }
-        else               { graceLevel = "Yuqori xavf (> 3%)"; graceIcon = '🔴'; }
-        graceLine = `\n${graceIcon} <b>GRACE Score:</b> ${g} ball — ${graceLevel}`;
+        let graceLevel, graceIcon, graceTavsiya;
+        if (g <= 108)      { graceLevel = "Past xavf (<1%)";    graceIcon = '🟢'; graceTavsiya = "Konservativ davolash mumkin"; }
+        else if (g <= 140) { graceLevel = "O'rta xavf (1–3%)";  graceIcon = '🟡'; graceTavsiya = "72 soat ichida KAG tavsiya etiladi"; }
+        else               { graceLevel = "Yuqori xavf (>3%)";  graceIcon = '🔴'; graceTavsiya = "Zudlik bilan invaziv muolaja!"; }
+        graceLine = `\n🧮 <b>GRACE Score:</b> ${g} ball\n${graceIcon} <b>Xavf:</b> ${graceLevel}\n   ↳ ${graceTavsiya}`;
       }
 
       return `${e.heart} <b>YANGI INFARKT BEMOR QABUL QILINDI</b>
