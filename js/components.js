@@ -10,52 +10,56 @@ function initIcons() {
 function showToast(msg, type = 'info', duration = 4000) {
   const container = document.getElementById('toast-container');
   if (!container) return;
+  try {
+    if (type === 'success') Sound.success();
+    else if (type === 'error') Sound.error();
+    else if (type === 'warning') Sound.warning();
+  } catch(e) {}
   const el = document.createElement('div');
   const icons = { success:'check-circle', error:'x-circle', warning:'alert-triangle', info:'info' };
   el.className = `toast toast-${type}`;
-  
   let color = 'var(--color-blue)';
   if (type === 'success') color = 'var(--color-green)';
   if (type === 'error') color = 'var(--color-infarkt)';
   if (type === 'warning') color = '#F59E0B';
   el.style.borderLeftColor = color;
-  
-  el.innerHTML = `<span style="color:${color}">${icon(icons[type]||'info', 20)}</span> <span>${msg}</span>`;
+  el.innerHTML = `<span style="color:${color}">${icon(icons[type]||'info', 20)}</span> <span>${esc(msg)}</span> <span style="cursor:pointer;margin-left:8px;opacity:0.5" onclick="this.parentElement.remove()">✕</span>`;
   container.appendChild(el);
-  setTimeout(() => el.remove(), duration);
+  setTimeout(() => { el.style.animation = 'slideInRight 0.3s ease reverse'; setTimeout(() => el.remove(), 300); }, duration);
   initIcons();
 }
 
-function showModal({ title, body, footer }) {
+function showModal({ title, body, footer, id = 'modal-main', size = 'md' }) {
+  closeModal();
   const container = document.getElementById('modal-container');
+  const maxW = size === 'lg' ? '720px' : size === 'sm' ? '380px' : '520px';
   container.innerHTML = `
-    <div class="modal-overlay" onclick="if(event.target===this)closeModal()">
-      <div class="modal-box bg-white border border-gray-200 rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl">
-        <div class="p-5 border-b border-gray-100 flex items-center justify-between">
-          <span class="text-lg font-bold text-gray-900">${title}</span>
-          <button class="p-2 hover:bg-gray-100 rounded-lg text-gray-500 transition-colors" onclick="closeModal()">
-            ${icon('x', 20)}
-          </button>
+    <div class="modal-backdrop" id="${id}-backdrop" onclick="if(event.target===this)closeModal()">
+      <div class="modal-box" style="max-width:${maxW}">
+        <div class="modal-header">
+          <h3 class="text-base font-bold text-slate-800">${title}</h3>
+          <button onclick="closeModal()" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 text-slate-500 text-lg font-bold">✕</button>
         </div>
-        <div class="p-6">${body}</div>
-        ${footer ? `<div class="p-5 border-t border-gray-100 flex justify-end gap-3 bg-gray-50 rounded-b-2xl">${footer}</div>` : ''}
+        <div class="modal-body">${body}</div>
+        ${footer ? `<div class="modal-footer">${footer}</div>` : ''}
       </div>
     </div>`;
   initIcons();
 }
+
 function closeModal() {
   const container = document.getElementById('modal-container');
   if (container) container.innerHTML = '';
 }
 
-function setLoading(btn, loading, text = '') {
+function setLoading(btn, loading, text = 'Saqlanmoqda...') {
   if (!btn) return;
   if (loading) {
-    btn._origText = btn.innerHTML;
-    btn.innerHTML = `<span class="spinner inline-block mr-2 align-middle"></span> ${text}`;
+    btn.dataset.origText = btn.innerHTML;
+    btn.innerHTML = `<span class="spinner" style="width:14px;height:14px;margin-right:6px;display:inline-block;vertical-align:middle;"></span>${text}`;
     btn.disabled = true;
   } else {
-    btn.innerHTML = btn._origText || btn.innerHTML;
+    btn.innerHTML = btn.dataset.origText || 'Saqlash';
     btn.disabled = false;
   }
 }

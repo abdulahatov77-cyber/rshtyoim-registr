@@ -57,11 +57,7 @@ const App = {
     }
   },
 
-  switchTab(idx) {
-    // Generic tab switcher called from Components.renderTabs
-    document.querySelectorAll('.tab-btn').forEach((b,i)=>b.classList.toggle('active',i===idx));
-    document.querySelectorAll('.tab-content').forEach((c,i)=>c.classList.toggle('active',i===idx));
-  }
+
 };
 
 // Start app

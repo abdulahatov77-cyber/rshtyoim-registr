@@ -155,7 +155,7 @@ const LoginPage = {
     
     try {
       await Auth.signIn(email, password);
-      UserLog.write('login');
+      await UserLog.write('login');
       showToast('Muvaffaqiyatli kirdingiz!', 'success');
       Router.go('dashboard');
     } catch (err) {
@@ -191,7 +191,8 @@ const LoginPage = {
       setLoading(btn, false);
       setTimeout(() => LoginPage.switchMode('login'), 3000);
     } catch (err) {
-      errEl.textContent = err.message;
+      const regMsg = err.message?.includes('already registered') ? 'Bu email allaqachon ro\'yxatdan o\'tgan' : 'Ro\'yxatdan o\'tishda xatolik yuz berdi';
+      errEl.textContent = regMsg;
       errEl.classList.remove('hidden');
       setLoading(btn, false);
     }

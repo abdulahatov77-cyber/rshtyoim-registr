@@ -467,7 +467,6 @@ const DB = {
   async getDashboardStats(overrideViloyat, overrideMuassasa, dateFrom, dateTo) {
     const p = await Profile.getCurrent();
     const viloyat = overrideMuassasa ? null : (overrideViloyat !== undefined ? overrideViloyat : (p?.role === 'super_admin' ? null : p?.viloyat));
-    const eqViloyat = (q) => overrideMuassasa ? q.eq('muassasa', overrideMuassasa) : (viloyat ? q.eq('viloyat', viloyat) : q);
     // Bugungi sana: O'zbekiston vaqti (UTC+5) da 00:00 dan 23:59 gacha
     // UTC+5 => bugungi 00:00 UZT = UTC 19:00 (kecha), 23:59 UZT = UTC 18:59 (bugun)
     const nowUzt = new Date();
@@ -586,12 +585,14 @@ const DB = {
   },
 
   // Risk factors distribution — RPC orqali
-  async getRiskFactors(overrideViloyat, overrideMuassasa) {
+  async getRiskFactors(overrideViloyat, overrideMuassasa, dateFrom, dateTo) {
     const p = await Profile.getCurrent();
     const viloyat = overrideMuassasa ? null : (overrideViloyat !== undefined ? overrideViloyat : (p?.role === 'super_admin' ? null : p?.viloyat));
     const { data, error } = await getSupabase().rpc('get_risk_factors', {
       p_viloyat:  viloyat || null,
-      p_muassasa: overrideMuassasa || null
+      p_muassasa: overrideMuassasa || null,
+      p_from:     dateFrom || null,
+      p_to:       dateTo   || null
     });
     if (error) throw error;
     const rows = data || [];
