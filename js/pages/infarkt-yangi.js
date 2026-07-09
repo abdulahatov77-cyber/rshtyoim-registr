@@ -222,7 +222,10 @@ const InfarktYangiPage = {
           ${this.field('boshqa_muassasa','Boshqa muassasa nomi',`<input id="boshqa_muassasa" class="form-input" value="${d.boshqa_muassasa||''}" placeholder="Muassasa nomini kiriting"/>`,true)}
         </div>
         ${this.field('kt_no','Kasallik tarixi №',`<input id="kt_no" class="form-input font-mono bg-gray-50" value="${d.kt_no||''}"/>`,true,'Avtomatik yaratiladi')}
-        ${this.field('qabul_vaqt','Bemor qabul qilingan sana va vaqt',`<input id="qabul_vaqt" type="datetime-local" class="form-input" value="${d.qabul_vaqt||''}"/>`,true)}
+        ${this.field('qabul_vaqt','Bemor qabul qilingan sana va vaqt',`<div class="flex gap-2">
+            <input id="qabul_sana" type="date" class="form-input" max="${new Date().toISOString().slice(0,10)}" value="${d.qabul_vaqt?.slice(0,10)||''}"/>
+            <input id="qabul_soat" type="time" class="form-input" value="${d.qabul_vaqt?.slice(11,16)||''}"/>
+          </div>`,true)}
         <div class="col-span-1 sm:col-span-2">
           ${this.field('murojaat_yoli','Murojaat yo\'li',`<select id="murojaat_yoli" class="form-select" onchange="InfarktYangiPage.onMurojaatChange(this.value)">
             ${this.selectOptions(APP_CONFIG.MUROJAAT_YOLLARI, d.murojaat_yoli||'')}</select>`,true)}
@@ -542,7 +545,14 @@ const InfarktYangiPage = {
     const wrap = document.getElementById('step-body');
     if (!wrap) return;
 
-    ['viloyat','muassasa','boshqa_muassasa','kt_no','qabul_vaqt','murojaat_yoli','yuborgan_muassasa',
+    // qabul_vaqt: alohida sana + soat inputlaridan yig'ish
+    const qabulSana = document.getElementById('qabul_sana')?.value;
+    const qabulSoat = document.getElementById('qabul_soat')?.value;
+    if (qabulSana && qabulSoat) InfarktYangiPage._data.qabul_vaqt = `${qabulSana}T${qabulSoat}`;
+    else if (qabulSana) InfarktYangiPage._data.qabul_vaqt = qabulSana;
+    else if (document.getElementById('qabul_sana')) InfarktYangiPage._data.qabul_vaqt = '';
+
+    ['viloyat','muassasa','boshqa_muassasa','kt_no','murojaat_yoli','yuborgan_muassasa',
      'tez_yordam_kelgan_vaqt','birinchi_murojaat_vaqti',
      'fio','aha_bali','simptom_vaqt','birlamchi_yoki_takroriy',
      'infarkt_turi','killip','qon_bosimi','puls','ekg_vaqti','troponin','kkfmb',
@@ -647,29 +657,27 @@ const InfarktYangiPage = {
     }
     // Qabul vaqti — sana VA soat majburiy
     if (this._step === 0) {
-      const hasTime = v => v && v.includes('T') && v.split('T')[1] && v.split('T')[1] !== '--:--';
-      if (!this._data.qabul_vaqt) {
-        valid = false;
-        const el = document.getElementById('qabul_vaqt');
-        if (el) { el.classList.add('border-red-500'); el.focus(); }
-        showToast('⚠️ Qabul qilingan sana va vaqtni kiriting!', 'error', 5000);
-      } else if (!hasTime(this._data.qabul_vaqt)) {
-        valid = false;
-        const el = document.getElementById('qabul_vaqt');
-        if (el) { el.classList.add('border-red-500'); el.focus(); }
-        showToast('⚠️ Qabul vaqti: sana bilan birga soatni ham kiriting!', 'error', 5000);
-      }
-    }
-    // Qabul vaqti kelajakda bo'lmasligi kerak
-    if (this._step === 0 && this._data.qabul_vaqt) {
-      const qv = new Date(this._data.qabul_vaqt);
-      if (qv > new Date()) {
-        valid = false;
-        const el = document.getElementById('qabul_vaqt');
-        if (el) { el.classList.add('border-red-500'); el.focus(); }
-        showToast('⚠️ Qabul vaqti kelajakda bo\'lishi mumkin emas!', 'error', 5000);
-        const errEl = document.getElementById('err-qabul_vaqt');
-        if (errEl) { errEl.textContent = 'Kelajak sana kiritilgan — iltimos to\'g\'irlang'; errEl.classList.remove('hidden'); }
+      const sanaEl = document.getElementById('qabul_sana');
+      const soatEl = document.getElementById('qabul_soat');
+      if (sanaEl && soatEl) {
+        if (!sanaEl.value) {
+          valid = false;
+          sanaEl.classList.add('border-red-500'); sanaEl.focus();
+          showToast('⚠️ Qabul sanasini kiriting!', 'error', 5000);
+        } else if (!soatEl.value) {
+          valid = false;
+          soatEl.classList.add('border-red-500'); soatEl.focus();
+          showToast('⚠️ Qabul soatini kiriting!', 'error', 5000);
+        } else {
+          const qv = new Date(`${sanaEl.value}T${soatEl.value}:00+05:00`);
+          if (qv > new Date()) {
+            valid = false;
+            sanaEl.classList.add('border-red-500');
+            showToast('⚠️ Qabul vaqti kelajakda bo\'lishi mumkin emas!', 'error', 5000);
+            const errEl = document.getElementById('err-qabul_vaqt');
+            if (errEl) { errEl.textContent = 'Kelajak sana kiritilgan — iltimos to\'g\'irlang'; errEl.classList.remove('hidden'); }
+          }
+        }
       }
     }
     if (this._step === 2 && valid) {
