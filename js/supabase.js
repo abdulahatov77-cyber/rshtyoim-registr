@@ -139,7 +139,7 @@ const DB = {
       'viloyat','muassasa','kt_no','qabul_vaqt','murojaat_yoli','yuborgan_muassasa',
       'fio','tugilgan_yil','jins',
       'aha_bali','simptom_vaqt','birlamchi_yoki_takroriy',
-      'infarkt_turi','killip','qon_bosimi','puls','ekg_vaqti','troponin','kkfmb','grace_bali',
+      'infarkt_turi','killip','qon_bosimi','puls','ekg_vaqti','ekg_vaqti_ts','troponin','kkfmb','grace_bali',
       'ekg_natija','xavf_omil',
       'birinchi_murojaat_vaqti','tez_yordam_kelgan_vaqt','tlt_vaqt','pci_vaqt',
       'muolaja_turi','angio_natija','otkazilgan_muassasa','otkazish_sababi',

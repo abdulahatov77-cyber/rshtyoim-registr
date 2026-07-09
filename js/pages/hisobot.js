@@ -770,7 +770,7 @@ const HisobotPage = {
     };
 
     // Vaqt mezonlari (stats: { median, q1, q3, n } yoki null)
-    const statsEKG          = calcTimeStatsMixed(infs.filter(p=>p.ekg_vaqti), 'qabul_vaqt', 'ekg_vaqti');
+    const statsEKG          = calcTimeStats(infs.filter(p=>p.ekg_vaqti_ts||p.ekg_vaqti), 'qabul_vaqt', 'ekg_vaqti_ts');
     const statsTLT_ins      = calcTimeStats(ins.filter(p=>p.trombolizis_vaqti), 'qabul_vaqt', 'trombolizis_vaqti');
     const statsTLT_inf      = calcTimeStats(infs.filter(p=>p.tlt_vaqt), 'qabul_vaqt', 'tlt_vaqt');
     const statsPCI          = calcTimeStats(infs.filter(p=>p.pci_vaqt), 'qabul_vaqt', 'pci_vaqt');

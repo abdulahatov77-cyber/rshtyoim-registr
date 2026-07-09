@@ -347,7 +347,11 @@ const InfarktYangiPage = {
           ${this.selectOptions(APP_CONFIG.KILLIP_KLASSLAR, d.killip||'')}</select>`,true)}
         ${this.field('qon_bosimi','Qon bosimi (qabul paytida)',`<input id="qon_bosimi" class="form-input font-mono" value="${d.qon_bosimi||''}" placeholder="140/90"/>`,true)}
         ${this.field('puls','Puls (qabul paytida)',`<input id="puls" type="number" min="20" max="300" class="form-input" value="${d.puls||''}" placeholder="76" oninput="this.value=this.value.replace(/[^0-9]/g,'')"/>`,true)}
-        ${this.field('ekg_vaqti','EKG o\'tkazilgan vaqt',`<input id="ekg_vaqti" type="time" class="form-input" value="${d.ekg_vaqti||''}"/>`,true)}
+        ${this.field('ekg_vaqti','EKG o\'tkazilgan vaqt',`
+          <div class="grid grid-cols-2 gap-2">
+            <input type="date" id="ekg_sana" class="form-input" value="${d.ekg_vaqti_ts ? new Date(new Date(d.ekg_vaqti_ts).getTime()+5*3600000).toISOString().slice(0,10) : (d.qabul_vaqt ? new Date(new Date(d.qabul_vaqt).getTime()+5*3600000).toISOString().slice(0,10) : '')}"/>
+            <input type="time" id="ekg_soat" class="form-input" value="${d.ekg_vaqti_ts ? new Date(new Date(d.ekg_vaqti_ts).getTime()+5*3600000).toISOString().slice(11,16) : ''}"/>
+          </div>`,true)}
         ${this.field('troponin','Troponin natijasi',`<select id="troponin" class="form-select">
           ${this.selectOptions(['Normal','Yuqori','O\'lchanmagan'], d.troponin||'')}</select>`,true)}
         ${this.field('kkfmb','KFK-MB natijasi',`<select id="kkfmb" class="form-select">
@@ -559,7 +563,7 @@ const InfarktYangiPage = {
     ['viloyat','muassasa','boshqa_muassasa','kt_no','murojaat_yoli','yuborgan_muassasa',
      'tez_yordam_kelgan_vaqt',
      'fio','aha_bali','simptom_vaqt','birlamchi_yoki_takroriy',
-     'infarkt_turi','killip','qon_bosimi','puls','ekg_vaqti','troponin','kkfmb',
+     'infarkt_turi','killip','qon_bosimi','puls','troponin','kkfmb',
      'muolaja_turi','angio_natija','otkazilgan_muassasa','otkazish_sababi','shifokor_fio','shifokor_tel']
     .forEach(id => {
       const el = document.getElementById(id);
@@ -572,6 +576,14 @@ const InfarktYangiPage = {
       if (graceEl && graceEl.value) InfarktYangiPage._data.grace_bali = graceEl.value;
     } else {
       delete InfarktYangiPage._data.grace_bali;
+    }
+
+    // ekg_vaqti_ts: sana + soat dan yig'ish
+    const ekgSana = document.getElementById('ekg_sana')?.value;
+    const ekgSoat = document.getElementById('ekg_soat')?.value;
+    if (ekgSana && ekgSoat) {
+      InfarktYangiPage._data.ekg_vaqti_ts = new Date(`${ekgSana}T${ekgSoat}:00+05:00`).toISOString();
+      InfarktYangiPage._data.ekg_vaqti = ekgSoat; // eski maydon uchun ham saqlab qo'yamiz
     }
 
     // tlt_vaqt va pci_vaqt: sana + soat dan yig'ish
@@ -618,7 +630,7 @@ const InfarktYangiPage = {
       if (this._data.murojaat_yoli === 'Tez tibbiy yordam bilan') required.push('tez_yordam_kelgan_vaqt');
     }
     if (this._step === 1) required = ['fio','tugilgan_sana','jins'];
-    if (this._step === 2) required = ['aha_bali','simptom_vaqt','birlamchi_yoki_takroriy','infarkt_turi','killip','qon_bosimi','puls','ekg_vaqti','troponin','kkfmb','ekg_natija'];
+    if (this._step === 2) required = ['aha_bali','simptom_vaqt','birlamchi_yoki_takroriy','infarkt_turi','killip','qon_bosimi','puls','ekg_sana','ekg_soat','troponin','kkfmb','ekg_natija'];
     if (this._step === 3) {
       required = ['muolaja_turi','shifokor_fio','shifokor_tel'];
       if (this._data.muolaja_turi === "Boshqa muassasaga o'tkazildi") required.push('otkazilgan_muassasa', 'otkazish_sababi');
