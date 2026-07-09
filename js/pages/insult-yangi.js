@@ -616,7 +616,7 @@ const InsultYangiPage = {
 
   _updateAspectsVisibility() {
     const d = InsultYangiPage._data;
-    const msktOk = d.mskt === "Ha – o'tkazildi" || (d.muolaja_turi || '').toLowerCase().includes('mskt');
+    const msktOk = d.mskt?.startsWith('Ha') || (d.muolaja_turi || '').toLowerCase().includes('mskt');
     const isIshemik = (d.insult_turi || '') === 'Ishemik insult';
     const angioDiv = document.getElementById('mskt-angio-div');
     if (angioDiv) angioDiv.style.display = (msktOk && isIshemik) ? 'block' : 'none';
@@ -631,7 +631,7 @@ const InsultYangiPage = {
     const isOtk = val === "Boshqa muassasaga o'tkazildi — angiografiya va endovaskulyar muolaja uchun";
     const isTLT = v.includes('trombolizis') || v.includes('tlt');
     const isTrombektomiya = v.includes('trombektomiya') || v.includes('tromboekstraksiya') || v.includes('tromboaspiratsiya') || v.includes('kombinatsiya') || v.includes('angiografiya') || v.includes('stentlash') || v.includes('tlbap');
-    const isMskt = InsultYangiPage._data.mskt === "Ha – o'tkazildi" || v.includes('mskt');
+    const isMskt = InsultYangiPage._data.mskt?.startsWith('Ha') || v.includes('mskt');
     const otkazDiv = document.getElementById('otkazilgan-div');
     const tltDiv = document.getElementById('trombolizis-vaqt-div');
     const trombDiv = document.getElementById('trombektomiya-vaqt-div');

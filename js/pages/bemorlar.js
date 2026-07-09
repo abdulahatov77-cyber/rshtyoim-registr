@@ -230,7 +230,7 @@ const BemorlarPage = {
           } else {
             const needsTLT = p.muolaja_turi?.toLowerCase().includes('trombolizis') || p.muolaja_turi?.toLowerCase().includes('tlt');
             const needsTromb = p.muolaja_turi?.toLowerCase().includes('trombektomiya') || p.muolaja_turi?.toLowerCase().includes('tromboekstraksiya');
-            const needsCT = p.mskt === 'Ha – o\'tkazildi';
+            const needsCT = p.mskt?.startsWith('Ha');
             return (needsTLT && !p.trombolizis_vaqti) || (needsTromb && !p.trombektomiya_vaqti) || (needsCT && !p.kt_vaqti);
           }
         });
@@ -497,7 +497,7 @@ const BemorlarPage = {
     });
     insRows.forEach(p => {
       const mt = (p.muolaja_turi||'').toLowerCase();
-      const isMskt = p.mskt === "Ha – o'tkazildi";
+      const isMskt = p.mskt?.startsWith('Ha');
       const needsTLT = mt.includes('trombolizis') || mt.includes('tlt');
       const needsTromb = mt.includes('trombektomiya') || mt.includes('tromboekstraksiya') || mt.includes('tromboaspiratsiya') || mt.includes('kombinatsiya');
       const fields = [];

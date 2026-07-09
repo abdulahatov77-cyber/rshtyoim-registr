@@ -694,9 +694,9 @@ const HisobotPage = {
     const tia = ins.filter(isTIA).length;
     const tiaDavol = ins.filter(p=>isTIA(p)&&p.status==='chiqarildi').length;
     const tiaVafot = ins.filter(p=>isTIA(p)&&p.status==='vafot').length;
-    const mskt = ins.filter(p=>p.mskt==="Ha – o'tkazildi").length;
-    const msktDavol = ins.filter(p=>p.mskt==="Ha – o'tkazildi"&&p.status==='chiqarildi').length;
-    const msktVafot = ins.filter(p=>p.mskt==="Ha – o'tkazildi"&&p.status==='vafot').length;
+    const mskt = ins.filter(p=>p.mskt?.startsWith('Ha')).length;
+    const msktDavol = ins.filter(p=>p.mskt?.startsWith('Ha')&&p.status==='chiqarildi').length;
+    const msktVafot = ins.filter(p=>p.mskt?.startsWith('Ha')&&p.status==='vafot').length;
     const tlt_ins = ins.filter(p=>p.muolaja_turi?.toLowerCase().includes('tromboliz')||p.muolaja_turi?.toLowerCase().includes('tlt')||p.muolaja_turi?.toLowerCase().includes('trombolitik')).length;
     const tltInsDavol = ins.filter(p=>(p.muolaja_turi?.toLowerCase().includes('tromboliz')||p.muolaja_turi?.toLowerCase().includes('tlt')||p.muolaja_turi?.toLowerCase().includes('trombolitik'))&&p.status==='chiqarildi').length;
     const tltInsVafot = ins.filter(p=>(p.muolaja_turi?.toLowerCase().includes('tromboliz')||p.muolaja_turi?.toLowerCase().includes('tlt')||p.muolaja_turi?.toLowerCase().includes('trombolitik'))&&p.status==='vafot').length;
@@ -788,7 +788,7 @@ const HisobotPage = {
     const nTLT_ins_filled = ins.filter(p=>p.trombolizis_vaqti).length;
     const nTromb_total    = ins.filter(p=>hasAnyMuolaja(p, dinamikaInsMap, ['trombektomiya','tromboekstraksiya','tromboaspiratsiya'])).length;
     const nTromb_filled   = ins.filter(p=>p.trombektomiya_vaqti).length;
-    const nCT_total       = ins.filter(p=>p.mskt==='Ha – o\'tkazildi').length;
+    const nCT_total       = ins.filter(p=>p.mskt?.startsWith('Ha')).length;
     const nCT_filled      = ins.filter(p=>p.kt_vaqti).length;
 
     const now = new Date();
@@ -1401,9 +1401,9 @@ const HisobotPage = {
     const tia = ins.filter(isTIA).length;
     const tiaDavol = ins.filter(p=>isTIA(p)&&p.status==='chiqarildi').length;
     const tiaVafot = ins.filter(p=>isTIA(p)&&p.status==='vafot').length;
-    const mskt = ins.filter(p=>p.mskt==="Ha – o'tkazildi").length;
-    const msktDavol = ins.filter(p=>p.mskt==="Ha – o'tkazildi"&&p.status==='chiqarildi').length;
-    const msktVafot = ins.filter(p=>p.mskt==="Ha – o'tkazildi"&&p.status==='vafot').length;
+    const mskt = ins.filter(p=>p.mskt?.startsWith('Ha')).length;
+    const msktDavol = ins.filter(p=>p.mskt?.startsWith('Ha')&&p.status==='chiqarildi').length;
+    const msktVafot = ins.filter(p=>p.mskt?.startsWith('Ha')&&p.status==='vafot').length;
     const tlt_ins = ins.filter(p=>p.muolaja_turi?.toLowerCase().includes('tromboliz')||p.muolaja_turi?.toLowerCase().includes('tlt')||p.muolaja_turi?.toLowerCase().includes('trombolitik')).length;
     const tltInsDavol = ins.filter(p=>(p.muolaja_turi?.toLowerCase().includes('tromboliz')||p.muolaja_turi?.toLowerCase().includes('tlt')||p.muolaja_turi?.toLowerCase().includes('trombolitik'))&&p.status==='chiqarildi').length;
     const tltInsVafot = ins.filter(p=>(p.muolaja_turi?.toLowerCase().includes('tromboliz')||p.muolaja_turi?.toLowerCase().includes('tlt')||p.muolaja_turi?.toLowerCase().includes('trombolitik'))&&p.status==='vafot').length;

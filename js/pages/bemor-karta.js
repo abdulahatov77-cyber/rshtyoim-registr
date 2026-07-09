@@ -1409,7 +1409,7 @@ const BemorKartaPage = {
           </div>
           ${(()=>{
             const mt = (p.muolaja_turi||'').toLowerCase();
-            const showKt = p.mskt === "Ha – o'tkazildi" || mt.includes('mskt') || mt.includes('angiografiya');
+            const showKt = p.mskt?.startsWith('Ha') || mt.includes('mskt') || mt.includes('angiografiya');
             const showTlt = mt.includes('trombolizis') || mt.includes('tlt') || mt.includes('trombolitik');
             const showTromb = mt.includes('trombektomiya') || mt.includes('tromboekstraksiya') || mt.includes('tromboaspiratsiya') || mt.includes('kombinatsiyalangan');
             const today2 = new Date().toISOString().slice(0,10);
