@@ -860,7 +860,7 @@ const Telegram = {
 
   // Test funksiyasi — brauzer konsolidan chaqirish uchun: Telegram.test('infarkt')
   async test(type = 'infarkt') {
-    const text = `✅ RSHTYOIM test xabari — ${new Date().toLocaleString('uz-UZ')}`; 
+    const text = `✅ RSHTYOIM test xabari — ${new Date().toLocaleString('uz-UZ', { timeZone: 'Asia/Tashkent' })}`;
     const res = await fetch('/api/telegram', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -1225,7 +1225,7 @@ const MuassasaDB = {
     const dupKey = (r) => {
       const fio = Utils.normalizeFio(r.fio || '').toLowerCase();
       const yil = r.tugilgan_yil || '';
-      const sana = r.qabul_vaqt ? new Date(r.qabul_vaqt).toISOString().slice(0, 10) : '';
+      const sana = r.qabul_vaqt ? new Date(new Date(r.qabul_vaqt).getTime()+5*3600000).toISOString().slice(0, 10) : '';
       const muassasa = (r.muassasa || '').trim().toLowerCase();
       if (!fio || !sana || !muassasa) return null;
       return `${r._type}|${fio}|${yil}|${sana}|${muassasa}`;

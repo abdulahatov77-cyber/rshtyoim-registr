@@ -248,7 +248,7 @@ const Components = {
                 Components._loadUnreadFeedbackBadge();
               });
             }
-            const fmtDate = dt => dt ? new Date(dt).toLocaleDateString('uz-Cyrl-UZ', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' }) : '';
+            const fmtDate = dt => dt ? new Date(dt).toLocaleDateString('uz-Cyrl-UZ', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit', timeZone:'Asia/Tashkent' }) : '';
             const esc = s => (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
             historyHtml = `
               <div style="border-top:1px solid #e2e8f0;padding-top:16px;margin-top:4px">

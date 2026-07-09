@@ -265,8 +265,8 @@ const DashboardPage = {
           for (let y = 2024; y <= curY; y++) years.push(y);
 
           const yearBtns = years.map(y => {
-            const from = new Date(Date.UTC(y, 0, 1)).toISOString();
-            const to   = new Date(Date.UTC(y, 11, 31, 23, 59, 59)).toISOString();
+            const from = new Date(`${y}-01-01T00:00:00+05:00`).toISOString();
+            const to   = new Date(`${y}-12-31T23:59:59+05:00`).toISOString();
             const isActive = (activeMode === 'year' && activeFrom === from) || (selYear === y && activeMode === 'month');
             return `<button onclick="DashboardPage.setDateFilter('${from}','${to}','year')"
               class="px-3 py-1.5 rounded-xl text-[11px] font-bold border transition-all ${isActive ? 'bg-amber-500 text-white border-amber-500' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'}">${y}</button>`;
@@ -278,8 +278,10 @@ const DashboardPage = {
             const maxM = selYear === curY ? now.getUTCMonth() : 11;
             const mos = [];
             for (let m = 0; m <= maxM; m++) {
-              const from = new Date(Date.UTC(selYear, m, 1)).toISOString();
-              const to   = new Date(Date.UTC(selYear, m+1, 0, 23, 59, 59)).toISOString();
+              const pad = n => String(n).padStart(2,'0');
+              const from = new Date(`${selYear}-${pad(m+1)}-01T00:00:00+05:00`).toISOString();
+              const lastDay = new Date(Date.UTC(selYear, m+1, 0)).getUTCDate();
+              const to   = new Date(`${selYear}-${pad(m+1)}-${pad(lastDay)}T23:59:59+05:00`).toISOString();
               const isActive = activeMode === 'month' && activeFrom === from;
               mos.push(`<button onclick="DashboardPage.setDateFilter('${from}','${to}','month')"
                 class="px-2.5 py-1 rounded-lg text-[11px] font-bold border transition-all ${isActive ? 'bg-amber-500 text-white border-amber-500' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'}">${monthNames[m]}</button>`);
@@ -1065,7 +1067,7 @@ const DashboardPage = {
       Holat: p.status || '—',
       'Kasallik turi': p.infarkt_turi || p.insult_turi || '—',
       Muolaja: p.muolaja_turi || '—'
-    })), `dashboard_bemorlar_${new Date().toISOString().slice(0,10)}.csv`);
+    })), `dashboard_bemorlar_${new Date(Date.now()+5*3600000).toISOString().slice(0,10)}.csv`);
     showToast('Excel eksport boshlandi', 'success');
   },
 

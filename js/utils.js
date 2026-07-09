@@ -17,7 +17,7 @@ const Utils = {
     if (!dt) return '—';
     const d = new Date(dt);
     if (isNaN(d)) return '—';
-    const defaults = { day: '2-digit', month: '2-digit', year: 'numeric' };
+    const defaults = { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'Asia/Tashkent' };
     return d.toLocaleDateString('uz-Cyrl-UZ', { ...defaults, ...opts });
   },
 
@@ -27,7 +27,8 @@ const Utils = {
     if (isNaN(d)) return '—';
     return d.toLocaleString('uz-Cyrl-UZ', {
       day: '2-digit', month: '2-digit', year: 'numeric',
-      hour: '2-digit', minute: '2-digit'
+      hour: '2-digit', minute: '2-digit',
+      timeZone: 'Asia/Tashkent'
     });
   },
 
@@ -35,9 +36,10 @@ const Utils = {
     if (!dt) return '';
     const d = new Date(dt);
     if (isNaN(d)) return '';
-    // Local time for datetime-local inputs (not UTC)
+    // UTC+5 da datetime-local input uchun
+    const uzt = new Date(d.getTime() + 5 * 3600000);
     const pad = n => String(n).padStart(2, '0');
-    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    return `${uzt.getUTCFullYear()}-${pad(uzt.getUTCMonth()+1)}-${pad(uzt.getUTCDate())}T${pad(uzt.getUTCHours())}:${pad(uzt.getUTCMinutes())}`;
   },
 
   calculateAge(val) {

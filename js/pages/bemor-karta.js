@@ -333,7 +333,7 @@ const BemorKartaPage = {
     const tugilgan = p.tugilgan_sana || p.tugilgan_yil || '';
     const tugilganDisplay = tugilgan
       ? (tugilgan.includes('-') && tugilgan.length >= 10
-          ? new Date(tugilgan).toLocaleDateString('uz-UZ', {day:'2-digit',month:'2-digit',year:'numeric'})
+          ? new Date(tugilgan).toLocaleDateString('uz-UZ', {day:'2-digit',month:'2-digit',year:'numeric',timeZone:'UTC'})
           : tugilgan)
       : null;
 
@@ -1284,7 +1284,7 @@ const BemorKartaPage = {
           <div class="form-group">
             <label class="form-label">Kasalxonaga yotgan sana/vaqt</label>
             <div class="flex gap-2">
-              <input id="edit-qabul-vaqt-d" type="date" class="form-input" max="${new Date().toISOString().slice(0,10)}"
+              <input id="edit-qabul-vaqt-d" type="date" class="form-input" max="${new Date(Date.now()+5*3600000).toISOString().slice(0,10)}"
                 value="${Utils.formatDateInput(p.qabul_vaqt)?.slice(0,10)||''}"/>
               <input id="edit-qabul-vaqt-t" type="time" class="form-input"
                 value="${Utils.formatDateInput(p.qabul_vaqt)?.slice(11,16)||''}"/>
@@ -1375,13 +1375,16 @@ const BemorKartaPage = {
           </div>
           <div class="form-group">
             <label class="form-label">EKG vaqti</label>
-            <input id="edit-ekg-vaqti" type="time" class="form-input" value="${p.ekg_vaqti||''}"/>
+            <div class="flex gap-2">
+              <input id="edit-ekg-vaqti-d" type="date" class="form-input" max="${new Date(Date.now()+5*3600000).toISOString().slice(0,10)}" value="${p.ekg_vaqti_ts ? new Date(new Date(p.ekg_vaqti_ts).getTime()+5*3600000).toISOString().slice(0,10) : (p.qabul_vaqt ? new Date(new Date(p.qabul_vaqt).getTime()+5*3600000).toISOString().slice(0,10) : '')}"/>
+              <input id="edit-ekg-vaqti-t" type="time" class="form-input" value="${p.ekg_vaqti_ts ? new Date(new Date(p.ekg_vaqti_ts).getTime()+5*3600000).toISOString().slice(11,16) : (p.ekg_vaqti||'')}"/>
+            </div>
           </div>
           ${(()=>{
             const mt = (p.muolaja_turi||'').toLowerCase();
             const showTlt = mt.includes('tlt') || mt.includes('trombolitik');
             const showPci = mt.includes('pci') || mt.includes('stentlash') || mt.includes('kag') || mt.includes('tlbap') || mt.includes('ballon') || mt.includes('angioplastika');
-            const today = new Date().toISOString().slice(0,10);
+            const today = new Date(Date.now()+5*3600000).toISOString().slice(0,10);
             return `
           ${showTlt ? `<div class="form-group">
             <label class="form-label">TLT vaqti</label>
@@ -1412,7 +1415,7 @@ const BemorKartaPage = {
             const showKt = p.mskt?.startsWith('Ha') || mt.includes('mskt') || mt.includes('angiografiya');
             const showTlt = mt.includes('trombolizis') || mt.includes('tlt') || mt.includes('trombolitik');
             const showTromb = mt.includes('trombektomiya') || mt.includes('tromboekstraksiya') || mt.includes('tromboaspiratsiya') || mt.includes('kombinatsiyalangan');
-            const today2 = new Date().toISOString().slice(0,10);
+            const today2 = new Date(Date.now()+5*3600000).toISOString().slice(0,10);
             return `
           ${showKt ? `<div class="form-group">
             <label class="form-label">KT/MSKT vaqti</label>
@@ -1514,7 +1517,9 @@ const BemorKartaPage = {
       updates.killip       = g('edit-killip')?.value || null;
       updates.troponin     = g('edit-troponin')?.value || null;
       updates.kkfmb        = g('edit-kkfmb')?.value || null;
-      updates.ekg_vaqti    = g('edit-ekg-vaqti')?.value || null;
+      const ekgD = g('edit-ekg-vaqti-d')?.value, ekgT = g('edit-ekg-vaqti-t')?.value;
+      updates.ekg_vaqti    = ekgT || null;
+      updates.ekg_vaqti_ts = (ekgD && ekgT) ? new Date(`${ekgD}T${ekgT}:00+05:00`).toISOString() : null;
       updates.tlt_vaqt     = splitToUTC('edit-tlt-vaqt-d', 'edit-tlt-vaqt-t');
       updates.pci_vaqt     = splitToUTC('edit-pci-vaqt-d', 'edit-pci-vaqt-t');
     } else {
@@ -1623,7 +1628,7 @@ const BemorKartaPage = {
       const chiqishDt = vaqt
         ? new Date(`${sana}T${vaqt}:00+05:00`)
         : new Date(`${sana}T00:00:00+05:00`);
-      const qabulSana = qabulDt.toISOString().slice(0, 10);
+      const qabulSana = new Date(qabulDt.getTime() + 5*3600000).toISOString().slice(0, 10);
       const chiqishSana = sana;
       // Faqat chiqish SANASI qabul SANASIDAN oldin bo'lsa xato
       if (chiqishSana < qabulSana) {
@@ -1695,7 +1700,7 @@ const BemorKartaPage = {
   },
 
   _buildHarakatUI(el, p, type, logs) {
-    const fmtDate = dt => dt ? new Date(dt).toLocaleDateString('uz-UZ', { day:'2-digit', month:'2-digit', year:'numeric' }) : '—';
+    const fmtDate = dt => dt ? new Date(dt).toLocaleDateString('uz-UZ', { day:'2-digit', month:'2-digit', year:'numeric', timeZone:'Asia/Tashkent' }) : '—';
     const profile = BemorKartaPage._profile;
     const canEdit = profile?.role === 'admin' || profile?.role === 'super_admin';
 
@@ -1780,7 +1785,7 @@ const BemorKartaPage = {
             </div>
             <div>
               <label style="font-size:11px;font-weight:700;color:#64748b;display:block;margin-bottom:4px">SANA</label>
-              <input id="tr-sana" type="date" class="form-input" style="font-size:13px;padding:7px 10px" value="${new Date().toISOString().split('T')[0]}">
+              <input id="tr-sana" type="date" class="form-input" style="font-size:13px;padding:7px 10px" value="${new Date(Date.now()+5*3600000).toISOString().slice(0,10)}">
             </div>
             <div>
               <label style="font-size:11px;font-weight:700;color:#64748b;display:block;margin-bottom:4px">SABAB</label>

@@ -71,8 +71,9 @@ const HisobotPage = {
   },
 
   renderUI(user) {
-    const today = new Date().toISOString().split('T')[0];
-    const monthAgo = new Date(Date.now()-30*864e5).toISOString().split('T')[0];
+    const _uztDate = ms => new Date(ms + 5*3600000).toISOString().slice(0,10);
+    const today = _uztDate(Date.now());
+    const monthAgo = _uztDate(Date.now()-30*864e5);
     const inner = document.getElementById('hisobot-inner');
     if (!inner) return;
     const isSuperAdmin = user?.role === 'super_admin';
@@ -203,7 +204,7 @@ const HisobotPage = {
             <p class="text-sm text-slate-500">Har bir viloyat bo'yicha STEMI/NSTEMI, Ishemik/Gemorragik/TIA va marshrutizatsiya statistikasi</p>
           </div>
           <div class="flex items-center gap-2">
-            <input id="vh-from" type="date" class="form-input bg-slate-50 text-blue-900 border-blue-200 font-medium" value="${new Date(Date.now()-90*864e5).toISOString().split('T')[0]}"/>
+            <input id="vh-from" type="date" class="form-input bg-slate-50 text-blue-900 border-blue-200 font-medium" value="${_uztDate(Date.now()-90*864e5)}"/>
             <span class="text-slate-400">—</span>
             <input id="vh-to" type="date" class="form-input bg-slate-50 text-blue-900 border-blue-200 font-medium" value="${today}"/>
             <button class="btn btn-primary shadow-md hover:shadow-lg flex items-center gap-2 px-4 rounded-xl" onclick="HisobotPage.loadViloyatReport()">
@@ -502,17 +503,19 @@ const HisobotPage = {
 
   onPeriodChange() {
     const val = document.getElementById('h-period')?.value;
-    const today = new Date();
-    let from = new Date();
-    if      (val==='today')  { /* from = today */ }
-    else if (val==='week')   { from.setDate(today.getDate()-7); }
-    else if (val==='month')  { from.setDate(today.getDate()-30); }
-    else if (val==='3month') { from.setMonth(today.getMonth()-3); }
-    else if (val==='6month') { from.setMonth(today.getMonth()-6); }
-    else if (val==='year')   { from.setFullYear(today.getFullYear()-1); }
+    const _uztDate = ms => new Date(ms + 5*3600000).toISOString().slice(0,10);
+    const nowMs = Date.now();
+    const todayStr = _uztDate(nowMs);
+    let fromMs = nowMs;
+    if      (val==='today')  { /* fromMs = nowMs */ }
+    else if (val==='week')   { fromMs = nowMs - 7*864e5; }
+    else if (val==='month')  { fromMs = nowMs - 30*864e5; }
+    else if (val==='3month') { fromMs = nowMs - 90*864e5; }
+    else if (val==='6month') { fromMs = nowMs - 180*864e5; }
+    else if (val==='year')   { fromMs = nowMs - 365*864e5; }
     else return;
-    document.getElementById('h-from').value = from.toISOString().split('T')[0];
-    document.getElementById('h-to').value = today.toISOString().split('T')[0];
+    document.getElementById('h-from').value = _uztDate(fromMs);
+    document.getElementById('h-to').value = todayStr;
   },
 
   onHViloyatChange(viloyat) {
@@ -770,7 +773,7 @@ const HisobotPage = {
     };
 
     // Vaqt mezonlari (stats: { median, q1, q3, n } yoki null)
-    const statsEKG          = calcTimeStats(infs.filter(p=>p.ekg_vaqti_ts||p.ekg_vaqti), 'qabul_vaqt', 'ekg_vaqti_ts');
+    const statsEKG          = calcTimeStats(infs.filter(p=>p.ekg_vaqti_ts), 'qabul_vaqt', 'ekg_vaqti_ts');
     const statsTLT_ins      = calcTimeStats(ins.filter(p=>p.trombolizis_vaqti), 'qabul_vaqt', 'trombolizis_vaqti');
     const statsTLT_inf      = calcTimeStats(infs.filter(p=>p.tlt_vaqt), 'qabul_vaqt', 'tlt_vaqt');
     const statsPCI          = calcTimeStats(infs.filter(p=>p.pci_vaqt), 'qabul_vaqt', 'pci_vaqt');
@@ -779,7 +782,7 @@ const HisobotPage = {
 
     // n — muolaja tanlangan bemorlar (vaqt to'ldirilishi kerak bo'lganlar)
     const nEKG_total      = infs.length;
-    const nEKG_filled     = infs.filter(p=>p.ekg_vaqti).length;
+    const nEKG_filled     = infs.filter(p=>p.ekg_vaqti_ts).length;
     const nTLT_inf_total  = infs.filter(p=>hasAnyMuolaja(p, dinamikaInfMap, ['TLT','trombolitik'])).length;
     const nTLT_inf_filled = infs.filter(p=>p.tlt_vaqt).length;
     const nPCI_total      = infs.filter(p=>hasAnyMuolaja(p, dinamikaInfMap, ['PCI','stentlash','TLBAP'])).length;
@@ -1479,7 +1482,7 @@ const HisobotPage = {
     </table>
   </div>
 </div>
-<div class="footer">Hisobot sanasi: ${new Date().toLocaleString('uz-UZ')}</div>
+<div class="footer">Hisobot sanasi: ${new Date().toLocaleString('uz-UZ', { timeZone: 'Asia/Tashkent' })}</div>
 <script>window.onload=()=>{window.print()}<\/script>
 </body></html>`);
     w.document.close();

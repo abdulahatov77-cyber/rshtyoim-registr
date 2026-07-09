@@ -141,7 +141,7 @@ const InsultYangiPage = {
         </div>
         ${this.field('kt_no','Kasallik tarixi №',`<input id="kt_no" class="form-input font-mono bg-gray-50" value="${d.kt_no||''}"/>`,true,'Avtomatik yaratiladi')}
         ${this.field('qabul_vaqt','Bemorni qabul qilgan sana va vaqt',`<div class="flex gap-2">
-            <input id="qabul_sana" type="date" class="form-input" max="${new Date().toISOString().slice(0,10)}" value="${d.qabul_vaqt?.slice(0,10)||''}"/>
+            <input id="qabul_sana" type="date" class="form-input" max="${new Date(Date.now()+5*3600000).toISOString().slice(0,10)}" value="${d.qabul_vaqt?.slice(0,10)||''}"/>
             <input id="qabul_soat" type="time" class="form-input" value="${d.qabul_vaqt?.slice(11,16)||''}"/>
           </div>`,true)}
         <div class="col-span-1 sm:col-span-2">
@@ -423,7 +423,7 @@ const InsultYangiPage = {
         ];
         if (found.length === 0) { warn.innerHTML = ''; return; }
         const rows = found.map(p => {
-          const d = p.qabul_vaqt ? new Date(p.qabul_vaqt).toLocaleDateString('uz-UZ', { day:'2-digit', month:'2-digit', year:'numeric' }) : '—';
+          const d = p.qabul_vaqt ? new Date(p.qabul_vaqt).toLocaleDateString('uz-UZ', { day:'2-digit', month:'2-digit', year:'numeric', timeZone:'Asia/Tashkent' }) : '—';
           return `<div class="flex items-center gap-2 text-xs py-1 border-b border-amber-100 last:border-0">
             <span class="font-bold text-amber-900">${esc(p.fio)}</span>
             <span class="text-amber-600">·</span>
