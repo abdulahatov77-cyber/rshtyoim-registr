@@ -557,8 +557,6 @@ const InfarktYangiPage = {
     else if (qabulSana) InfarktYangiPage._data.qabul_vaqt = qabulSana;
     else if (document.getElementById('qabul_sana')) InfarktYangiPage._data.qabul_vaqt = '';
 
-    // birinchi_murojaat_vaqti = qabul_vaqt bilan bir xil
-    if (InfarktYangiPage._data.qabul_vaqt) InfarktYangiPage._data.birinchi_murojaat_vaqti = InfarktYangiPage._data.qabul_vaqt;
 
     ['viloyat','muassasa','boshqa_muassasa','kt_no','murojaat_yoli','yuborgan_muassasa',
      'tez_yordam_kelgan_vaqt',
@@ -834,7 +832,7 @@ const InfarktYangiPage = {
       }
       // datetime-local qiymatlari Toshkent vaqti (UTC+5) — bazaga UTC ISO sifatida yuboramiz
       // Agar allaqachon ISO UTC bo'lsa (Z yoki +00:00) — qayta o'zgartirmaymiz
-      for (const f of ['qabul_vaqt', 'tlt_vaqt', 'pci_vaqt', 'tez_yordam_kelgan_vaqt', 'birinchi_murojaat_vaqti']) {
+      for (const f of ['qabul_vaqt', 'tlt_vaqt', 'pci_vaqt', 'tez_yordam_kelgan_vaqt']) {
         if (!payload[f]) { payload[f] = null; continue; }
         if (!payload[f].endsWith('Z') && !payload[f].includes('+05:00')) {
           payload[f] = new Date(payload[f] + ':00+05:00').toISOString();

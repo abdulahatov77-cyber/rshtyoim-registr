@@ -141,7 +141,7 @@ const DB = {
       'aha_bali','simptom_vaqt','birlamchi_yoki_takroriy',
       'infarkt_turi','killip','qon_bosimi','puls','ekg_vaqti','ekg_vaqti_ts','troponin','kkfmb','grace_bali',
       'ekg_natija','xavf_omil',
-      'birinchi_murojaat_vaqti','tez_yordam_kelgan_vaqt','tlt_vaqt','pci_vaqt',
+      'tez_yordam_kelgan_vaqt','tlt_vaqt','pci_vaqt',
       'muolaja_turi','angio_natija','otkazilgan_muassasa','otkazish_sababi',
       'dinamika_muolaja_turi','dinamika_izoh',
       'shifokor_fio','shifokor_tel','status'
@@ -247,7 +247,7 @@ const DB = {
       'mskt','mskt_angiografiya','muolaja_turi','otkazilgan_muassasa',
       'aspects_c','aspects_l','aspects_ic','aspects_i',
       'aspects_m1','aspects_m2','aspects_m3','aspects_m4','aspects_m5','aspects_m6',
-      'birinchi_murojaat_vaqti','tez_yordam_kelgan_vaqt','kt_vaqti','trombolizis_vaqti','trombektomiya_vaqti',
+      'tez_yordam_kelgan_vaqt','kt_vaqti','trombolizis_vaqti','trombektomiya_vaqti',
       'dinamika_muolaja_turi','dinamika_izoh',
       'shifokor_fio','shifokor_tel','status'
     ];

@@ -380,7 +380,6 @@ const BemorKartaPage = {
             ${row('Simptomlar boshlanishi', p.simptom_vaqt)}
             ${row('Shifoxonaga keldi', Utils.formatDateTime(p.qabul_vaqt))}
             ${type==='infarkt' ? `
-              ${row('Birinchi murojaat', Utils.formatDateTime(p.birinchi_murojaat_vaqti))}
               ${row('Tez yordam yetib keldi', Utils.formatDateTime(p.tez_yordam_kelgan_vaqt))}
             ` : ''}
             ${p.reabilitatsiya_boshlangan_vaqt ? row('Reabilitatsiya boshlandi', Utils.formatDateTime(p.reabilitatsiya_boshlangan_vaqt)) : ''}
