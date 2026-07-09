@@ -34,7 +34,7 @@ function showModal({ title, body, footer, id = 'modal-main', size = 'md' }) {
   const container = document.getElementById('modal-container');
   const maxW = size === 'lg' ? '720px' : size === 'sm' ? '380px' : '520px';
   container.innerHTML = `
-    <div class="modal-backdrop" id="${id}-backdrop" onclick="if(event.target===this)closeModal()">
+    <div class="modal-overlay" id="${id}-backdrop" onclick="if(event.target===this)closeModal()">
       <div class="modal-box" style="max-width:${maxW}">
         <div class="modal-header">
           <h3 class="text-base font-bold text-slate-800">${title}</h3>
