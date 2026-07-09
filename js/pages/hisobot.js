@@ -758,8 +758,12 @@ const HisobotPage = {
         const d2 = new Date(dateStrUzt + 'T' + p[timeField] + (p[timeField].length === 5 ? ':00+05:00' : '+05:00'));
         if (isNaN(d2)) return null;
         let diff = (d2 - d1) / 60000;
-        if (diff < 0) diff += 24 * 60;
-        if (diff <= 0 || diff > 480) return null;
+        // Tun o'tish: -5 dan kichik bo'lsa keyingi kun deb hisobla
+        if (diff < -5) diff += 24 * 60;
+        // 0 va undan kichik (5 daqiqalik tolerans): EKG darhol olingan deb hisobla
+        if (diff < 0) diff = 0;
+        // 720 daqiqadan (12 soat) ko'p bo'lsa noto'g'ri kiritilgan
+        if (diff > 720) return null;
         return diff;
       }).filter(d => d !== null);
       return calcMedianStats(diffs);
