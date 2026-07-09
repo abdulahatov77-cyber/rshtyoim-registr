@@ -794,8 +794,8 @@ const HisobotPage = {
     const nCT_total       = ins.filter(p=>p.mskt?.startsWith('Ha')).length;
     const nCT_filled      = ins.filter(p=>p.kt_vaqti).length;
 
-    const now = new Date();
-    const nowStr = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')} ${String(now.getDate()).padStart(2,'0')}.${String(now.getMonth()+1).padStart(2,'0')}.${now.getFullYear()}`;
+    const now = new Date(Date.now() + 5*3600000);
+    const nowStr = `${String(now.getUTCHours()).padStart(2,'0')}:${String(now.getUTCMinutes()).padStart(2,'0')} ${String(now.getUTCDate()).padStart(2,'0')}.${String(now.getUTCMonth()+1).padStart(2,'0')}.${now.getUTCFullYear()}`;
 
     // Readmission (30 days)
     const readm30 = (kuzatuv || []).filter(k => k.kuzatuv_davri==='30 kunlik' && (k.holati?.includes('Qayta') || k.qayta_xuruj)).length;

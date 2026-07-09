@@ -354,7 +354,7 @@ const AdminPage = {
       <td style="font-size:12px;color:#0f172a;font-weight:600">${p.fio||p.full_name||'—'}</td>
       <td>${roleBadge}</td>
       <td style="font-size:12px;color:#1e293b;font-weight:600">${p.viloyat||'<span style="color:#94a3b8">Belgilanmagan</span>'}</td>
-      <td style="font-size:11px;color:#475569">${p.created_at?new Date(p.created_at).toLocaleDateString('uz-UZ'):'—'}</td>
+      <td style="font-size:11px;color:#475569">${p.created_at?new Date(p.created_at).toLocaleDateString('uz-UZ',{timeZone:'Asia/Tashkent',day:'2-digit',month:'2-digit',year:'numeric'}):'—'}</td>
       <td>
         <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
           <select id="role-${p.id}" onchange="AdminPage.changeRole('${p.id}',this.value)"
@@ -983,7 +983,7 @@ const AdminPage = {
               <td style="font-weight:600;font-size:13px">${r.fio||'—'}</td>
               <td style="font-size:12px;color:#94a3b8">${r._type==='infarkt'?'Infarkt':'Insult'}</td>
               <td style="font-size:12px;color:#94a3b8">${r.muassasa||'—'}</td>
-              <td style="font-size:12px;color:#94a3b8">${r.qabul_vaqt ? new Date(r.qabul_vaqt).toLocaleString('uz-UZ',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '—'}</td>
+              <td style="font-size:12px;color:#94a3b8">${r.qabul_vaqt ? new Date(r.qabul_vaqt).toLocaleString('uz-UZ',{timeZone:'Asia/Tashkent',day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '—'}</td>
               ${showDelete?`<td>
                 <button onclick="AdminPage.deleteDupRecord('${r.kt_no}','${r._type}')"
                   style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.2);border-radius:8px;padding:5px 10px;color:#f87171;font-size:12px;cursor:pointer">

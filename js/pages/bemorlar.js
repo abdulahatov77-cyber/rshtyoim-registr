@@ -490,7 +490,7 @@ const BemorlarPage = {
       const needsTLT = mt.includes('tlt') || mt.includes('trombolitik');
       const needsPCI = mt.includes('pci') || mt.includes('stentlash') || mt.includes('tlbap');
       const fields = [];
-      if (!p.ekg_vaqti) fields.push({ id:'ekg_vaqti', label:'EKG vaqti', splitType:'time' });
+      if (!p.ekg_vaqti_ts) fields.push({ id:'ekg_vaqti_ts', label:'EKG vaqti', splitType:'datetime', extra:'ekg_vaqti' });
       if (needsTLT && !p.tlt_vaqt) fields.push({ id:'tlt_vaqt', label:'TLT vaqti', splitType:'datetime' });
       if (needsPCI && !p.pci_vaqt) fields.push({ id:'pci_vaqt', label:'PCI/Groin vaqti', splitType:'datetime' });
       if (fields.length) missing.push({ ...p, _type:'infarkt', _fields: fields });
@@ -638,6 +638,7 @@ const BemorlarPage = {
         if (entered > now) { valid = false; errMsg = `${f.label} kelajak vaqt bo'lishi mumkin emas`; return; }
         if (qabulISO && entered < new Date(qabulISO)) { valid = false; errMsg = `${f.label} bemorning qabul vaqtidan oldin bo'lishi mumkin emas`; return; }
         updates[f.id] = entered.toISOString();
+        if (f.extra) updates[f.extra] = tEl.value; // ekg_vaqti = HH:MM
       }
     });
 

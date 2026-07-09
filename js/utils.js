@@ -160,10 +160,10 @@ const Utils = {
   },
 
   generateKtNo(muassasa) {
-    const now = new Date();
-    const y = now.getFullYear().toString().slice(2);
-    const m = (now.getMonth() + 1).toString().padStart(2, '0');
-    const d = now.getDate().toString().padStart(2, '0');
+    const now = new Date(Date.now() + 5*3600000);
+    const y = now.getUTCFullYear().toString().slice(2);
+    const m = (now.getUTCMonth() + 1).toString().padStart(2, '0');
+    const d = now.getUTCDate().toString().padStart(2, '0');
     const rand = Math.floor(Math.random() * 900000) + 100000;
     const prefix = Utils.muassasaPrefix(muassasa);
     return `${prefix}-${y}${m}${d}-${rand}`;

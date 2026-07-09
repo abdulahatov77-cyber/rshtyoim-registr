@@ -1710,7 +1710,7 @@ const BemorKartaPage = {
       muassasa_dan: '—',
       muassasa_ga: p.muassasa || '—',
       viloyat_ga: p.viloyat || '',
-      sana: p.qabul_vaqt ? p.qabul_vaqt.split('T')[0] : null,
+      sana: p.qabul_vaqt ? new Date(new Date(p.qabul_vaqt).getTime()+5*3600000).toISOString().slice(0,10) : null,
       sabab: 'Dastlabki qabul',
       _first: true
     };
