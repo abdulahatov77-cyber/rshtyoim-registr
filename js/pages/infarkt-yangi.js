@@ -630,7 +630,7 @@ const InfarktYangiPage = {
       if (this._data.murojaat_yoli === 'Tez tibbiy yordam bilan') required.push('tez_yordam_kelgan_vaqt');
     }
     if (this._step === 1) required = ['fio','tugilgan_sana','jins'];
-    if (this._step === 2) required = ['aha_bali','simptom_vaqt','birlamchi_yoki_takroriy','infarkt_turi','killip','qon_bosimi','puls','ekg_sana','ekg_soat','troponin','kkfmb','ekg_natija'];
+    if (this._step === 2) required = ['aha_bali','simptom_vaqt','birlamchi_yoki_takroriy','infarkt_turi','killip','qon_bosimi','puls','troponin','kkfmb','ekg_natija'];
     if (this._step === 3) {
       required = ['muolaja_turi','shifokor_fio','shifokor_tel'];
       if (this._data.muolaja_turi === "Boshqa muassasaga o'tkazildi") required.push('otkazilgan_muassasa', 'otkazish_sababi');
@@ -694,6 +694,21 @@ const InfarktYangiPage = {
             if (errEl) { errEl.textContent = 'Kelajak sana kiritilgan — iltimos to\'g\'irlang'; errEl.classList.remove('hidden'); }
           }
         }
+      }
+    }
+    if (this._step === 2 && valid) {
+      const ekgSana = document.getElementById('ekg_sana')?.value;
+      const ekgSoat = document.getElementById('ekg_soat')?.value;
+      if (!ekgSana) {
+        valid = false;
+        document.getElementById('ekg_sana')?.classList.add('border-red-500');
+        document.getElementById('ekg_sana')?.focus();
+        showToast('⚠️ EKG sanasini kiriting!', 'error', 5000);
+      } else if (!ekgSoat) {
+        valid = false;
+        document.getElementById('ekg_soat')?.classList.add('border-red-500');
+        document.getElementById('ekg_soat')?.focus();
+        showToast('⚠️ EKG soatini kiriting!', 'error', 5000);
       }
     }
     if (this._step === 2 && valid) {
