@@ -102,7 +102,7 @@
   <!-- Auto-reload: checks for new version every 30 seconds -->
   <script>
     (function() {
-      const APP_BUILD = '20260709-36';
+      const APP_BUILD = '20260709-37';
       const BUILD_KEY = 'rshtyoim_build';
       const stored = localStorage.getItem(BUILD_KEY);
       if (stored && stored !== APP_BUILD) {
@@ -134,8 +134,8 @@
         } catch(e) {}
       }
 
-      // Har 30 sekundda tekshir
-      setInterval(checkVersion, 30 * 1000);
+      // Har 5 daqiqada tekshir
+      setInterval(checkVersion, 5 * 60 * 1000);
 
       // Sahifa focus bo'lganda ham tekshir (boshqa tabdan qaytganda)
       document.addEventListener('visibilitychange', () => {
