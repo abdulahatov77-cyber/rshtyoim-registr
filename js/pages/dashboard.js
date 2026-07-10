@@ -555,7 +555,8 @@ const DashboardPage = {
     DashboardPage._viewDateTo   = to;
     DashboardPage._viewDateMode = mode || null;
     if (mode === 'year' && from) {
-      DashboardPage._viewSelectedYear = new Date(from).getUTCFullYear();
+      // from = UTC ISO, lekin UZT da yil boshidan — UTC+5 da yilni olish kerak
+      DashboardPage._viewSelectedYear = new Date(new Date(from).getTime() + 5*3600000).getUTCFullYear();
     } else if (mode === 'month' && from) {
       // Oy tanlanganda _viewSelectedYear o'zgarmaydi — qaysi yil oylaridan ekanini saqlab qo'yamiz
     } else if (!from) {
