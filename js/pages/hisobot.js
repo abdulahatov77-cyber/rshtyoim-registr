@@ -589,11 +589,15 @@ const HisobotPage = {
       }
       if (selMuassasa) filters.muassasa = selMuassasa;
 
-      const ageFrom = parseInt(document.getElementById('h-age-from')?.value) || 0;
-      const ageTo   = parseInt(document.getElementById('h-age-to')?.value)   || 120;
+      const ageFromRaw = document.getElementById('h-age-from')?.value;
+      const ageToRaw   = document.getElementById('h-age-to')?.value;
+      const ageFrom = parseInt(ageFromRaw) || 0;
+      const ageTo   = parseInt(ageToRaw)   || 120;
+      // Yosh filtri aniq tanlanganmi? (default 0-120 emas)
+      const ageFilterActive = (ageFromRaw !== '' && ageFrom > 0) || (ageToRaw !== '' && ageTo < 120);
       const byAge = arr => arr.filter(p => {
         const age = Utils.calculateAge(p.tugilgan_sana || p.tugilgan_yil);
-        if (age === null || age === undefined || isNaN(age)) return true;
+        if (age === null || age === undefined || isNaN(age)) return !ageFilterActive; // aniq oraliqda noma'lum yosh chiqariladi
         return age >= ageFrom && age <= ageTo;
       });
 
@@ -1632,11 +1636,19 @@ ${muolajaStr(insMuolajaNorm)}
       ...d.infs.map(p=>({...p,_turi:'infarkt'})),
       ...d.ins.map(p=>({...p,_turi:'insult'}))
     ];
+    // Dinamik (kuzatuv) muolajalarni ham qo'shamiz — ekrandagi statistika bilan mos bo'lishi uchun
+    const muolajaStr = p => {
+      const parts = [p.muolaja_turi].filter(Boolean);
+      const dyn = p.dinamika_muolajalar || p.dinamika_muolaja_turi;
+      if (Array.isArray(dyn)) parts.push(...dyn.filter(Boolean));
+      else if (dyn) parts.push(dyn);
+      return [...new Set(parts)].join('; ');
+    };
     Utils.exportCSV(all.map(p=>({
       Turi: p._turi, 'K/T No': p.kt_no, 'F.I.O': p.fio,
       Viloyat: p.viloyat, 'Qabul vaqti': Utils.formatDateTime(p.qabul_vaqt),
       Holat: p.status, 'Kasallik turi': p.infarkt_turi||p.insult_turi||'',
-      Muolaja: p.muolaja_turi||''
+      Muolaja: muolajaStr(p)
     })), `hisobot_${d.from}_${d.to}.csv`);
     showToast('✅ Eksport boshlandi','success');
   }
