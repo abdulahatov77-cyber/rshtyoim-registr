@@ -1592,24 +1592,26 @@ ${vilStr(insViloyat)}
 ${muolajaStr(insMuolajaNorm)}
 ━━━━━━━━━━━━━━━━━━━━━━`;
 
-      const send = async (token, chatId, text) => {
-        const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+      // Token brauzerga chiqmaydi — server (/api/telegram) orqali yuboriladi
+      const send = async (type, text) => {
+        const res = await fetch('/api/telegram', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ chat_id: parseInt(chatId), text })
+          body: JSON.stringify({ type, text })
         });
-        return res.json();
+        const data = await res.json().catch(() => ({}));
+        return { ok: res.ok && data.ok !== false, error: data.error || data.detail };
       };
 
       const [r1, r2] = await Promise.all([
-        send(APP_CONFIG.TELEGRAM_INFARKT_TOKEN, APP_CONFIG.TELEGRAM_INFARKT_CHAT, infMsg),
-        send(APP_CONFIG.TELEGRAM_INSULT_TOKEN,  APP_CONFIG.TELEGRAM_INSULT_CHAT,  insMsg)
+        send('infarkt', infMsg),
+        send('insult',  insMsg)
       ]);
 
       if (r1.ok && r2.ok) {
         showToast('✅ Hisobot Telegramga yuborildi!', 'success', 5000);
       } else {
-        showToast('⚠️ Telegram xato: ' + (r1.description || r2.description || 'Noma\'lum'), 'error', 6000);
+        showToast('⚠️ Telegram xato: ' + (JSON.stringify(r1.error || r2.error) || 'Noma\'lum'), 'error', 6000);
       }
     } catch(err) {
       showToast('❌ Xato: ' + err.message, 'error');
