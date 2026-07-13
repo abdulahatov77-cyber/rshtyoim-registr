@@ -847,13 +847,24 @@ const TransferLog = {
 // ==================== TELEGRAM ====================
 const Telegram = {
 
+  // Joriy foydalanuvchi access token bilan header (server auth uchun)
+  async _authHeaders() {
+    const h = { 'Content-Type': 'application/json' };
+    try {
+      const { data } = await getSupabase().auth.getSession();
+      const token = data?.session?.access_token;
+      if (token) h['Authorization'] = `Bearer ${token}`;
+    } catch(e) {}
+    return h;
+  },
+
   async notify(patient, type) {
     try {
       const text = Telegram.buildMessage(patient, type);
 
       const res = await fetch('/api/telegram', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: await Telegram._authHeaders(),
         body: JSON.stringify({ type, text })
       });
 
@@ -875,7 +886,7 @@ const Telegram = {
     const text = `✅ RSHTYOIM test xabari — ${new Date().toLocaleString('uz-UZ', { timeZone: 'Asia/Tashkent' })}`;
     const res = await fetch('/api/telegram', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: await Telegram._authHeaders(),
       body: JSON.stringify({ type, text })
     });
     const json = await res.json();

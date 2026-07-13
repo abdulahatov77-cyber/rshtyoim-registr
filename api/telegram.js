@@ -26,6 +26,26 @@ module.exports = async function handler(req, res) {
     return res.status(200).end();
   }
 
+  // AUTH: faqat tizimga kirgan foydalanuvchi yubora oladi
+  // Klient Authorization: Bearer <access_token> yuboradi, server Supabase orqali tekshiradi
+  try {
+    const authHeader = req.headers.authorization || '';
+    const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
+    if (!token) {
+      return res.status(401).json({ error: 'Avtorizatsiya talab qilinadi' });
+    }
+    const SUPA_URL = process.env.SUPABASE_URL || 'https://udayvbywwnulbxrvxknm.supabase.co';
+    const SUPA_ANON = process.env.SUPABASE_ANON_KEY || '';
+    const uRes = await fetch(`${SUPA_URL}/auth/v1/user`, {
+      headers: { 'Authorization': `Bearer ${token}`, 'apikey': SUPA_ANON }
+    });
+    if (!uRes.ok) {
+      return res.status(401).json({ error: 'Sessiya yaroqsiz — qayta kiring' });
+    }
+  } catch (e) {
+    return res.status(401).json({ error: 'Avtorizatsiya xatosi' });
+  }
+
   try {
     const { type, text, parseMode } = req.body || {};
 

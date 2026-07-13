@@ -1603,7 +1603,7 @@ ${muolajaStr(insMuolajaNorm)}
       const send = async (type, text) => {
         const res = await fetch('/api/telegram', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: await Telegram._authHeaders(),
           body: JSON.stringify({ type, text, parseMode: null })
         });
         const data = await res.json().catch(() => ({}));
