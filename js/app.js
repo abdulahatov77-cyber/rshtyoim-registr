@@ -34,13 +34,16 @@ const App = {
 
     // Auth state listener
     Auth.onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_IN' && session) {
+      if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && session) {
         App._user = session.user;
         Profile.getCurrent().then(p => { App._profile = p; }).catch(()=>{});
         if (Router._current === 'login') Router.go('dashboard');
       } else if (event === 'SIGNED_OUT') {
         App._user = null;
-        Router.go('login');
+        if (Router._current !== 'login') {
+          showToast('Sessiya tugadi — qayta kiring', 'warning', 5000);
+          Router.go('login');
+        }
       }
     });
   },

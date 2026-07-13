@@ -68,6 +68,14 @@ const Router = {
       }
     } catch (err) {
       console.error('Router error:', err);
+      // Sessiya muddati tugagan / JWT xatosi — login sahifasiga yo'naltiramiz
+      const m = (err.message || '') + ' ' + (err.code || '');
+      if (/jwt|token|401|not authenticated|session|expired|refresh/i.test(m)) {
+        try { await Auth.signOut(); } catch(e){}
+        showToast('Sessiya muddati tugadi — qayta kiring', 'warning', 5000);
+        Router.go('login');
+        return;
+      }
       app.innerHTML = `<div class="flex items-center justify-center min-h-screen">
         <div class="text-center p-8">
           <div class="text-5xl mb-4">⚠️</div>
