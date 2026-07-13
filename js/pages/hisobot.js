@@ -1510,9 +1510,10 @@ const HisobotPage = {
       const sb = getSupabase();
 
       // Hozir shifoxonada (status = active, barcha vaqt) — faqat shu muassasa/viloyat
+      const scope = HisobotPage._savedFilters || {};
       const _applyScope = (q) => {
-        if (filters.muassasa) return q.eq('muassasa', filters.muassasa);
-        if (filters.viloyat)  return q.eq('viloyat', filters.viloyat);
+        if (scope.muassasa) return q.eq('muassasa', scope.muassasa);
+        if (scope.viloyat)  return q.eq('viloyat', scope.viloyat);
         return q;
       };
       const [infActive, insActive] = await Promise.all([
