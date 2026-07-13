@@ -59,6 +59,12 @@ const Utils = {
     return new Date().getFullYear() - yr;
   },
 
+  // MSKT/KT o'tkazilganmi? — katta-kichik harf va bo'shliqqa sezgir emas
+  // "Ha — o'tkazildi", "Ha – o'tkazildi", " ha ...", "HA ..." — hammasi true
+  msktDone(v) {
+    return typeof v === 'string' && v.trim().toLowerCase().startsWith('ha');
+  },
+
   relativeTime(dt) {
     if (!dt) return '—';
     const d = new Date(dt);

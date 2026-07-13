@@ -973,7 +973,7 @@ ${e.line}${kritik}`;
       }
 
       // MSKT Angiografiya va ASPECTS — faqat Ishemik insult + Angiografiya Ha uchun
-      const msktDone = patient.mskt?.startsWith('Ha');
+      const msktDone = Utils.msktDone(patient.mskt);
       const isIshemikInsult = (patient.insult_turi || '') === 'Ishemik insult';
       let msktAngioLine = '';
       if (msktDone && isIshemikInsult && patient.mskt_angiografiya) {
