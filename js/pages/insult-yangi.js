@@ -646,6 +646,10 @@ const InsultYangiPage = {
     const tltDiv = document.getElementById('trombolizis-vaqt-div');
     const trombDiv = document.getElementById('trombektomiya-vaqt-div');
     const msktDiv = document.getElementById('mskt-vaqt-div');
+    // Muolaja o'zgarganda mos kelmaydigan yashirin vaqtlarni tozalaymiz
+    if (!isTLT) { InsultYangiPage._data.trombolizis_vaqti = ''; const e=document.getElementById('trombolizis_vaqti'); if(e) e.value=''; }
+    if (!isTrombektomiya) { InsultYangiPage._data.trombektomiya_vaqti = ''; const e=document.getElementById('trombektomiya_vaqti'); if(e) e.value=''; }
+    if (!isOtk) { InsultYangiPage._data.otkazilgan_muassasa = ''; InsultYangiPage._data.otkazish_sababi = ''; }
     if (otkazDiv) otkazDiv.style.display = isOtk ? 'block' : 'none';
     if (tltDiv) tltDiv.style.display = isTLT ? 'block' : 'none';
     if (trombDiv) {

@@ -509,6 +509,11 @@ const InfarktYangiPage = {
     const otkazDiv = document.getElementById('otkazilgan-div');
     const tltDiv = document.getElementById('tlt-vaqt-div');
     const pciDiv = document.getElementById('pci-vaqt-div');
+    // Muolaja o'zgarganda mos kelmaydigan yashirin maydonlarni tozalaymiz (eski ma'lumot saqlanib qolmasin)
+    if (!InfarktYangiPage._isTLT(val)) { InfarktYangiPage._data.tlt_vaqt = ''; const e=document.getElementById('tlt_vaqt'); if(e) e.value=''; }
+    if (!InfarktYangiPage._isPCI(val)) { InfarktYangiPage._data.pci_vaqt = ''; const e=document.getElementById('pci_vaqt'); if(e) e.value=''; }
+    if (val !== 'Faqat KAG (diagnostik koronar angiografiya)') InfarktYangiPage._data.angio_natija = '';
+    if (!isOtk) { InfarktYangiPage._data.otkazilgan_muassasa = ''; InfarktYangiPage._data.otkazish_sababi = ''; }
     if (tltDiv) tltDiv.style.display = InfarktYangiPage._isTLT(val) ? 'block' : 'none';
     if (pciDiv) {
       pciDiv.style.display = InfarktYangiPage._isPCI(val) ? 'block' : 'none';
