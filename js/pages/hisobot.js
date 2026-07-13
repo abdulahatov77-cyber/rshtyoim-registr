@@ -257,11 +257,11 @@ const HisobotPage = {
       const infs = infResult.value?.data || [];
       const ins  = insResult.value?.data || [];
 
-      // Mutually exclusive va to'liq qamrovli — har bir bemor aniq bitta toifaga tushadi, "aniqlanmagan" qolmaydi
+      // STEMI/NSTEMI/AMI — asosiy hisobot bilan bir xil ta'rif (bo'sh/noaniq yozuv hech qayerga qo'shilmaydi)
       const isSTEMI = p => p.infarkt_turi?.toUpperCase().includes('STEMI') && !p.infarkt_turi?.toUpperCase().includes('NSTEMI');
       const isNSTEMI = p => p.infarkt_turi?.toUpperCase().includes('NSTEMI');
-      // Qolgan barcha infarkt yozuvlari (bo'sh yoki noaniq matn) AMI hisoblanadi
-      const isAMI = p => !isSTEMI(p) && !isNSTEMI(p);
+      // AMI = "miokard" so'zi bor (aniq tanlangan) — asosiy hisobot bilan bir xil
+      const isAMI = p => p.infarkt_turi?.toLowerCase().includes('miokard');
       const isGemorragik = p => /^gemorragik insult$/i.test((p.insult_turi||'').trim());
       const isTIA        = p => /^tia\b/i.test((p.insult_turi||'').trim());
       // Qolgan barcha insult yozuvlari (bo'sh yoki noaniq matn) Ishemik hisoblanadi
@@ -681,9 +681,10 @@ const HisobotPage = {
     const tlt_inf = infs.filter(p=>p.muolaja_turi?.includes('TLT')||p.muolaja_turi?.toLowerCase().includes('trombolitik')).length;
     const tltDavol = infs.filter(p=>(p.muolaja_turi?.includes('TLT')||p.muolaja_turi?.toLowerCase().includes('trombolitik'))&&p.status==='chiqarildi').length;
     const tltVafot = infs.filter(p=>(p.muolaja_turi?.includes('TLT')||p.muolaja_turi?.toLowerCase().includes('trombolitik'))&&p.status==='vafot').length;
-    const medInf = infs.filter(p=>p.muolaja_turi?.toLowerCase().includes('medikamentoz')).length;
-    const medInfDavol = infs.filter(p=>p.muolaja_turi?.toLowerCase().includes('medikamentoz')&&p.status==='chiqarildi').length;
-    const medInfVafot = infs.filter(p=>p.muolaja_turi?.toLowerCase().includes('medikamentoz')&&p.status==='vafot').length;
+    const isMedInf = p => p.muolaja_turi?.toLowerCase().includes('medikamentoz') || p.muolaja_turi?.toLowerCase().includes('konservativ');
+    const medInf = infs.filter(isMedInf).length;
+    const medInfDavol = infs.filter(p=>isMedInf(p)&&p.status==='chiqarildi').length;
+    const medInfVafot = infs.filter(p=>isMedInf(p)&&p.status==='vafot').length;
     const killip34 = infs.filter(p=>p.killip?.includes('III')||p.killip?.includes('IV')).length;
     const isIshemik    = p => /^ishemik insult$/i.test((p.insult_turi||'').trim());
     const isGemorragik = p => /^gemorragik insult$/i.test((p.insult_turi||'').trim());
@@ -1388,9 +1389,10 @@ const HisobotPage = {
     const tlt_inf = infs.filter(p=>p.muolaja_turi?.includes('TLT')||p.muolaja_turi?.toLowerCase().includes('trombolitik')).length;
     const tltDavol = infs.filter(p=>(p.muolaja_turi?.includes('TLT')||p.muolaja_turi?.toLowerCase().includes('trombolitik'))&&p.status==='chiqarildi').length;
     const tltVafot = infs.filter(p=>(p.muolaja_turi?.includes('TLT')||p.muolaja_turi?.toLowerCase().includes('trombolitik'))&&p.status==='vafot').length;
-    const medInf = infs.filter(p=>p.muolaja_turi?.toLowerCase().includes('medikamentoz')).length;
-    const medInfDavol = infs.filter(p=>p.muolaja_turi?.toLowerCase().includes('medikamentoz')&&p.status==='chiqarildi').length;
-    const medInfVafot = infs.filter(p=>p.muolaja_turi?.toLowerCase().includes('medikamentoz')&&p.status==='vafot').length;
+    const isMedInf = p => p.muolaja_turi?.toLowerCase().includes('medikamentoz') || p.muolaja_turi?.toLowerCase().includes('konservativ');
+    const medInf = infs.filter(isMedInf).length;
+    const medInfDavol = infs.filter(p=>isMedInf(p)&&p.status==='chiqarildi').length;
+    const medInfVafot = infs.filter(p=>isMedInf(p)&&p.status==='vafot').length;
     const killip34 = infs.filter(p=>p.killip?.includes('III')||p.killip?.includes('IV')).length;
     const isIshemik    = p => /^ishemik insult$/i.test((p.insult_turi||'').trim());
     const isGemorragik = p => /^gemorragik insult$/i.test((p.insult_turi||'').trim());
