@@ -333,8 +333,9 @@ const Calculators = {
       if (v < 140) return 34; if (v < 160) return 24; if (v < 200) return 10; return 0;
     },
     cr(v) {
-      if (v < 0.4) return 1; if (v < 0.8) return 3; if (v < 1.2) return 5;
-      if (v < 1.6) return 7; if (v < 2.0) return 9; if (v < 4.0) return 15; return 20;
+      // Rasmiy GRACE 1.0 (in-hospital mortality) kreatinin ballari (mg/dL)
+      if (v < 0.4) return 1; if (v < 0.8) return 4; if (v < 1.2) return 7;
+      if (v < 1.6) return 10; if (v < 2.0) return 13; if (v < 4.0) return 21; return 28;
     },
     killip: { 1: 0, 2: 20, 3: 39, 4: 59 }
   },
