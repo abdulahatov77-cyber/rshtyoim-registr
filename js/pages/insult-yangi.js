@@ -619,10 +619,20 @@ const InsultYangiPage = {
     const msktOk = Utils.msktDone(d.mskt) || (d.muolaja_turi || '').toLowerCase().includes('mskt');
     const isIshemik = (d.insult_turi || '') === 'Ishemik insult';
     const angioDiv = document.getElementById('mskt-angio-div');
-    if (angioDiv) angioDiv.style.display = (msktOk && isIshemik) ? 'block' : 'none';
-    const show = msktOk && isIshemik && d.mskt_angiografiya === 'Ha';
+    const angioShow = msktOk && isIshemik;
+    if (angioDiv) angioDiv.style.display = angioShow ? 'block' : 'none';
+    // Angio savoli yashirilsa — javobini va ASPECTS ni tozalaymiz (eski ma'lumot saqlanib qolmasin)
+    if (!angioShow && d.mskt_angiografiya) {
+      d.mskt_angiografiya = '';
+    }
+    const show = angioShow && d.mskt_angiografiya === 'Ha';
     const aspectsDiv = document.getElementById('aspects-div');
     if (aspectsDiv) aspectsDiv.style.display = show ? 'block' : 'none';
+    // ASPECTS bloki yashirilsa — barcha aspects_* belgilarini tozalaymiz
+    if (!show) {
+      ['aspects_c','aspects_l','aspects_ic','aspects_i','aspects_m1','aspects_m2','aspects_m3','aspects_m4','aspects_m5','aspects_m6']
+        .forEach(k => { if (d[k]) d[k] = false; });
+    }
   },
 
   onMuolajaChange(val) {

@@ -159,7 +159,12 @@ const LoginPage = {
       showToast('Muvaffaqiyatli kirdingiz!', 'success');
       Router.go('dashboard');
     } catch (err) {
-      const msg = err.message === 'Invalid login credentials' ? 'Email yoki parol noto\'g\'ri' : err.message;
+      // Ma'lum xatolarni tushunarli qilib, qolganini umumiy xabar bilan ko'rsatamiz (schema sizishining oldini olish)
+      let msg;
+      if (err.message === 'Invalid login credentials') msg = 'Email yoki parol noto\'g\'ri';
+      else if (/email/i.test(err.message) && /confirm/i.test(err.message)) msg = 'Email tasdiqlanmagan';
+      else if (/network|fetch/i.test(err.message)) msg = 'Tarmoq xatosi — internetni tekshiring';
+      else msg = 'Kirishда xato yuz berdi. Qayta urinib ko\'ring.';
       errEl.textContent = msg;
       errEl.classList.remove('hidden');
       setLoading(btn, false);
