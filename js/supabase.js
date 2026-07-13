@@ -163,7 +163,8 @@ const DB = {
         .select()
         .single();
       if (!error) return result;
-      const isKtDup = error.message?.includes('infarkt_qabul_kt_no_muassasa_key');
+      // 23505 = unique_violation; constraint nomi o'zgarsa ham ishlaydi
+      const isKtDup = error.code === '23505' || error.message?.includes('kt_no');
       if (!isKtDup) throw error;
     }
     throw new Error(`"${clean.kt_no}" raqami bu muassasada allaqachon mavjud — boshqa raqam kiriting`);
@@ -264,7 +265,8 @@ const DB = {
         .select()
         .single();
       if (!error) return result;
-      const isKtDup = error.message?.includes('insult_qabul_kt_no_muassasa_key');
+      // 23505 = unique_violation; constraint nomi o'zgarsa ham ishlaydi
+      const isKtDup = error.code === '23505' || error.message?.includes('kt_no');
       if (!isKtDup) throw error;
     }
     throw new Error(`"${clean.kt_no}" raqami bu muassasada allaqachon mavjud — boshqa raqam kiriting`);

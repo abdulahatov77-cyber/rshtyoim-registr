@@ -160,9 +160,10 @@ const Utils = {
     // Respublika markazi
     if (/respublika shoshilinch/i.test(m)) return 'RSHM';
     // "Pop politravma markazi" → "POP", "Sirdaryo politravma markazi" → "SIR"
-    // Birinchi so'z (shahar/tuman nomi) — 3-4 harf
-    const first = m.split(/\s+/)[0];
-    return first.slice(0, 4).toUpperCase().replace(/[^A-Z0-9]/g, '');
+    // Birinchi so'z (shahar/tuman nomi) — 3-4 harf. Kirill bo'lsa lotinga o'giramiz.
+    const first = Utils.cyrToLat(m.split(/\s+/)[0] || '');
+    const prefix = first.slice(0, 4).toUpperCase().replace(/[^A-Z0-9]/g, '');
+    return prefix || 'KT'; // bo'sh bo'lsa (masalan noaniq belgilar) — KT
   },
 
   generateKtNo(muassasa) {
