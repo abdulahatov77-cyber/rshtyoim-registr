@@ -27,7 +27,7 @@ module.exports = async function handler(req, res) {
   }
 
   try {
-    const { type, text } = req.body || {};
+    const { type, text, parseMode } = req.body || {};
 
     if (!type || !text) {
       return res.status(400).json({ error: 'type va text talab qilinadi' });
@@ -58,7 +58,8 @@ module.exports = async function handler(req, res) {
         body: JSON.stringify({
           chat_id: parseInt(chatId),
           text,
-          parse_mode: 'HTML'
+          // parseMode: null yuborilsa HTML parse qilinmaydi (oddiy matn)
+          ...(parseMode === null ? {} : { parse_mode: parseMode || 'HTML' })
         })
       }
     );

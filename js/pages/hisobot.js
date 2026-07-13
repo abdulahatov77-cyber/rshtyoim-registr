@@ -1593,11 +1593,12 @@ ${muolajaStr(insMuolajaNorm)}
 ━━━━━━━━━━━━━━━━━━━━━━`;
 
       // Token brauzerga chiqmaydi — server (/api/telegram) orqali yuboriladi
+      // parseMode: null — oddiy matn (hisobotda < > & belgilar bo'lishi mumkin)
       const send = async (type, text) => {
         const res = await fetch('/api/telegram', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ type, text })
+          body: JSON.stringify({ type, text, parseMode: null })
         });
         const data = await res.json().catch(() => ({}));
         return { ok: res.ok && data.ok !== false, error: data.error || data.detail };
