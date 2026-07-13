@@ -116,13 +116,13 @@ const DB = {
   async checkDuplicate(table, fio, tugilganYil, qabulVaqtIso) {
     if (!fio || !qabulVaqtIso) return null;
     const normFio = Utils.normalizeFio(fio);
-    const day = qabulVaqtIso.slice(0, 10);
+    // UZT (UTC+5) bo'yicha kun — yarim tunda off-by-one bo'lmasligi uchun
+    const day = new Date(new Date(qabulVaqtIso).getTime() + 5*3600000).toISOString().slice(0, 10);
     const { data } = await getSupabase()
       .from(table)
       .select('kt_no,fio,tugilgan_yil,qabul_vaqt,muassasa')
-      .gte('qabul_vaqt', `${day}T00:00:00`)
-      .lte('qabul_vaqt', `${day}T23:59:59`)
-      .limit(50);
+      .gte('qabul_vaqt', `${day}T00:00:00+05:00`)
+      .lte('qabul_vaqt', `${day}T23:59:59+05:00`);
     if (!data) return null;
     return data.find(r => {
       const rFio = Utils.normalizeFio(r.fio || '').toLowerCase();
@@ -184,7 +184,7 @@ const DB = {
       if (filters.muassasa) q = q.eq('muassasa', filters.muassasa);
       if (filters.from)     q = q.gte('qabul_vaqt', filters.from);
       if (filters.to)       q = q.lte('qabul_vaqt', filters.to);
-      if (filters.search) { const s = filters.search.replace(/[,()]/g, '').trim(); if (s) q = q.or(`fio.ilike.%${s}%,kt_no.ilike.%${s}%,muassasa.ilike.%${s}%`); }
+      if (filters.search) { const s = filters.search.replace(/[,()*%_.\\]/g, '').trim(); if (s) q = q.or(`fio.ilike.%${s}%,kt_no.ilike.%${s}%,muassasa.ilike.%${s}%`); }
       return q;
     };
 
@@ -285,7 +285,7 @@ const DB = {
       if (filters.muassasa) q = q.eq('muassasa', filters.muassasa);
       if (filters.from)     q = q.gte('qabul_vaqt', filters.from);
       if (filters.to)       q = q.lte('qabul_vaqt', filters.to);
-      if (filters.search) { const s = filters.search.replace(/[,()]/g, '').trim(); if (s) q = q.or(`fio.ilike.%${s}%,kt_no.ilike.%${s}%,muassasa.ilike.%${s}%`); }
+      if (filters.search) { const s = filters.search.replace(/[,()*%_.\\]/g, '').trim(); if (s) q = q.or(`fio.ilike.%${s}%,kt_no.ilike.%${s}%,muassasa.ilike.%${s}%`); }
       return q;
     };
 
