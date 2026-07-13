@@ -35,7 +35,8 @@ module.exports = async function handler(req, res) {
       return res.status(401).json({ error: 'Avtorizatsiya talab qilinadi' });
     }
     const SUPA_URL = process.env.SUPABASE_URL || 'https://udayvbywwnulbxrvxknm.supabase.co';
-    const SUPA_ANON = process.env.SUPABASE_ANON_KEY || '';
+    // Anon key — env bo'lmasa config'дagi ochiq anon key (bu maxfiy emas)
+    const SUPA_ANON = process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVkYXl2Ynl3d251bGJ4cnZ4a25tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY2Njk0NTYsImV4cCI6MjA5MjI0NTQ1Nn0.9lgD_V2H2TRKgdtPD0BO1jmE71st45JsOtlCIhmtP8U';
     const uRes = await fetch(`${SUPA_URL}/auth/v1/user`, {
       headers: { 'Authorization': `Bearer ${token}`, 'apikey': SUPA_ANON }
     });
