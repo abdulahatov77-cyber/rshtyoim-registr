@@ -1601,7 +1601,9 @@ ${muolajaStr(insMuolajaNorm)}
           body: JSON.stringify({ type, text, parseMode: null })
         });
         const data = await res.json().catch(() => ({}));
-        return { ok: res.ok && data.ok !== false, error: data.error || data.detail };
+        // Aniq sabab: Telegram detail.description
+        const reason = data.detail?.description || data.detail?.error_code || data.error;
+        return { ok: res.ok && data.ok !== false, error: reason, full: data };
       };
 
       const [r1, r2] = await Promise.all([
@@ -1612,7 +1614,9 @@ ${muolajaStr(insMuolajaNorm)}
       if (r1.ok && r2.ok) {
         showToast('✅ Hisobot Telegramga yuborildi!', 'success', 5000);
       } else {
-        showToast('⚠️ Telegram xato: ' + (JSON.stringify(r1.error || r2.error) || 'Noma\'lum'), 'error', 6000);
+        const err = r1.error || r2.error || 'Noma\'lum';
+        console.error('Telegram hisobot xato — infarkt:', r1.full, 'insult:', r2.full);
+        showToast('⚠️ Telegram xato: ' + err, 'error', 9000);
       }
     } catch(err) {
       showToast('❌ Xato: ' + err.message, 'error');
