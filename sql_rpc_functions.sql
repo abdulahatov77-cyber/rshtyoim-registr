@@ -32,7 +32,7 @@ BEGIN
     'bugun_infarkt', (SELECT COUNT(*) FROM infarkt_qabul WHERE (p_viloyat IS NULL OR viloyat = p_viloyat) AND (p_muassasa IS NULL OR muassasa = p_muassasa) AND qabul_vaqt >= p_today_start::timestamptz AND qabul_vaqt < p_today_end::timestamptz),
     'bugun_insult',  (SELECT COUNT(*) FROM insult_qabul  WHERE (p_viloyat IS NULL OR viloyat = p_viloyat) AND (p_muassasa IS NULL OR muassasa = p_muassasa) AND qabul_vaqt >= p_today_start::timestamptz AND qabul_vaqt < p_today_end::timestamptz),
     -- Kritik bemorlar
-    'kritik_infarkt', (SELECT COUNT(*) FROM infarkt_qabul WHERE (p_viloyat IS NULL OR viloyat = p_viloyat) AND (p_muassasa IS NULL OR muassasa = p_muassasa) AND status = 'active' AND killip ILIKE '%III%' OR killip ILIKE '%IV%'),
+    'kritik_infarkt', (SELECT COUNT(*) FROM infarkt_qabul WHERE (p_viloyat IS NULL OR viloyat = p_viloyat) AND (p_muassasa IS NULL OR muassasa = p_muassasa) AND status = 'active' AND (killip ILIKE '%III%' OR killip ILIKE '%IV%')),
     'kritik_insult',  (SELECT COUNT(*) FROM insult_qabul  WHERE (p_viloyat IS NULL OR viloyat = p_viloyat) AND (p_muassasa IS NULL OR muassasa = p_muassasa) AND status = 'active' AND nihss_qabul >= 15),
     -- Infarkt klinik taqsimot
     'stemi',              (SELECT COUNT(*) FROM infarkt_qabul WHERE (p_viloyat IS NULL OR viloyat = p_viloyat) AND (p_muassasa IS NULL OR muassasa = p_muassasa) AND infarkt_turi ILIKE '%STEMI%' AND infarkt_turi NOT ILIKE '%NSTEMI%'),

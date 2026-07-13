@@ -604,8 +604,8 @@ const InfarktYangiPage = {
 
     const tugilgan = document.getElementById('tugilgan_sana');
     if (tugilgan) {
-      InfarktYangiPage._data.tugilgan_sana = tugilgan.value;
-      InfarktYangiPage._data.tugilgan_yil = tugilgan.value;
+      InfarktYangiPage._data.tugilgan_sana = tugilgan.value;                    // to'liq sana → tugilgan_sana ustuni
+      InfarktYangiPage._data.tugilgan_yil  = (tugilgan.value || '').slice(0, 4); // faqat yil → tugilgan_yil ustuni
     }
 
     const jinsEl = document.querySelector('input[name="jins"]:checked');
