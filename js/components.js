@@ -152,7 +152,7 @@ const Components = {
             <div class="w-9 h-9 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-sm flex-shrink-0"
                  style="background: ${isSuperAdmin ? 'linear-gradient(135deg,#7c3aed,#4f46e5)' : isAdmin ? 'linear-gradient(135deg,#0ea5e9,#2563eb)' : '#2563eb'}">${initials}</div>
             <div class="flex-1 min-w-0">
-              <p class="text-xs font-bold text-slate-800 truncate">${displayName}</p>
+              <p class="text-xs font-bold text-slate-800 truncate">${esc(displayName)}</p>
               <p class="text-[10px] font-medium text-slate-500 uppercase">${roleLabel}</p>
             </div>
             <button class="text-slate-400 hover:text-red-500 transition-colors" onclick="App.logout()">

@@ -113,7 +113,7 @@ const HarakatPage = {
     const infCount = HarakatPage._data.filter(d => d.bemor_turi === 'infarkt').length;
     const insCount = HarakatPage._data.filter(d => d.bemor_turi === 'insult').length;
 
-    const fmtDate = dt => dt ? new Date(dt).toLocaleDateString('uz-UZ', { day:'2-digit', month:'2-digit', year:'numeric' }) : '—';
+    const fmtDate = dt => dt ? new Date(dt).toLocaleDateString('uz-UZ', { day:'2-digit', month:'2-digit', year:'numeric', timeZone:'Asia/Tashkent' }) : '—';
 
     const rows = list.length === 0
       ? `<div style="text-align:center;padding:60px;color:#94a3b8">
@@ -129,7 +129,7 @@ const HarakatPage = {
           `).join('');
 
           return `
-            <div onclick="Router.go('bemor-karta',{kt_no:'${d.kt_no}',type:'${d.bemor_turi}'})"
+            <div onclick="Router.go('bemor-karta',{kt_no:'${esc(String(d.kt_no||'')).replace(/'/g,'&#39;')}',type:'${esc(String(d.bemor_turi||''))}'})"
               style="background:white;border:1px solid #e2e8f0;border-radius:14px;padding:16px 18px;cursor:pointer;transition:box-shadow 0.15s;margin-bottom:10px"
               onmouseover="this.style.boxShadow='0 4px 16px rgba(0,0,0,0.08)'"
               onmouseout="this.style.boxShadow='none'">

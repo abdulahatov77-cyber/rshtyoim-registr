@@ -72,7 +72,7 @@ const Router = {
         <div class="text-center p-8">
           <div class="text-5xl mb-4">⚠️</div>
           <h2 class="text-lg font-bold text-slate-700 mb-2">Sahifani yuklashda xato</h2>
-          <p class="text-slate-400 text-sm mb-4">${err.message}</p>
+          <p class="text-slate-400 text-sm mb-4">${esc(err.message)}</p>
           <button class="btn btn-primary" onclick="Router.go('dashboard')">Dashboard ga qaytish</button>
         </div>
       </div>`;

@@ -93,13 +93,13 @@ const InfarktReyestriPage = {
               ${data.map(r => {
                 const mortality = r.jami > 0 ? ((r.vafot / r.jami) * 100).toFixed(1) : 0;
                 return `
-                  <tr class="hover:bg-slate-50/80 transition-colors cursor-pointer group" data-name="${r.name.replace(/"/g,'&quot;')}" onclick="InfarktReyestriPage._rowClick(this)">
+                  <tr class="hover:bg-slate-50/80 transition-colors cursor-pointer group" data-name="${esc(r.name)}" onclick="InfarktReyestriPage._rowClick(this)">
                     <td class="px-6 py-5">
                       <div class="flex items-center gap-3">
                         <div class="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-500 group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors">
                           ${icon(this._viloyat ? 'building-2' : 'map-pin', 16)}
                         </div>
-                        <span class="text-sm font-bold text-slate-700">${r.name}</span>
+                        <span class="text-sm font-bold text-slate-700">${esc(r.name)}</span>
                       </div>
                     </td>
                     <td class="px-6 py-5 text-center font-black text-slate-900">${r.jami}</td>

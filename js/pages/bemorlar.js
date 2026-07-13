@@ -267,7 +267,7 @@ const BemorlarPage = {
           <div class="py-16 text-center">
             <div class="text-red-500 mb-3">${icon('alert-circle', 40, 'mx-auto')}</div>
             <h3 class="text-lg font-bold text-gray-900 mb-2">Xatolik yuz berdi</h3>
-            <p class="text-gray-500">${err.message}</p>
+            <p class="text-gray-500">${esc(err.message)}</p>
           </div>`;
         initIcons();
       }

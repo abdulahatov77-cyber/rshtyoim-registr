@@ -746,10 +746,10 @@ const AdminPage = {
                   <td>${r._type === 'infarkt'
                     ? '<span style="background:rgba(220,38,38,0.15);color:#f87171;font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px">Infarkt</span>'
                     : '<span style="background:rgba(124,58,237,0.15);color:#a78bfa;font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px">Insult</span>'}</td>
-                  <td style="font-family:monospace;font-size:12px;color:#64748b">${r.kt_no}</td>
-                  <td style="font-weight:600;font-size:13px">${r.fio||'—'}</td>
-                  <td style="font-size:12px;color:#94a3b8">${r.viloyat||'<span style="color:#f87171">Bo\'sh</span>'}</td>
-                  <td style="font-size:12px;color:#94a3b8">${r.muassasa||'<span style="color:#f87171">Bo\'sh</span>'}</td>
+                  <td style="font-family:monospace;font-size:12px;color:#64748b">${esc(r.kt_no)}</td>
+                  <td style="font-weight:600;font-size:13px">${esc(r.fio)||'—'}</td>
+                  <td style="font-size:12px;color:#94a3b8">${esc(r.viloyat)||'<span style="color:#f87171">Bo\'sh</span>'}</td>
+                  <td style="font-size:12px;color:#94a3b8">${esc(r.muassasa)||'<span style="color:#f87171">Bo\'sh</span>'}</td>
                   <td>${r._issue === 'mismatch'
                     ? '<span style="color:#fbbf24;font-size:12px">Viloyatga mos kelmaydi</span>'
                     : '<span style="color:#f87171;font-size:12px">Bo\'sh maydon</span>'}</td>
@@ -971,7 +971,7 @@ const AdminPage = {
       return `
       <div style="border:1px solid ${g.type==='duplicate'?'rgba(239,68,68,0.25)':'rgba(99,118,158,0.2)'};border-radius:12px;overflow:hidden;margin-bottom:4px">
         <div style="background:${g.type==='duplicate'?'rgba(239,68,68,0.08)':'rgba(99,118,158,0.08)'};padding:8px 14px;font-size:12px;font-weight:700;color:${g.type==='duplicate'?'#f87171':'#94a3b8'}">
-          ${gi+1}. ${g.records[0].fio || '—'} • ${g.records[0].tugilgan_yil || '—'} • ${g.type==='duplicate'?'⚠️ Duplikat':'🔄 Qayta murojaat'}
+          ${gi+1}. ${esc(g.records[0].fio) || '—'} • ${esc(g.records[0].tugilgan_yil) || '—'} • ${g.type==='duplicate'?'⚠️ Duplikat':'🔄 Qayta murojaat'}
         </div>
         <table class="data-table">
           <thead><tr>
@@ -979,10 +979,10 @@ const AdminPage = {
           </tr></thead>
           <tbody>
             ${visibleRecords.map(r => `<tr>
-              <td style="font-family:monospace;font-size:12px;color:#64748b">${r.kt_no}</td>
-              <td style="font-weight:600;font-size:13px">${r.fio||'—'}</td>
+              <td style="font-family:monospace;font-size:12px;color:#64748b">${esc(r.kt_no)}</td>
+              <td style="font-weight:600;font-size:13px">${esc(r.fio)||'—'}</td>
               <td style="font-size:12px;color:#94a3b8">${r._type==='infarkt'?'Infarkt':'Insult'}</td>
-              <td style="font-size:12px;color:#94a3b8">${r.muassasa||'—'}</td>
+              <td style="font-size:12px;color:#94a3b8">${esc(r.muassasa)||'—'}</td>
               <td style="font-size:12px;color:#94a3b8">${r.qabul_vaqt ? new Date(r.qabul_vaqt).toLocaleString('uz-UZ',{timeZone:'Asia/Tashkent',day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '—'}</td>
               ${showDelete?`<td>
                 <button onclick="AdminPage.deleteDupRecord('${r.kt_no}','${r._type}')"
