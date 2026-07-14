@@ -175,18 +175,29 @@ const HarakatPage = {
       const chain = d.fullChain.filter(Boolean);
       const chainStr = chain.join(' → ');
       const topLevel = Math.max(...chain.map(m => HarakatPage._muassasaLevel(m)), 1);
-      let requiresRouting = false, reason = '';
+      const muolaja = (p.muolaja_turi || '').toLowerCase();
+      let requiresRouting = false, reason = '', needLevel = 3;
 
-      if (d.bemor_turi === 'insult' && p.mskt_angiografiya === 'Ha') {
-        requiresRouting = true;
-        reason = 'Angiografiyaga korsatma bor - angiografiya markaziga otkazilishi kerak edi';
+      if (d.bemor_turi === 'insult') {
+        if (p.mskt_angiografiya === 'Ha') {
+          // Angiografiyaga korsatma - angiografiya markaziga (3-bosqich) borishi kerak
+          requiresRouting = true; needLevel = 3;
+          reason = 'Angiografiyaga korsatma bor - angiografiya markaziga otkazilishi kerak edi';
+        } else if (muolaja.includes('mskt') && muolaja.includes('otkazildi')) {
+          // MSKT uchun o'tkazilgan - kamida Politravmaga (2-bosqich) borishi kerak
+          requiresRouting = true; needLevel = 2;
+          reason = 'MSKT uchun otkazilgan - Politravma markaziga yetishi kerak edi';
+        }
       } else if (d.bemor_turi === 'infarkt') {
         const isSTEMI = (p.infarkt_turi || '').toUpperCase().includes('STEMI') && !(p.infarkt_turi || '').toUpperCase().includes('NSTEMI');
-        if (isSTEMI) { requiresRouting = true; reason = 'STEMI - angiografiya markaziga otkazilishi kerak edi'; }
+        if (isSTEMI) {
+          requiresRouting = true; needLevel = 3;
+          reason = 'STEMI - angiografiya markaziga otkazilishi kerak edi';
+        }
       }
       if (requiresRouting) {
         needed++;
-        if (topLevel === 3) correct++;
+        if (topLevel >= needLevel) correct++;
         else issues.push({ ...d, issue: reason, chainStr });
       }
     });

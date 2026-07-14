@@ -332,6 +332,7 @@ const APP_CONFIG = {
     "Serebral angiografiya + transluminal ballon angioplastika (TLBAP)",
     "Kombinatsiyalangan muolaja: tromboaspiratsiya + tromboekstraksiya",
     "Gemorragik insult bo'yicha jarrohlik amaliyoti",
+    "Boshqa muassasaga o'tkazildi — MSKT (tekshiruv) uchun",
     "Boshqa muassasaga o'tkazildi — angiografiya va endovaskulyar muolaja uchun"
   ],
 
