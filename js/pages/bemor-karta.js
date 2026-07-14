@@ -359,7 +359,6 @@ const BemorKartaPage = {
               ${row('Killip klassifikatsiyasi', p.killip)}
               ${row('Troponin', p.troponin)}
               ${row('KFK-MB', p.kkfmb)}
-              ${row('EKG vaqti', p.ekg_vaqti)}
               ${row('Puls', p.puls || null)}
               ${row('AHA bali', p.aha_bali ? p.aha_bali + ' ball' : null)}
             `: `
@@ -381,7 +380,15 @@ const BemorKartaPage = {
             ${row('Shifoxonaga keldi', Utils.formatDateTime(p.qabul_vaqt))}
             ${type==='infarkt' ? `
               ${row('Tez yordam yetib keldi', Utils.formatDateTime(p.tez_yordam_kelgan_vaqt))}
-            ` : ''}
+              ${p.ekg_vaqti_ts ? row('EKG o\'tkazildi', Utils.formatDateTime(p.ekg_vaqti_ts)) : (p.ekg_vaqti ? row('EKG vaqti', p.ekg_vaqti) : '')}
+              ${p.tlt_vaqt ? row('TLT o\'tkazildi', Utils.formatDateTime(p.tlt_vaqt)) : ''}
+              ${p.pci_vaqt ? row('PCI/Groin vaqti', Utils.formatDateTime(p.pci_vaqt)) : ''}
+            ` : `
+              ${row('Tez yordam yetib keldi', Utils.formatDateTime(p.tez_yordam_kelgan_vaqt))}
+              ${p.kt_vaqti ? row('KT/MSKT o\'tkazildi', Utils.formatDateTime(p.kt_vaqti)) : ''}
+              ${p.trombolizis_vaqti ? row('Trombolizis o\'tkazildi', Utils.formatDateTime(p.trombolizis_vaqti)) : ''}
+              ${p.trombektomiya_vaqti ? row('Trombektomiya o\'tkazildi', Utils.formatDateTime(p.trombektomiya_vaqti)) : ''}
+            `}
             ${p.reabilitatsiya_boshlangan_vaqt ? row('Reabilitatsiya boshlandi', Utils.formatDateTime(p.reabilitatsiya_boshlangan_vaqt)) : ''}
           </div>
         </div>

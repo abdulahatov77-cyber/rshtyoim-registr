@@ -731,14 +731,24 @@ const HisobotPage = {
       if (diffs.length === 0) return null;
       const sorted = [...diffs].sort((a, b) => a - b);
       const n = sorted.length;
-      const median = n % 2 === 0
-        ? Math.round((sorted[n/2-1] + sorted[n/2]) / 2)
-        : Math.round(sorted[Math.floor(n/2)]);
-      const q1 = Math.round(sorted[Math.floor(n * 0.25)]);
-      const q3 = Math.round(sorted[Math.floor(n * 0.75)]);
-      return { median, q1, q3, n };
+      // Chiziqli interpolyatsiya bilan persentil (kichik n uchun to'g'riroq)
+      const pct = (p) => {
+        if (n === 1) return sorted[0];
+        const idx = (n - 1) * p;
+        const lo = Math.floor(idx), hi = Math.ceil(idx);
+        if (lo === hi) return sorted[lo];
+        return sorted[lo] + (sorted[hi] - sorted[lo]) * (idx - lo);
+      };
+      return {
+        median: Math.round(pct(0.5)),
+        q1: Math.round(pct(0.25)),
+        q3: Math.round(pct(0.75)),
+        n
+      };
     };
 
+    // diff daqiqada. Manfiy (qabuldan oldin) va absurd (>7 kun — aniq xato) chiqariladi.
+    // 24 soatdan ko'p muolaja HAQIQIY kechikish bo'lishi mumkin — saqlanadi.
     const calcTimeStats = (items, startField, endField) => {
       const diffs = items.map(p => {
         if (!p[startField] || !p[endField]) return null;
@@ -746,7 +756,7 @@ const HisobotPage = {
         const d2 = new Date(p[endField]);
         if (isNaN(d1) || isNaN(d2)) return null;
         return (d2 - d1) / 60000;
-      }).filter(d => d !== null && d > 0 && d < 1440);
+      }).filter(d => d !== null && d > 0 && d < 10080); // 10080 daq = 7 kun
       return calcMedianStats(diffs);
     };
 
@@ -786,8 +796,10 @@ const HisobotPage = {
     const statsCT           = calcTimeStats(ins.filter(p=>p.kt_vaqti), 'qabul_vaqt', 'kt_vaqti');
 
     // n — muolaja tanlangan bemorlar (vaqt to'ldirilishi kerak bo'lganlar)
-    const nEKG_total      = infs.length;
-    const nEKG_filled     = infs.filter(p=>p.ekg_vaqti_ts).length;
+    // EKG: boshqa muassasaga o'tkazib yuborilganlar bu yerда EKG olmasligi mumkin — chiqaramiz
+    const infsEKG = infs.filter(p => p.status !== 'otkazildi');
+    const nEKG_total      = infsEKG.length;
+    const nEKG_filled     = infsEKG.filter(p=>p.ekg_vaqti_ts).length;
     const nTLT_inf_total  = infs.filter(p=>hasAnyMuolaja(p, dinamikaInfMap, ['TLT','trombolitik'])).length;
     const nTLT_inf_filled = infs.filter(p=>p.tlt_vaqt).length;
     const nPCI_total      = infs.filter(p=>hasAnyMuolaja(p, dinamikaInfMap, ['PCI','stentlash','TLBAP'])).length;
