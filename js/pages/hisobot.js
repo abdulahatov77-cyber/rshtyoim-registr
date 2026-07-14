@@ -799,15 +799,17 @@ const HisobotPage = {
     // EKG: BARCHA infarkt bemorlar EKG oladi (o'tkazilganlar ham — EKG shu yerда qilinib, keyin o'tkaziladi)
     const nEKG_total      = infs.length;
     const nEKG_filled     = infs.filter(p=>p.ekg_vaqti_ts).length;
-    const nTLT_inf_total  = infs.filter(p=>hasAnyMuolaja(p, dinamikaInfMap, ['TLT','trombolitik'])).length;
+    // Jami (denominator) = muolaja tanlangan YOKI vaqt to'ldirilgan (vaqt bor bemor albатта muolaja olган)
+    // Shunda "to'ldirilgan" hech qachon "jami" dan oshib ketmaydi (100% dan katta bo'lmaydi)
+    const nTLT_inf_total  = infs.filter(p=>hasAnyMuolaja(p, dinamikaInfMap, ['TLT','trombolitik']) || p.tlt_vaqt).length;
     const nTLT_inf_filled = infs.filter(p=>p.tlt_vaqt).length;
-    const nPCI_total      = infs.filter(p=>hasAnyMuolaja(p, dinamikaInfMap, ['PCI','stentlash','TLBAP'])).length;
+    const nPCI_total      = infs.filter(p=>hasAnyMuolaja(p, dinamikaInfMap, ['PCI','stentlash','TLBAP']) || p.pci_vaqt).length;
     const nPCI_filled     = infs.filter(p=>p.pci_vaqt).length;
-    const nTLT_ins_total  = ins.filter(p=>hasAnyMuolaja(p, dinamikaInsMap, ['trombolizis','tlt'])).length;
+    const nTLT_ins_total  = ins.filter(p=>hasAnyMuolaja(p, dinamikaInsMap, ['trombolizis','tlt']) || p.trombolizis_vaqti).length;
     const nTLT_ins_filled = ins.filter(p=>p.trombolizis_vaqti).length;
-    const nTromb_total    = ins.filter(p=>hasAnyMuolaja(p, dinamikaInsMap, ['trombektomiya','tromboekstraksiya','tromboaspiratsiya'])).length;
+    const nTromb_total    = ins.filter(p=>hasAnyMuolaja(p, dinamikaInsMap, ['trombektomiya','tromboekstraksiya','tromboaspiratsiya']) || p.trombektomiya_vaqti).length;
     const nTromb_filled   = ins.filter(p=>p.trombektomiya_vaqti).length;
-    const nCT_total       = ins.filter(p=>Utils.msktDone(p.mskt)).length;
+    const nCT_total       = ins.filter(p=>Utils.msktDone(p.mskt) || p.kt_vaqti).length;
     const nCT_filled      = ins.filter(p=>p.kt_vaqti).length;
 
     // NSTEMI invaziv strategiya oynasi (GRACE bo'yicha): yuqori xavf <24 soat, o'rta <72 soat
