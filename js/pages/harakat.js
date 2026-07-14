@@ -3,6 +3,9 @@ const HarakatPage = {
   _data: [],
   _filter: 'barchasi', // 'barchasi' | 'infarkt' | 'insult'
   _search: '',
+  _viloyat: '',        // '' = barcha viloyat
+  _from: '',           // sana dan (YYYY-MM-DD)
+  _to: '',             // sana gacha
 
   async render() {
     const user = await Auth.getUser();
@@ -17,22 +20,26 @@ const HarakatPage = {
 
   async _load() {
     try {
-      // infarkt_qabul va insult_qabul dan otkazilgan_muassasa bo'sh bo'lmaganlar
-      const [infRes, insRes, logRes] = await Promise.all([
-        getSupabase()
-          .from('infarkt_qabul')
-          .select('kt_no,fio,muassasa,viloyat,otkazilgan_muassasa,otkazish_sababi,qabul_vaqt,muolaja_turi')
-          .not('otkazilgan_muassasa', 'is', null)
-          .neq('otkazilgan_muassasa', '')
-          .order('qabul_vaqt', { ascending: false })
-          .range(0, 4999),
-        getSupabase()
-          .from('insult_qabul')
-          .select('kt_no,fio,muassasa,viloyat,otkazilgan_muassasa,qabul_vaqt,muolaja_turi,mskt,mskt_angiografiya')
-          .not('otkazilgan_muassasa', 'is', null)
-          .neq('otkazilgan_muassasa', '')
-          .order('qabul_vaqt', { ascending: false })
-          .range(0, 4999),
+      // Barcha yozuvlarni 1000-qatorlik batch loop bilan olamiz (cheksiz)
+      const fetchAllTransfers = async (table, cols) => {
+        let all = [], from = 0;
+        while (true) {
+          const { data, error } = await getSupabase()
+            .from(table).select(cols)
+            .not('otkazilgan_muassasa', 'is', null)
+            .neq('otkazilgan_muassasa', '')
+            .order('qabul_vaqt', { ascending: false })
+            .range(from, from + 999);
+          if (error || !data || !data.length) break;
+          all = all.concat(data);
+          if (data.length < 1000) break;
+          from += 1000;
+        }
+        return all;
+      };
+      const [infData, insData, logRes] = await Promise.all([
+        fetchAllTransfers('infarkt_qabul', 'kt_no,fio,muassasa,viloyat,otkazilgan_muassasa,otkazish_sababi,qabul_vaqt,muolaja_turi,infarkt_turi'),
+        fetchAllTransfers('insult_qabul', 'kt_no,fio,muassasa,viloyat,otkazilgan_muassasa,qabul_vaqt,muolaja_turi,mskt,mskt_angiografiya'),
         getSupabase()
           .from('transfer_log')
           .select('*')
@@ -48,8 +55,8 @@ const HarakatPage = {
 
       // infarkt + insult bemorlarini birlashtirish
       const combined = [
-        ...(infRes.data || []).map(p => ({ ...p, _type: 'infarkt' })),
-        ...(insRes.data || []).map(p => ({ ...p, _type: 'insult' }))
+        ...(infData || []).map(p => ({ ...p, _type: 'infarkt' })),
+        ...(insData || []).map(p => ({ ...p, _type: 'insult' }))
       ];
 
       HarakatPage._data = combined.map(p => {
@@ -105,6 +112,18 @@ const HarakatPage = {
     if (HarakatPage._filter !== 'barchasi') {
       list = list.filter(d => d.bemor_turi === HarakatPage._filter);
     }
+    // Viloyat filtri
+    if (HarakatPage._viloyat) {
+      list = list.filter(d => d.patient?.viloyat === HarakatPage._viloyat);
+    }
+    // Davr filtri (qabul_vaqt bo'yicha, UZT sana)
+    const toUztDay = iso => iso ? new Date(new Date(iso).getTime()+5*3600000).toISOString().slice(0,10) : '';
+    if (HarakatPage._from) {
+      list = list.filter(d => toUztDay(d.patient?.qabul_vaqt) >= HarakatPage._from);
+    }
+    if (HarakatPage._to) {
+      list = list.filter(d => toUztDay(d.patient?.qabul_vaqt) <= HarakatPage._to);
+    }
     if (HarakatPage._search) {
       const q = HarakatPage._search.toLowerCase();
       list = list.filter(d =>
@@ -149,23 +168,41 @@ const HarakatPage = {
   // Marshrut nazorati: klinik qoidага mos kelmagan holatlar
   _routeAudit() {
     const issues = [];
-    // Muassasa turini aniqlash (marshrut bosqichи)
-    // 3-bosqich (eng yuqori): angiografiya/endovaskulyar imkoniyati bor markaz
-    const isAngioCenter = m => {
-      const s = (m || '').toLowerCase();
-      return s.includes('rshtyoim') || s.includes('angiografiya') || s.includes('angio markaz') || s.includes('endovaskulyar') || s.includes('kardiologiya markaz');
-    };
-    // 2-bosqich: politravma markazi (MSKT bor)
-    const isPolitravma = m => (m || '').toLowerCase().includes('politravma');
+    let needed = 0, correct = 0;
 
     HarakatPage._getFiltered().forEach(d => {
       const p = d.patient;
       const chain = d.fullChain.filter(Boolean);
       const chainStr = chain.join(' → ');
+      const topLevel = Math.max(...chain.map(m => HarakatPage._muassasaLevel(m)), 1);
+      let requiresRouting = false, reason = '';
+
+      if (d.bemor_turi === 'insult' && p.mskt_angiografiya === 'Ha') {
+        requiresRouting = true;
+        reason = 'Angiografiyaga korsatma bor - angiografiya markaziga otkazilishi kerak edi';
+      } else if (d.bemor_turi === 'infarkt') {
+        const isSTEMI = (p.infarkt_turi || '').toUpperCase().includes('STEMI') && !(p.infarkt_turi || '').toUpperCase().includes('NSTEMI');
+        if (isSTEMI) { requiresRouting = true; reason = 'STEMI - angiografiya markaziga otkazilishi kerak edi'; }
+      }
+      if (requiresRouting) {
+        needed++;
+        if (topLevel === 3) correct++;
+        else issues.push({ ...d, issue: reason, chainStr });
+      }
+    });
+    return { needed, correct, issues, pct: needed ? Math.round(correct / needed * 100) : null };
+  },
+
+  _OLD_routeAudit_unused() {
+    const issues = []; let needed=0, correct=0;
+    const isAngioCenter = m => HarakatPage._muassasaLevel(m) === 3;
+    const isPolitravma = m => (m||'').toLowerCase().includes('politravma');
+    HarakatPage._getFiltered().forEach(d => {
+      const p = d.patient;
+      const chain = d.fullChain.filter(Boolean);
+      const chainStr = chain.join(' → ');
       const lastStop = chain.slice(-1)[0] || '';
-
       const add = (issue) => issues.push({ ...d, issue, chainStr });
-
       if (d.bemor_turi === 'insult') {
         // TO'G'RI marshrut: TTB → Politravma (MSKT) → [ko'rsатма bo'lsa] Angiografiya markazi
         // MUAMMO: MSKT angiografiyaда ko'rsатма bor, lekin angiografiya markazига YETIB bormagan
@@ -258,17 +295,35 @@ const HarakatPage = {
       </div>
       <style>@media(max-width:720px){.route-stats-grid{grid-template-columns:1fr !important}}</style>`;
 
-    // ===== Marshrut nazorati (muammoli holatlar) =====
-    const auditIssues = HarakatPage._routeAudit();
-    const auditHtml = auditIssues.length === 0
-      ? `<div style="background:var(--ok-soft,#f0fdf4);border:1px solid #bbf7d0;border-radius:14px;padding:16px 18px;margin-bottom:20px;display:flex;align-items:center;gap:12px">
+    // ===== Marshrut nazorati (foiz ko'rsatkич + muammoli holatlar) =====
+    const audit = HarakatPage._routeAudit();
+    const auditIssues = audit.issues;
+    // Foiz ko'rsatkич kartasi
+    const pctColor = audit.pct === null ? '#94a3b8' : audit.pct >= 80 ? '#16a34a' : audit.pct >= 50 ? '#d97706' : '#dc2626';
+    const auditSummaryHtml = `
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px">
+        <div style="background:white;border:1px solid #e2e8f0;border-radius:14px;padding:16px;text-align:center">
+          <div style="font-size:28px;font-weight:800;color:#0f172a">${audit.needed}</div>
+          <div style="font-size:11px;color:#64748b;font-weight:600;text-transform:uppercase">Marshrутизацияга muhtoj</div>
+        </div>
+        <div style="background:white;border:1px solid #e2e8f0;border-radius:14px;padding:16px;text-align:center">
+          <div style="font-size:28px;font-weight:800;color:#16a34a">${audit.correct}</div>
+          <div style="font-size:11px;color:#64748b;font-weight:600;text-transform:uppercase">To'g'ri marshrut</div>
+        </div>
+        <div style="background:white;border:1px solid #e2e8f0;border-radius:14px;padding:16px;text-align:center;border-color:${pctColor}33">
+          <div style="font-size:28px;font-weight:800;color:${pctColor}">${audit.pct === null ? '—' : audit.pct + '%'}</div>
+          <div style="font-size:11px;color:#64748b;font-weight:600;text-transform:uppercase">To'g'rilik darajasi</div>
+        </div>
+      </div>`;
+    const auditHtml = auditSummaryHtml + (auditIssues.length === 0
+      ? `<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:14px;padding:16px 18px;margin-bottom:20px;display:flex;align-items:center;gap:12px">
            <div style="width:32px;height:32px;border-radius:8px;background:#16a34a;color:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0">${icon('check',18)}</div>
-           <div><div style="font-size:13px;font-weight:700;color:#16a34a">Marshrut muammosi topilmadi</div>
-           <div style="font-size:12px;color:#64748b">Barcha o'tkazishlar klinik qoidага mos</div></div>
+           <div><div style="font-size:13px;font-weight:700;color:#16a34a">Barcha marshrутизация to'g'ri</div>
+           <div style="font-size:12px;color:#64748b">Muhtoj bemorlar angiografiya markazига yetган</div></div>
          </div>`
       : `<div style="background:#fffbeb;border:1px solid #fde68a;border-radius:14px;padding:16px 18px;margin-bottom:20px">
            <div style="font-size:13px;font-weight:800;color:#d97706;margin-bottom:12px;display:flex;align-items:center;gap:8px">
-             ${icon('alert-triangle',16)} Marshrut nazorati — ${auditIssues.length} ta e'tibor talab qiladigan holat
+             ${icon('alert-triangle',16)} Noto'g'ri marshrut — ${auditIssues.length} ta bemor angiografiya markazига yetmagan
            </div>
            ${auditIssues.slice(0, 20).map(iss => `
              <div onclick="Router.go('bemor-karta',{kt_no:'${esc(String(iss.kt_no||'')).replace(/'/g,'&#39;')}',type:'${esc(String(iss.bemor_turi||''))}'})"
@@ -282,7 +337,7 @@ const HarakatPage = {
                </div>
              </div>`).join('')}
            ${auditIssues.length > 20 ? `<div style="font-size:12px;color:#94a3b8;text-align:center;padding-top:6px">va yana ${auditIssues.length - 20} ta...</div>` : ''}
-         </div>`;
+         </div>`);
 
     const rows = list.length === 0
       ? `<div style="text-align:center;padding:60px;color:#94a3b8">
@@ -347,6 +402,22 @@ const HarakatPage = {
           </div>
         </div>
 
+        <!-- Davr + viloyat filtri -->
+        <div style="background:white;border:1px solid #e2e8f0;border-radius:12px;padding:12px 14px;margin-bottom:14px;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+          <span style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase">Davr:</span>
+          <input type="date" value="${HarakatPage._from}" onchange="HarakatPage._setPeriod('from',this.value)"
+            style="border:1px solid #e2e8f0;border-radius:8px;padding:6px 10px;font-size:12px;outline:none">
+          <span style="color:#94a3b8">—</span>
+          <input type="date" value="${HarakatPage._to}" onchange="HarakatPage._setPeriod('to',this.value)"
+            style="border:1px solid #e2e8f0;border-radius:8px;padding:6px 10px;font-size:12px;outline:none">
+          <span style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;margin-left:8px">Viloyat:</span>
+          <select onchange="HarakatPage._setViloyat(this.value)" style="border:1px solid #e2e8f0;border-radius:8px;padding:6px 10px;font-size:12px;outline:none;min-width:160px">
+            <option value="">— Barcha viloyat —</option>
+            ${(APP_CONFIG.VILOYATLAR||[]).map(v => `<option value="${esc(v)}" ${HarakatPage._viloyat===v?'selected':''}>${esc(v)}</option>`).join('')}
+          </select>
+          ${(HarakatPage._from||HarakatPage._to||HarakatPage._viloyat) ? `<button onclick="HarakatPage._clearFilters()" style="margin-left:auto;padding:6px 12px;background:#fef2f2;color:#dc2626;border:1px solid #fecaca;border-radius:8px;cursor:pointer;font-size:12px;font-weight:700">Tozalash</button>` : ''}
+        </div>
+
         <!-- Filter va qidiruv -->
         <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center">
           <div style="display:flex;gap:6px">
@@ -389,6 +460,22 @@ const HarakatPage = {
 
   _setSearch(v) {
     HarakatPage._search = v;
+    HarakatPage._render();
+  },
+
+  _setViloyat(v) {
+    HarakatPage._viloyat = v;
+    HarakatPage._render();
+  },
+
+  _setPeriod(which, v) {
+    if (which === 'from') HarakatPage._from = v;
+    else HarakatPage._to = v;
+    HarakatPage._render();
+  },
+
+  _clearFilters() {
+    HarakatPage._from = ''; HarakatPage._to = ''; HarakatPage._viloyat = '';
     HarakatPage._render();
   }
 };
