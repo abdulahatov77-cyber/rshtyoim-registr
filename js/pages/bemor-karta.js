@@ -734,8 +734,23 @@ const BemorKartaPage = {
         shifokor_fio: profile?.fio || 'Dr. Navbatchi'
       });
       if (isOtk) {
-        if (BemorKartaPage._type === 'infarkt') await DB.infarktUpdate(p.kt_no, { status: 'otkazildi' });
-        else await DB.insultUpdate(p.kt_no, { status: 'otkazildi' });
+        // Bemorning joriy (oxirgi) muassasasi — undan yangi muassasaga o'tkaziladi
+        const oldTransfers = await TransferLog.getByKtNo(p.kt_no).catch(() => []);
+        const currentMuassasa = oldTransfers.length
+          ? oldTransfers[oldTransfers.length - 1].muassasa_ga
+          : (p.otkazilgan_muassasa || p.muassasa);
+        // transfer_log ga yozamiz — marshrutizatsiya (harakat) sahifasida ko'rinadi
+        await TransferLog.add({
+          kt_no: p.kt_no,
+          muassasa_dan: currentMuassasa,
+          muassasa_ga: otkazilganMuassasa,
+          sana: new Date(Date.now() + 5*3600000).toISOString().slice(0,10)
+        }).catch(() => {});
+        const upd = { status: 'otkazildi' };
+        // Agar hali otkazilgan_muassasa bo'sh bo'lsa — birinchi o'tkazishni ham yozamiz
+        if (!p.otkazilgan_muassasa) upd.otkazilgan_muassasa = otkazilganMuassasa;
+        if (BemorKartaPage._type === 'infarkt') await DB.infarktUpdate(p.kt_no, upd);
+        else await DB.insultUpdate(p.kt_no, upd);
         BemorKartaPage._patient.status = 'otkazildi';
         showToast(`✅ Bemor ${otkazilganMuassasa}ga o'tkazildi`, 'success');
         setTimeout(() => Router.go('bemorlar'), 1500);
