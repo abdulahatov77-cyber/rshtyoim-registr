@@ -767,6 +767,15 @@ const InsultYangiPage = {
       const errEl = document.getElementById('err-'+key);
       if (errEl) { errEl.textContent = msg; errEl.classList.remove('hidden'); }
     }
+    // F.I.O — kamida bitta harf bo'lishi kerak
+    if (this._step === 1 && valid && this._data.fio) {
+      if (!/[a-zA-Zа-яА-ЯўқғҳЎҚҒҲ']/.test(this._data.fio)) {
+        valid = false;
+        const el = document.getElementById('fio');
+        if (el) { el.classList.add('border-red-500'); el.focus(); }
+        showToast('⚠️ F.I.O harflardan iborat bo\'lishi kerak!', 'error', 5000);
+      }
+    }
     // Tug'ilgan sana tekshiruvi
     if (this._step === 1 && this._data.tugilgan_sana) {
       const birth = new Date(this._data.tugilgan_sana);
@@ -805,15 +814,27 @@ const InsultYangiPage = {
           showToast('⚠️ Qabul soatini kiriting!', 'error', 5000);
         } else {
           const qv = new Date(`${sanaEl.value}T${soatEl.value}:00+05:00`);
+          const oneYearAgo = new Date(); oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
           if (qv > new Date()) {
             valid = false;
             sanaEl.classList.add('border-red-500');
             showToast('⚠️ Qabul vaqti kelajakda bo\'lishi mumkin emas!', 'error', 5000);
             const errEl = document.getElementById('err-qabul_vaqt');
             if (errEl) { errEl.textContent = 'Kelajak sana kiritilgan — iltimos to\'g\'irlang'; errEl.classList.remove('hidden'); }
+          } else if (qv < oneYearAgo) {
+            valid = false;
+            sanaEl.classList.add('border-red-500');
+            showToast('⚠️ Qabul vaqti 1 yildan eski bo\'lishi mumkin emas — sanani tekshiring!', 'error', 6000);
           }
         }
       }
+    }
+    // Qon bosimi formati (masalan 140/90)
+    if (this._step === 2 && valid && this._data.qon_bosimi && !/^\d{2,3}\/\d{2,3}$/.test(this._data.qon_bosimi.trim())) {
+      valid = false;
+      document.getElementById('qon_bosimi')?.classList.add('border-red-500');
+      document.getElementById('qon_bosimi')?.focus();
+      showToast('⚠️ Qon bosimi "140/90" ko\'rinishida bo\'lishi kerak!', 'error', 5000);
     }
     if (this._step === 2 && valid) {
       if (!this._data.xavf_omil || this._data.xavf_omil.length === 0) {
@@ -821,8 +842,18 @@ const InsultYangiPage = {
         showToast('Xavf omillarini belgilang (kamida bittasini)', 'warning');
       }
     }
+    // Shifokor telefoni — kamida 7 raqam
+    if (this._step === 3 && valid && this._data.shifokor_tel) {
+      const digits = (this._data.shifokor_tel.match(/\d/g) || []).length;
+      if (digits < 7) {
+        valid = false;
+        document.getElementById('shifokor_tel')?.classList.add('border-red-500');
+        document.getElementById('shifokor_tel')?.focus();
+        showToast('⚠️ Shifokor telefonini to\'g\'ri kiriting (kamida 7 raqam)!', 'error', 5000);
+      }
+    }
     // Step 3: vaqt mezonlari validatsiyasi
-    if (this._step === 3) {
+    if (this._step === 3 && valid) {
       const now = new Date();
       const qv = (() => { try { return this._data.qabul_vaqt ? new Date(this._data.qabul_vaqt + (this._data.qabul_vaqt.includes('T') ? ':00+05:00' : '')) : null; } catch(e) { return null; } })();
       const muolaja = this._data.muolaja_turi || '';
