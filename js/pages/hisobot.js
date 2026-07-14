@@ -810,6 +810,23 @@ const HisobotPage = {
     const nCT_total       = ins.filter(p=>Utils.msktDone(p.mskt)).length;
     const nCT_filled      = ins.filter(p=>p.kt_vaqti).length;
 
+    // NSTEMI invaziv strategiya oynasi (GRACE bo'yicha): yuqori xavf <24 soat, o'rta <72 soat
+    // PCI qilingan NSTEMI bemorlar oynaga ulgurdimi?
+    const nstemiPci = infs.filter(p => {
+      const isNSTEMI = (p.infarkt_turi || '').toUpperCase().includes('NSTEMI');
+      return isNSTEMI && p.pci_vaqt && p.qabul_vaqt && !isNaN(parseInt(p.grace_bali));
+    });
+    let nstemiWindowNeeded = 0, nstemiWindowOk = 0;
+    nstemiPci.forEach(p => {
+      const grace = parseInt(p.grace_bali);
+      const limitH = grace > 140 ? 24 : (grace > 108 ? 72 : null);
+      if (limitH === null) return; // past xavf — oynaga kirmaydi
+      nstemiWindowNeeded++;
+      const deadline = new Date(new Date(p.qabul_vaqt).getTime() + limitH*3600000);
+      if (new Date(p.pci_vaqt) <= deadline) nstemiWindowOk++;
+    });
+    const nstemiWindowPct = nstemiWindowNeeded ? Math.round(nstemiWindowOk / nstemiWindowNeeded * 100) : null;
+
     const now = new Date(Date.now() + 5*3600000);
     const nowStr = `${String(now.getUTCHours()).padStart(2,'0')}:${String(now.getUTCMinutes()).padStart(2,'0')} ${String(now.getUTCDate()).padStart(2,'0')}.${String(now.getUTCMonth()+1).padStart(2,'0')}.${now.getUTCFullYear()}`;
 
@@ -930,6 +947,18 @@ const HisobotPage = {
             </div>
           </div>
           <div class="p-4">
+            ${nstemiWindowNeeded ? `
+            <!-- NSTEMI invaziv strategiya oynasi (GRACE bo'yicha) -->
+            <div class="mb-5" style="background:#fff7ed;border-radius:14px;border:1px solid #fed7aa;padding:14px">
+              <div style="font-size:11px;font-weight:900;color:#c2410c;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:10px;display:flex;align-items:center;gap:6px">
+                ${icon('activity',14)} NSTEMI — invaziv strategiya oynasi (GRACE: yuqori xavf &lt;24 soat, o'rta &lt;72 soat)
+              </div>
+              <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
+                <div style="text-align:center"><div style="font-size:26px;font-weight:800;color:#0f172a">${nstemiWindowNeeded}</div><div style="font-size:11px;color:#78716c;font-weight:600">PCI qilingan NSTEMI</div></div>
+                <div style="text-align:center"><div style="font-size:26px;font-weight:800;color:#16a34a">${nstemiWindowOk}</div><div style="font-size:11px;color:#78716c;font-weight:600">Muddatда bajarildi</div></div>
+                <div style="text-align:center"><div style="font-size:26px;font-weight:800;color:${nstemiWindowPct>=80?'#16a34a':nstemiWindowPct>=50?'#d97706':'#dc2626'}">${nstemiWindowPct}%</div><div style="font-size:11px;color:#78716c;font-weight:600">Oynaga ulgurish</div></div>
+              </div>
+            </div>` : ''}
             <!-- Vaqt kiritilganlik darajasi -->
             <div class="mb-5" style="background:#f8fafc;border-radius:14px;border:1px solid #e2e8f0;padding:14px">
               <div style="font-size:11px;font-weight:900;color:#0f172a;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:10px">

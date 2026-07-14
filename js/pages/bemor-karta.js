@@ -328,7 +328,49 @@ const BemorKartaPage = {
         <span class="text-sm text-gray-500">${label}</span>
         <span class="text-sm font-semibold text-gray-900 text-right max-w-[60%]">${val||'—'}</span>
       </div>`;
-      
+
+    // NSTEMI PCI vaqt oynasi (GRACE bo'yicha): yuqori xavf <24 soat, o'rta <72 soat
+    const pciWindowHtml = (() => {
+      if (type !== 'infarkt') return '';
+      const isNSTEMI = (p.infarkt_turi || '').toUpperCase().includes('NSTEMI');
+      if (!isNSTEMI || !p.qabul_vaqt) return '';
+      const grace = parseInt(p.grace_bali);
+      if (isNaN(grace)) return '';
+      // Kerakli muddat (soat)
+      const limitH = grace > 140 ? 24 : (grace > 108 ? 72 : null);
+      if (limitH === null) return ''; // past xavf — invaziv shart emas
+      const deadline = new Date(new Date(p.qabul_vaqt).getTime() + limitH*3600000);
+      let statusHtml;
+      if (p.pci_vaqt) {
+        const pciDt = new Date(p.pci_vaqt);
+        const onTime = pciDt <= deadline;
+        const diffH = ((pciDt - new Date(p.qabul_vaqt)) / 3600000).toFixed(1);
+        statusHtml = onTime
+          ? `<span style="color:#16a34a;font-weight:700">✓ Muddatда bajarildi (${diffH} soat)</span>`
+          : `<span style="color:#dc2626;font-weight:700">✗ Kechikди (${diffH} soat)</span>`;
+      } else {
+        const now = new Date();
+        const overdue = now > deadline;
+        const leftH = ((deadline - now) / 3600000).toFixed(1);
+        statusHtml = overdue
+          ? `<span style="color:#dc2626;font-weight:700">⚠️ Muddat o'tди — PCI hali qilinmagan</span>`
+          : `<span style="color:#d97706;font-weight:700">⏳ ${leftH} soat qoldi</span>`;
+      }
+      const riskLabel = grace > 140 ? 'Yuqori xavf' : "O'rta xavf";
+      return `
+        <div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:12px;padding:14px 16px;margin-bottom:16px">
+          <div style="font-size:12px;font-weight:800;color:#c2410c;margin-bottom:8px;display:flex;align-items:center;gap:6px">
+            ${icon('activity',14)} NSTEMI — invaziv strategiya oynasi
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:13px">
+            <div><span style="color:#78716c">GRACE:</span> <b>${grace}</b> (${riskLabel})</div>
+            <div><span style="color:#78716c">Kerakli muddat:</span> <b>&lt; ${limitH} soat</b></div>
+            <div style="grid-column:1/3"><span style="color:#78716c">Oxirgi muddat:</span> <b>${Utils.formatDateTime(deadline.toISOString())}</b></div>
+            <div style="grid-column:1/3;padding-top:4px;border-top:1px solid #fed7aa">${statusHtml}</div>
+          </div>
+        </div>`;
+    })();
+
     // Tug'ilgan sanasini to'g'ri o'qish
     const tugilgan = p.tugilgan_sana || p.tugilgan_yil || '';
     const tugilganDisplay = tugilgan
@@ -391,6 +433,7 @@ const BemorKartaPage = {
             `}
             ${p.reabilitatsiya_boshlangan_vaqt ? row('Reabilitatsiya boshlandi', Utils.formatDateTime(p.reabilitatsiya_boshlangan_vaqt)) : ''}
           </div>
+          ${pciWindowHtml ? `<div class="px-5 pb-5">${pciWindowHtml}</div>` : ''}
         </div>
         <div class="card !mb-0 lg:col-span-2">
           <div class="card-header bg-gray-50 border-b border-gray-100 !mb-0"><h3 class="card-title text-gray-900 flex items-center gap-2">${icon('alert-triangle', 18)} Xavf omillari</h3></div>
