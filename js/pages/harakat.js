@@ -91,6 +91,15 @@ const HarakatPage = {
     }
   },
 
+  // Muassasa bosqichи (marshrut darajasi): 1=TTB, 2=Politravma, 3=Angio/RSHTYOIM
+  _muassasaLevel(m) {
+    const s = (m || '').toLowerCase();
+    if (s.includes('rshtyoim') || s.includes('angiografiya') || s.includes('angio markaz') ||
+        s.includes('endovaskulyar') || s.includes('kardiologiya markaz') || s.includes('respublika shoshilinch')) return 3;
+    if (s.includes('politravma')) return 2;
+    return 1; // TTB, ShTB va boshqalar
+  },
+
   _getFiltered() {
     let list = HarakatPage._data;
     if (HarakatPage._filter !== 'barchasi') {
@@ -107,17 +116,21 @@ const HarakatPage = {
     return list;
   },
 
-  // Marshrut statistikasi: "A → B" yo'nalishlari nechа marta uchragani
+  // Marshrut statistikasi — FAQAT yuqorига (marshrutизация) harakat.
+  // Pastга (RSHTYOIM → TTB — stabillashuvдан keyingi o'tkazish) hisoblanmaydi.
   _routeStats() {
     const list = HarakatPage._getFiltered();
     const routes = {};   // "A → B" : soni
     const fromCount = {}; // "A" (qayerdan): soni
     const toCount = {};   // "B" (qayerga): soni
+    let downCount = 0;    // pastга (oddiy o'tkazish) soni
     list.forEach(d => {
       const chain = d.fullChain.filter(Boolean);
       for (let i = 0; i < chain.length - 1; i++) {
         const from = chain[i], to = chain[i+1];
         if (!from || !to || from === to) continue;
+        // Faqat bosqich OSHган (yuqorига) harakat marshrutизация hisoblanadi
+        if (HarakatPage._muassasaLevel(to) <= HarakatPage._muassasaLevel(from)) { downCount++; continue; }
         const key = `${from} → ${to}`;
         routes[key] = (routes[key] || 0) + 1;
         fromCount[from] = (fromCount[from] || 0) + 1;
@@ -128,7 +141,8 @@ const HarakatPage = {
     return {
       routes: sortDesc(routes),
       topFrom: sortDesc(fromCount).slice(0, 8),
-      topTo: sortDesc(toCount).slice(0, 8)
+      topTo: sortDesc(toCount).slice(0, 8),
+      downCount
     };
   },
 
@@ -221,10 +235,13 @@ const HarakatPage = {
           </div>`).join('');
 
     const statsBlockHtml = `
+      <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:#1e40af">
+        ℹ️ Faqat <b>marshrutизация</b> (pastдан yuqорига: TTB → Politravma → Angiografiya) ko'rsatilган. Yuqоридан pastга o'tkazish (stabillashuvдан keyin) hisobga olinmaydi${rs.downCount ? ` — <b>${rs.downCount}</b> ta shunday o'tkazish chiqarib tashlanди` : ''}.
+      </div>
       <div style="display:grid;grid-template-columns:1.4fr 1fr;gap:14px;margin-bottom:20px" class="route-stats-grid">
         <div style="background:white;border:1px solid #e2e8f0;border-radius:14px;padding:18px">
           <div style="font-size:13px;font-weight:800;color:#0f172a;margin-bottom:14px;display:flex;align-items:center;gap:8px">
-            ${icon('git-branch',16)} Eng ko'p marshrutlar (qayerdan → qayerga)
+            ${icon('git-branch',16)} Eng ko'p marshrutlar (yuqорига)
           </div>
           ${routesHtml}
         </div>
