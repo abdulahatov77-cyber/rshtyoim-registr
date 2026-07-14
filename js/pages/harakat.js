@@ -135,29 +135,49 @@ const HarakatPage = {
   // Marshrut nazorati: klinik qoidага mos kelmagan holatlar
   _routeAudit() {
     const issues = [];
+    // Muassasa turini aniqlash (marshrut bosqichи)
+    // 3-bosqich (eng yuqori): angiografiya/endovaskulyar imkoniyati bor markaz
     const isAngioCenter = m => {
       const s = (m || '').toLowerCase();
-      return s.includes('rshtyoim') || s.includes('angiografiya') || s.includes('angio markaz') || s.includes('endovaskulyar');
+      return s.includes('rshtyoim') || s.includes('angiografiya') || s.includes('angio markaz') || s.includes('endovaskulyar') || s.includes('kardiologiya markaz');
     };
+    // 2-bosqich: politravma markazi (MSKT bor)
+    const isPolitravma = m => (m || '').toLowerCase().includes('politravma');
+
     HarakatPage._getFiltered().forEach(d => {
       const p = d.patient;
-      const chainStr = d.fullChain.filter(Boolean).join(' → ');
-      const lastStop = d.fullChain.filter(Boolean).slice(-1)[0] || '';
-      // QOIDA 1 (insult): MSKT angiografiyaда ko'rsатма bor, lekin angiografiya markazига o'tkazilmagan
-      if (d.bemor_turi === 'insult' && p.mskt_angiografiya === 'Ha' && !isAngioCenter(lastStop)) {
-        issues.push({ ...d, issue: 'MSKT angiografiya ko\'rsatма bor, lekin angiografiya markazига o\'tkazilmagan', chainStr });
-      }
-      // QOIDA 2: o'tkazish sababi ko'rsatilmagan (infarkt)
-      if (d.bemor_turi === 'infarkt' && (!p.otkazish_sababi || !p.otkazish_sababi.trim())) {
-        issues.push({ ...d, issue: 'O\'tkazish sababi ko\'rsatilmagan', chainStr });
-      }
-      // QOIDA 3: bir xil muassasага o'tkazish (marshrut xatosi)
       const chain = d.fullChain.filter(Boolean);
-      for (let i = 0; i < chain.length - 1; i++) {
-        if (chain[i] === chain[i+1]) {
-          issues.push({ ...d, issue: 'Bir xil muassasага o\'tkazilgan', chainStr });
-          break;
+      const chainStr = chain.join(' → ');
+      const lastStop = chain.slice(-1)[0] || '';
+
+      const add = (issue) => issues.push({ ...d, issue, chainStr });
+
+      if (d.bemor_turi === 'insult') {
+        // TO'G'RI marshrut: TTB → Politravma (MSKT) → [ko'rsатма bo'lsa] Angiografiya markazi
+        // MUAMMO: MSKT angiografiyaда ko'rsатма bor, lekin angiografiya markazига YETIB bormagan
+        if (p.mskt_angiografiya === 'Ha' && !isAngioCenter(lastStop)) {
+          add('Angiografiyaга ko\'rsatма bor — angiografiya markazига o\'tkazilishi kerak edi');
         }
+        // MUAMMO: Politravmага bormasдан to'g'ridan-to'g'ri angiografiya markazига (MSKT o'tkazilmagan bo'lsa)
+        // (MSKT Politravmада qilinadi — agar u o'tkazib yuborilса)
+      }
+
+      if (d.bemor_turi === 'infarkt') {
+        // TO'G'RI marshrut (STEMI): TTB → to'g'ridan-to'g'ri Angiografiya markazi
+        const isSTEMI = (p.infarkt_turi || '').toUpperCase().includes('STEMI') && !(p.infarkt_turi || '').toUpperCase().includes('NSTEMI');
+        // MUAMMO: STEMI bemor angiografiya markazига yetib bormagan
+        if (isSTEMI && !isAngioCenter(lastStop)) {
+          add('STEMI — angiografiya markazига o\'tkazilishi kerak edi');
+        }
+        // MUAMMO: STEMI Politravmага yuborilган (ortiqcha bosqich — vaqt yo'qotiladi)
+        if (isSTEMI && chain.some(isPolitravma)) {
+          add('STEMI Politravmага yuborilган — to\'g\'ridan-to\'g\'ri angiografiyага borishi kerak edi');
+        }
+      }
+
+      // UMUMIY MUAMMO: bir xil muassасага o'tkazish
+      for (let i = 0; i < chain.length - 1; i++) {
+        if (chain[i] === chain[i+1]) { add('Bir xil muassасага o\'tkazilgan'); break; }
       }
     });
     return issues;
