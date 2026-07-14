@@ -21,14 +21,14 @@ const HarakatPage = {
       const [infRes, insRes, logRes] = await Promise.all([
         getSupabase()
           .from('infarkt_qabul')
-          .select('kt_no,fio,muassasa,viloyat,otkazilgan_muassasa,qabul_vaqt,muolaja_turi')
+          .select('kt_no,fio,muassasa,viloyat,otkazilgan_muassasa,otkazish_sababi,qabul_vaqt,muolaja_turi')
           .not('otkazilgan_muassasa', 'is', null)
           .neq('otkazilgan_muassasa', '')
           .order('qabul_vaqt', { ascending: false })
           .range(0, 4999),
         getSupabase()
           .from('insult_qabul')
-          .select('kt_no,fio,muassasa,viloyat,otkazilgan_muassasa,qabul_vaqt,muolaja_turi')
+          .select('kt_no,fio,muassasa,viloyat,otkazilgan_muassasa,qabul_vaqt,muolaja_turi,mskt,mskt_angiografiya')
           .not('otkazilgan_muassasa', 'is', null)
           .neq('otkazilgan_muassasa', '')
           .order('qabul_vaqt', { ascending: false })
@@ -132,6 +132,37 @@ const HarakatPage = {
     };
   },
 
+  // Marshrut nazorati: klinik qoidага mos kelmagan holatlar
+  _routeAudit() {
+    const issues = [];
+    const isAngioCenter = m => {
+      const s = (m || '').toLowerCase();
+      return s.includes('rshtyoim') || s.includes('angiografiya') || s.includes('angio markaz') || s.includes('endovaskulyar');
+    };
+    HarakatPage._getFiltered().forEach(d => {
+      const p = d.patient;
+      const chainStr = d.fullChain.filter(Boolean).join(' → ');
+      const lastStop = d.fullChain.filter(Boolean).slice(-1)[0] || '';
+      // QOIDA 1 (insult): MSKT angiografiyaда ko'rsатма bor, lekin angiografiya markazига o'tkazilmagan
+      if (d.bemor_turi === 'insult' && p.mskt_angiografiya === 'Ha' && !isAngioCenter(lastStop)) {
+        issues.push({ ...d, issue: 'MSKT angiografiya ko\'rsatма bor, lekin angiografiya markazига o\'tkazilmagan', chainStr });
+      }
+      // QOIDA 2: o'tkazish sababi ko'rsatilmagan (infarkt)
+      if (d.bemor_turi === 'infarkt' && (!p.otkazish_sababi || !p.otkazish_sababi.trim())) {
+        issues.push({ ...d, issue: 'O\'tkazish sababi ko\'rsatilmagan', chainStr });
+      }
+      // QOIDA 3: bir xil muassasага o'tkazish (marshrut xatosi)
+      const chain = d.fullChain.filter(Boolean);
+      for (let i = 0; i < chain.length - 1; i++) {
+        if (chain[i] === chain[i+1]) {
+          issues.push({ ...d, issue: 'Bir xil muassasага o\'tkazilgan', chainStr });
+          break;
+        }
+      }
+    });
+    return issues;
+  },
+
   _render() {
     const list = HarakatPage._getFiltered();
     const total = HarakatPage._data.length;
@@ -189,6 +220,32 @@ const HarakatPage = {
         </div>
       </div>
       <style>@media(max-width:720px){.route-stats-grid{grid-template-columns:1fr !important}}</style>`;
+
+    // ===== Marshrut nazorati (muammoli holatlar) =====
+    const auditIssues = HarakatPage._routeAudit();
+    const auditHtml = auditIssues.length === 0
+      ? `<div style="background:var(--ok-soft,#f0fdf4);border:1px solid #bbf7d0;border-radius:14px;padding:16px 18px;margin-bottom:20px;display:flex;align-items:center;gap:12px">
+           <div style="width:32px;height:32px;border-radius:8px;background:#16a34a;color:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0">${icon('check',18)}</div>
+           <div><div style="font-size:13px;font-weight:700;color:#16a34a">Marshrut muammosi topilmadi</div>
+           <div style="font-size:12px;color:#64748b">Barcha o'tkazishlar klinik qoidага mos</div></div>
+         </div>`
+      : `<div style="background:#fffbeb;border:1px solid #fde68a;border-radius:14px;padding:16px 18px;margin-bottom:20px">
+           <div style="font-size:13px;font-weight:800;color:#d97706;margin-bottom:12px;display:flex;align-items:center;gap:8px">
+             ${icon('alert-triangle',16)} Marshrut nazorati — ${auditIssues.length} ta e'tibor talab qiladigan holat
+           </div>
+           ${auditIssues.slice(0, 20).map(iss => `
+             <div onclick="Router.go('bemor-karta',{kt_no:'${esc(String(iss.kt_no||'')).replace(/'/g,'&#39;')}',type:'${esc(String(iss.bemor_turi||''))}'})"
+               style="background:white;border:1px solid #fde68a;border-radius:10px;padding:11px 14px;margin-bottom:8px;cursor:pointer">
+               <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap">
+                 <div style="min-width:0;flex:1">
+                   <div style="font-size:13px;font-weight:700;color:#334155">${esc(iss.patient?.fio || '—')} <span style="font-size:11px;color:#94a3b8;font-family:monospace">${esc(iss.kt_no)}</span></div>
+                   <div style="font-size:12px;color:#64748b;margin-top:2px">${esc(iss.chainStr)}</div>
+                 </div>
+                 <div style="font-size:11px;font-weight:700;color:#d97706;background:#fffbeb;border:1px solid #fde68a;border-radius:6px;padding:3px 8px;align-self:flex-start;max-width:280px">⚠️ ${esc(iss.issue)}</div>
+               </div>
+             </div>`).join('')}
+           ${auditIssues.length > 20 ? `<div style="font-size:12px;color:#94a3b8;text-align:center;padding-top:6px">va yana ${auditIssues.length - 20} ta...</div>` : ''}
+         </div>`;
 
     const rows = list.length === 0
       ? `<div style="text-align:center;padding:60px;color:#94a3b8">
@@ -271,6 +328,9 @@ const HarakatPage = {
             ${icon('refresh-cw',13)} Yangilash
           </button>
         </div>
+
+        <!-- Marshrut nazorati -->
+        ${auditHtml}
 
         <!-- Marshrut statistikasi -->
         ${statsBlockHtml}
