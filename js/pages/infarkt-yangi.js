@@ -712,6 +712,19 @@ const InfarktYangiPage = {
         document.getElementById('ekg_soat')?.classList.add('border-red-500');
         document.getElementById('ekg_soat')?.focus();
         showToast('⚠️ EKG soatini kiriting!', 'error', 5000);
+      } else {
+        // EKG vaqti qabul vaqtidan oldin yoki kelajakда bo'lmasligi kerak
+        const ekgDt = new Date(`${ekgSana}T${ekgSoat}:00+05:00`);
+        const qv = this._data.qabul_vaqt ? new Date(this._data.qabul_vaqt.includes('T') && !this._data.qabul_vaqt.endsWith('Z') && !this._data.qabul_vaqt.includes('+') ? this._data.qabul_vaqt + ':00+05:00' : this._data.qabul_vaqt) : null;
+        if (ekgDt > new Date()) {
+          valid = false;
+          document.getElementById('ekg_soat')?.classList.add('border-red-500');
+          showToast('⚠️ EKG vaqti kelajakда bo\'lishi mumkin emas!', 'error', 5000);
+        } else if (qv && !isNaN(qv) && ekgDt < qv) {
+          valid = false;
+          document.getElementById('ekg_soat')?.classList.add('border-red-500');
+          showToast('⚠️ EKG vaqti bemor qabul vaqtidan oldin bo\'lishi mumkin emas!', 'error', 6000);
+        }
       }
     }
     if (this._step === 2 && valid) {

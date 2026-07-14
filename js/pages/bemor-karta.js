@@ -1485,9 +1485,9 @@ const BemorKartaPage = {
       if (!d || !t) return null;
       return new Date(`${d}T${t}:00+05:00`).toISOString();
     };
-    // Vaqt mezonlari validatsiyasi
+    // Vaqt mezonlari validatsiyasi (EKG ham qabul vaqtiga tekshiriladi)
     const vaqtFields = (isInf
-      ? [['edit-tlt-vaqt-d','edit-tlt-vaqt-t','TLT vaqti'],['edit-pci-vaqt-d','edit-pci-vaqt-t','PCI vaqti']]
+      ? [['edit-ekg-vaqti-d','edit-ekg-vaqti-t','EKG vaqti'],['edit-tlt-vaqt-d','edit-tlt-vaqt-t','TLT vaqti'],['edit-pci-vaqt-d','edit-pci-vaqt-t','PCI vaqti']]
       : [['edit-kt-vaqti-d','edit-kt-vaqti-t','KT/MSKT vaqti'],['edit-trombolizis-vaqti-d','edit-trombolizis-vaqti-t','Trombolizis vaqti'],['edit-trombektomiya-vaqti-d','edit-trombektomiya-vaqti-t','Trombektomiya vaqti']]
     ).filter(([dId]) => !!g(dId));
     for (const [dId, tId, label] of vaqtFields) {

@@ -796,10 +796,9 @@ const HisobotPage = {
     const statsCT           = calcTimeStats(ins.filter(p=>p.kt_vaqti), 'qabul_vaqt', 'kt_vaqti');
 
     // n — muolaja tanlangan bemorlar (vaqt to'ldirilishi kerak bo'lganlar)
-    // EKG: boshqa muassasaga o'tkazib yuborilganlar bu yerда EKG olmasligi mumkin — chiqaramiz
-    const infsEKG = infs.filter(p => p.status !== 'otkazildi');
-    const nEKG_total      = infsEKG.length;
-    const nEKG_filled     = infsEKG.filter(p=>p.ekg_vaqti_ts).length;
+    // EKG: BARCHA infarkt bemorlar EKG oladi (o'tkazilganlar ham — EKG shu yerда qilinib, keyin o'tkaziladi)
+    const nEKG_total      = infs.length;
+    const nEKG_filled     = infs.filter(p=>p.ekg_vaqti_ts).length;
     const nTLT_inf_total  = infs.filter(p=>hasAnyMuolaja(p, dinamikaInfMap, ['TLT','trombolitik'])).length;
     const nTLT_inf_filled = infs.filter(p=>p.tlt_vaqt).length;
     const nPCI_total      = infs.filter(p=>hasAnyMuolaja(p, dinamikaInfMap, ['PCI','stentlash','TLBAP'])).length;
