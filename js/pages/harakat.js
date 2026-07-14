@@ -107,6 +107,31 @@ const HarakatPage = {
     return list;
   },
 
+  // Marshrut statistikasi: "A → B" yo'nalishlari nechа marta uchragani
+  _routeStats() {
+    const list = HarakatPage._getFiltered();
+    const routes = {};   // "A → B" : soni
+    const fromCount = {}; // "A" (qayerdan): soni
+    const toCount = {};   // "B" (qayerga): soni
+    list.forEach(d => {
+      const chain = d.fullChain.filter(Boolean);
+      for (let i = 0; i < chain.length - 1; i++) {
+        const from = chain[i], to = chain[i+1];
+        if (!from || !to || from === to) continue;
+        const key = `${from} → ${to}`;
+        routes[key] = (routes[key] || 0) + 1;
+        fromCount[from] = (fromCount[from] || 0) + 1;
+        toCount[to] = (toCount[to] || 0) + 1;
+      }
+    });
+    const sortDesc = obj => Object.entries(obj).sort((a,b) => b[1]-a[1]);
+    return {
+      routes: sortDesc(routes),
+      topFrom: sortDesc(fromCount).slice(0, 8),
+      topTo: sortDesc(toCount).slice(0, 8)
+    };
+  },
+
   _render() {
     const list = HarakatPage._getFiltered();
     const total = HarakatPage._data.length;
@@ -114,6 +139,56 @@ const HarakatPage = {
     const insCount = HarakatPage._data.filter(d => d.bemor_turi === 'insult').length;
 
     const fmtDate = dt => dt ? new Date(dt).toLocaleDateString('uz-UZ', { day:'2-digit', month:'2-digit', year:'numeric', timeZone:'Asia/Tashkent' }) : '—';
+
+    // ===== Marshrut statistikasi =====
+    const rs = HarakatPage._routeStats();
+    const maxRoute = rs.routes.length ? rs.routes[0][1] : 1;
+    const routesHtml = rs.routes.length === 0
+      ? `<div style="color:#94a3b8;font-size:13px;padding:16px;text-align:center">Marshrut ma'lumoti yo'q</div>`
+      : rs.routes.slice(0, 12).map(([route, cnt]) => {
+          const pct = Math.round(cnt / maxRoute * 100);
+          const [from, to] = route.split(' → ');
+          return `<div style="margin-bottom:10px">
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:3px">
+              <span style="font-size:12px;color:#334155;font-weight:600;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+                ${esc(from)} <span style="color:#94a3b8">→</span> <span style="font-weight:700">${esc(to)}</span>
+              </span>
+              <span style="font-size:12px;font-weight:800;color:#2563eb;flex-shrink:0">${cnt}</span>
+            </div>
+            <div style="height:6px;background:#f1f5f9;border-radius:3px;overflow:hidden">
+              <div style="height:100%;width:${pct}%;background:linear-gradient(90deg,#3b82f6,#2563eb);border-radius:3px"></div>
+            </div>
+          </div>`;
+        }).join('');
+
+    const chipList = (arr, color) => arr.length === 0
+      ? `<span style="color:#94a3b8;font-size:12px">—</span>`
+      : arr.map(([nom, cnt]) => `
+          <div style="display:flex;justify-content:space-between;gap:8px;padding:6px 10px;background:#f8fafc;border:1px solid #f1f5f9;border-radius:8px;margin-bottom:5px">
+            <span style="font-size:12px;color:#334155;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(nom)}</span>
+            <span style="font-size:12px;font-weight:800;color:${color};flex-shrink:0">${cnt}</span>
+          </div>`).join('');
+
+    const statsBlockHtml = `
+      <div style="display:grid;grid-template-columns:1.4fr 1fr;gap:14px;margin-bottom:20px" class="route-stats-grid">
+        <div style="background:white;border:1px solid #e2e8f0;border-radius:14px;padding:18px">
+          <div style="font-size:13px;font-weight:800;color:#0f172a;margin-bottom:14px;display:flex;align-items:center;gap:8px">
+            ${icon('git-branch',16)} Eng ko'p marshrutlar (qayerdan → qayerga)
+          </div>
+          ${routesHtml}
+        </div>
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <div style="background:white;border:1px solid #e2e8f0;border-radius:14px;padding:16px">
+            <div style="font-size:12px;font-weight:800;color:#64748b;margin-bottom:10px;text-transform:uppercase;letter-spacing:.03em">📤 Ko'p yuborgan</div>
+            ${chipList(rs.topFrom, '#ea580c')}
+          </div>
+          <div style="background:white;border:1px solid #e2e8f0;border-radius:14px;padding:16px">
+            <div style="font-size:12px;font-weight:800;color:#64748b;margin-bottom:10px;text-transform:uppercase;letter-spacing:.03em">📥 Ko'p qabul qilgan</div>
+            ${chipList(rs.topTo, '#16a34a')}
+          </div>
+        </div>
+      </div>
+      <style>@media(max-width:720px){.route-stats-grid{grid-template-columns:1fr !important}}</style>`;
 
     const rows = list.length === 0
       ? `<div style="text-align:center;padding:60px;color:#94a3b8">
@@ -197,6 +272,13 @@ const HarakatPage = {
           </button>
         </div>
 
+        <!-- Marshrut statistikasi -->
+        ${statsBlockHtml}
+
+        <!-- Bemorlar ro'yxati sarlavhasi -->
+        <div style="font-size:13px;font-weight:800;color:#0f172a;margin-bottom:12px;display:flex;align-items:center;gap:8px">
+          ${icon('users',16)} O'tkazilgan bemorlar (${list.length})
+        </div>
         <!-- Ro'yxat -->
         <div>${rows}</div>
       </div>`;
