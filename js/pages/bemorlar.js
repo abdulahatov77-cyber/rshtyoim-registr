@@ -707,9 +707,9 @@ const BemorlarPage = {
       const lastColon = key.lastIndexOf(':');
       const kt_no = key.slice(0, lastColon);
       const type = key.slice(lastColon + 1);
-      const table = type === 'infarkt' ? 'infarkt_qabul' : 'insult_qabul';
-      const { error } = await sb.from(table).delete().eq('kt_no', kt_no);
-      if (error) errors.push(kt_no);
+      try {
+        await DB.deletePatientCascade(kt_no, type); // child yozuvlar ham o'chiriladi
+      } catch (error) { errors.push(kt_no); }
     }
     if (errors.length) showToast(`${errors.length} ta o'chirishda xatolik`, 'error');
     else showToast(`${n} ta bemor o'chirildi`, 'success');

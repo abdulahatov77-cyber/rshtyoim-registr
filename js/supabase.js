@@ -112,6 +112,22 @@ const UserLog = {
 
 // ==================== DATABASE ====================
 const DB = {
+  // Bemorni VA barcha bog'liq (child) yozuvlarini o'chiradi (orphan qolmasin)
+  async deletePatientCascade(kt_no, type) {
+    const sb = getSupabase();
+    const mainTable = type === 'infarkt' ? 'infarkt_qabul' : 'insult_qabul';
+    const chiqarishTable = type === 'infarkt' ? 'infarkt_chiqarish' : 'insult_chiqarish';
+    // Barcha child jadvallar kt_no orqali bog'langan
+    const childTables = [chiqarishTable, 'holat_dinamikasi', 'navbatchi_jurnal',
+      'dinamika_muolajalar', 'holat_baxolash', 'kuzatuv', 'davolash',
+      'transfer_log', 'bemor_fayllari'];
+    for (const t of childTables) {
+      try { await sb.from(t).delete().eq('kt_no', kt_no); } catch(e) { /* jadval yo'q bo'lsa o'tkazamiz */ }
+    }
+    const { error } = await sb.from(mainTable).delete().eq('kt_no', kt_no);
+    if (error) throw error;
+  },
+
   // F.I.O normalize qilingan holda bir xil bemor bazada bormi tekshiradi
   async checkDuplicate(table, fio, tugilganYil, qabulVaqtIso) {
     if (!fio || !qabulVaqtIso) return null;

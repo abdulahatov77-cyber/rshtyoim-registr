@@ -1557,19 +1557,9 @@ const BemorKartaPage = {
     }
     if (!confirm("Rostdan ham ushbu bemor ma'lumotlarini o'chirmoqchimisiz? Bu amalni ortga qaytarib bo'lmaydi!")) return;
     try {
-      const sb = getSupabase();
       const kt = BemorKartaPage._patient.kt_no;
-      const mainTable = BemorKartaPage._type === 'infarkt' ? 'infarkt_qabul' : 'insult_qabul';
-      const chiqarishTable = BemorKartaPage._type === 'infarkt' ? 'infarkt_chiqarish' : 'insult_chiqarish';
-      // Child jadvallarni avval o'chirish (FK constraint)
-      await sb.from(chiqarishTable).delete().eq('kt_no', kt);
-      await sb.from('holat_dinamikasi').delete().eq('kt_no', kt);
-      await sb.from('navbatchi_jurnal').delete().eq('kt_no', kt);
-      await sb.from('dinamika_muolajalar').delete().eq('kt_no', kt);
-      await sb.from('holat_baxolash').delete().eq('kt_no', kt);
-      await sb.from('kuzatuv').delete().eq('kt_no', kt);
-      const { error } = await sb.from(mainTable).delete().eq('kt_no', kt);
-      if (error) throw error;
+      // Bemor va barcha bog'liq yozuvlarni o'chiradi (davolash, transfer, fayllar ham)
+      await DB.deletePatientCascade(kt, BemorKartaPage._type);
       showToast("Bemor muvaffaqiyatli o'chirildi", 'success');
       // Keshlarni tozalash — hisobot va bemorlar ro'yxati yangilansin
       if (window.HisobotPage) { HisobotPage._lastData = null; HisobotPage._lastListType = null; }
