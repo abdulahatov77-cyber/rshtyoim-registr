@@ -73,7 +73,7 @@ const InsultYangiPage = {
               ${step < InsultYangiPage.STEPS.length-1
                 ? `<button class="flex items-center gap-1 px-4 py-2 sm:px-8 sm:py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-bold text-xs sm:text-sm shadow-md transition-all active:scale-95" onclick="InsultYangiPage.nextStep()">Keyingi ${icon('arrow-right', 16)}</button>`
                 : (() => {
-                    const isOtk = InsultYangiPage._data.muolaja_turi === "Boshqa muassasaga o'tkazildi — angiografiya va endovaskulyar muolaja uchun";
+                    const isOtk = (InsultYangiPage._data.muolaja_turi || '').startsWith("Boshqa muassasaga o'tkazildi");
                     return `<button class="flex items-center gap-1 px-4 py-2 sm:px-8 sm:py-3 ${isOtk ? 'bg-orange-500 hover:bg-orange-600' : 'bg-green-600 hover:bg-green-700'} text-white rounded-xl font-bold text-xs sm:text-sm shadow-md transition-all active:scale-95" id="save-btn" onclick="InsultYangiPage.save()">${icon(isOtk ? 'log-out' : 'save', 16)} ${isOtk ? 'Chiqarish' : 'Saqlash'}</button>`;
                   })()
               }
@@ -274,7 +274,7 @@ const InsultYangiPage = {
     const d = InsultYangiPage._data;
     const muolaja = d.muolaja_turi || '';
     const muolajaL = muolaja.toLowerCase();
-    const showOtkazilgan = muolaja === "Boshqa muassasaga o'tkazildi — angiografiya va endovaskulyar muolaja uchun";
+    const showOtkazilgan = muolaja.startsWith("Boshqa muassasaga o'tkazildi");
     const showTLT = muolajaL.includes('trombolizis') || muolajaL.includes('tlt');
     const showTrombektomiya = muolajaL.includes('trombektomiya') || muolajaL.includes('tromboekstraksiya') || muolajaL.includes('tromboaspiratsiya') || muolajaL.includes('kombinatsiya') || muolajaL.includes('angiografiya') || muolajaL.includes('stentlash') || muolajaL.includes('tlbap');
     const trombektomiyaLabel = (muolajaL.includes('angiografiya') || muolajaL.includes('stentlash') || muolajaL.includes('tlbap')) && !muolajaL.includes('trombektomiya') && !muolajaL.includes('tromboekstraksiya') && !muolajaL.includes('tromboaspiratsiya') ? 'Angiografiya o\'tkazilgan vaqt (Groin time)' : 'Trombektomiya (Groin time)';
@@ -638,7 +638,7 @@ const InsultYangiPage = {
   onMuolajaChange(val) {
     InsultYangiPage._data.muolaja_turi = val;
     const v = val.toLowerCase();
-    const isOtk = val === "Boshqa muassasaga o'tkazildi — angiografiya va endovaskulyar muolaja uchun";
+    const isOtk = val.startsWith("Boshqa muassasaga o'tkazildi");
     const isTLT = v.includes('trombolizis') || v.includes('tlt');
     const isTrombektomiya = v.includes('trombektomiya') || v.includes('tromboekstraksiya') || v.includes('tromboaspiratsiya') || v.includes('kombinatsiya') || v.includes('angiografiya') || v.includes('stentlash') || v.includes('tlbap');
     const isMskt = Utils.msktDone(InsultYangiPage._data.mskt) || v.includes('mskt');
@@ -753,7 +753,7 @@ const InsultYangiPage = {
     if (this._step === 2) required = ['aha_bali','simptom_vaqt','nihss_qabul','gcs_bali','insult_turi','qon_bosimi'];
     if (this._step === 3) {
       required = ['mskt','muolaja_turi','shifokor_fio','shifokor_tel'];
-      if (this._data.muolaja_turi === "Boshqa muassasaga o'tkazildi — angiografiya va endovaskulyar muolaja uchun") required.push('otkazilgan_muassasa');
+      if ((this._data.muolaja_turi || '').startsWith("Boshqa muassasaga o'tkazildi")) required.push('otkazilgan_muassasa');
     }
 
     const errs = Utils.validate(this._data, required);
@@ -971,7 +971,7 @@ const InsultYangiPage = {
       delete payload._simptom_soat_raw;
       // aspects_ball GENERATED ustun — bazaga yozmaymiz
       delete payload.aspects_ball;
-      if (payload.muolaja_turi === "Boshqa muassasaga o'tkazildi — angiografiya va endovaskulyar muolaja uchun") {
+      if ((payload.muolaja_turi || '').startsWith("Boshqa muassasaga o'tkazildi")) {
         payload.status = 'otkazildi';
       }
       // datetime-local qiymatlari Toshkent vaqti (UTC+5) — bazaga UTC ISO sifatida yuboramiz

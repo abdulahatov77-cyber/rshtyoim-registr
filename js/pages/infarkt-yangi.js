@@ -440,7 +440,7 @@ const InfarktYangiPage = {
 
         <div id="otkazilgan-div" style="display:${showOtkazilgan?'block':'none'}">
           ${this.field('otkazish_sababi','O\'tkazish sababi',`<select id="otkazish_sababi" class="form-select">
-            ${this.selectOptions(['Angiografiya (KAG) uchun', 'PCI/stentlash uchun', 'Stabillashgandan so\'ng davolash uchun', 'Boshqa sabab'], d.otkazish_sababi||'')}</select>`,true)}
+            ${this.selectOptions(['Angiografiya (KAG) uchun', 'Stabillashgandan so\'ng davolash uchun', 'Boshqa sabab'], d.otkazish_sababi||'')}</select>`,true)}
           ${this.field('otkazilgan_muassasa','O\'tkazilgan muassasa nomi',`<select id="otkazilgan_muassasa" class="form-select">
             <option value="">Muassasani tanlang...</option>
             ${this.getAllMuassasalar().map(m => `<option value="${m}" ${d.otkazilgan_muassasa===m?'selected':''}>${m}</option>`).join('')}

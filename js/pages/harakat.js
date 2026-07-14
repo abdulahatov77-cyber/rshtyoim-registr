@@ -179,11 +179,13 @@ const HarakatPage = {
       let requiresRouting = false, reason = '', needLevel = 3;
 
       if (d.bemor_turi === 'insult') {
-        if (p.mskt_angiografiya === 'Ha') {
-          // Angiografiyaga korsatma - angiografiya markaziga (3-bosqich) borishi kerak
+        const isMsktTransfer = muolaja.includes('otkazildi') && muolaja.includes('mskt');
+        const isAngioTransfer = muolaja.includes('otkazildi') && (muolaja.includes('angiografiya') || muolaja.includes('endovaskulyar'));
+        if (p.mskt_angiografiya === 'Ha' || isAngioTransfer) {
+          // Angiografiyaga korsatma / angiografiya uchun otkazilgan - angiografiya markaziga (3-bosqich)
           requiresRouting = true; needLevel = 3;
           reason = 'Angiografiyaga korsatma bor - angiografiya markaziga otkazilishi kerak edi';
-        } else if (muolaja.includes('mskt') && muolaja.includes('otkazildi')) {
+        } else if (isMsktTransfer) {
           // MSKT uchun o'tkazilgan - kamida Politravmaga (2-bosqich) borishi kerak
           requiresRouting = true; needLevel = 2;
           reason = 'MSKT uchun otkazilgan - Politravma markaziga yetishi kerak edi';

@@ -333,7 +333,9 @@ const APP_CONFIG = {
     "Kombinatsiyalangan muolaja: tromboaspiratsiya + tromboekstraksiya",
     "Gemorragik insult bo'yicha jarrohlik amaliyoti",
     "Boshqa muassasaga o'tkazildi — MSKT (tekshiruv) uchun",
-    "Boshqa muassasaga o'tkazildi — angiografiya va endovaskulyar muolaja uchun"
+    "Boshqa muassasaga o'tkazildi — angiografiya va endovaskulyar muolaja uchun",
+    "Boshqa muassasaga o'tkazildi — stabillashgandan so'ng davolash uchun",
+    "Boshqa muassasaga o'tkazildi — boshqa sabab"
   ],
 
   MRS_DARAJALAR: [
