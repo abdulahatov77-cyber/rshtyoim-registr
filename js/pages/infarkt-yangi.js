@@ -356,6 +356,30 @@ const InfarktYangiPage = {
     `;
   },
 
+  // Bemorning qabul vaqtini Date obyekt sifatida olish (taqqoslash uchun)
+  _qabulDate() {
+    const v = InfarktYangiPage._data.qabul_vaqt;
+    if (!v) return null;
+    const iso = (v.includes('T') && !v.endsWith('Z') && !v.includes('+')) ? v + ':00+05:00' : v;
+    const d = new Date(iso);
+    return isNaN(d) ? null : d;
+  },
+
+  // Muolaja/tekshiruv vaqti o'zgarganda darhol tekshirish
+  // Kelajakda yoki qabul vaqtidan oldin bo'lsa — katak qizaradi
+  onVaqtChange(sanaId, soatId, label) {
+    const sanaEl = document.getElementById(sanaId);
+    const soatEl = document.getElementById(soatId);
+    if (!sanaEl?.value || !soatEl?.value) return;
+    const dt = new Date(`${sanaEl.value}T${soatEl.value}:00+05:00`);
+    const qv = InfarktYangiPage._qabulDate();
+    let err = '';
+    if (dt > new Date()) err = `${label} kelajakda bo'lishi mumkin emas!`;
+    else if (qv && dt < qv) err = `${label} bemor qabul vaqtidan oldin bo'lishi mumkin emas!`;
+    [sanaEl, soatEl].forEach(el => el.classList.toggle('border-red-500', !!err));
+    if (err) showToast('⚠️ ' + err, 'error', 4000);
+  },
+
   // Qabul vaqti o'zgarganda darhol tekshirish — kelajak bo'lsa ogohlantiramiz
   onQabulVaqtChange() {
     const sanaEl = document.getElementById('qabul_sana');
@@ -435,8 +459,8 @@ const InfarktYangiPage = {
         ${this.field('puls','Puls (qabul paytida)',`<input id="puls" type="number" min="20" max="300" class="form-input" value="${d.puls||''}" placeholder="76" oninput="this.value=this.value.replace(/[^0-9]/g,'')"/>`,true)}
         ${this.field('ekg_vaqti','EKG o\'tkazilgan vaqt',`
           <div class="grid grid-cols-2 gap-2">
-            <input type="date" id="ekg_sana" class="form-input" value="${d.ekg_vaqti_ts ? new Date(new Date(d.ekg_vaqti_ts).getTime()+5*3600000).toISOString().slice(0,10) : (d.qabul_vaqt ? new Date(new Date(d.qabul_vaqt).getTime()+5*3600000).toISOString().slice(0,10) : '')}"/>
-            <input type="time" id="ekg_soat" class="form-input" value="${d.ekg_vaqti_ts ? new Date(new Date(d.ekg_vaqti_ts).getTime()+5*3600000).toISOString().slice(11,16) : ''}"/>
+            <input type="date" id="ekg_sana" class="form-input" max="${new Date(Date.now()+5*3600000).toISOString().slice(0,10)}" value="${d.ekg_vaqti_ts ? new Date(new Date(d.ekg_vaqti_ts).getTime()+5*3600000).toISOString().slice(0,10) : (d.qabul_vaqt ? new Date(new Date(d.qabul_vaqt).getTime()+5*3600000).toISOString().slice(0,10) : '')}" onchange="InfarktYangiPage.onVaqtChange('ekg_sana','ekg_soat','EKG vaqti')"/>
+            <input type="time" id="ekg_soat" class="form-input" value="${d.ekg_vaqti_ts ? new Date(new Date(d.ekg_vaqti_ts).getTime()+5*3600000).toISOString().slice(11,16) : ''}" onchange="InfarktYangiPage.onVaqtChange('ekg_sana','ekg_soat','EKG vaqti')"/>
           </div>`,true)}
         ${this.field('troponin','Troponin natijasi',`<select id="troponin" class="form-select">
           ${this.selectOptions(['Normal','Yuqori','O\'lchanmagan'], d.troponin||'')}</select>`,true)}
@@ -476,7 +500,7 @@ const InfarktYangiPage = {
     const d = InfarktYangiPage._data;
     const muolaja = d.muolaja_turi || '';
     const showAngio = muolaja === 'Faqat KAG (diagnostik koronar angiografiya)';
-    const showOtkazilgan = muolaja === 'Boshqa muassasaga o\'tkazildi';
+    const showOtkazilgan = muolaja.startsWith("Boshqa muassasaga o'tkazildi");
     const showTLT = InfarktYangiPage._isTLT(muolaja);
     const showPCI = InfarktYangiPage._isPCI(muolaja);
     const pciLabel = muolaja === 'Faqat KAG (diagnostik koronar angiografiya)' ? 'KAG o\'tkazilgan vaqt (Groin time)' : 'PCI/KAG (kateter kiritilgan vaqt — Groin time)';
@@ -491,11 +515,11 @@ const InfarktYangiPage = {
             <div class="flex gap-2">
               <div class="flex-1">
                 <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Sana *</label>
-                <input id="tlt_sana" type="date" class="form-input w-full" value="${d.tlt_vaqt?Utils.formatDateInput(d.tlt_vaqt).slice(0,10):''}"/>
+                <input id="tlt_sana" type="date" class="form-input w-full" max="${new Date(Date.now()+5*3600000).toISOString().slice(0,10)}" value="${d.tlt_vaqt?Utils.formatDateInput(d.tlt_vaqt).slice(0,10):''}" onchange="InfarktYangiPage.onVaqtChange('tlt_sana','tlt_soat','TLT vaqti')"/>
               </div>
               <div class="flex-1">
                 <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Soat * (HH:MM)</label>
-                <input id="tlt_soat" type="time" class="form-input w-full" value="${d.tlt_vaqt?Utils.formatDateInput(d.tlt_vaqt).slice(11,16):''}"/>
+                <input id="tlt_soat" type="time" class="form-input w-full" value="${d.tlt_vaqt?Utils.formatDateInput(d.tlt_vaqt).slice(11,16):''}" onchange="InfarktYangiPage.onVaqtChange('tlt_sana','tlt_soat','TLT vaqti')"/>
               </div>
             </div>`,true,'Door-to-needle mezonini hisoblash uchun')}
           <input id="tlt_vaqt" type="hidden" value="${d.tlt_vaqt||''}"/>
@@ -506,11 +530,11 @@ const InfarktYangiPage = {
             <div class="flex gap-2">
               <div class="flex-1">
                 <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Sana *</label>
-                <input id="pci_sana" type="date" class="form-input w-full" value="${d.pci_vaqt?Utils.formatDateInput(d.pci_vaqt).slice(0,10):''}"/>
+                <input id="pci_sana" type="date" class="form-input w-full" max="${new Date(Date.now()+5*3600000).toISOString().slice(0,10)}" value="${d.pci_vaqt?Utils.formatDateInput(d.pci_vaqt).slice(0,10):''}" onchange="InfarktYangiPage.onVaqtChange('pci_sana','pci_soat','PCI/KAG vaqti')"/>
               </div>
               <div class="flex-1">
                 <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Soat * (HH:MM)</label>
-                <input id="pci_soat" type="time" class="form-input w-full" value="${d.pci_vaqt?Utils.formatDateInput(d.pci_vaqt).slice(11,16):''}"/>
+                <input id="pci_soat" type="time" class="form-input w-full" value="${d.pci_vaqt?Utils.formatDateInput(d.pci_vaqt).slice(11,16):''}" onchange="InfarktYangiPage.onVaqtChange('pci_sana','pci_soat','PCI/KAG vaqti')"/>
               </div>
             </div>`,true,'Door-to-groin mezonini hisoblash uchun')}
           <input id="pci_vaqt" type="hidden" value="${d.pci_vaqt||''}"/>

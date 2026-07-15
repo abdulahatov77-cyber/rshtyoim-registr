@@ -271,6 +271,29 @@ const InsultYangiPage = {
     `;
   },
 
+  // Bemorning qabul vaqtini Date obyekt sifatida olish (taqqoslash uchun)
+  _qabulDate() {
+    const v = InsultYangiPage._data.qabul_vaqt;
+    if (!v) return null;
+    const iso = (v.includes('T') && !v.endsWith('Z') && !v.includes('+')) ? v + ':00+05:00' : v;
+    const d = new Date(iso);
+    return isNaN(d) ? null : d;
+  },
+
+  // Muolaja/tekshiruv vaqti o'zgarganda darhol tekshirish
+  onVaqtChange(sanaId, soatId, label) {
+    const sanaEl = document.getElementById(sanaId);
+    const soatEl = document.getElementById(soatId);
+    if (!sanaEl?.value || !soatEl?.value) return;
+    const dt = new Date(`${sanaEl.value}T${soatEl.value}:00+05:00`);
+    const qv = InsultYangiPage._qabulDate();
+    let err = '';
+    if (dt > new Date()) err = `${label} kelajakda bo'lishi mumkin emas!`;
+    else if (qv && dt < qv) err = `${label} bemor qabul vaqtidan oldin bo'lishi mumkin emas!`;
+    [sanaEl, soatEl].forEach(el => el.classList.toggle('border-red-500', !!err));
+    if (err) showToast('⚠️ ' + err, 'error', 4000);
+  },
+
   // Qabul vaqti o'zgarganda darhol tekshirish — kelajak bo'lsa ogohlantiramiz
   onQabulVaqtChange() {
     const sanaEl = document.getElementById('qabul_sana');
@@ -387,11 +410,11 @@ const InsultYangiPage = {
             <div class="flex gap-2">
               <div class="flex-1">
                 <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Sana *</label>
-                <input id="kt_sana" type="date" class="form-input w-full" value="${d.kt_vaqti?Utils.formatDateInput(d.kt_vaqti).slice(0,10):''}"/>
+                <input id="kt_sana" type="date" class="form-input w-full" max="${new Date(Date.now()+5*3600000).toISOString().slice(0,10)}" value="${d.kt_vaqti?Utils.formatDateInput(d.kt_vaqti).slice(0,10):''}" onchange="InsultYangiPage.onVaqtChange('kt_sana','kt_soat','KT/MSKT vaqti')"/>
               </div>
               <div class="flex-1">
                 <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Soat * (HH:MM)</label>
-                <input id="kt_soat" type="time" class="form-input w-full" value="${d.kt_vaqti?Utils.formatDateInput(d.kt_vaqti).slice(11,16):''}"/>
+                <input id="kt_soat" type="time" class="form-input w-full" value="${d.kt_vaqti?Utils.formatDateInput(d.kt_vaqti).slice(11,16):''}" onchange="InsultYangiPage.onVaqtChange('kt_sana','kt_soat','KT/MSKT vaqti')"/>
               </div>
             </div>`,true,'Door-to-CT mezonini hisoblash uchun')}
           <input id="kt_vaqti" type="hidden" value="${d.kt_vaqti||''}"/>
@@ -436,11 +459,11 @@ const InsultYangiPage = {
             <div class="flex gap-2">
               <div class="flex-1">
                 <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Sana *</label>
-                <input id="trombolizis_sana" type="date" class="form-input w-full" value="${d.trombolizis_vaqti?Utils.formatDateInput(d.trombolizis_vaqti).slice(0,10):''}"/>
+                <input id="trombolizis_sana" type="date" class="form-input w-full" max="${new Date(Date.now()+5*3600000).toISOString().slice(0,10)}" value="${d.trombolizis_vaqti?Utils.formatDateInput(d.trombolizis_vaqti).slice(0,10):''}" onchange="InsultYangiPage.onVaqtChange('trombolizis_sana','trombolizis_soat','Trombolizis vaqti')"/>
               </div>
               <div class="flex-1">
                 <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Soat * (HH:MM)</label>
-                <input id="trombolizis_soat" type="time" class="form-input w-full" value="${d.trombolizis_vaqti?Utils.formatDateInput(d.trombolizis_vaqti).slice(11,16):''}"/>
+                <input id="trombolizis_soat" type="time" class="form-input w-full" value="${d.trombolizis_vaqti?Utils.formatDateInput(d.trombolizis_vaqti).slice(11,16):''}" onchange="InsultYangiPage.onVaqtChange('trombolizis_sana','trombolizis_soat','Trombolizis vaqti')"/>
               </div>
             </div>`,true,'Door-to-needle mezonini hisoblash uchun')}
           <input id="trombolizis_vaqti" type="hidden" value="${d.trombolizis_vaqti||''}"/>
@@ -451,11 +474,11 @@ const InsultYangiPage = {
             <div class="flex gap-2">
               <div class="flex-1">
                 <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Sana *</label>
-                <input id="trombektomiya_sana" type="date" class="form-input w-full" value="${d.trombektomiya_vaqti?Utils.formatDateInput(d.trombektomiya_vaqti).slice(0,10):''}"/>
+                <input id="trombektomiya_sana" type="date" class="form-input w-full" max="${new Date(Date.now()+5*3600000).toISOString().slice(0,10)}" value="${d.trombektomiya_vaqti?Utils.formatDateInput(d.trombektomiya_vaqti).slice(0,10):''}" onchange="InsultYangiPage.onVaqtChange('trombektomiya_sana','trombektomiya_soat','Trombektomiya vaqti')"/>
               </div>
               <div class="flex-1">
                 <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Soat * (HH:MM)</label>
-                <input id="trombektomiya_soat" type="time" class="form-input w-full" value="${d.trombektomiya_vaqti?Utils.formatDateInput(d.trombektomiya_vaqti).slice(11,16):''}"/>
+                <input id="trombektomiya_soat" type="time" class="form-input w-full" value="${d.trombektomiya_vaqti?Utils.formatDateInput(d.trombektomiya_vaqti).slice(11,16):''}" onchange="InsultYangiPage.onVaqtChange('trombektomiya_sana','trombektomiya_soat','Trombektomiya vaqti')"/>
               </div>
             </div>`,true,'Door-to-groin mezonini hisoblash uchun')}
           <input id="trombektomiya_vaqti" type="hidden" value="${d.trombektomiya_vaqti||''}"/>
