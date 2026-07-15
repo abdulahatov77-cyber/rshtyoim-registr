@@ -272,6 +272,8 @@ const InsultYangiPage = {
   },
 
   onFuqarolikChange(val) {
+    // Joriy bosqich ma'lumotlarini yo'qotmaslik uchun avval saqlaymiz
+    InsultYangiPage.saveCurrentStep();
     InsultYangiPage._data.fuqarolik = val;
     if (val === 'Chet el') {
       InsultYangiPage._data.yashash_viloyat = '';
@@ -279,7 +281,7 @@ const InsultYangiPage = {
     } else {
       InsultYangiPage._data.chet_el_davlati = '';
     }
-    InsultYangiPage.render();
+    InsultYangiPage.renderStep(); // faqat joriy bosqichni qayta chizamiz
   },
 
   onYashashViloyatChange(val) {

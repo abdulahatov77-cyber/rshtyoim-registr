@@ -357,6 +357,8 @@ const InfarktYangiPage = {
   },
 
   onFuqarolikChange(val) {
+    // Joriy bosqich ma'lumotlarini yo'qotmaslik uchun avval saqlaymiz
+    InfarktYangiPage.saveCurrentStep();
     InfarktYangiPage._data.fuqarolik = val;
     // Mos kelmaydigan maydonlarni tozalaymiz
     if (val === 'Chet el') {
@@ -365,7 +367,7 @@ const InfarktYangiPage = {
     } else {
       InfarktYangiPage._data.chet_el_davlati = '';
     }
-    InfarktYangiPage.render();
+    InfarktYangiPage.renderStep(); // faqat joriy bosqichni qayta chizamiz
   },
 
   onYashashViloyatChange(val) {
