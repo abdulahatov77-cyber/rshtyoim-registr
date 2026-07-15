@@ -192,9 +192,11 @@ const HarakatPage = {
         }
       } else if (d.bemor_turi === 'infarkt') {
         const isSTEMI = (p.infarkt_turi || '').toUpperCase().includes('STEMI') && !(p.infarkt_turi || '').toUpperCase().includes('NSTEMI');
-        if (isSTEMI) {
+        const isKagTransfer = muolaja.includes('otkazildi') && (muolaja.includes('kag') || muolaja.includes('angiografiya'));
+        if (isSTEMI || isKagTransfer) {
           requiresRouting = true; needLevel = 3;
-          reason = 'STEMI - angiografiya markaziga otkazilishi kerak edi';
+          reason = isSTEMI ? 'STEMI - angiografiya markaziga otkazilishi kerak edi'
+                           : 'KAG uchun otkazilgan - angiografiya markaziga yetishi kerak edi';
         }
       }
       if (requiresRouting) {

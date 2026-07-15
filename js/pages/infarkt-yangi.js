@@ -73,7 +73,7 @@ const InfarktYangiPage = {
               ${step < InfarktYangiPage.STEPS.length-1
                 ? `<button class="flex items-center gap-1 px-4 py-2 sm:px-8 sm:py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold text-xs sm:text-sm shadow-md transition-all active:scale-95" onclick="InfarktYangiPage.nextStep()">Keyingi ${icon('arrow-right', 16)}</button>`
                 : (() => {
-                    const isOtk = InfarktYangiPage._data.muolaja_turi === "Boshqa muassasaga o'tkazildi";
+                    const isOtk = (InfarktYangiPage._data.muolaja_turi || '').startsWith("Boshqa muassasaga o'tkazildi");
                     return `<button class="flex items-center gap-1 px-4 py-2 sm:px-8 sm:py-3 ${isOtk ? 'bg-orange-500 hover:bg-orange-600' : 'bg-green-600 hover:bg-green-700'} text-white rounded-xl font-bold text-xs sm:text-sm shadow-md transition-all active:scale-95" id="save-btn" onclick="InfarktYangiPage.save()">${icon(isOtk ? 'log-out' : 'save', 16)} ${isOtk ? 'Chiqarish' : 'Saqlash'}</button>`;
                   })()
               }
@@ -439,8 +439,6 @@ const InfarktYangiPage = {
         </div>
 
         <div id="otkazilgan-div" style="display:${showOtkazilgan?'block':'none'}">
-          ${this.field('otkazish_sababi','O\'tkazish sababi',`<select id="otkazish_sababi" class="form-select">
-            ${this.selectOptions(['Angiografiya (KAG) uchun', 'Stabillashgandan so\'ng davolash uchun', 'Boshqa sabab'], d.otkazish_sababi||'')}</select>`,true)}
           ${this.field('otkazilgan_muassasa','O\'tkazilgan muassasa nomi',`<select id="otkazilgan_muassasa" class="form-select">
             <option value="">Muassasani tanlang...</option>
             ${this.getAllMuassasalar().map(m => `<option value="${m}" ${d.otkazilgan_muassasa===m?'selected':''}>${m}</option>`).join('')}
@@ -504,7 +502,7 @@ const InfarktYangiPage = {
 
   onMuolajaChange(val) {
     InfarktYangiPage._data.muolaja_turi = val;
-    const isOtk = val === "Boshqa muassasaga o'tkazildi";
+    const isOtk = val.startsWith("Boshqa muassasaga o'tkazildi");
     const angioDiv = document.getElementById('angio-div');
     const otkazDiv = document.getElementById('otkazilgan-div');
     const tltDiv = document.getElementById('tlt-vaqt-div');
@@ -636,7 +634,7 @@ const InfarktYangiPage = {
     if (this._step === 2) required = ['aha_bali','simptom_vaqt','birlamchi_yoki_takroriy','infarkt_turi','killip','qon_bosimi','puls','troponin','kkfmb','ekg_natija'];
     if (this._step === 3) {
       required = ['muolaja_turi','shifokor_fio','shifokor_tel'];
-      if (this._data.muolaja_turi === "Boshqa muassasaga o'tkazildi") required.push('otkazilgan_muassasa', 'otkazish_sababi');
+      if ((this._data.muolaja_turi || '').startsWith("Boshqa muassasaga o'tkazildi")) required.push('otkazilgan_muassasa');
       if (this._data.muolaja_turi === 'Faqat KAG (diagnostik koronar angiografiya)') required.push('angio_natija');
     }
 
@@ -886,8 +884,11 @@ const InfarktYangiPage = {
         payload.muassasa = payload.boshqa_muassasa;
       }
       delete payload.boshqa_muassasa;
-      if (payload.muolaja_turi === "Boshqa muassasaga o'tkazildi") {
+      if ((payload.muolaja_turi || '').startsWith("Boshqa muassasaga o'tkazildi")) {
         payload.status = 'otkazildi';
+        // O'tkazish sababini muolaja matnidan ajratamiz (marshrut nazorati uchun)
+        const dashIdx = payload.muolaja_turi.indexOf('—');
+        if (dashIdx > -1) payload.otkazish_sababi = payload.muolaja_turi.slice(dashIdx + 1).trim();
       }
       // datetime-local qiymatlari Toshkent vaqti (UTC+5) — bazaga UTC ISO sifatida yuboramiz
       // Agar allaqachon ISO UTC bo'lsa (Z yoki +00:00) — qayta o'zgartirmaymiz

@@ -289,7 +289,9 @@ const APP_CONFIG = {
     "TLT + KAG + stentlash (Rescue PCI)",
     "TLT + KAG + ballon angioplastika (Rescue TLBAP)",
     "Medikamentoz davo",
-    "Boshqa muassasaga o'tkazildi"
+    "Boshqa muassasaga o'tkazildi — KAG/angiografiya uchun",
+    "Boshqa muassasaga o'tkazildi — stabillashgandan so'ng davolash uchun",
+    "Boshqa muassasaga o'tkazildi — boshqa sabab"
   ],
 
   DINAMIKA_MUOLAJALAR: [
