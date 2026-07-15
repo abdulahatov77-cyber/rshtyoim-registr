@@ -238,7 +238,7 @@ const InfarktYangiPage = {
         <div id="tez-yordam-div" style="display:${d.murojaat_yoli==='Tez tibbiy yordam bilan'?'block':'none'}">
           ${this.field('tez_yordam_kelgan_vaqt','Tez yordam yetib keldi (vaqt)',`
             <div class="flex gap-2">
-              <input id="tez_yordam_kelgan_sana" type="date" class="form-input" value="${d.tez_yordam_kelgan_vaqt?Utils.formatDateInput(d.tez_yordam_kelgan_vaqt).slice(0,10):''}" onchange="InfarktYangiPage.onTezYordamChange()"/>
+              <input id="tez_yordam_kelgan_sana" type="date" class="form-input" max="${new Date(Date.now()+5*3600000).toISOString().slice(0,10)}" value="${d.tez_yordam_kelgan_vaqt?Utils.formatDateInput(d.tez_yordam_kelgan_vaqt).slice(0,10):''}" onchange="InfarktYangiPage.onTezYordamChange()"/>
               <input id="tez_yordam_kelgan_soat" type="time" class="form-input" value="${d.tez_yordam_kelgan_vaqt?Utils.formatDateInput(d.tez_yordam_kelgan_vaqt).slice(11,16):''}" onchange="InfarktYangiPage.onTezYordamChange()"/>
               <input id="tez_yordam_kelgan_vaqt" type="hidden" value="${d.tez_yordam_kelgan_vaqt||''}"/>
             </div>`,true)}
@@ -772,6 +772,20 @@ const InfarktYangiPage = {
             valid = false;
             sanaEl.classList.add('border-red-500');
             showToast('⚠️ Qabul vaqti 1 yildan eski bo\'lishi mumkin emas — sanani tekshiring!', 'error', 6000);
+          }
+        }
+      }
+      // Tez yordam yetib kelgan vaqti — kelajakda bo'lmasin
+      if (valid) {
+        const tySana = document.getElementById('tez_yordam_kelgan_sana')?.value;
+        const tySoat = document.getElementById('tez_yordam_kelgan_soat')?.value;
+        if (tySana && tySoat) {
+          const tyDt = new Date(`${tySana}T${tySoat}:00+05:00`);
+          if (tyDt > new Date()) {
+            valid = false;
+            document.getElementById('tez_yordam_kelgan_sana')?.classList.add('border-red-500');
+            document.getElementById('tez_yordam_kelgan_soat')?.classList.add('border-red-500');
+            showToast('⚠️ Tez yordam vaqti kelajakda bo\'lishi mumkin emas!', 'error', 5000);
           }
         }
       }
