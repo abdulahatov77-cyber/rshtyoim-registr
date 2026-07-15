@@ -731,22 +731,33 @@ const BemorKartaPage = {
             <p class="text-sm font-semibold text-gray-800">${p.muolaja_turi}</p>
           </div>
         </div>` : '';
+      // Tahrirlash huquqi — admin va super_admin
+      const canEdit = ['admin','super_admin'].includes(BemorKartaPage._profile?.role);
       histEl.innerHTML = initial + records.map((r, i) => `
         <div class="flex gap-4 ${i < records.length - 1 ? 'mb-4' : ''}">
           <div class="flex flex-col items-center">
             <div class="w-9 h-9 rounded-full ${type==='infarkt'?'bg-red-500':'bg-purple-500'} flex items-center justify-center text-white text-xs font-bold flex-shrink-0">${i + 2}</div>
             ${i < records.length - 1 ? '<div class="w-0.5 bg-gray-200 flex-1 mt-1"></div>' : ''}
           </div>
-          <div class="pb-4 flex-1">
+          <div class="pb-4 flex-1 group">
             <div class="flex items-center gap-2 mb-1">
               <span class="text-xs font-bold ${type==='infarkt'?'text-red-600':'text-purple-600'} uppercase">Dinamik muolaja</span>
               <span class="text-xs text-gray-400">${Utils.formatDateTime(r.created_at)}</span>
+              ${canEdit ? `
+                <div class="ml-auto flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button onclick="BemorKartaPage.editDinamika('${r.id}')" title="Tahrirlash"
+                    class="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors">${icon('pencil',14)}</button>
+                  <button onclick="BemorKartaPage.deleteDinamika('${r.id}')" title="O'chirish"
+                    class="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors">${icon('trash-2',14)}</button>
+                </div>` : ''}
             </div>
-            <p class="text-sm font-semibold text-gray-800">${r.muolaja_turi}</p>
-            ${r.izoh ? `<p class="text-xs text-gray-500 mt-1 italic">"${r.izoh}"</p>` : ''}
-            <p class="text-xs text-gray-400 mt-1">— Dr. ${r.shifokor_fio || 'Noma\'lum'}</p>
+            <p class="text-sm font-semibold text-gray-800">${esc(r.muolaja_turi)}</p>
+            ${r.izoh ? `<p class="text-xs text-gray-500 mt-1 italic">"${esc(r.izoh)}"</p>` : ''}
+            <p class="text-xs text-gray-400 mt-1">— Dr. ${esc(r.shifokor_fio) || 'Noma\'lum'}</p>
           </div>
         </div>`).join('');
+      // Tahrirlash uchun yozuvlarni saqlab qo'yamiz
+      BemorKartaPage._dinRecords = records;
       initIcons();
     } catch(err) {
       const histEl = document.getElementById('din-history');
@@ -808,6 +819,73 @@ const BemorKartaPage = {
     } catch(err) {
       showToast(err.message, 'error');
       setLoading(btn, false);
+    }
+  },
+
+  // ===== Dinamik muolajani tahrirlash =====
+  editDinamika(id) {
+    const r = (BemorKartaPage._dinRecords || []).find(x => String(x.id) === String(id));
+    if (!r) { showToast('Yozuv topilmadi', 'error'); return; }
+    const type = BemorKartaPage._type;
+    const muolajaList = type === 'infarkt'
+      ? APP_CONFIG.DINAMIKA_MUOLAJALAR
+      : APP_CONFIG.DINAMIKA_MUOLAJALAR_INSULT;
+    showModal({
+      title: 'Dinamik muolajani tahrirlash',
+      body: `
+        <div class="space-y-4">
+          <div>
+            <label class="form-label">Muolaja turi</label>
+            <select id="edit-din-muolaja" class="form-select">
+              ${muolajaList.map(m => `<option value="${esc(m)}" ${r.muolaja_turi===m?'selected':''}>${esc(m)}</option>`).join('')}
+              ${!muolajaList.includes(r.muolaja_turi) ? `<option value="${esc(r.muolaja_turi)}" selected>${esc(r.muolaja_turi)} (eski)</option>` : ''}
+            </select>
+          </div>
+          <div>
+            <label class="form-label">Izoh</label>
+            <textarea id="edit-din-izoh" class="form-textarea" rows="3" placeholder="Ixtiyoriy">${esc(r.izoh || '')}</textarea>
+          </div>
+          <div>
+            <label class="form-label">Shifokor F.I.O</label>
+            <input id="edit-din-shifokor" class="form-input" value="${esc(r.shifokor_fio || '')}"/>
+          </div>
+          <p class="text-xs text-slate-400">Yozuv sanasi: ${Utils.formatDateTime(r.created_at)} (o'zgartirilmaydi)</p>
+        </div>`,
+      footer: `
+        <button class="btn btn-secondary" onclick="closeModal()">Bekor qilish</button>
+        <button class="btn btn-primary" id="btn-din-edit-save" onclick="BemorKartaPage.saveDinamikaEdit('${id}')">Saqlash</button>`
+    });
+  },
+
+  async saveDinamikaEdit(id) {
+    const muolaja = document.getElementById('edit-din-muolaja')?.value;
+    if (!muolaja) { showToast('Muolaja turini tanlang', 'warning'); return; }
+    const btn = document.getElementById('btn-din-edit-save');
+    setLoading(btn, true);
+    try {
+      await DB.updateDinamikaMuolaja(id, {
+        muolaja_turi: muolaja,
+        izoh: document.getElementById('edit-din-izoh')?.value || null,
+        shifokor_fio: document.getElementById('edit-din-shifokor')?.value || null
+      });
+      closeModal();
+      showToast('Muolaja yangilandi', 'success');
+      BemorKartaPage.loadTab(1);
+    } catch(err) {
+      showToast(err.message, 'error');
+      setLoading(btn, false);
+    }
+  },
+
+  async deleteDinamika(id) {
+    const r = (BemorKartaPage._dinRecords || []).find(x => String(x.id) === String(id));
+    if (!confirm(`"${r?.muolaja_turi || 'Bu muolaja'}" yozuvini o'chirasizmi?\nBu amalni qaytarib bo'lmaydi!`)) return;
+    try {
+      await DB.deleteDinamikaMuolaja(id);
+      showToast('Muolaja o\'chirildi', 'success');
+      BemorKartaPage.loadTab(1);
+    } catch(err) {
+      showToast(err.message, 'error');
     }
   },
 
