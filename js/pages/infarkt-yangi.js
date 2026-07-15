@@ -225,8 +225,8 @@ const InfarktYangiPage = {
         </div>
         ${this.field('kt_no','Kasallik tarixi №',`<input id="kt_no" class="form-input font-mono bg-gray-50" value="${d.kt_no||''}"/>`,true,'Avtomatik yaratiladi')}
         ${this.field('qabul_vaqt','Bemor qabul qilingan sana va vaqt',`<div class="flex gap-2">
-            <input id="qabul_sana" type="date" class="form-input" max="${new Date(Date.now()+5*3600000).toISOString().slice(0,10)}" value="${d.qabul_vaqt?.slice(0,10)||''}"/>
-            <input id="qabul_soat" type="time" class="form-input" value="${d.qabul_vaqt?.slice(11,16)||''}"/>
+            <input id="qabul_sana" type="date" class="form-input" max="${new Date(Date.now()+5*3600000).toISOString().slice(0,10)}" value="${d.qabul_vaqt?.slice(0,10)||''}" onchange="InfarktYangiPage.onQabulVaqtChange()"/>
+            <input id="qabul_soat" type="time" class="form-input" value="${d.qabul_vaqt?.slice(11,16)||''}" onchange="InfarktYangiPage.onQabulVaqtChange()"/>
           </div>`,true)}
         <div class="col-span-1 sm:col-span-2">
           ${this.field('murojaat_yoli','Murojaat yo\'li',`<select id="murojaat_yoli" class="form-select" onchange="InfarktYangiPage.onMurojaatChange(this.value)">
@@ -354,6 +354,17 @@ const InfarktYangiPage = {
         </div>
       </div>
     `;
+  },
+
+  // Qabul vaqti o'zgarganda darhol tekshirish — kelajak bo'lsa ogohlantiramiz
+  onQabulVaqtChange() {
+    const sanaEl = document.getElementById('qabul_sana');
+    const soatEl = document.getElementById('qabul_soat');
+    if (!sanaEl?.value || !soatEl?.value) return;
+    const qv = new Date(`${sanaEl.value}T${soatEl.value}:00+05:00`);
+    const kelajak = qv > new Date();
+    [sanaEl, soatEl].forEach(el => el.classList.toggle('border-red-500', kelajak));
+    if (kelajak) showToast('⚠️ Qabul vaqti kelajakda bo\'lishi mumkin emas!', 'error', 4000);
   },
 
   onFuqarolikChange(val) {
