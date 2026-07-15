@@ -744,11 +744,11 @@ const BemorKartaPage = {
               <span class="text-xs font-bold ${type==='infarkt'?'text-red-600':'text-purple-600'} uppercase">Dinamik muolaja</span>
               <span class="text-xs text-gray-400">${Utils.formatDateTime(r.created_at)}</span>
               ${canEdit ? `
-                <div class="ml-auto flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div class="ml-auto flex gap-1">
                   <button onclick="BemorKartaPage.editDinamika('${r.id}')" title="Tahrirlash"
-                    class="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors">${icon('pencil',14)}</button>
+                    class="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 border border-slate-200 transition-colors">${icon('pencil',14)}</button>
                   <button onclick="BemorKartaPage.deleteDinamika('${r.id}')" title="O'chirish"
-                    class="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors">${icon('trash-2',14)}</button>
+                    class="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 border border-slate-200 transition-colors">${icon('trash-2',14)}</button>
                 </div>` : ''}
             </div>
             <p class="text-sm font-semibold text-gray-800">${esc(r.muolaja_turi)}</p>
