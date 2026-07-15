@@ -903,10 +903,21 @@ const Telegram = {
       const tesc = s => s ? String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') : '';
       const emoji = type === 'infarkt' ? '🫀' : '🧠';
       const isOtk = (muolaja || '').includes("Boshqa muassasaga o'tkazildi");
-      const vaqt = new Date(Date.now() + 5*3600000).toISOString();
       const pad = n => String(n).padStart(2,'0');
-      const d = new Date(vaqt);
-      const vaqtStr = `${pad(d.getUTCDate())}.${pad(d.getUTCMonth()+1)}.${d.getUTCFullYear()} ${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}`;
+      // UZT (UTC+5) formatida sana-vaqt
+      const fmt = (iso) => {
+        if (!iso) return '—';
+        const dt = new Date(iso);
+        if (isNaN(dt)) return '—';
+        const z = new Date(dt.getTime() + 5*3600000);
+        return `${pad(z.getUTCDate())}.${pad(z.getUTCMonth()+1)}.${z.getUTCFullYear()} ${pad(z.getUTCHours())}:${pad(z.getUTCMinutes())}`;
+      };
+      const vaqtStr = fmt(new Date().toISOString());
+      const qabulStr = fmt(patient.qabul_vaqt);
+      const tashxis = type === 'infarkt' ? patient.infarkt_turi : patient.insult_turi;
+      // O'tkazish sababini muolaja matnidan ajratamiz
+      const dashIdx = (muolaja || '').indexOf('—');
+      const sabab = (isOtk && dashIdx > -1) ? muolaja.slice(dashIdx + 1).trim() : '';
 
       const text = `${emoji} <b>${isOtk ? "BEMOR O'TKAZILDI" : 'YANGI MUOLAJA (dinamika)'}</b>
 ━━━━━━━━━━━━━━━━━━━━━━
@@ -915,8 +926,16 @@ const Telegram = {
 📋 <b>K/T No:</b> <code>${tesc(patient.kt_no) || '—'}</code>
 👤 <b>Bemor:</b> ${tesc(patient.fio) || '—'}
 ━━━━━━━━━━━━━━━━━━━━━━
-💊 <b>Muolaja:</b> ${tesc(muolaja)}
-${isOtk && otkazilganMuassasa ? `➡️ <b>O'tkazildi:</b> ${tesc(otkazilganMuassasa)}\n` : ''}🕐 <b>Vaqt:</b> ${vaqtStr}
+<b>QABUL MA'LUMOTLARI</b>
+🕐 <b>Kelgan vaqti:</b> ${qabulStr}
+${type === 'infarkt' ? '🔴' : '🔵'} <b>Tashxis:</b> ${tesc(tashxis) || '—'}
+💊 <b>Dastlabki muolaja:</b> ${tesc(patient.muolaja_turi) || '—'}
+━━━━━━━━━━━━━━━━━━━━━━
+${isOtk ? `<b>O'TKAZISH</b>
+➡️ <b>Qayerga:</b> ${tesc(otkazilganMuassasa) || '—'}
+📝 <b>Sabab:</b> ${tesc(sabab) || tesc(muolaja)}` : `<b>YANGI MUOLAJA</b>
+💉 <b>Muolaja:</b> ${tesc(muolaja)}`}
+🕐 <b>Vaqt:</b> ${vaqtStr}
 👨‍⚕️ <b>Shifokor:</b> ${tesc(shifokor) || '—'}
 ━━━━━━━━━━━━━━━━━━━━━━`;
 
