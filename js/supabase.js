@@ -897,6 +897,43 @@ const Telegram = {
     }
   },
 
+  // Dinamik (kuzatuv) muolaja qo'shilganda xabar — bemor kartasidan chaqiriladi
+  async notifyDinamika(patient, type, muolaja, shifokor, otkazilganMuassasa) {
+    try {
+      const tesc = s => s ? String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') : '';
+      const emoji = type === 'infarkt' ? '🫀' : '🧠';
+      const isOtk = (muolaja || '').includes("Boshqa muassasaga o'tkazildi");
+      const vaqt = new Date(Date.now() + 5*3600000).toISOString();
+      const pad = n => String(n).padStart(2,'0');
+      const d = new Date(vaqt);
+      const vaqtStr = `${pad(d.getUTCDate())}.${pad(d.getUTCMonth()+1)}.${d.getUTCFullYear()} ${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}`;
+
+      const text = `${emoji} <b>${isOtk ? "BEMOR O'TKAZILDI" : 'YANGI MUOLAJA (dinamika)'}</b>
+━━━━━━━━━━━━━━━━━━━━━━
+📍 <b>Viloyat:</b> ${tesc(patient.viloyat) || '—'}
+🏥 <b>Muassasa:</b> ${tesc(patient.muassasa) || '—'}
+📋 <b>K/T No:</b> <code>${tesc(patient.kt_no) || '—'}</code>
+👤 <b>Bemor:</b> ${tesc(patient.fio) || '—'}
+━━━━━━━━━━━━━━━━━━━━━━
+💊 <b>Muolaja:</b> ${tesc(muolaja)}
+${isOtk && otkazilganMuassasa ? `➡️ <b>O'tkazildi:</b> ${tesc(otkazilganMuassasa)}\n` : ''}🕐 <b>Vaqt:</b> ${vaqtStr}
+👨‍⚕️ <b>Shifokor:</b> ${tesc(shifokor) || '—'}
+━━━━━━━━━━━━━━━━━━━━━━`;
+
+      const res = await fetch('/api/telegram', {
+        method: 'POST',
+        headers: await Telegram._authHeaders(),
+        body: JSON.stringify({ type, text })
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!(res.ok && json.ok)) {
+        showToast(`⚠️ Telegram xato: ${json.error || "Noma'lum"}`, 'warning', 5000);
+      }
+    } catch (e) {
+      showToast(`⚠️ Telegram ulanmadi: ${e.message}`, 'warning', 5000);
+    }
+  },
+
   // Test funksiyasi — brauzer konsolidan chaqirish uchun: Telegram.test('infarkt')
   async test(type = 'infarkt') {
     const text = `✅ RSHTYOIM test xabari — ${new Date().toLocaleString('uz-UZ', { timeZone: 'Asia/Tashkent' })}`;

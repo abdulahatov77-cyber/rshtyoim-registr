@@ -795,9 +795,13 @@ const BemorKartaPage = {
         if (BemorKartaPage._type === 'infarkt') await DB.infarktUpdate(p.kt_no, upd);
         else await DB.insultUpdate(p.kt_no, upd);
         BemorKartaPage._patient.status = 'otkazildi';
+        // Telegram xabar — o'tkazish
+        Telegram.notifyDinamika(p, BemorKartaPage._type, selected, profile?.fio, otkazilganMuassasa).catch(()=>{});
         showToast(`✅ Bemor ${otkazilganMuassasa}ga o'tkazildi`, 'success');
         setTimeout(() => Router.go('bemorlar'), 1500);
       } else {
+        // Telegram xabar — yangi dinamik muolaja
+        Telegram.notifyDinamika(p, BemorKartaPage._type, selected, profile?.fio).catch(()=>{});
         showToast('Muolaja saqlandi', 'success');
         BemorKartaPage.loadTab(1);
       }
