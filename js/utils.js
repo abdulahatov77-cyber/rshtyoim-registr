@@ -239,7 +239,7 @@ const Utils = {
     Utils.exportXLSX(data, xlsxName);
   },
 
-  exportXLSX(data, filename = 'bemorlar.xlsx') {
+  exportXLSX(data, filename = 'bemorlar.xlsx', sheetName = 'Hisobot') {
     if (!data || !data.length) return;
     const clean = v => {
       if (v === null || v === undefined) return '';
@@ -247,36 +247,51 @@ const Utils = {
       return String(v);
     };
     const headers = Object.keys(data[0]);
-    const rows = [
-      headers,
-      ...data.map(r => headers.map(h => clean(r[h])))
-    ];
-    const ws = XLSX.utils.aoa_to_sheet(rows);
+    const body = data.map(r => headers.map(h => clean(r[h])));
+    const ws = XLSX.utils.aoa_to_sheet([headers, ...body]);
 
-    // Har bir ustun kengligini mazmuniga qarab avtomatik sozlash
-    const colWidths = headers.map((h, i) => {
-      const maxLen = Math.max(
-        h.length,
-        ...data.map(r => clean(r[h]).length)
-      );
-      return { wch: Math.min(maxLen + 2, 50) };
+    // Ustun kengligi — eng uzun qiymatga qarab.
+    // Math.max(...arr) ishlatilmaydi: o'n minglab qator bilan stack to'lib ketadi.
+    ws['!cols'] = headers.map((h, c) => {
+      let max = h.length;
+      for (const row of body) if (row[c].length > max) max = row[c].length;
+      return { wch: Math.min(Math.max(max + 2, 9), 45) };
     });
-    ws['!cols'] = colWidths;
 
-    // 1-qator (sarlavha) qalin va ko'k rang
-    headers.forEach((_, i) => {
-      const cell = ws[XLSX.utils.encode_cell({ r: 0, c: i })];
+    // Sarlavha qatori balandroq — matn ikki qatorga o'ralishi uchun
+    ws['!rows'] = [{ hpt: 32 }];
+
+    // Excel'da saralash/filtrlash tugmalari
+    const lastCol = XLSX.utils.encode_col(headers.length - 1);
+    ws['!autofilter'] = { ref: `A1:${lastCol}1` };
+
+    // Sarlavha: oq qalin shrift, ko'k fon, markazda, o'raladigan matn
+    headers.forEach((_, c) => {
+      const cell = ws[XLSX.utils.encode_cell({ r: 0, c })];
       if (cell) {
         cell.s = {
-          font: { bold: true, color: { rgb: 'FFFFFF' } },
+          font: { bold: true, color: { rgb: 'FFFFFF' }, sz: 11 },
           fill: { fgColor: { rgb: '1D4ED8' } },
-          alignment: { horizontal: 'center', vertical: 'center', wrapText: false }
+          alignment: { horizontal: 'center', vertical: 'center', wrapText: true },
+          border: { bottom: { style: 'medium', color: { rgb: '1E3A8A' } } }
         };
       }
     });
 
+    // Ma'lumot kataklari: yuqoriga tekislash + yengil ajratuvchi chiziq
+    const dataStyle = {
+      alignment: { vertical: 'top' },
+      border: { bottom: { style: 'hair', color: { rgb: 'E2E8F0' } } }
+    };
+    for (let r = 1; r <= body.length; r++) {
+      for (let c = 0; c < headers.length; c++) {
+        const cell = ws[XLSX.utils.encode_cell({ r, c })];
+        if (cell) cell.s = dataStyle;
+      }
+    }
+
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Hisobot');
+    XLSX.utils.book_append_sheet(wb, ws, sheetName);
     XLSX.writeFile(wb, filename);
   },
 

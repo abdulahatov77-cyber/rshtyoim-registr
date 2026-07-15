@@ -494,10 +494,7 @@ const HisobotPage = {
       "O'tkazilgan (insult)": d.totals.otkazilganIns,
       "STEMI ≤120 daq (D2B)": d.totals.stemi120total>0 ? `${d.totals.stemi120n}/${d.totals.stemi120total} (${Math.round(d.totals.stemi120n/d.totals.stemi120total*100)}%)` : '—'
     });
-    const ws = XLSX.utils.json_to_sheet(data);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Viloyatlar hisoboti');
-    XLSX.writeFile(wb, `viloyatlar_hisobot_${d.from}_${d.to}.xlsx`);
+    Utils.exportXLSX(data, `viloyatlar_hisobot_${d.from}_${d.to}.xlsx`, 'Viloyatlar hisoboti');
     showToast('✅ Excel fayl yuklab olindi', 'success');
   },
 
