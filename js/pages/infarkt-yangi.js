@@ -404,7 +404,23 @@ const InfarktYangiPage = {
           ${this.selectOptions(APP_CONFIG.INFARKT_TURLARI, d.infarkt_turi||'')}</select>`,true)}
         ${this.field('killip','Killip klassifikatsiyasi',`<select id="killip" class="form-select">
           ${this.selectOptions(APP_CONFIG.KILLIP_KLASSLAR, d.killip||'')}</select>`,true)}
-        ${this.field('qon_bosimi','Qon bosimi (qabul paytida)',`<input id="qon_bosimi" class="form-input font-mono" value="${d.qon_bosimi||''}" placeholder="140/90"/>`,true)}
+        ${this.field('qon_bosimi','Qon bosimi (qabul paytida)',(() => {
+          const [sys, dia] = (d.qon_bosimi || '').split('/');
+          return `<div class="flex items-center gap-2">
+            <input id="qon_sistolik" type="number" min="50" max="300" class="form-input font-mono text-center" placeholder="140"
+              value="${sys || ''}" oninput="this.value=this.value.replace(/[^0-9]/g,'')" title="Sistolik (yuqori)"/>
+            <span class="text-slate-400 font-bold text-lg">/</span>
+            <input id="qon_diastolik" type="number" min="30" max="200" class="form-input font-mono text-center" placeholder="90"
+              value="${dia || ''}" oninput="this.value=this.value.replace(/[^0-9]/g,'')" title="Diastolik (pastki)"/>
+            <span class="text-xs text-slate-400 whitespace-nowrap">mm Hg</span>
+          </div>
+          <div class="flex gap-2 mt-1">
+            <span class="flex-1 text-[10px] text-slate-400 text-center">Sistolik</span>
+            <span class="w-3"></span>
+            <span class="flex-1 text-[10px] text-slate-400 text-center">Diastolik</span>
+            <span class="w-12"></span>
+          </div>`;
+        })(),true)}
         ${this.field('puls','Puls (qabul paytida)',`<input id="puls" type="number" min="20" max="300" class="form-input" value="${d.puls||''}" placeholder="76" oninput="this.value=this.value.replace(/[^0-9]/g,'')"/>`,true)}
         ${this.field('ekg_vaqti','EKG o\'tkazilgan vaqt',`
           <div class="grid grid-cols-2 gap-2">
@@ -624,12 +640,21 @@ const InfarktYangiPage = {
      'tez_yordam_kelgan_vaqt',
      'fio','aha_bali','simptom_vaqt','birlamchi_yoki_takroriy',
      'yashash_viloyat','yashash_tuman','chet_el_davlati',
-     'infarkt_turi','killip','qon_bosimi','puls','troponin','kkfmb',
+     'infarkt_turi','killip','puls','troponin','kkfmb',
      'muolaja_turi','angio_natija','otkazilgan_muassasa','otkazish_sababi','shifokor_fio','shifokor_tel']
     .forEach(id => {
       const el = document.getElementById(id);
       if (el) InfarktYangiPage._data[id] = el.value;
     });
+
+    // Qon bosimi — ikkita katakdan "140/90" ko'rinishida yig'amiz
+    const sysEl = document.getElementById('qon_sistolik');
+    const diaEl = document.getElementById('qon_diastolik');
+    if (sysEl || diaEl) {
+      const sys = sysEl?.value?.trim() || '';
+      const dia = diaEl?.value?.trim() || '';
+      InfarktYangiPage._data.qon_bosimi = (sys && dia) ? `${sys}/${dia}` : '';
+    }
     // grace_bali faqat NSTEMI uchun — _data da allaqachon to'g'ri qiymat bor (kalkulyator yozgan)
     const graceEl = document.getElementById('grace_bali');
     if (InfarktYangiPage._data.infarkt_turi === "O'KS ST elevatsiyasiz (NSTEMI)") {
@@ -696,7 +721,8 @@ const InfarktYangiPage = {
       if (this._data.fuqarolik === 'Chet el') required.push('chet_el_davlati');
       else required.push('yashash_viloyat','yashash_tuman');
     }
-    if (this._step === 2) required = ['aha_bali','simptom_vaqt','birlamchi_yoki_takroriy','infarkt_turi','killip','qon_bosimi','puls','troponin','kkfmb','ekg_natija'];
+    // qon_bosimi bu ro'yxatда yo'q — u sistolik/diastolik orqali alohida tekshiriladi (aniqroq xabar bilan)
+    if (this._step === 2) required = ['aha_bali','simptom_vaqt','birlamchi_yoki_takroriy','infarkt_turi','killip','puls','troponin','kkfmb','ekg_natija'];
     if (this._step === 3) {
       required = ['muolaja_turi','shifokor_fio','shifokor_tel'];
       if ((this._data.muolaja_turi || '').startsWith("Boshqa muassasaga o'tkazildi")) required.push('otkazilgan_muassasa');
@@ -826,11 +852,25 @@ const InfarktYangiPage = {
         document.getElementById('puls')?.classList.add('border-red-500');
         document.getElementById('puls')?.focus();
         showToast('⚠️ Puls 20–300 oralig\'ida bo\'lishi kerak!', 'error', 5000);
-      } else if (this._data.qon_bosimi && !/^\d{2,3}\/\d{2,3}$/.test(this._data.qon_bosimi.trim())) {
-        valid = false;
-        document.getElementById('qon_bosimi')?.classList.add('border-red-500');
-        document.getElementById('qon_bosimi')?.focus();
-        showToast('⚠️ Qon bosimi "140/90" ko\'rinishida bo\'lishi kerak!', 'error', 5000);
+      } else {
+        // Qon bosimi — sistolik va diastolik alohida tekshiriladi
+        const sysEl = document.getElementById('qon_sistolik');
+        const diaEl = document.getElementById('qon_diastolik');
+        const sys = parseInt(sysEl?.value);
+        const dia = parseInt(diaEl?.value);
+        if (isNaN(sys) || sys < 50 || sys > 300) {
+          valid = false;
+          sysEl?.classList.add('border-red-500'); sysEl?.focus();
+          showToast('⚠️ Sistolik bosim 50–300 oralig\'ida bo\'lishi kerak!', 'error', 5000);
+        } else if (isNaN(dia) || dia < 30 || dia > 200) {
+          valid = false;
+          diaEl?.classList.add('border-red-500'); diaEl?.focus();
+          showToast('⚠️ Diastolik bosim 30–200 oralig\'ida bo\'lishi kerak!', 'error', 5000);
+        } else if (dia >= sys) {
+          valid = false;
+          diaEl?.classList.add('border-red-500'); diaEl?.focus();
+          showToast('⚠️ Diastolik bosim sistolikdan kichik bo\'lishi kerak!', 'error', 5000);
+        }
       }
     }
     if (this._step === 2 && valid) {

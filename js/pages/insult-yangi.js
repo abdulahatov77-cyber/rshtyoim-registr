@@ -315,7 +315,23 @@ const InsultYangiPage = {
         ${this.field('gcs_bali','Glazgo shkalasi (GCS), (3-15 ball)',`<div class="flex gap-2 items-center"><input id="gcs_bali" type="number" min="3" max="15" class="form-input w-full bg-slate-50 cursor-not-allowed" value="${d.gcs_bali||''}" placeholder="Kalkulyator orqali to'ldiring" readonly style="pointer-events:none;opacity:0.8"/><button type="button" class="flex-shrink-0 bg-purple-100 text-purple-700 hover:bg-purple-200 px-3 py-2 rounded-lg text-sm font-bold shadow-sm transition-colors border border-purple-200 flex items-center gap-1" onclick="Calculators.openGCS('gcs_bali')">🧮 Hisoblash</button></div>`,true)}
         ${this.field('insult_turi','Insult turi',`<select id="insult_turi" class="form-select border-purple-300 focus:border-purple-500" onchange="InsultYangiPage.saveCurrentStep();InsultYangiPage._updateAspectsVisibility()">
           ${this.selectOptions(APP_CONFIG.INSULT_TURLARI, d.insult_turi||'')}</select>`,true)}
-        ${this.field('qon_bosimi','Qon bosimi (qabul paytida)',`<input id="qon_bosimi" class="form-input font-mono" value="${d.qon_bosimi||''}" placeholder="140/90"/>`,true)}
+        ${this.field('qon_bosimi','Qon bosimi (qabul paytida)',(() => {
+          const [sys, dia] = (d.qon_bosimi || '').split('/');
+          return `<div class="flex items-center gap-2">
+            <input id="qon_sistolik" type="number" min="50" max="300" class="form-input font-mono text-center" placeholder="140"
+              value="${sys || ''}" oninput="this.value=this.value.replace(/[^0-9]/g,'')" title="Sistolik (yuqori)"/>
+            <span class="text-slate-400 font-bold text-lg">/</span>
+            <input id="qon_diastolik" type="number" min="30" max="200" class="form-input font-mono text-center" placeholder="90"
+              value="${dia || ''}" oninput="this.value=this.value.replace(/[^0-9]/g,'')" title="Diastolik (pastki)"/>
+            <span class="text-xs text-slate-400 whitespace-nowrap">mm Hg</span>
+          </div>
+          <div class="flex gap-2 mt-1">
+            <span class="flex-1 text-[10px] text-slate-400 text-center">Sistolik</span>
+            <span class="w-3"></span>
+            <span class="flex-1 text-[10px] text-slate-400 text-center">Diastolik</span>
+            <span class="w-12"></span>
+          </div>`;
+        })(),true)}
       </div>
       <div class="mt-4 border-t border-dashed border-gray-200 pt-4">
         ${this.field('xavf_omillari','Xavf omillari',
@@ -742,13 +758,22 @@ const InsultYangiPage = {
 
     ['viloyat','muassasa','boshqa_muassasa','kt_no','murojaat_yoli','yuborgan_muassasa',
      'tez_yordam_kelgan_vaqt',
-     'fio','simptom_vaqt','gcs_bali','insult_turi','qon_bosimi','aha_bali','nihss_qabul',
+     'fio','simptom_vaqt','gcs_bali','insult_turi','aha_bali','nihss_qabul',
      'yashash_viloyat','yashash_tuman','chet_el_davlati',
      'mskt','mskt_angiografiya','otkazilgan_muassasa','shifokor_fio','shifokor_tel']
     .forEach(id => {
       const el = document.getElementById(id);
       if (el) InsultYangiPage._data[id] = el.value;
     });
+
+    // Qon bosimi — ikkita katakdan "140/90" ko'rinishida yig'amiz
+    const sysEl = document.getElementById('qon_sistolik');
+    const diaEl = document.getElementById('qon_diastolik');
+    if (sysEl || diaEl) {
+      const sys = sysEl?.value?.trim() || '';
+      const dia = diaEl?.value?.trim() || '';
+      InsultYangiPage._data.qon_bosimi = (sys && dia) ? `${sys}/${dia}` : '';
+    }
 
     // ASPECTS checkboxlarini o'qish
     ['aspects_c','aspects_l','aspects_ic','aspects_i','aspects_m1','aspects_m2',
@@ -814,7 +839,8 @@ const InsultYangiPage = {
       if (this._data.fuqarolik === 'Chet el') required.push('chet_el_davlati');
       else required.push('yashash_viloyat','yashash_tuman');
     }
-    if (this._step === 2) required = ['aha_bali','simptom_vaqt','nihss_qabul','gcs_bali','insult_turi','qon_bosimi'];
+    // qon_bosimi bu ro'yxatда yo'q — sistolik/diastolik orqali alohida tekshiriladi
+    if (this._step === 2) required = ['aha_bali','simptom_vaqt','nihss_qabul','gcs_bali','insult_turi'];
     if (this._step === 3) {
       required = ['mskt','muolaja_turi','shifokor_fio','shifokor_tel'];
       if ((this._data.muolaja_turi || '').startsWith("Boshqa muassasaga o'tkazildi")) required.push('otkazilgan_muassasa');
@@ -907,12 +933,25 @@ const InsultYangiPage = {
         }
       }
     }
-    // Qon bosimi formati (masalan 140/90)
-    if (this._step === 2 && valid && this._data.qon_bosimi && !/^\d{2,3}\/\d{2,3}$/.test(this._data.qon_bosimi.trim())) {
-      valid = false;
-      document.getElementById('qon_bosimi')?.classList.add('border-red-500');
-      document.getElementById('qon_bosimi')?.focus();
-      showToast('⚠️ Qon bosimi "140/90" ko\'rinishida bo\'lishi kerak!', 'error', 5000);
+    // Qon bosimi — sistolik va diastolik alohida tekshiriladi
+    if (this._step === 2 && valid) {
+      const sysEl = document.getElementById('qon_sistolik');
+      const diaEl = document.getElementById('qon_diastolik');
+      const sys = parseInt(sysEl?.value);
+      const dia = parseInt(diaEl?.value);
+      if (isNaN(sys) || sys < 50 || sys > 300) {
+        valid = false;
+        sysEl?.classList.add('border-red-500'); sysEl?.focus();
+        showToast('⚠️ Sistolik bosim 50–300 oralig\'ida bo\'lishi kerak!', 'error', 5000);
+      } else if (isNaN(dia) || dia < 30 || dia > 200) {
+        valid = false;
+        diaEl?.classList.add('border-red-500'); diaEl?.focus();
+        showToast('⚠️ Diastolik bosim 30–200 oralig\'ida bo\'lishi kerak!', 'error', 5000);
+      } else if (dia >= sys) {
+        valid = false;
+        diaEl?.classList.add('border-red-500'); diaEl?.focus();
+        showToast('⚠️ Diastolik bosim sistolikdan kichik bo\'lishi kerak!', 'error', 5000);
+      }
     }
     if (this._step === 2 && valid) {
       if (!this._data.xavf_omil || this._data.xavf_omil.length === 0) {
