@@ -1686,12 +1686,24 @@ ${muolajaStr(insMuolajaNorm)}
       else if (dyn) parts.push(dyn);
       return [...new Set(parts)].join('; ');
     };
-    Utils.exportCSV(all.map(p=>({
-      Turi: p._turi, 'K/T No': p.kt_no, 'F.I.O': p.fio,
-      Viloyat: p.viloyat, 'Qabul vaqti': Utils.formatDateTime(p.qabul_vaqt),
-      Holat: p.status, 'Kasallik turi': p.infarkt_turi||p.insult_turi||'',
-      Muolaja: muolajaStr(p)
-    })), `hisobot_${d.from}_${d.to}.csv`);
+    Utils.exportCSV(all.map(p=>{
+      const kasallikTuri = p.infarkt_turi || p.insult_turi || '';
+      const yosh = Utils.calculateAge(p.tugilgan_sana || p.tugilgan_yil);
+      return {
+        Turi: p._turi, 'K/T No': p.kt_no, 'F.I.O': p.fio,
+        Viloyat: p.viloyat,
+        'Doimiy yashash joyi': Utils.yashashJoyi(p),
+        'Tibbiyot muassasasi': p.muassasa || '',
+        'Kasal yoshi': (yosh === null || isNaN(yosh)) ? '' : yosh,
+        Jinsi: p.jins || '',
+        'Murojaat qilish yo\'li': p.murojaat_yoli || '',
+        'Birlamchi diagnoz MKB-10': Utils.mkb10(kasallikTuri),
+        'Birlamchi yoki qayta murojaat': p.birlamchi_yoki_takroriy || '',
+        'Qabul vaqti': Utils.formatDateTime(p.qabul_vaqt),
+        Holat: p.status, 'Kasallik turi': kasallikTuri,
+        Muolaja: muolajaStr(p)
+      };
+    }), `hisobot_${d.from}_${d.to}.csv`);
     showToast('✅ Eksport boshlandi','success');
   }
 };

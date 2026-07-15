@@ -59,6 +59,23 @@ const Utils = {
     return new Date().getFullYear() - yr;
   },
 
+  // Birlamchi diagnoz MKB-10 — kasallik turidan avtomatik.
+  // full=false → 'I21.3', full=true → "I21.3 — O'KS ST elevatsiya bilan (STEMI)"
+  mkb10(turi, full = true) {
+    const m = turi && APP_CONFIG.MKB10_KODLARI?.[turi];
+    if (!m) return '';
+    return full ? `${m.kod} — ${turi}` : m.kod;
+  },
+
+  // Doimiy yashash joyi — chet el fuqarosi uchun davlat, aks holda viloyat + tuman
+  yashashJoyi(p) {
+    if (!p) return '';
+    if (p.fuqarolik === 'Chet el') {
+      return p.chet_el_davlati ? `${p.chet_el_davlati} (chet el fuqarosi)` : 'Chet el fuqarosi';
+    }
+    return [p.yashash_viloyat, p.yashash_tuman].filter(Boolean).join(', ');
+  },
+
   // MSKT/KT o'tkazilganmi? — katta-kichik harf va bo'shliqqa sezgir emas
   // "Ha — o'tkazildi", "Ha – o'tkazildi", " ha ...", "HA ..." — hammasi true
   msktDone(v) {

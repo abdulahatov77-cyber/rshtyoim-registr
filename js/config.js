@@ -408,6 +408,19 @@ const APP_CONFIG = {
     "TIA (Tranzitor ishemik ataka)"
   ],
 
+  // MKB-10 (XKT-10) kodlari — kasallik turi tanlanganda avtomatik aniqlanadi.
+  // Kalitlar INFARKT_TURLARI va INSULT_TURLARI qiymatlari bilan bir xil bo'lishi shart.
+  MKB10_KODLARI: {
+    // Infarkt
+    "O'KS ST elevatsiya bilan (STEMI)": { kod: 'I21.3', nom: "O'tkir transmural miokard infarkti (joyi aniqlanmagan)" },
+    "O'KS ST elevatsiyasiz (NSTEMI)":   { kod: 'I21.4', nom: "O'tkir subendokardial miokard infarkti" },
+    "O'tkir miokard infarkti (AMI)":    { kod: 'I21.9', nom: "O'tkir miokard infarkti, aniqlanmagan" },
+    // Insult
+    "Ishemik insult":                   { kod: 'I63.9', nom: "Miya infarkti, aniqlanmagan" },
+    "Gemorragik insult":                { kod: 'I61.9', nom: "Miya ichiga qon quyilishi, aniqlanmagan" },
+    "TIA (Tranzitor ishemik ataka)":    { kod: 'G45.9', nom: "Tranzitor serebral ishemik ataka, aniqlanmagan" }
+  },
+
   INSULT_MUOLAJALARI: [
     "Medikamentoz (konservativ) davo",
     "Faqat serebral angiografiya",

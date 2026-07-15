@@ -422,7 +422,7 @@ const BemorKartaPage = {
         <div class="card !mb-0">
           <div class="card-header bg-gray-50 border-b border-gray-100 !mb-0"><h3 class="card-title text-gray-900 flex items-center gap-2">${icon('clock', 18)} Vaqt ko'rsatkichlari</h3></div>
           <div class="card-body p-5">
-            ${type==='infarkt' ? row('Kasallik turi', p.birlamchi_yoki_takroriy) : ''}
+            ${row('Kasallik turi', p.birlamchi_yoki_takroriy)}
             ${row('Simptomlar boshlanishi', p.simptom_vaqt)}
             ${row('Shifoxonaga keldi', Utils.formatDateTime(p.qabul_vaqt))}
             ${type==='infarkt' ? `
@@ -1498,6 +1498,13 @@ const BemorKartaPage = {
             </select>
           </div>
           <div class="form-group">
+            <label class="form-label">Birlamchi yoki takroriy?</label>
+            <select id="edit-birlamchi" class="form-select">
+              <option value="">— tanlanmagan —</option>
+              ${APP_CONFIG.BIRLAMCHI_TAKROIRIY.map(b => `<option value="${b}" ${p.birlamchi_yoki_takroriy===b?'selected':''}>${b}</option>`).join('')}
+            </select>
+          </div>
+          <div class="form-group">
             <label class="form-label">${isInf ? 'Infarkt turi' : 'Insult turi'}</label>
             <select id="edit-turi" class="form-select">
               ${(isInf ? APP_CONFIG.INFARKT_TURLARI : APP_CONFIG.INSULT_TURLARI).map(t => `<option value="${t}" ${(isInf?p.infarkt_turi:p.insult_turi)===t?'selected':''}>${t}</option>`).join('')}
@@ -1661,6 +1668,7 @@ const BemorKartaPage = {
       aha_bali:      g('edit-aha')?.value !== '' ? parseInt(g('edit-aha').value) : null,
       simptom_vaqt:  g('edit-simptom')?.value || null,
       muolaja_turi:  g('edit-muolaja')?.value || null,
+      birlamchi_yoki_takroriy: g('edit-birlamchi')?.value || null,
     };
     if (isInf) {
       updates.puls         = g('edit-puls')?.value ? parseInt(g('edit-puls').value) : null;
