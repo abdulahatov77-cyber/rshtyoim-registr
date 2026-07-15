@@ -154,6 +154,7 @@ const DB = {
     const allowed = [
       'viloyat','muassasa','kt_no','qabul_vaqt','murojaat_yoli','yuborgan_muassasa',
       'fio','tugilgan_yil','tugilgan_sana','jins',
+      'fuqarolik','yashash_viloyat','yashash_tuman','chet_el_davlati',
       'aha_bali','simptom_vaqt','birlamchi_yoki_takroriy',
       'infarkt_turi','killip','qon_bosimi','puls','ekg_vaqti','ekg_vaqti_ts','troponin','kkfmb','grace_bali',
       'ekg_natija','xavf_omil',
@@ -259,6 +260,7 @@ const DB = {
     const allowed = [
       'viloyat','muassasa','kt_no','qabul_vaqt','murojaat_yoli','yuborgan_muassasa',
       'fio','tugilgan_yil','tugilgan_sana','jins',
+      'fuqarolik','yashash_viloyat','yashash_tuman','chet_el_davlati',
       'simptom_vaqt','nihss_qabul','gcs_bali','insult_turi','qon_bosimi',
       'xavf_omil','aha_bali',
       'mskt','mskt_angiografiya','muolaja_turi','otkazilgan_muassasa',

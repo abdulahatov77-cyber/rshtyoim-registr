@@ -386,6 +386,11 @@ const BemorKartaPage = {
           <div class="card-body p-5">
             ${row('Tug\'ilgan sanasi', tugilganDisplay)}
             ${row('Jinsi', p.jins)}
+            ${p.fuqarolik === 'Chet el'
+              ? row('Doimiy yashash manzili', p.chet_el_davlati ? `🌍 ${esc(p.chet_el_davlati)} (chet el fuqarosi)` : '🌍 Chet el fuqarosi')
+              : ((p.yashash_viloyat || p.yashash_tuman)
+                  ? row('Doimiy yashash manzili', `${esc(p.yashash_viloyat || '')}${p.yashash_tuman ? ', ' + esc(p.yashash_tuman) : ''}`)
+                  : '')}
             ${row('Viloyat', p.viloyat)}
             ${row('Muassasa', p.muassasa)}
             ${row('Murojaat yo\'li', p.murojaat_yoli)}

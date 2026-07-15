@@ -13,7 +13,8 @@ const InsultYangiPage = {
     InsultYangiPage._data = {
       kt_no: Utils.generateKtNo(profile?.muassasa || ''),
       qabul_vaqt: Utils.formatDateInput(new Date()),
-      viloyat: (profile?.role === 'admin' || profile?.role === 'super_admin') ? '' : (profile?.viloyat || '')
+      viloyat: (profile?.role === 'admin' || profile?.role === 'super_admin') ? '' : (profile?.viloyat || ''),
+      fuqarolik: "O'zbekiston"
     };
 
     document.getElementById('app').innerHTML = Components.renderLayout(
@@ -232,8 +233,63 @@ const InsultYangiPage = {
             </div>
           `,true)}
         </div>
+
+        <!-- Doimiy yashash manzili -->
+        <div class="col-span-1 sm:col-span-2 mt-2 pt-4 border-t border-dashed border-gray-200">
+          ${this.field('fuqarolik','Fuqaroligi',`
+            <div class="flex gap-3">
+              <button type="button" onclick="InsultYangiPage.onFuqarolikChange('O\\'zbekiston')"
+                class="flex-1 py-2.5 rounded-xl font-bold text-sm border-2 transition-all ${(d.fuqarolik||'O\'zbekiston')==='O\'zbekiston' ? 'bg-purple-600 text-white border-purple-600' : 'bg-white text-slate-600 border-slate-200 hover:border-purple-400'}">
+                🇺🇿 O'zbekiston fuqarosi
+              </button>
+              <button type="button" onclick="InsultYangiPage.onFuqarolikChange('Chet el')"
+                class="flex-1 py-2.5 rounded-xl font-bold text-sm border-2 transition-all ${d.fuqarolik==='Chet el' ? 'bg-amber-600 text-white border-amber-600' : 'bg-white text-slate-600 border-slate-200 hover:border-amber-400'}">
+                🌍 Chet el fuqarosi
+              </button>
+            </div>`,true)}
+        </div>
+
+        <!-- O'zbekiston: viloyat + tuman -->
+        <div id="yashash-uz-div" class="col-span-1 sm:col-span-2 ${d.fuqarolik==='Chet el' ? 'hidden' : ''}">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6">
+            ${this.field('yashash_viloyat','Yashash viloyati',`<select id="yashash_viloyat" class="form-select" onchange="InsultYangiPage.onYashashViloyatChange(this.value)">
+              <option value="">Tanlang...</option>
+              ${APP_CONFIG.VILOYATLAR.map(v=>`<option value="${v}" ${d.yashash_viloyat===v?'selected':''}>${v}</option>`).join('')}
+            </select>`,true)}
+            ${this.field('yashash_tuman','Tuman / shahar',`<select id="yashash_tuman" class="form-select">
+              <option value="">${d.yashash_viloyat ? 'Tanlang...' : 'Avval viloyatni tanlang'}</option>
+              ${(APP_CONFIG.TUMANLAR[d.yashash_viloyat]||[]).map(t=>`<option value="${t}" ${d.yashash_tuman===t?'selected':''}>${t}</option>`).join('')}
+            </select>`,true)}
+          </div>
+        </div>
+
+        <!-- Chet el: davlat -->
+        <div id="yashash-chet-div" class="col-span-1 sm:col-span-2 ${d.fuqarolik==='Chet el' ? '' : 'hidden'}">
+          ${this.field('chet_el_davlati','Qaysi davlat fuqarosi',`<input id="chet_el_davlati" class="form-input" value="${d.chet_el_davlati||''}" placeholder="Masalan: Rossiya, Qozog'iston, Tojikiston..."/>`,true)}
+        </div>
       </div>
     `;
+  },
+
+  onFuqarolikChange(val) {
+    InsultYangiPage._data.fuqarolik = val;
+    if (val === 'Chet el') {
+      InsultYangiPage._data.yashash_viloyat = '';
+      InsultYangiPage._data.yashash_tuman = '';
+    } else {
+      InsultYangiPage._data.chet_el_davlati = '';
+    }
+    InsultYangiPage.render();
+  },
+
+  onYashashViloyatChange(val) {
+    InsultYangiPage._data.yashash_viloyat = val;
+    InsultYangiPage._data.yashash_tuman = '';
+    const sel = document.getElementById('yashash_tuman');
+    if (sel) {
+      sel.innerHTML = `<option value="">${val ? 'Tanlang...' : 'Avval viloyatni tanlang'}</option>` +
+        (APP_CONFIG.TUMANLAR[val]||[]).map(t=>`<option value="${t}">${t}</option>`).join('');
+    }
   },
 
   // ============ 3-BO'LIM: Klinik ============
@@ -685,6 +741,7 @@ const InsultYangiPage = {
     ['viloyat','muassasa','boshqa_muassasa','kt_no','murojaat_yoli','yuborgan_muassasa',
      'tez_yordam_kelgan_vaqt',
      'fio','simptom_vaqt','gcs_bali','insult_turi','qon_bosimi','aha_bali','nihss_qabul',
+     'yashash_viloyat','yashash_tuman','chet_el_davlati',
      'mskt','mskt_angiografiya','otkazilgan_muassasa','shifokor_fio','shifokor_tel']
     .forEach(id => {
       const el = document.getElementById(id);
@@ -749,7 +806,12 @@ const InsultYangiPage = {
       if (this._data.murojaat_yoli === 'Boshqa muassasadan') required.push('yuborgan_muassasa');
       if (this._data.murojaat_yoli === 'Tez tibbiy yordam bilan') required.push('tez_yordam_kelgan_vaqt');
     }
-    if (this._step === 1) required = ['fio','tugilgan_sana','jins'];
+    if (this._step === 1) {
+      required = ['fio','tugilgan_sana','jins'];
+      // Yashash manzili — fuqarolikка qarab
+      if (this._data.fuqarolik === 'Chet el') required.push('chet_el_davlati');
+      else required.push('yashash_viloyat','yashash_tuman');
+    }
     if (this._step === 2) required = ['aha_bali','simptom_vaqt','nihss_qabul','gcs_bali','insult_turi','qon_bosimi'];
     if (this._step === 3) {
       required = ['mskt','muolaja_turi','shifokor_fio','shifokor_tel'];
