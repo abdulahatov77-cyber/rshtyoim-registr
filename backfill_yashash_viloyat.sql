@@ -11,10 +11,17 @@
 --      keyingilarda shifokor manzilni qo'lda kiritgan — ular haqiqiy,
 --      ustidan yozilmaydi.
 --
--- ⚠️ DIQQAT: bu TAXMIN, haqiqiy so'ralgan ma'lumot emas. Yozilgandan keyin
---    qaysi biri haqiqiy, qaysi biri taxmin ekanini ajratib bo'lmaydi.
+-- ⚠️ DIQQAT: bu TAXMIN, haqiqiy so'ralgan ma'lumot emas.
 --    yashash_tuman ga tegilmaydi — tuman darajasida taxmin qilinmaydi.
---    Sana chegarasi tufayli orqaga qaytarish xavfsiz (skript oxiriga qarang).
+--    Shu sababli "viloyati bor, tumani bo'sh" = skript yozgan (taxmin),
+--    "ikkalasi ham bor" = shifokor qo'lda kiritgan (haqiqiy).
+--    Qaytarish shu belgi bo'yicha aniq bajariladi — skript oxiriga qarang.
+--
+-- ⛔ created_at GA ISHONMANG. import.html uni Google Sheets dagi eski
+--    sanadan oladi (import.html:219), ya'ni u yozuv bazaga qachon
+--    tushganini ko'rsatmaydi. Quyidagi sana sharti faqat "eski import
+--    qilingan yozuvlar" ni ajratish uchun — himoya vazifasini
+--    yashash_viloyat IS NULL sharti bajaradi, sana emas.
 --
 -- Supabase SQL Editor da BOSQICHMA-BOSQICH ishga tushiring.
 -- ============================================================
@@ -368,19 +375,29 @@ DROP VIEW     IF EXISTS tuman_viloyat;
 DROP FUNCTION IF EXISTS norm_muassasa(TEXT);
 
 -- ============================================================
--- ORQAGA QAYTARISH — XAVFSIZ
--- Sana chegarasi tufayli skript FAQAT 15-iyulgacha bo'lgan yozuvlarga
--- tegadi. Demak o'sha chegara bo'yicha qaytarsak, shifokorlar qo'lda
--- kiritgan haqiqiy manzillarga zarar yetmaydi.
+-- ORQAGA QAYTARISH
+--
+-- ⛔ created_at BO'YICHA QAYTARMANG! import.html yozuvlarni yuklaganda
+--    created_at ni Google Sheets dagi ESKI sanadan oladi (import.html:219).
+--    Ya'ni u yozuv bazaga qachon tushganini ko'rsatmaydi. created_at
+--    bo'yicha tozalasangiz, shifokorlar qo'lda kiritgan HAQIQIY manzillar
+--    ham o'chib ketadi.
+--
+-- ✅ TO'G'RI YO'L — yashash_tuman ni belgi sifatida ishlatish.
+--    Bu skript yashash_tuman ga TEGMAYDI, forma esa uni MAJBURIY qiladi.
+--    Demak "viloyati bor, tumani bo'sh" = aynan shu skript yozgan yozuv.
 --
 -- UPDATE insult_qabul  SET yashash_viloyat = NULL
---  WHERE created_at < '2026-07-15 00:00:00+05';
+--  WHERE yashash_viloyat IS NOT NULL AND yashash_tuman IS NULL;
 -- UPDATE infarkt_qabul SET yashash_viloyat = NULL
---  WHERE created_at < '2026-07-15 00:00:00+05';
+--  WHERE yashash_viloyat IS NOT NULL AND yashash_tuman IS NULL;
 --
--- (fuqarolik ni ham qaytarish kerak bo'lsa:
---  UPDATE insult_qabul  SET fuqarolik = NULL WHERE created_at < '2026-07-15 00:00:00+05';
---  UPDATE infarkt_qabul SET fuqarolik = NULL WHERE created_at < '2026-07-15 00:00:00+05'; )
+-- Avval nechta yozuv qaytishini ko'ring:
+-- SELECT COUNT(*) FROM (
+--   SELECT 1 FROM insult_qabul  WHERE yashash_viloyat IS NOT NULL AND yashash_tuman IS NULL
+--   UNION ALL
+--   SELECT 1 FROM infarkt_qabul WHERE yashash_viloyat IS NOT NULL AND yashash_tuman IS NULL
+-- ) t;
 -- ============================================================
 
 -- ✅ TUGADI
