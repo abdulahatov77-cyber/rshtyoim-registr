@@ -457,7 +457,7 @@ FROM (
 LEFT JOIN muassasa_tuman mt
   ON mt.viloyat = b.viloyat AND mt.nmuassasa = norm_muassasa(b.muassasa)
 GROUP BY 1, 2
-ORDER BY (mt.tuman IS NULL) DESC, bemorlar DESC;
+ORDER BY holat, bemorlar DESC;   -- 'TOPILMADI' harfi 'topildi' dan oldin keladi
 
 -- ============================================================
 -- 2-BOSQICH: VILOYATNI TO'LDIRISH  (sana sharti YO'Q)
