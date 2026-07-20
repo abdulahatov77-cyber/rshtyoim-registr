@@ -716,17 +716,17 @@ const BemorKartaPage = {
       const records = await DB.getDinamikaMuolajalar(p.kt_no);
       const histEl = document.getElementById('din-history');
       if (!histEl) return;
-      if (records.length === 0) {
+      if (records.length === 0 && !p.muolaja_turi) {
         histEl.innerHTML = `<div class="text-center py-10 text-gray-400">${icon('inbox', 32, 'mx-auto mb-2')} <p class="text-sm">Hali muolaja yozilmagan</p></div>`;
         initIcons();
         return;
       }
       // Qabul muolajasini birinchi yozuv sifatida ko'rsatish
       const initial = p.muolaja_turi ? `
-        <div class="flex gap-4 mb-4">
+        <div class="flex gap-4 ${records.length ? 'mb-4' : ''}">
           <div class="flex flex-col items-center">
             <div class="w-9 h-9 rounded-full bg-blue-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">1</div>
-            <div class="w-0.5 bg-gray-200 flex-1 mt-1"></div>
+            ${records.length ? '<div class="w-0.5 bg-gray-200 flex-1 mt-1"></div>' : ''}
           </div>
           <div class="pb-4 flex-1">
             <div class="flex items-center gap-2 mb-1">
