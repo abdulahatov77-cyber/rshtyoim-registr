@@ -660,7 +660,9 @@ const BemorKartaPage = {
                 <select id="din-otkazilgan-muassasa" class="form-select mt-1">
                   <option value="">Muassasani tanlang...</option>
                   ${Object.values(APP_CONFIG.MUASSASALAR).flat().sort().map(m=>`<option value="${m}">${m}</option>`).join('')}
+                  <option value="__boshqa__">— Ro'yxatda yo'q (qo'lda kiritish) —</option>
                 </select>
+                <input id="din-otkazilgan-muassasa-custom" type="text" class="form-input mt-2" placeholder="Muassasa nomini kiriting..." style="display:none">
               </div>
               <div class="form-group mt-3">
                 <label class="form-label">Qo'shimcha izoh</label>
@@ -710,6 +712,19 @@ const BemorKartaPage = {
         }
       });
     });
+
+    // Muassasa "Boshqa" tanlanganda qo'lda kiritish maydonini ko'rsatish
+    const muassasaSelect = document.getElementById('din-otkazilgan-muassasa');
+    if (muassasaSelect) {
+      muassasaSelect.addEventListener('change', () => {
+        const customInput = document.getElementById('din-otkazilgan-muassasa-custom');
+        if (customInput) {
+          const isBoshqa = muassasaSelect.value === '__boshqa__';
+          customInput.style.display = isBoshqa ? 'block' : 'none';
+          if (!isBoshqa) customInput.value = '';
+        }
+      });
+    }
 
     // Tarixni yuklash
     try {
@@ -774,8 +789,11 @@ const BemorKartaPage = {
     const selected = document.querySelector('input[name="din-muolaja"]:checked')?.value;
     if (!selected) { showToast('Muolaja turini tanlang', 'warning'); return; }
     const isOtk = selected.includes("Boshqa muassasaga o'tkazildi");
-    const otkazilganMuassasa = document.getElementById('din-otkazilgan-muassasa')?.value || '';
-    if (isOtk && !otkazilganMuassasa) { showToast('Muassasa nomini tanlang', 'warning'); return; }
+    const muassasaSelectVal = document.getElementById('din-otkazilgan-muassasa')?.value || '';
+    const otkazilganMuassasa = muassasaSelectVal === '__boshqa__'
+      ? (document.getElementById('din-otkazilgan-muassasa-custom')?.value || '').trim()
+      : muassasaSelectVal;
+    if (isOtk && !otkazilganMuassasa) { showToast('Muassasa nomini kiriting', 'warning'); return; }
     const izoh = document.getElementById('din-izoh')?.value || '';
     const btn = document.getElementById('btn-davolash-save');
     setLoading(btn, true);
