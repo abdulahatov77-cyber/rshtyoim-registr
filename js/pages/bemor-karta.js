@@ -812,12 +812,16 @@ const BemorKartaPage = {
         else await DB.insultUpdate(p.kt_no, upd);
         BemorKartaPage._patient.status = 'otkazildi';
         // Telegram xabar — o'tkazish
-        Telegram.notifyDinamika(p, BemorKartaPage._type, selected, profile?.fio, otkazilganMuassasa).catch(()=>{});
+        // O'CHIRILDI: dinamika_muolajalar jadvaliga yozuv tushganda server-bot ("DINAMIKA YANGILANDI")
+        // avtomatik xabar yuboradi. Bu qatorni qoldirsak, bitta hodisaga ikkita xabar ketadi (dublikat).
+        // Telegram.notifyDinamika(p, BemorKartaPage._type, selected, profile?.fio, otkazilganMuassasa).catch(()=>{});
         showToast(`✅ Bemor ${otkazilganMuassasa}ga o'tkazildi`, 'success');
         setTimeout(() => Router.go('bemorlar'), 1500);
       } else {
         // Telegram xabar — yangi dinamik muolaja
-        Telegram.notifyDinamika(p, BemorKartaPage._type, selected, profile?.fio).catch(()=>{});
+        // O'CHIRILDI: dinamika_muolajalar jadvaliga yozuv tushganda server-bot ("DINAMIKA YANGILANDI")
+        // avtomatik xabar yuboradi. Bu qatorni qoldirsak, bitta hodisaga ikkita xabar ketadi (dublikat).
+        // Telegram.notifyDinamika(p, BemorKartaPage._type, selected, profile?.fio).catch(()=>{});
         showToast('Muolaja saqlandi', 'success');
         BemorKartaPage.loadTab(1);
       }
