@@ -1489,6 +1489,15 @@ const BemorKartaPage = {
             </select>
           </div>
           <div class="form-group">
+            <label class="form-label">Tana vazni (kg)</label>
+            <input id="edit-vazn" type="number" min="2" max="350" step="0.1" class="form-input" value="${p.vazn||''}" placeholder="Masalan: 78" oninput="this.value=this.value.replace(/[^0-9.]/g,'')"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Bo'y uzunligi (sm)</label>
+            <input id="edit-boy" type="number" min="50" max="250" class="form-input" value="${p.boy||''}" placeholder="Masalan: 172"/>
+            <div class="text-xs text-slate-400 mt-1">Santimetrda, butun son — metrda EMAS</div>
+          </div>
+          <div class="form-group">
             <label class="form-label">Viloyat</label>
             <select id="edit-viloyat" class="form-select" onchange="BemorKartaPage._updateMuassasaOptions()">
               ${viloyatlar.map(v => `<option value="${v}" ${p.viloyat===v?'selected':''}>${v}</option>`).join('')}
@@ -1709,12 +1718,33 @@ const BemorKartaPage = {
       if (qv && cd < qv) { showToast('⚠️ Chiqarilgan vaqt qabul vaqtidan oldin bo\'lishi mumkin emas!', 'error', 5000); return; }
       chiqishIso = cd.toISOString();
     }
+    // Bo'y — faqat santimetrda, butun son (metrda kiritilsa xato)
+    const boyRawE = g('edit-boy')?.value || '';
+    if (boyRawE) {
+      const boyVE = parseFloat(boyRawE.replace(',', '.'));
+      if (boyRawE.includes('.') || boyRawE.includes(',') || boyVE < 50 || boyVE > 250) {
+        g('edit-boy')?.classList.add('border-red-500');
+        showToast("⚠️ Bo'y SANTIMETRDA, butun son bo'lib kiritilsin (masalan 172) — metrda EMAS!", 'error', 7000);
+        return;
+      }
+    }
+    const vaznRawE = g('edit-vazn')?.value || '';
+    if (vaznRawE) {
+      const vaznVE = parseFloat(vaznRawE);
+      if (!(vaznVE >= 2 && vaznVE <= 350)) {
+        g('edit-vazn')?.classList.add('border-red-500');
+        showToast("⚠️ Tana vazni 2–350 kg oralig'ida bo'lishi kerak!", 'error', 6000);
+        return;
+      }
+    }
     const btn = document.getElementById('btn-edit-save');
     setLoading(btn, true);
     const qabulVaqt = qv ? qv.toISOString() : null;
     const updates = {
       fio,
       jins:          g('edit-jins')?.value || null,
+      vazn:          vaznRawE ? parseFloat(vaznRawE) : null,
+      boy:           boyRawE ? parseInt(boyRawE) : null,
       viloyat:       g('edit-viloyat')?.value || null,
       muassasa:      g('edit-muassasa')?.value || null,
       murojaat_yoli: g('edit-murojaat')?.value || null,
