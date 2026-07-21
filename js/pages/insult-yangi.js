@@ -443,19 +443,8 @@ const InsultYangiPage = {
           ${this._renderAspects(d)}
         </div>
 
-        ${this.field('muolaja_turi','Muolaja turi',`
-          <div class="grid grid-cols-1 gap-2 mt-2">
-            ${APP_CONFIG.INSULT_MUOLAJALARI.map(item => {
-              const isSel = muolaja === item;
-              return `
-                <label class="flex items-center gap-3 p-3 border rounded-xl cursor-pointer transition-all ${isSel ? 'border-purple-500 bg-purple-50 text-purple-700 font-medium shadow-sm' : 'border-gray-200 hover:border-purple-300 hover:bg-gray-50 text-gray-600'}">
-                  <input type="radio" name="muolaja_turi" value="${item}" class="w-4 h-4 text-purple-600" ${isSel?'checked':''} onchange="InsultYangiPage.onMuolajaChange('${item}')">
-                  <span class="text-sm">${item}</span>
-                </label>
-              `;
-            }).join('')}
-          </div>
-        `,true)}
+        ${this.field('muolaja_turi','Bajarilgan muolaja turi',`<select id="muolaja_turi" class="form-select border-purple-300 focus:border-purple-500" onchange="InsultYangiPage.onMuolajaChange(this.value)">
+          ${this.selectOptions(APP_CONFIG.INSULT_MUOLAJALARI, muolaja)}</select>`,true)}
 
         <div id="trombolizis-vaqt-div" style="display:${showTLT?'block':'none'}">
           ${this.field('trombolizis_vaqti','Trombolizis (TLT) o\'tkazilgan vaqt',`
@@ -845,7 +834,8 @@ const InsultYangiPage = {
     const jinsEl = document.querySelector('input[name="jins"]:checked');
     if (jinsEl) InsultYangiPage._data.jins = jinsEl.value;
 
-    const muolajaEl = document.querySelector('input[name="muolaja_turi"]:checked');
+    // Muolaja turi — endi select (infarkt formasi bilan bir xil)
+    const muolajaEl = document.getElementById('muolaja_turi');
     if (muolajaEl) InsultYangiPage._data.muolaja_turi = muolajaEl.value;
 
     ['xavf_omillari','asoratlar'].forEach(name => {
