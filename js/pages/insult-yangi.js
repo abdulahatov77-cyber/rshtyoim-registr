@@ -386,10 +386,11 @@ const InsultYangiPage = {
     const muolaja = d.muolaja_turi || '';
     const muolajaL = muolaja.toLowerCase();
     const showOtkazilgan = muolaja.startsWith("Boshqa muassasaga o'tkazildi");
-    const showTLT = muolajaL.includes('trombolizis') || muolajaL.includes('tlt');
-    const showTrombektomiya = muolajaL.includes('trombektomiya') || muolajaL.includes('tromboekstraksiya') || muolajaL.includes('tromboaspiratsiya') || muolajaL.includes('kombinatsiya') || muolajaL.includes('angiografiya') || muolajaL.includes('stentlash') || muolajaL.includes('tlbap');
+    // O'tkazish variantlarida muolaja vaqtlari so'ralmaydi (muolaja bu yerda emas, boshqa muassasada bo'ladi)
+    const showTLT = !showOtkazilgan && (muolajaL.includes('trombolizis') || muolajaL.includes('tlt'));
+    const showTrombektomiya = !showOtkazilgan && (muolajaL.includes('trombektomiya') || muolajaL.includes('tromboekstraksiya') || muolajaL.includes('tromboaspiratsiya') || muolajaL.includes('kombinatsiya') || muolajaL.includes('angiografiya') || muolajaL.includes('stentlash') || muolajaL.includes('tlbap'));
     const trombektomiyaLabel = (muolajaL.includes('angiografiya') || muolajaL.includes('stentlash') || muolajaL.includes('tlbap')) && !muolajaL.includes('trombektomiya') && !muolajaL.includes('tromboekstraksiya') && !muolajaL.includes('tromboaspiratsiya') ? 'Angiografiya o\'tkazilgan vaqt (Groin time)' : 'Trombektomiya (Groin time)';
-    const showMsktVaqt = Utils.msktDone(d.mskt) || muolajaL.includes('mskt');
+    const showMsktVaqt = Utils.msktDone(d.mskt) || (!showOtkazilgan && muolajaL.includes('mskt'));
     const isIshemik = (d.insult_turi || '') === 'Ishemik insult';
     const showAngio = showMsktVaqt && isIshemik;
     const showAspects = showAngio && d.mskt_angiografiya === 'Ha';
@@ -739,9 +740,10 @@ const InsultYangiPage = {
     InsultYangiPage._data.muolaja_turi = val;
     const v = val.toLowerCase();
     const isOtk = val.startsWith("Boshqa muassasaga o'tkazildi");
-    const isTLT = v.includes('trombolizis') || v.includes('tlt');
-    const isTrombektomiya = v.includes('trombektomiya') || v.includes('tromboekstraksiya') || v.includes('tromboaspiratsiya') || v.includes('kombinatsiya') || v.includes('angiografiya') || v.includes('stentlash') || v.includes('tlbap');
-    const isMskt = Utils.msktDone(InsultYangiPage._data.mskt) || v.includes('mskt');
+    // O'tkazish variantlarida muolaja vaqtlari so'ralmaydi
+    const isTLT = !isOtk && (v.includes('trombolizis') || v.includes('tlt'));
+    const isTrombektomiya = !isOtk && (v.includes('trombektomiya') || v.includes('tromboekstraksiya') || v.includes('tromboaspiratsiya') || v.includes('kombinatsiya') || v.includes('angiografiya') || v.includes('stentlash') || v.includes('tlbap'));
+    const isMskt = Utils.msktDone(InsultYangiPage._data.mskt) || (!isOtk && v.includes('mskt'));
     const otkazDiv = document.getElementById('otkazilgan-div');
     const tltDiv = document.getElementById('trombolizis-vaqt-div');
     const trombDiv = document.getElementById('trombektomiya-vaqt-div');
@@ -1088,9 +1090,11 @@ const InsultYangiPage = {
       const qv = (() => { try { return this._data.qabul_vaqt ? new Date(this._data.qabul_vaqt + (this._data.qabul_vaqt.includes('T') ? ':00+05:00' : '')) : null; } catch(e) { return null; } })();
       const muolaja = this._data.muolaja_turi || '';
       const muolajaL = muolaja.toLowerCase();
-      const isTLT = muolajaL.includes('trombolizis') || muolajaL.includes('tlt');
-      const isTrombektomiya = muolajaL.includes('trombektomiya') || muolajaL.includes('tromboekstraksiya') || muolajaL.includes('tromboaspiratsiya') || muolajaL.includes('kombinatsiya') || muolajaL.includes('angiografiya') || muolajaL.includes('stentlash') || muolajaL.includes('tlbap');
-      const isMskt = Utils.msktDone(this._data.mskt) || muolajaL.includes('mskt');
+      const isOtkM = muolaja.startsWith("Boshqa muassasaga o'tkazildi");
+      // O'tkazish variantlarida muolaja vaqtlari talab qilinmaydi
+      const isTLT = !isOtkM && (muolajaL.includes('trombolizis') || muolajaL.includes('tlt'));
+      const isTrombektomiya = !isOtkM && (muolajaL.includes('trombektomiya') || muolajaL.includes('tromboekstraksiya') || muolajaL.includes('tromboaspiratsiya') || muolajaL.includes('kombinatsiya') || muolajaL.includes('angiografiya') || muolajaL.includes('stentlash') || muolajaL.includes('tlbap'));
+      const isMskt = Utils.msktDone(this._data.mskt) || (!isOtkM && muolajaL.includes('mskt'));
 
       // KT/MSKT vaqti majburiy (MSKT o'tkazilganda) — sana VA soat ikkalasi ham shart
       if (isMskt) {

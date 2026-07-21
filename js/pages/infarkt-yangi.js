@@ -491,10 +491,13 @@ const InfarktYangiPage = {
 
   // ============ 4-BO'LIM: Muolaja ============
   _isTLT(val) {
-    return val && (val.includes('TLT') || val.includes('trombolitik'));
+    // O'tkazish variantlarida muolaja vaqtlari so'ralmaydi
+    if (!val || val.startsWith("Boshqa muassasaga o'tkazildi")) return false;
+    return val.includes('TLT') || val.includes('trombolitik');
   },
   _isPCI(val) {
-    return val && (val.includes('PCI') || val.includes('stentlash') || val.includes('TLBAP') || val.includes('ballon') || val.includes('KAG'));
+    if (!val || val.startsWith("Boshqa muassasaga o'tkazildi")) return false;
+    return val.includes('PCI') || val.includes('stentlash') || val.includes('TLBAP') || val.includes('ballon') || val.includes('KAG');
   },
 
   renderStep3() {
@@ -1010,8 +1013,9 @@ const InfarktYangiPage = {
       const now = new Date();
       const qv = (() => { try { return this._data.qabul_vaqt ? new Date(this._data.qabul_vaqt + (this._data.qabul_vaqt.includes('T') ? ':00+05:00' : '')) : null; } catch(e) { return null; } })();
       const muolaja = this._data.muolaja_turi || '';
-      const isTLT = muolaja.toLowerCase().includes('tlt') || muolaja.toLowerCase().includes('trombolit');
-      const isPCI = muolaja.toLowerCase().includes('pci') || muolaja.toLowerCase().includes('angioplast') || muolaja.toLowerCase().includes('stent') || muolaja.toLowerCase().includes('groin') || muolaja.toLowerCase().includes('kag');
+      // O'tkazish variantlarida muolaja vaqtlari talab qilinmaydi (_isTLT/_isPCI ichida tekshiriladi)
+      const isTLT = InfarktYangiPage._isTLT(muolaja);
+      const isPCI = InfarktYangiPage._isPCI(muolaja);
 
       // TLT vaqti majburiy (TLT muolajasi tanlanganda)
       if (isTLT && !this._data.tlt_vaqt) {
