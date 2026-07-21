@@ -4,6 +4,11 @@
 -- bilan Postgres trigger Vercel /api/telegram ga so'rov yuboradi.
 -- Operator brauzerining versiyasiga umuman bog'liq emas.
 --
+-- HIMOYA (avtomatik, qo'lda hech narsa qilish shart emas):
+--  1) Retro-import qatorlari (created_at 10 daqiqadan eski) — xabar yuborilmaydi
+--  2) 5 daqiqada 30 tadan ortiq xabar (ommaviy import belgisi) —
+--     ortiqchasi avtomatik to'xtatiladi, guruhga 1 ta ogohlantirish tushadi
+--
 -- ISHGA TUSHIRISH: Supabase Dashboard -> SQL Editor
 -- MUHIM: pastdagi SERVER_KEY qiymati Vercel'dagi
 --        TELEGRAM_SERVER_KEY env o'zgaruvchisi bilan BIR XIL bo'lsin.
@@ -17,11 +22,21 @@ LANGUAGE sql IMMUTABLE AS $$
   SELECT replace(replace(replace(coalesce(s, ''), '&', '&amp;'), '<', '&lt;'), '>', '&gt;');
 $$;
 
+-- Xabarlar hisobi (ommaviy importni avtomatik aniqlash uchun)
+CREATE TABLE IF NOT EXISTS telegram_notify_throttle (
+  sent_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_tg_throttle_sent ON telegram_notify_throttle (sent_at);
+-- Tashqaridan ko'rinmasin (faqat trigger ishlatadi)
+ALTER TABLE telegram_notify_throttle ENABLE ROW LEVEL SECURITY;
+REVOKE ALL ON telegram_notify_throttle FROM anon, authenticated;
+
 CREATE OR REPLACE FUNCTION notify_telegram_new_patient() RETURNS trigger
 LANGUAGE plpgsql SECURITY DEFINER AS $fn$
 DECLARE
   SERVER_KEY constant text := 'SIZNING_MAXFIY_KALIT';  -- <<< ALMASHTIRING
   API_URL    constant text := 'https://rshtyoim-registr.vercel.app/api/telegram';
+  MAX_MSGS   constant int  := 30;              -- 5 daqiqadagi maksimal xabar
   j        jsonb := to_jsonb(NEW);
   p_type   text  := CASE WHEN TG_TABLE_NAME = 'infarkt_qabul' THEN 'infarkt' ELSE 'insult' END;
   emoji    text  := CASE WHEN TG_TABLE_NAME = 'infarkt_qabul' THEN '🫀' ELSE '🧠' END;
@@ -31,10 +46,35 @@ DECLARE
   age      text := '?';
   qabul    text := '—';
   kritik   text := '';
+  cnt      int;
   detail   text;
   shifokor text;
   msg      text;
 BEGIN
+  -- HIMOYA 1: retro-import qatori (created_at eski) — jonli kiritish emas
+  IF (j->>'created_at') IS NOT NULL
+     AND (j->>'created_at')::timestamptz < now() - interval '10 minutes' THEN
+    RETURN NEW;
+  END IF;
+
+  -- HIMOYA 2: 5 daqiqalik oynada xabarlar sonini cheklash (ommaviy import)
+  DELETE FROM telegram_notify_throttle WHERE sent_at < now() - interval '5 minutes';
+  SELECT count(*) INTO cnt FROM telegram_notify_throttle;
+  IF cnt >= MAX_MSGS THEN
+    IF cnt = MAX_MSGS THEN
+      -- Chegara oshganda guruhga bitta ogohlantirish
+      INSERT INTO telegram_notify_throttle DEFAULT VALUES;
+      PERFORM net.http_post(
+        url     := API_URL,
+        headers := jsonb_build_object('Content-Type', 'application/json', 'x-server-key', SERVER_KEY),
+        body    := jsonb_build_object('type', p_type, 'text',
+          '⚠️ <b>Qisqa vaqtda juda ko''p yozuv kiritildi (import?)</b>' || nl ||
+          'Keyingi xabarlar vaqtincha to''xtatildi — 5 daqiqadan so''ng avtomatik tiklanadi.')
+      );
+    END IF;
+    RETURN NEW;
+  END IF;
+
   -- Yosh
   IF left(tug, 4) ~ '^\d{4}$' THEN
     age := (date_part('year', now() AT TIME ZONE 'Asia/Tashkent')::int - left(tug, 4)::int)::text;
@@ -81,6 +121,7 @@ BEGIN
       || '👨‍⚕️ <b>Shifokor:</b> ' || shifokor || nl
       || line || kritik;
 
+  INSERT INTO telegram_notify_throttle DEFAULT VALUES;
   PERFORM net.http_post(
     url     := API_URL,
     headers := jsonb_build_object(
@@ -107,13 +148,3 @@ DROP TRIGGER IF EXISTS trg_telegram_notify ON insult_qabul;
 CREATE TRIGGER trg_telegram_notify
   AFTER INSERT ON insult_qabul
   FOR EACH ROW EXECUTE FUNCTION notify_telegram_new_patient();
-
--- ============================================================
--- ESLATMA: Excel'dan OMMAVIY IMPORT oldidan triggerni o'chiring,
--- aks holda har bir qator uchun alohida xabar ketadi:
---   ALTER TABLE insult_qabul  DISABLE TRIGGER trg_telegram_notify;
---   ALTER TABLE infarkt_qabul DISABLE TRIGGER trg_telegram_notify;
--- Import tugagach qayta yoqing:
---   ALTER TABLE insult_qabul  ENABLE TRIGGER trg_telegram_notify;
---   ALTER TABLE infarkt_qabul ENABLE TRIGGER trg_telegram_notify;
--- ============================================================
