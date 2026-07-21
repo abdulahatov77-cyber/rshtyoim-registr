@@ -1279,7 +1279,9 @@ const BemorKartaPage = {
   },
 
   renderChiqarish(el, p, type) {
-    if (p.status !== 'active') {
+    // Status "chiqarildi/vafot" deb belgilangan-u varaqa yo'q bo'lsa — formani ochamiz (retro to'ldirish)
+    const varaqaYoq = (p.status === 'chiqarildi' || p.status === 'vafot') && !p._chiqarish?.chiqish_sana;
+    if (p.status !== 'active' && !varaqaYoq) {
       const statusLabels = {
         chiqarildi: { icon: 'log-out', color: 'blue',   label: 'Bemor chiqarilgan',              desc: 'Bemor shifoxonadan muvaffaqiyatli chiqarilgan.' },
         otkazildi:  { icon: 'share-2', color: 'orange', label: "Bemor boshqa muassasaga o'tkazilgan", desc: "Bemor boshqa tibbiyot muassasasiga o'tkazilgan." },
@@ -1337,6 +1339,11 @@ const BemorKartaPage = {
 
     el.innerHTML = `
       <div class="max-w-2xl mx-auto">
+        ${varaqaYoq ? `
+        <div class="mb-4 p-4 rounded-xl bg-amber-50 border border-amber-300 text-amber-800 text-sm">
+          ⚠️ Bu bemor <b>"${p.status === 'vafot' ? 'vafot' : 'chiqarildi'}"</b> deb belgilangan, lekin chiqarish varaqasi
+          to'ldirilmagan. Quyida haqiqiy chiqish sanasi va ma'lumotlarini kiritib saqlang.
+        </div>` : ''}
         <div class="card border-t-4 ${borderColor}">
           <div class="card-header bg-gray-50 border-b border-gray-100 p-5 !mb-0">
             <h3 class="card-title text-gray-900 flex items-center gap-2">${icon('log-out', 18)} Bemorni chiqarish</h3>
