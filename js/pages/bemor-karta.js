@@ -416,6 +416,7 @@ const BemorKartaPage = {
               ${row('Insult turi', p.insult_turi)}
               ${row('NIHSS (qabul)', p.nihss_qabul!=null ? p.nihss_qabul+' ball' : null)}
               ${row('GCS (Glazgo)', p.gcs_bali!=null ? p.gcs_bali+' ball' : null)}
+              ${row('Puls', p.puls || null)}
               ${row('AHA bali', p.aha_bali!=null ? p.aha_bali+' ball' : null)}
               ${row('MSKT o\'tkazilganmi?', p.mskt)}
             `}
@@ -1738,6 +1739,7 @@ const BemorKartaPage = {
       updates.pci_vaqt     = splitToUTC('edit-pci-vaqt-d', 'edit-pci-vaqt-t');
     } else {
       updates.insult_turi         = g('edit-turi')?.value || null;
+      updates.puls                = g('edit-puls')?.value ? parseInt(g('edit-puls').value) : null;
       updates.nihss_qabul         = g('edit-nihss')?.value ? parseInt(g('edit-nihss').value) : null;
       updates.gcs_bali            = g('edit-gcs')?.value ? parseInt(g('edit-gcs').value) : null;
       updates.kt_vaqti            = splitToUTC('edit-kt-vaqti-d', 'edit-kt-vaqti-t');

@@ -369,6 +369,7 @@ const InsultYangiPage = {
             <span class="w-12"></span>
           </div>`;
         })(),true)}
+        ${this.field('puls','Puls (qabul paytida)',`<input id="puls" type="number" min="20" max="300" class="form-input" placeholder="Masalan: 80" value="${d.puls||''}" oninput="this.value=this.value.replace(/[^0-9]/g,'')"/>`,true,'Zarba/daqiqa')}
       </div>
       <div class="mt-4 border-t border-dashed border-gray-200 pt-4">
         ${this.field('xavf_omillari','Xavf omillari',
@@ -801,7 +802,7 @@ const InsultYangiPage = {
 
     ['viloyat','muassasa','boshqa_muassasa','kt_no','murojaat_yoli','yuborgan_muassasa',
      'tez_yordam_kelgan_vaqt',
-     'fio','simptom_vaqt','gcs_bali','birlamchi_yoki_takroriy','insult_turi','aha_bali','nihss_qabul',
+     'fio','simptom_vaqt','gcs_bali','birlamchi_yoki_takroriy','insult_turi','aha_bali','nihss_qabul','puls',
      'yashash_viloyat','yashash_tuman','chet_el_davlati',
      'mskt','mskt_angiografiya','otkazilgan_muassasa','otkazilgan_boshqa','shifokor_fio','shifokor_tel']
     .forEach(id => {
@@ -906,7 +907,7 @@ const InsultYangiPage = {
       else required.push('yashash_viloyat','yashash_tuman');
     }
     // qon_bosimi bu ro'yxatда yo'q — sistolik/diastolik orqali alohida tekshiriladi
-    if (this._step === 2) required = ['aha_bali','simptom_vaqt','nihss_qabul','gcs_bali','birlamchi_yoki_takroriy','insult_turi'];
+    if (this._step === 2) required = ['aha_bali','simptom_vaqt','nihss_qabul','gcs_bali','birlamchi_yoki_takroriy','insult_turi','puls'];
     if (this._step === 3) {
       required = ['mskt','muolaja_turi','shifokor_fio','shifokor_tel'];
       if ((this._data.muolaja_turi || '').startsWith("Boshqa muassasaga o'tkazildi")) required.push('otkazilgan_muassasa');
@@ -974,6 +975,12 @@ const InsultYangiPage = {
         const el = document.getElementById('simptom_soat_raw');
         if (el) el.classList.add('border-red-500');
         showToast("⚠️ Simptom vaqti 0 bo'lishi mumkin emas — necha soat oldin boshlanganini kiriting!", 'error', 6000);
+      }
+      const pulsV = parseInt(this._data.puls);
+      if (this._data.puls && !(pulsV >= 20 && pulsV <= 300)) {
+        valid = false;
+        document.getElementById('puls')?.classList.add('border-red-500', 'err-red');
+        showToast("⚠️ Puls qiymati noreal (20–300 oralig'ida bo'lishi kerak)!", 'error', 6000);
       }
     }
     // F.I.O — kamida bitta harf bo'lishi kerak

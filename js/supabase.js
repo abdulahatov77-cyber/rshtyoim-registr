@@ -261,7 +261,7 @@ const DB = {
       'viloyat','muassasa','kt_no','qabul_vaqt','murojaat_yoli','yuborgan_muassasa',
       'fio','tugilgan_yil','tugilgan_sana','jins',
       'fuqarolik','yashash_viloyat','yashash_tuman','chet_el_davlati',
-      'simptom_vaqt','birlamchi_yoki_takroriy','nihss_qabul','gcs_bali','insult_turi','qon_bosimi',
+      'simptom_vaqt','birlamchi_yoki_takroriy','nihss_qabul','gcs_bali','insult_turi','qon_bosimi','puls',
       'xavf_omil','aha_bali',
       'mskt','mskt_angiografiya','muolaja_turi','otkazilgan_muassasa',
       'aspects_c','aspects_l','aspects_ic','aspects_i',
