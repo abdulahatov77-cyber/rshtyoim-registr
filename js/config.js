@@ -30,8 +30,8 @@ const APP_CONFIG = {
   // Bemorning doimiy yashash manzili — viloyat bo'yicha tumanlar/shaharlar
   TUMANLAR: {
     "Andijon viloyati": [
-      "Andijon shahri", "Xonobod shahri", "Andijon tumani", "Asaka tumani", "Baliqchi tumani",
-      "Bo'ston tumani", "Buloqboshi tumani", "Izboskan tumani", "Jalaquduq tumani",
+      "Andijon shahri", "Xonobod shahri", "Qorasuv shahri", "Andijon tumani", "Asaka tumani",
+      "Baliqchi tumani", "Bo'z tumani", "Buloqboshi tumani", "Izboskan tumani", "Jalaquduq tumani",
       "Xo'jaobod tumani", "Qo'rg'ontepa tumani", "Marhamat tumani", "Oltinko'l tumani",
       "Paxtaobod tumani", "Shahrixon tumani", "Ulug'nor tumani"
     ],
@@ -43,7 +43,7 @@ const APP_CONFIG = {
     "Jizzax viloyati": [
       "Jizzax shahri", "Arnasoy tumani", "Baxmal tumani", "Do'stlik tumani", "Forish tumani",
       "G'allaorol tumani", "Sharof Rashidov tumani", "Mirzacho'l tumani", "Paxtakor tumani",
-      "Yangiobod tumani", "Zafarobod tumani", "Zomin tumani"
+      "Yangiobod tumani", "Zafarobod tumani", "Zarbdor tumani", "Zomin tumani"
     ],
     "Qashqadaryo viloyati": [
       "Qarshi shahri", "Shahrisabz shahri", "Chiroqchi tumani", "Dehqonobod tumani",
@@ -81,10 +81,11 @@ const APP_CONFIG = {
     ],
     "Toshkent viloyati": [
       "Nurafshon shahri", "Angren shahri", "Bekobod shahri", "Chirchiq shahri",
-      "Olmaliq shahri", "Yangiyo'l shahri", "Bekobod tumani", "Bo'ka tumani",
+      "Ohangaron shahri", "Olmaliq shahri", "Yangiyo'l shahri", "Bekobod tumani", "Bo'ka tumani",
       "Bo'stonliq tumani", "Chinoz tumani", "Qibray tumani", "Ohangaron tumani",
       "Oqqo'rg'on tumani", "Parkent tumani", "Piskent tumani", "Quyichirchiq tumani",
-      "O'rtachirchiq tumani", "Yangiyo'l tumani", "Yuqorichirchiq tumani", "Zangiota tumani"
+      "O'rtachirchiq tumani", "Toshkent tumani", "Yangiyo'l tumani", "Yuqorichirchiq tumani",
+      "Zangiota tumani"
     ],
     "Farg'ona viloyati": [
       "Farg'ona shahri", "Marg'ilon shahri", "Qo'qon shahri", "Quvasoy shahri",
@@ -102,12 +103,13 @@ const APP_CONFIG = {
       "Nukus shahri", "Amudaryo tumani", "Beruniy tumani", "Bo'zatov tumani",
       "Chimboy tumani", "Ellikqal'a tumani", "Kegeyli tumani", "Mo'ynoq tumani",
       "Nukus tumani", "Qanliko'l tumani", "Qo'ng'irot tumani", "Qorao'zak tumani",
-      "Shumanay tumani", "Taxtako'pir tumani", "To'rtko'l tumani", "Xo'jayli tumani"
+      "Shumanay tumani", "Taxiatosh tumani", "Taxtako'pir tumani", "To'rtko'l tumani",
+      "Xo'jayli tumani"
     ],
     "Toshkent shahri": [
       "Bektemir tumani", "Chilonzor tumani", "Mirobod tumani", "Mirzo Ulug'bek tumani",
       "Olmazor tumani", "Sergeli tumani", "Shayxontohur tumani", "Uchtepa tumani",
-      "Yakkasaroy tumani", "Yashnobod tumani", "Yunusobod tumani"
+      "Yakkasaroy tumani", "Yangihayot tumani", "Yashnobod tumani", "Yunusobod tumani"
     ]
   },
 
