@@ -1505,12 +1505,22 @@ const BemorKartaPage = {
           </div>
           <div class="form-group">
             <label class="form-label">Holat (status)</label>
-            <select id="edit-status" class="form-select">
+            <select id="edit-status" class="form-select"
+              onchange="var w=document.getElementById('edit-chiqish-wrap'); if(w) w.style.display=(this.value==='active')?'none':''">
               <option value="active" ${p.status==='active'?'selected':''}>Aktiv (davolanmoqda)</option>
               <option value="chiqarildi" ${p.status==='chiqarildi'?'selected':''}>Chiqarildi</option>
               <option value="otkazildi" ${p.status==='otkazildi'?'selected':''}>O'tkazildi</option>
               <option value="vafot" ${p.status==='vafot'?'selected':''}>Vafot</option>
             </select>
+          </div>
+          <div class="form-group" id="edit-chiqish-wrap" ${p.status==='active' ? 'style="display:none"' : ''}>
+            <label class="form-label">Chiqarilgan sana/vaqt</label>
+            <div class="flex gap-2">
+              <input id="edit-chiqish-d" type="date" class="form-input" max="${new Date(Date.now()+5*3600000).toISOString().slice(0,10)}"
+                value="${p._chiqarish?.chiqish_sana ? new Date(new Date(p._chiqarish.chiqish_sana).getTime()+5*3600000).toISOString().slice(0,10) : ''}"/>
+              <input id="edit-chiqish-t" type="time" class="form-input"
+                value="${p._chiqarish?.chiqish_sana ? new Date(new Date(p._chiqarish.chiqish_sana).getTime()+5*3600000).toISOString().slice(11,16) : ''}"/>
+            </div>
           </div>
           <div class="form-group">
             <label class="form-label">Qon bosimi</label>
@@ -1684,6 +1694,18 @@ const BemorKartaPage = {
       if (vt > now) { showToast(`⚠️ ${label} kelajakda bo'lishi mumkin emas!`, 'error', 5000); return; }
       if (qv && vt < qv) { showToast(`⚠️ ${label} bemor qabul vaqtidan oldin bo'lishi mumkin emas!`, 'error', 5000); return; }
     }
+    // Chiqarilgan sana/vaqt tekshiruvi
+    const chiqishD = g('edit-chiqish-d')?.value, chiqishT = g('edit-chiqish-t')?.value;
+    const newStatus = g('edit-status')?.value;
+    let chiqishIso = null;
+    if (newStatus !== 'active' && (chiqishD || chiqishT)) {
+      if (!chiqishD) { showToast('⚠️ Chiqarilgan sanani kiriting', 'error', 4000); return; }
+      if (!chiqishT) { showToast('⚠️ Chiqarilgan vaqtni kiriting', 'error', 4000); return; }
+      const cd = new Date(`${chiqishD}T${chiqishT}:00+05:00`);
+      if (cd > now) { showToast('⚠️ Chiqarilgan vaqt kelajakda bo\'lishi mumkin emas!', 'error', 5000); return; }
+      if (qv && cd < qv) { showToast('⚠️ Chiqarilgan vaqt qabul vaqtidan oldin bo\'lishi mumkin emas!', 'error', 5000); return; }
+      chiqishIso = cd.toISOString();
+    }
     const btn = document.getElementById('btn-edit-save');
     setLoading(btn, true);
     const qabulVaqt = qv ? qv.toISOString() : null;
@@ -1726,7 +1748,24 @@ const BemorKartaPage = {
       const result = isInf
         ? await DB.infarktUpdate(p.kt_no, updates)
         : await DB.insultUpdate(p.kt_no, updates);
-      BemorKartaPage._patient = { ...p, ...result };
+      // Chiqarilgan sana/vaqt — chiqarish jadvalidagi yozuvni yangilaymiz yoki yaratamiz
+      if (chiqishIso && newStatus !== 'active') {
+        const tbl = isInf ? 'infarkt_chiqarish' : 'insult_chiqarish';
+        const sb = getSupabase();
+        const { data: exRows } = await sb.from(tbl).select('id').eq('kt_no', p.kt_no)
+          .order('created_at', { ascending: false }).limit(1);
+        if (exRows && exRows.length > 0) {
+          await sb.from(tbl).update({ chiqish_sana: chiqishIso }).eq('id', exRows[0].id);
+        } else {
+          const rec = { kt_no: p.kt_no, chiqish_sana: chiqishIso };
+          if (isInf) rec.chiqish_holat = newStatus === 'vafot' ? 'Vafot etdi' : null;
+          else { rec.natija = newStatus === 'vafot' ? 'Vafot etdi' : null; rec.viloyat = updates.viloyat || p.viloyat || null; }
+          await sb.from(tbl).insert(rec);
+        }
+        BemorKartaPage._patient = { ...p, ...result, _chiqarish: { ...(p._chiqarish || {}), chiqish_sana: chiqishIso } };
+      } else {
+        BemorKartaPage._patient = { ...p, ...result, _chiqarish: p._chiqarish };
+      }
       closeModal();
       showToast('Ma\'lumotlar yangilandi', 'success');
       BemorKartaPage.renderContent(BemorKartaPage._patient, type);
