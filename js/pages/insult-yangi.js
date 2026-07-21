@@ -103,7 +103,7 @@ const InsultYangiPage = {
 
   checkboxGroup(name, arr, selectedArr = []) {
     return `
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
+      <div id="${name}-group" class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
         ${arr.map(item => {
           const isSel = selectedArr.includes(item);
           return `
@@ -858,9 +858,31 @@ const InsultYangiPage = {
     });
   },
 
+  // Qizil belgilangan katak to'ldirilishi bilan qizilni darhol olib tashlaydi
+  _wireRedClear() {
+    document.querySelectorAll('.err-red').forEach(el => {
+      if (el._redWired) return;
+      el._redWired = true;
+      const clear = () => {
+        const filled = el.tagName === 'DIV'
+          ? !!el.querySelector('input:checked')
+          : (el.value || '') !== '';
+        if (filled) {
+          el.classList.remove('border-red-500', 'err-red', 'p-2');
+          if (el.id && el.id.endsWith('-group')) el.classList.remove('border', 'rounded-xl');
+          const errEl = document.getElementById('err-' + el.id.replace(/-group$/, ''));
+          if (errEl) errEl.classList.add('hidden');
+        }
+      };
+      el.addEventListener('input', clear);
+      el.addEventListener('change', clear);
+    });
+  },
+
   validateStep() {
     this.saveCurrentStep();
     document.querySelectorAll('.form-input, .form-select, .form-textarea').forEach(el => el.classList.remove('border-red-500'));
+    document.querySelectorAll('.err-red').forEach(el => { el.classList.remove('border-red-500', 'err-red', 'p-2'); if (el.id && el.id.endsWith('-group')) el.classList.remove('border', 'rounded-xl'); });
     document.querySelectorAll('.form-error-msg').forEach(el => { el.textContent=''; el.classList.add('hidden'); });
 
     let required = [];
@@ -887,12 +909,34 @@ const InsultYangiPage = {
     let valid = true;
     for (const [key, msg] of Object.entries(errs)) {
       valid = false;
-      const el = document.getElementById(key);
-      if (el) { el.classList.add('border-red-500'); el.focus(); }
+      const el = document.getElementById(key) || document.getElementById(key + '-group');
+      if (el) el.classList.add('border', 'border-red-500', 'rounded-xl', 'err-red');
       else if (key === 'jins') showToast('Jinsini tanlang', 'warning');
       else if (key === 'muolaja_turi') showToast('Muolaja turini tanlang', 'warning');
       const errEl = document.getElementById('err-'+key);
       if (errEl) { errEl.textContent = msg; errEl.classList.remove('hidden'); }
+    }
+    // 2-bosqich: qon bosimi va xavf omillari bo'sh bo'lsa ham darhol qizil belgilaymiz
+    if (this._step === 2) {
+      const sysEl = document.getElementById('qon_sistolik');
+      const diaEl = document.getElementById('qon_diastolik');
+      if (sysEl && !sysEl.value) { valid = false; sysEl.classList.add('border-red-500', 'err-red'); }
+      if (diaEl && !diaEl.value) { valid = false; diaEl.classList.add('border-red-500', 'err-red'); }
+      if (!document.querySelector('input[name="xavf_omillari"]:checked')) {
+        valid = false;
+        const grp = document.getElementById('xavf_omillari-group');
+        if (grp) grp.classList.add('border', 'border-red-500', 'rounded-xl', 'p-2', 'err-red');
+        const errEl = document.getElementById('err-xavf_omillari');
+        if (errEl) { errEl.textContent = 'Kamida bitta xavf omilini belgilang'; errEl.classList.remove('hidden'); }
+      }
+    }
+    if (!valid) {
+      const firstRed = document.querySelector('.err-red');
+      if (firstRed) {
+        firstRed.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        showToast("⚠️ Qizil belgilangan kataklarni to'ldiring!", 'error', 4000);
+      }
+      InsultYangiPage._wireRedClear();
     }
     // 0 yoki noreal qiymatlar — keyingi bosqichga o'tkazmaymiz
     if (this._step === 2 && valid) {
