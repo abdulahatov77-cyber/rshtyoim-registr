@@ -553,10 +553,14 @@ const InfarktYangiPage = {
         </div>
 
         <div id="otkazilgan-div" style="display:${showOtkazilgan?'block':'none'}">
-          ${this.field('otkazilgan_muassasa','O\'tkazilgan muassasa nomi',`<select id="otkazilgan_muassasa" class="form-select">
+          ${this.field('otkazilgan_muassasa','O\'tkazilgan muassasa nomi',`<select id="otkazilgan_muassasa" class="form-select" onchange="InfarktYangiPage.onOtkazilganMuassasa(this.value)">
             <option value="">Muassasani tanlang...</option>
             ${this.getAllMuassasalar().map(m => `<option value="${m}" ${d.otkazilgan_muassasa===m?'selected':''}>${m}</option>`).join('')}
+            <option value="__boshqa__" ${d.otkazilgan_muassasa==='__boshqa__'?'selected':''}>➕ Boshqa (ro'yxatda yo'q) — qo'lda yozish</option>
           </select>`)}
+          <div id="otkazilgan-boshqa-div" style="display:${d.otkazilgan_muassasa==='__boshqa__'?'block':'none'}">
+            ${this.field('otkazilgan_boshqa','Muassasa nomini qo\'lda yozing',`<input id="otkazilgan_boshqa" class="form-input" value="${d.otkazilgan_boshqa||''}" placeholder="Masalan: Toshkent shahar 1-son klinik shifoxonasi"/>`)}
+          </div>
         </div>
         <div class="mt-4 border-t border-dashed border-gray-200 pt-4">
           ${this.field('shifokor_fio','Ushbu formani to\'ldiruvchi shifokor F.I.O',`<input id="shifokor_fio" class="form-input" value="${d.shifokor_fio||''}" placeholder="Familiya Ism Otasining ismi"/>`,true)}
@@ -612,6 +616,17 @@ const InfarktYangiPage = {
     if (rawEl) rawEl.value = '';
     InfarktYangiPage._data.simptom_vaqt = label;
     InfarktYangiPage._data._simptom_soat_raw = '';
+  },
+
+  onOtkazilganMuassasa(val) {
+    InfarktYangiPage._data.otkazilgan_muassasa = val;
+    const div = document.getElementById('otkazilgan-boshqa-div');
+    if (div) div.style.display = val === '__boshqa__' ? 'block' : 'none';
+    if (val !== '__boshqa__') {
+      InfarktYangiPage._data.otkazilgan_boshqa = '';
+      const e = document.getElementById('otkazilgan_boshqa');
+      if (e) e.value = '';
+    }
   },
 
   onMuolajaChange(val) {
@@ -680,7 +695,7 @@ const InfarktYangiPage = {
      'fio','aha_bali','simptom_vaqt','birlamchi_yoki_takroriy',
      'yashash_viloyat','yashash_tuman','chet_el_davlati',
      'infarkt_turi','killip','puls','troponin','kkfmb',
-     'muolaja_turi','angio_natija','otkazilgan_muassasa','otkazish_sababi','shifokor_fio','shifokor_tel']
+     'muolaja_turi','angio_natija','otkazilgan_muassasa','otkazilgan_boshqa','otkazish_sababi','shifokor_fio','shifokor_tel']
     .forEach(id => {
       const el = document.getElementById(id);
       if (el) InfarktYangiPage._data[id] = el.value;
@@ -807,6 +822,14 @@ const InfarktYangiPage = {
       const diaEl = document.getElementById('qon_diastolik');
       if (sysEl && !sysEl.value) { valid = false; sysEl.classList.add('border-red-500', 'err-red'); }
       if (diaEl && !diaEl.value) { valid = false; diaEl.classList.add('border-red-500', 'err-red'); }
+    }
+    // "Boshqa" muassasa tanlanganda nomi qo'lda yozilishi shart
+    if (this._step === 3 && valid && this._data.otkazilgan_muassasa === '__boshqa__') {
+      if (!(this._data.otkazilgan_boshqa || '').trim()) {
+        valid = false;
+        document.getElementById('otkazilgan_boshqa')?.classList.add('border-red-500', 'err-red');
+        showToast("⚠️ O'tkazilgan muassasa nomini qo'lda yozing!", 'error', 5000);
+      }
     }
     if (!valid) {
       const firstRed = document.querySelector('.err-red');
@@ -1115,6 +1138,11 @@ const InfarktYangiPage = {
         payload.muassasa = payload.boshqa_muassasa;
       }
       delete payload.boshqa_muassasa;
+      // "Boshqa" muassasa — qo'lda yozilgan nom ishlatiladi
+      if (payload.otkazilgan_muassasa === '__boshqa__') {
+        payload.otkazilgan_muassasa = (payload.otkazilgan_boshqa || '').trim();
+      }
+      delete payload.otkazilgan_boshqa;
       if ((payload.muolaja_turi || '').startsWith("Boshqa muassasaga o'tkazildi")) {
         payload.status = 'otkazildi';
         // O'tkazish sababini muolaja matnidan ajratamiz (marshrut nazorati uchun)

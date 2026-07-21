@@ -478,10 +478,14 @@ const InsultYangiPage = {
         </div>
 
         <div id="otkazilgan-div" style="display:${showOtkazilgan?'block':'none'}">
-          ${this.field('otkazilgan_muassasa','O\'tkazilgan muassasa nomi',`<select id="otkazilgan_muassasa" class="form-select">
+          ${this.field('otkazilgan_muassasa','O\'tkazilgan muassasa nomi',`<select id="otkazilgan_muassasa" class="form-select" onchange="InsultYangiPage.onOtkazilganMuassasa(this.value)">
             <option value="">Muassasani tanlang...</option>
             ${this.getAllMuassasalar().map(m => `<option value="${m}" ${d.otkazilgan_muassasa===m?'selected':''}>${m}</option>`).join('')}
+            <option value="__boshqa__" ${d.otkazilgan_muassasa==='__boshqa__'?'selected':''}>➕ Boshqa (ro'yxatda yo'q) — qo'lda yozish</option>
           </select>`)}
+          <div id="otkazilgan-boshqa-div" style="display:${d.otkazilgan_muassasa==='__boshqa__'?'block':'none'}">
+            ${this.field('otkazilgan_boshqa','Muassasa nomini qo\'lda yozing',`<input id="otkazilgan_boshqa" class="form-input" value="${d.otkazilgan_boshqa||''}" placeholder="Masalan: Toshkent shahar 1-son klinik shifoxonasi"/>`)}
+          </div>
         </div>
 
         <div class="mt-4 border-t border-dashed border-gray-200 pt-4">
@@ -736,6 +740,17 @@ const InsultYangiPage = {
     }
   },
 
+  onOtkazilganMuassasa(val) {
+    InsultYangiPage._data.otkazilgan_muassasa = val;
+    const div = document.getElementById('otkazilgan-boshqa-div');
+    if (div) div.style.display = val === '__boshqa__' ? 'block' : 'none';
+    if (val !== '__boshqa__') {
+      InsultYangiPage._data.otkazilgan_boshqa = '';
+      const e = document.getElementById('otkazilgan_boshqa');
+      if (e) e.value = '';
+    }
+  },
+
   onMuolajaChange(val) {
     InsultYangiPage._data.muolaja_turi = val;
     const v = val.toLowerCase();
@@ -788,7 +803,7 @@ const InsultYangiPage = {
      'tez_yordam_kelgan_vaqt',
      'fio','simptom_vaqt','gcs_bali','birlamchi_yoki_takroriy','insult_turi','aha_bali','nihss_qabul',
      'yashash_viloyat','yashash_tuman','chet_el_davlati',
-     'mskt','mskt_angiografiya','otkazilgan_muassasa','shifokor_fio','shifokor_tel']
+     'mskt','mskt_angiografiya','otkazilgan_muassasa','otkazilgan_boshqa','shifokor_fio','shifokor_tel']
     .forEach(id => {
       const el = document.getElementById(id);
       if (el) InsultYangiPage._data[id] = el.value;
@@ -920,6 +935,14 @@ const InsultYangiPage = {
         if (grp) grp.classList.add('border', 'border-red-500', 'rounded-xl', 'p-2', 'err-red');
         const errEl = document.getElementById('err-xavf_omillari');
         if (errEl) { errEl.textContent = 'Kamida bitta xavf omilini belgilang'; errEl.classList.remove('hidden'); }
+      }
+    }
+    // "Boshqa" muassasa tanlanganda nomi qo'lda yozilishi shart
+    if (this._step === 3 && valid && this._data.otkazilgan_muassasa === '__boshqa__') {
+      if (!(this._data.otkazilgan_boshqa || '').trim()) {
+        valid = false;
+        document.getElementById('otkazilgan_boshqa')?.classList.add('border-red-500', 'err-red');
+        showToast("⚠️ O'tkazilgan muassasa nomini qo'lda yozing!", 'error', 5000);
       }
     }
     if (!valid) {
@@ -1202,6 +1225,11 @@ const InsultYangiPage = {
         payload.muassasa = payload.boshqa_muassasa;
       }
       delete payload.boshqa_muassasa;
+      // "Boshqa" muassasa — qo'lda yozilgan nom ishlatiladi
+      if (payload.otkazilgan_muassasa === '__boshqa__') {
+        payload.otkazilgan_muassasa = (payload.otkazilgan_boshqa || '').trim();
+      }
+      delete payload.otkazilgan_boshqa;
       delete payload._simptom_soat_raw;
       // aspects_ball GENERATED ustun — bazaga yozmaymiz
       delete payload.aspects_ball;
