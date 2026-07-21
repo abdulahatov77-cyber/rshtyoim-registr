@@ -26,9 +26,14 @@ module.exports = async function handler(req, res) {
     return res.status(200).end();
   }
 
-  // AUTH: faqat tizimga kirgan foydalanuvchi yubora oladi
+  // AUTH 1: server-to-server (Supabase trigger) — maxfiy kalit orqali
+  // Kalit faqat Vercel env (TELEGRAM_SERVER_KEY) va Supabase trigger funksiyasida saqlanadi
+  const serverKey = req.headers['x-server-key'] || '';
+  const isServerCall = !!process.env.TELEGRAM_SERVER_KEY && serverKey === process.env.TELEGRAM_SERVER_KEY;
+
+  // AUTH 2: faqat tizimga kirgan foydalanuvchi yubora oladi
   // Klient Authorization: Bearer <access_token> yuboradi, server Supabase orqali tekshiradi
-  try {
+  if (!isServerCall) try {
     const authHeader = req.headers.authorization || '';
     const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
     if (!token) {

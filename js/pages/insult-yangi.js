@@ -1151,7 +1151,9 @@ const InsultYangiPage = {
       }
 
       const saved = await DB.insultQabul(payload);
-      Telegram.notify(saved, 'insult').catch(() => {});
+      // Telegram xabar endi server tomondan yuboriladi (insult_qabul INSERT trigger —
+      // telegram_server_notify.sql). Brauzerdan yuborsak dublikat bo'ladi.
+      // Telegram.notify(saved, 'insult').catch(() => {});
       const isOtk = payload.status === 'otkazildi';
       showToast(isOtk ? `✅ Bemor ${payload.otkazilgan_muassasa || 'boshqa muassasa'}ga o'tkazildi!` : '🎉 Bemor muvaffaqiyatli saqlandi!', 'success');
       setTimeout(() => Router.go('dashboard'), 1500);
