@@ -236,19 +236,26 @@ const DB = {
   async infarktByKtNo(kt_no) {
     const p = await Profile.getCurrent();
     const sb = getSupabase();
-    let q = sb.from('infarkt_qabul').select('*').eq('kt_no', kt_no);
+    // kt_no har xil muassasada takrorlanishi mumkin — .single() emas, ro'yxat olamiz
+    let q = sb.from('infarkt_qabul').select('*').eq('kt_no', kt_no).order('created_at', { ascending: false });
     if (p?.role !== 'super_admin' && p?.viloyat) q = q.eq('viloyat', p.viloyat);
-    const { data, error } = await q.single();
+    const { data, error } = await q;
     if (error) throw error;
-    return data;
+    if (!data || data.length === 0) throw new Error('Bemor topilmadi');
+    if (data.length > 1) showToast(`⚠️ "${kt_no}" raqamli ${data.length} ta bemor bor — eng oxirgi kiritilgani ochildi`, 'warning', 7000);
+    return data[0];
   },
 
   async infarktUpdate(kt_no, updates) {
     const p = await Profile.getCurrent();
     const sb = getSupabase();
-    let q = sb.from('infarkt_qabul').update(updates).eq('kt_no', kt_no);
-    if (p?.role !== 'super_admin' && p?.viloyat) q = q.eq('viloyat', p.viloyat);
-    const { data, error } = await q.select().single();
+    // Duplikat kt_no bo'lsa faqat bitta (eng oxirgi) yozuv yangilanishi uchun id orqali
+    let idq = sb.from('infarkt_qabul').select('id').eq('kt_no', kt_no).order('created_at', { ascending: false }).limit(1);
+    if (p?.role !== 'super_admin' && p?.viloyat) idq = idq.eq('viloyat', p.viloyat);
+    const { data: rows, error: idErr } = await idq;
+    if (idErr) throw idErr;
+    if (!rows || rows.length === 0) throw new Error('Bemor topilmadi');
+    const { data, error } = await sb.from('infarkt_qabul').update(updates).eq('id', rows[0].id).select().single();
     if (error) throw error;
     return data;
   },
@@ -338,19 +345,26 @@ const DB = {
   async insultByKtNo(kt_no) {
     const p = await Profile.getCurrent();
     const sb = getSupabase();
-    let q = sb.from('insult_qabul').select('*').eq('kt_no', kt_no);
+    // kt_no har xil muassasada takrorlanishi mumkin — .single() emas, ro'yxat olamiz
+    let q = sb.from('insult_qabul').select('*').eq('kt_no', kt_no).order('created_at', { ascending: false });
     if (p?.role !== 'super_admin' && p?.viloyat) q = q.eq('viloyat', p.viloyat);
-    const { data, error } = await q.single();
+    const { data, error } = await q;
     if (error) throw error;
-    return data;
+    if (!data || data.length === 0) throw new Error('Bemor topilmadi');
+    if (data.length > 1) showToast(`⚠️ "${kt_no}" raqamli ${data.length} ta bemor bor — eng oxirgi kiritilgani ochildi`, 'warning', 7000);
+    return data[0];
   },
 
   async insultUpdate(kt_no, updates) {
     const p = await Profile.getCurrent();
     const sb = getSupabase();
-    let q = sb.from('insult_qabul').update(updates).eq('kt_no', kt_no);
-    if (p?.role !== 'super_admin' && p?.viloyat) q = q.eq('viloyat', p.viloyat);
-    const { data, error } = await q.select().single();
+    // Duplikat kt_no bo'lsa faqat bitta (eng oxirgi) yozuv yangilanishi uchun id orqali
+    let idq = sb.from('insult_qabul').select('id').eq('kt_no', kt_no).order('created_at', { ascending: false }).limit(1);
+    if (p?.role !== 'super_admin' && p?.viloyat) idq = idq.eq('viloyat', p.viloyat);
+    const { data: rows, error: idErr } = await idq;
+    if (idErr) throw idErr;
+    if (!rows || rows.length === 0) throw new Error('Bemor topilmadi');
+    const { data, error } = await sb.from('insult_qabul').update(updates).eq('id', rows[0].id).select().single();
     if (error) throw error;
     return data;
   },
