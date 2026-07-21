@@ -99,12 +99,20 @@ const BemorlarPage = {
           </div>
         </div>
         <div class="flex flex-wrap gap-3 items-center justify-between border-t border-gray-100 pt-4 mt-2">
-          <label class="flex items-center gap-2 cursor-pointer select-none">
-            <input type="checkbox" id="f-missing-time" onchange="BemorlarPage.applyFilter()"
-              ${f.missingTime ? 'checked' : ''}
-              style="width:16px;height:16px;accent-color:#dc2626;cursor:pointer"/>
-            <span class="text-sm font-semibold text-red-600">⏱ Vaqt mezonlari kiritilmagan</span>
-          </label>
+          <div class="flex flex-wrap gap-4 items-center">
+            <label class="flex items-center gap-2 cursor-pointer select-none">
+              <input type="checkbox" id="f-missing-time" onchange="BemorlarPage.applyFilter()"
+                ${f.missingTime ? 'checked' : ''}
+                style="width:16px;height:16px;accent-color:#dc2626;cursor:pointer"/>
+              <span class="text-sm font-semibold text-red-600">⏱ Vaqt mezonlari kiritilmagan</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer select-none">
+              <input type="checkbox" id="f-missing-exit" onchange="BemorlarPage.applyFilter()"
+                ${f.missingExit ? 'checked' : ''}
+                style="width:16px;height:16px;accent-color:#ea580c;cursor:pointer"/>
+              <span class="text-sm font-semibold text-orange-600">⚠️ Chiqarish varaqasi to'ldirilmagan</span>
+            </label>
+          </div>
           <div class="flex gap-3">
             <button class="btn btn-secondary flex items-center gap-2" onclick="BemorlarPage.resetFilters()">
               ${icon('refresh-cw', 16)} Tozalash
@@ -180,13 +188,14 @@ const BemorlarPage = {
     BemorlarPage._filters.dateTo = document.getElementById('f-date-to')?.value || '';
     BemorlarPage._filters.search = document.getElementById('f-search')?.value || '';
     BemorlarPage._filters.missingTime = document.getElementById('f-missing-time')?.checked || false;
+    BemorlarPage._filters.missingExit = document.getElementById('f-missing-exit')?.checked || false;
     BemorlarPage._currentPage = 1;
     BemorlarPage.loadData();
   },
 
   resetFilters() {
     BemorlarPage._filters = {
-      type: 'all', status: '', muassasa: '', search: '', date: '', dateTo: '', missingTime: false,
+      type: 'all', status: '', muassasa: '', search: '', date: '', dateTo: '', missingTime: false, missingExit: false,
       viloyat: BemorlarPage._profile?.role === 'super_admin' ? '' : (BemorlarPage._profile?.viloyat || '')
     };
     BemorlarPage._currentPage = 1;
@@ -206,6 +215,8 @@ const BemorlarPage = {
       search:   f.search   || undefined,
       page, pageSize
     };
+    // Chiqarish varaqasi filtri — faqat chiqarilgan bemorlar orasidan qidiramiz
+    if (f.missingExit && !fObj.status) fObj.status = 'chiqarildi';
     if (f.date)   fObj.from = new Date(f.date   + 'T00:00:00+05:00').toISOString();
     if (f.dateTo) fObj.to   = new Date(f.dateTo + 'T23:59:59+05:00').toISOString();
     else if (f.date) fObj.to = new Date(f.date  + 'T23:59:59+05:00').toISOString();
@@ -255,6 +266,13 @@ const BemorlarPage = {
           const ex = exitMap[p._type + ':' + p.kt_no];
           if (ex) p._chiqarish = ex;
         });
+      }
+
+      // Chiqarish varaqasi to'ldirilmagan filtr (client-side)
+      if (f.missingExit) {
+        combined = combined.filter(p =>
+          (p.status === 'chiqarildi' || p.status === 'vafot') && !p._chiqarish?.chiqish_sana);
+        totalCount = combined.length;
       }
 
       BemorlarPage._allData = combined;
@@ -343,7 +361,7 @@ const BemorlarPage = {
                   <div class="flex flex-col gap-1">
                     ${Utils.statusBadge(p.status)}
                     ${p.status === 'otkazildi' && p.otkazilgan_muassasa ? `<span class="text-xs text-orange-600 font-medium truncate max-w-[140px]" title="${esc(p.otkazilgan_muassasa)}">→ ${esc(p.otkazilgan_muassasa)}</span>` : ''}
-                    ${p._chiqarish?.chiqish_sana ? `<span class="text-xs text-gray-400">${Utils.formatDateTime(p._chiqarish.chiqish_sana)}</span>` : ''}
+                    ${p._chiqarish?.chiqish_sana ? `<span class="text-xs text-gray-400">${Utils.formatDateTime(p._chiqarish.chiqish_sana)}</span>` : (p.status === 'chiqarildi' || p.status === 'vafot') ? `<span class="text-xs text-orange-600 font-semibold" title="Chiqarish varaqasi to'ldirilmagan">⚠️ varaqa yo'q</span>` : ''}
                   </div>
                 </td>
                 <td class="text-right text-gray-400">${icon('chevron-right', 20)}</td>

@@ -222,6 +222,10 @@ const BemorKartaPage = {
                 ${icon(p.status === 'vafot' ? 'x-circle' : p.status === 'otkazildi' ? 'arrow-right-circle' : 'log-out', 12)}
                 ${p.status === 'chiqarildi' ? 'Chiqarilgan' : p.status === 'otkazildi' ? 'O\'tkazilgan' : 'Vafot etgan'}: <span class="text-white/80 font-semibold">${Utils.formatDateTime(p._chiqarish.chiqish_sana)}</span>
                 ${p._chiqarish.natija ? `<span class="ml-1 opacity-70">— ${p._chiqarish.natija}</span>` : ''}
+              </p>` : (p.status === 'chiqarildi' || p.status === 'vafot') ? `
+              <p class="text-xs flex items-center gap-1 mt-1 font-bold" style="color:#fde047">
+                ⚠️ Chiqarish varaqasi to'ldirilmagan —
+                <span class="underline cursor-pointer" onclick="BemorKartaPage.switchTab(5)">Chiqarish tabini to'ldiring</span>
               </p>` : ''}
             </div>
           </div>
