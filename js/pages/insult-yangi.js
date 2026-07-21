@@ -234,6 +234,8 @@ const InsultYangiPage = {
             </div>
           `,true)}
         </div>
+        ${this.field('vazn','Tana vazni (kg)',`<input id="vazn" type="number" min="2" max="350" step="0.1" class="form-input" placeholder="Masalan: 78" value="${d.vazn||''}" oninput="this.value=this.value.replace(/[^0-9.]/g,'')"/>`,true,'Kilogrammda')}
+        ${this.field('boy','Bo\'y uzunligi (sm)',`<input id="boy" type="number" min="50" max="250" class="form-input" placeholder="Masalan: 172" value="${d.boy||''}"/>`,true,"Santimetrda, butun son (masalan 172) — metrda EMAS")}
 
         <!-- Doimiy yashash manzili -->
         <div class="col-span-1 sm:col-span-2 mt-2 pt-4 border-t border-dashed border-gray-200">
@@ -802,7 +804,7 @@ const InsultYangiPage = {
 
     ['viloyat','muassasa','boshqa_muassasa','kt_no','murojaat_yoli','yuborgan_muassasa',
      'tez_yordam_kelgan_vaqt',
-     'fio','simptom_vaqt','gcs_bali','birlamchi_yoki_takroriy','insult_turi','aha_bali','nihss_qabul','puls',
+     'fio','vazn','boy','simptom_vaqt','gcs_bali','birlamchi_yoki_takroriy','insult_turi','aha_bali','nihss_qabul','puls',
      'yashash_viloyat','yashash_tuman','chet_el_davlati',
      'mskt','mskt_angiografiya','otkazilgan_muassasa','otkazilgan_boshqa','shifokor_fio','shifokor_tel']
     .forEach(id => {
@@ -901,7 +903,7 @@ const InsultYangiPage = {
       if (this._data.murojaat_yoli === 'Tez tibbiy yordam bilan') required.push('tez_yordam_kelgan_vaqt');
     }
     if (this._step === 1) {
-      required = ['fio','tugilgan_sana','jins'];
+      required = ['fio','tugilgan_sana','jins','vazn','boy'];
       // Yashash manzili — fuqarolikка qarab
       if (this._data.fuqarolik === 'Chet el') required.push('chet_el_davlati');
       else required.push('yashash_viloyat','yashash_tuman');
@@ -981,6 +983,28 @@ const InsultYangiPage = {
         valid = false;
         document.getElementById('puls')?.classList.add('border-red-500', 'err-red');
         showToast("⚠️ Puls qiymati noreal (20–300 oralig'ida bo'lishi kerak)!", 'error', 6000);
+      }
+    }
+    // Vazn (kg) va bo'y (sm) — noreal qiymatlar; bo'y metrda kiritilsa xato
+    if (this._step === 1 && valid) {
+      const vaznV = parseFloat(this._data.vazn);
+      if (this._data.vazn && !(vaznV >= 2 && vaznV <= 350)) {
+        valid = false;
+        document.getElementById('vazn')?.classList.add('border-red-500', 'err-red');
+        showToast("⚠️ Tana vazni 2–350 kg oralig'ida bo'lishi kerak!", 'error', 6000);
+      }
+      const boyRaw = String(this._data.boy || '');
+      if (boyRaw) {
+        const boyV = parseFloat(boyRaw.replace(',', '.'));
+        if (boyRaw.includes('.') || boyRaw.includes(',') || boyV < 50) {
+          valid = false;
+          document.getElementById('boy')?.classList.add('border-red-500', 'err-red');
+          showToast("⚠️ Bo'y SANTIMETRDA, butun son bo'lib kiritilsin (masalan 172) — metrda EMAS!", 'error', 7000);
+        } else if (boyV > 250) {
+          valid = false;
+          document.getElementById('boy')?.classList.add('border-red-500', 'err-red');
+          showToast("⚠️ Bo'y 50–250 sm oralig'ida bo'lishi kerak!", 'error', 6000);
+        }
       }
     }
     // F.I.O — kamida bitta harf bo'lishi kerak

@@ -153,7 +153,7 @@ const DB = {
     // Faqat mavjud ustunlarni yuboramiz
     const allowed = [
       'viloyat','muassasa','kt_no','qabul_vaqt','murojaat_yoli','yuborgan_muassasa',
-      'fio','tugilgan_yil','tugilgan_sana','jins',
+      'fio','tugilgan_yil','tugilgan_sana','jins','vazn','boy',
       'fuqarolik','yashash_viloyat','yashash_tuman','chet_el_davlati',
       'aha_bali','simptom_vaqt','birlamchi_yoki_takroriy',
       'infarkt_turi','killip','qon_bosimi','puls','ekg_vaqti','ekg_vaqti_ts','troponin','kkfmb','grace_bali',
@@ -259,7 +259,7 @@ const DB = {
     // Faqat mavjud ustunlarni yuboramiz
     const allowed = [
       'viloyat','muassasa','kt_no','qabul_vaqt','murojaat_yoli','yuborgan_muassasa',
-      'fio','tugilgan_yil','tugilgan_sana','jins',
+      'fio','tugilgan_yil','tugilgan_sana','jins','vazn','boy',
       'fuqarolik','yashash_viloyat','yashash_tuman','chet_el_davlati',
       'simptom_vaqt','birlamchi_yoki_takroriy','nihss_qabul','gcs_bali','insult_turi','qon_bosimi','puls',
       'xavf_omil','aha_bali',
