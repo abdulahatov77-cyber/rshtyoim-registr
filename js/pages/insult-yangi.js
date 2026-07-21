@@ -989,7 +989,7 @@ const InsultYangiPage = {
           showToast("⚠️ Tez yordam yetib kelgan sana VA soatni to'liq kiriting!", 'error', 5000);
         }
       }
-      // Tez yordam yetib kelgan vaqti — kelajakda bo'lmasin
+      // Tez yordam yetib kelgan vaqti — kelajakda bo'lmasin va qabul vaqtidan keyin bo'lmasin
       if (valid) {
         const tySana = document.getElementById('tez_yordam_kelgan_sana')?.value;
         const tySoat = document.getElementById('tez_yordam_kelgan_soat')?.value;
@@ -1000,6 +1000,14 @@ const InsultYangiPage = {
             document.getElementById('tez_yordam_kelgan_sana')?.classList.add('border-red-500');
             document.getElementById('tez_yordam_kelgan_soat')?.classList.add('border-red-500');
             showToast('⚠️ Tez yordam vaqti kelajakda bo\'lishi mumkin emas!', 'error', 5000);
+          } else if (this._data.qabul_vaqt) {
+            const qabulDt = new Date(`${this._data.qabul_vaqt}:00+05:00`);
+            if (!isNaN(qabulDt) && tyDt > qabulDt) {
+              valid = false;
+              document.getElementById('tez_yordam_kelgan_sana')?.classList.add('border-red-500');
+              document.getElementById('tez_yordam_kelgan_soat')?.classList.add('border-red-500');
+              showToast('⚠️ Tez yordam yetib kelgan vaqt bemor kasalxonaga yotqizilgan (qabul) vaqtidan keyin bo\'lishi mumkin emas!', 'error', 6000);
+            }
           }
         }
       }
