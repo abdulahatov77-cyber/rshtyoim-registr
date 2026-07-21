@@ -170,7 +170,8 @@ const InsultYangiPage = {
   onTezYordamChange() {
     const sana = document.getElementById('tez_yordam_kelgan_sana')?.value || '';
     const soat = document.getElementById('tez_yordam_kelgan_soat')?.value || '';
-    const combined = sana && soat ? `${sana}T${soat}` : (sana ? `${sana}T00:00` : '');
+    // Sana VA soat ikkalasi ham kiritilishi shart — aks holda qiymat bo'sh qoladi
+    const combined = sana && soat ? `${sana}T${soat}` : '';
     const hidden = document.getElementById('tez_yordam_kelgan_vaqt');
     if (hidden) hidden.value = combined;
     InsultYangiPage._data.tez_yordam_kelgan_vaqt = combined;
@@ -975,6 +976,17 @@ const InsultYangiPage = {
             sanaEl.classList.add('border-red-500');
             showToast('⚠️ Qabul vaqti 1 yildan eski bo\'lishi mumkin emas — sanani tekshiring!', 'error', 6000);
           }
+        }
+      }
+      // Tez yordam vaqti — sana va soat ikkalasi ham to'liq bo'lishi shart
+      if (valid && this._data.murojaat_yoli === 'Tez tibbiy yordam bilan') {
+        const tySana = document.getElementById('tez_yordam_kelgan_sana')?.value;
+        const tySoat = document.getElementById('tez_yordam_kelgan_soat')?.value;
+        if (!tySana || !tySoat) {
+          valid = false;
+          if (!tySana) document.getElementById('tez_yordam_kelgan_sana')?.classList.add('border-red-500');
+          if (!tySoat) document.getElementById('tez_yordam_kelgan_soat')?.classList.add('border-red-500');
+          showToast("⚠️ Tez yordam yetib kelgan sana VA soatni to'liq kiriting!", 'error', 5000);
         }
       }
       // Tez yordam yetib kelgan vaqti — kelajakda bo'lmasin
