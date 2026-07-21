@@ -864,8 +864,39 @@ const InsultYangiPage = {
         const els = document.querySelectorAll(`input[name="${name}"]:checked`);
         const key = name === 'xavf_omillari' ? 'xavf_omil' : name;
         InsultYangiPage._data[key] = Array.from(els).map(e=>e.value);
+        // Render d.xavf_omillari dan o'qiydi — orqaga qaytganda belgilar yo'qolmasin
+        if (name === 'xavf_omillari') InsultYangiPage._data.xavf_omillari = InsultYangiPage._data.xavf_omil;
       }
     });
+
+    InsultYangiPage._applySemizlikAuto();
+  },
+
+  // VMI (BMI) >= 30 bo'lsa "Semizlik" xavf omilini avtomatik belgilaydi
+  _applySemizlikAuto() {
+    const d = InsultYangiPage._data;
+    const LABEL = 'Semizlik';
+    const vazn = parseFloat(d.vazn), boy = parseFloat(d.boy);
+    if (!(vazn > 0) || !(boy >= 50)) return;
+    const bmi = vazn / Math.pow(boy / 100, 2);
+    let arr = Array.isArray(d.xavf_omil) ? [...d.xavf_omil] : [];
+    const has = arr.includes(LABEL);
+    if (bmi >= 30 && !has) {
+      arr.push(LABEL);
+      d._semizlikAuto = true;
+      showToast(`ℹ️ VMI (BMI) ${bmi.toFixed(1)} — "Semizlik" xavf omili avtomatik belgilandi`, 'success', 5000);
+    } else if (bmi < 30 && has && d._semizlikAuto) {
+      arr = arr.filter(x => x !== LABEL);
+      d._semizlikAuto = false;
+    } else return;
+    d.xavf_omil = arr;
+    d.xavf_omillari = arr;
+    // Checkbox hozir ekranda bo'lsa — vizual holatini ham yangilaymiz
+    const cb = Array.from(document.querySelectorAll('input[name="xavf_omillari"]')).find(i => i.value === LABEL);
+    if (cb && cb.checked !== arr.includes(LABEL)) {
+      cb.checked = arr.includes(LABEL);
+      InsultYangiPage.toggleCheckbox(cb);
+    }
   },
 
   // Qizil belgilangan katak to'ldirilishi bilan qizilni darhol olib tashlaydi

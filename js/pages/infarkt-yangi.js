@@ -756,6 +756,37 @@ const InfarktYangiPage = {
     if (document.querySelector(`input[name="xavf_omillari"]`)) {
       const xavfEls = document.querySelectorAll(`input[name="xavf_omillari"]:checked`);
       InfarktYangiPage._data.xavf_omil = Array.from(xavfEls).map(e=>e.value);
+      // Render d.xavf_omillari dan o'qiydi — orqaga qaytganda belgilar yo'qolmasin
+      InfarktYangiPage._data.xavf_omillari = InfarktYangiPage._data.xavf_omil;
+    }
+
+    InfarktYangiPage._applySemizlikAuto();
+  },
+
+  // VMI (BMI) >= 30 bo'lsa "Semizlik" xavf omilini avtomatik belgilaydi
+  _applySemizlikAuto() {
+    const d = InfarktYangiPage._data;
+    const LABEL = 'Semizlik (BMI ≥30)';
+    const vazn = parseFloat(d.vazn), boy = parseFloat(d.boy);
+    if (!(vazn > 0) || !(boy >= 50)) return;
+    const bmi = vazn / Math.pow(boy / 100, 2);
+    let arr = Array.isArray(d.xavf_omil) ? [...d.xavf_omil] : [];
+    const has = arr.includes(LABEL);
+    if (bmi >= 30 && !has) {
+      arr.push(LABEL);
+      d._semizlikAuto = true;
+      showToast(`ℹ️ VMI (BMI) ${bmi.toFixed(1)} — "Semizlik" xavf omili avtomatik belgilandi`, 'success', 5000);
+    } else if (bmi < 30 && has && d._semizlikAuto) {
+      arr = arr.filter(x => x !== LABEL);
+      d._semizlikAuto = false;
+    } else return;
+    d.xavf_omil = arr;
+    d.xavf_omillari = arr;
+    // Checkbox hozir ekranda bo'lsa — vizual holatini ham yangilaymiz
+    const cb = Array.from(document.querySelectorAll('input[name="xavf_omillari"]')).find(i => i.value === LABEL);
+    if (cb && cb.checked !== arr.includes(LABEL)) {
+      cb.checked = arr.includes(LABEL);
+      InfarktYangiPage.toggleCheckbox(cb);
     }
   },
 
