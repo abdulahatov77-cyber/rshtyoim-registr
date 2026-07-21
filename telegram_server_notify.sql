@@ -47,6 +47,10 @@ DECLARE
   qabul    text := '—';
   kritik   text := '';
   cnt      int;
+  g        int;
+  gi       text;
+  gt       text;
+  after_muolaja text := '';
   detail   text;
   shifokor text;
   msg      text;
@@ -91,13 +95,28 @@ BEGIN
     IF coalesce(j->>'killip', '') LIKE '%III%' OR coalesce(j->>'killip', '') LIKE '%IV%' THEN
       kritik := nl || '⚠️ <b>DIQQAT: KRITIK HOLAT!</b>';
     END IF;
-    IF nullif(j->>'angio_natija', '') IS NOT NULL THEN
-      detail := detail || nl || '🧪 <b>KAG natijasi:</b> ' || tg_esc(j->>'angio_natija');
+    -- GRACE Score — faqat NSTEMI uchun
+    IF upper(coalesce(j->>'infarkt_turi', '')) LIKE '%NSTEMI%' AND (j->>'grace_bali') ~ '^\d+$' THEN
+      g := (j->>'grace_bali')::int;
+      IF g > 140 THEN
+        gi := '🔴'; gt := 'Yuqori xavf (>3%) — KAG 24 soat ichida o''tkazilishi tavsiya etiladi';
+      ELSIF g >= 109 THEN
+        gi := '🟡'; gt := 'O''rta xavf (1–3%) — KAG 72 soat ichida tavsiya etiladi';
+      ELSE
+        gi := '🟢'; gt := 'Past xavf (<1%) — Konservativ davolash tavsiya etiladi';
+      END IF;
+      detail := detail || nl || '🧮' || gi || ' <b>GRACE Score: ' || g::text || ' ball.</b> ' || gt;
     END IF;
+    -- KAG natijasi Muolaja qatoridan KEYIN chiqadi
+    IF nullif(j->>'angio_natija', '') IS NOT NULL THEN
+      after_muolaja := nl || '🧪 <b>KAG natijasi:</b> ' || tg_esc(j->>'angio_natija');
+    END IF;
+    after_muolaja := after_muolaja || nl || '📊 <b>AHA bali:</b> ' || coalesce(nullif(j->>'aha_bali', ''), '—');
   ELSE
     detail := '🔵 <b>' || tg_esc(coalesce(nullif(j->>'insult_turi', ''), '—')) || '</b>' || nl
            || '📊 <b>NIHSS:</b> ' || coalesce(j->>'nihss_qabul', '—')
-           || ' | <b>GCS:</b> ' || coalesce(j->>'gcs_bali', j->>'gcs_qabul', '—');
+           || ' | <b>GCS:</b> ' || coalesce(j->>'gcs_bali', j->>'gcs_qabul', '—') || nl
+           || '📋 <b>AHA:</b> ' || coalesce(nullif(j->>'aha_bali', ''), '—');
     IF (j->>'nihss_qabul') ~ '^\d+$' AND (j->>'nihss_qabul')::int >= 15 THEN
       kritik := nl || '⚠️ <b>DIQQAT: OG''IR HOLAT! (NIHSS ≥ 15)</b>';
     END IF;
@@ -115,7 +134,7 @@ BEGIN
       || '👤 <b>Bemor:</b> ' || tg_esc(coalesce(nullif(j->>'fio', ''), '—'))
       || ', ' || age || ' yosh, ' || tg_esc(coalesce(nullif(j->>'jins', ''), '—')) || nl
       || detail || nl
-      || '💊 <b>Muolaja:</b> ' || tg_esc(coalesce(nullif(j->>'muolaja_turi', ''), '—')) || nl
+      || '💊 <b>Muolaja:</b> ' || tg_esc(coalesce(nullif(j->>'muolaja_turi', ''), '—')) || after_muolaja || nl
       || '⏰ <b>Simptom:</b> '  || tg_esc(coalesce(nullif(j->>'simptom_vaqt', ''), '—')) || nl
       || '🕐 <b>Qabul:</b> '    || qabul || nl
       || '👨‍⚕️ <b>Shifokor:</b> ' || shifokor || nl
