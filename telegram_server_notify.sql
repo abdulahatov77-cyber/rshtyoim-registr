@@ -34,7 +34,7 @@ REVOKE ALL ON telegram_notify_throttle FROM anon, authenticated;
 CREATE OR REPLACE FUNCTION notify_telegram_new_patient() RETURNS trigger
 LANGUAGE plpgsql SECURITY DEFINER AS $fn$
 DECLARE
-  SERVER_KEY constant text := 'SIZNING_MAXFIY_KALIT';  -- <<< ALMASHTIRING
+  SERVER_KEY constant text := 'SIZNING_MAXFIY_KALIT';
   API_URL    constant text := 'https://rshtyoim-registr.vercel.app/api/telegram';
   MAX_MSGS   constant int  := 30;              -- 5 daqiqadagi maksimal xabar
   j        jsonb := to_jsonb(NEW);
@@ -97,7 +97,7 @@ BEGIN
   ELSE
     detail := '🔵 <b>' || tg_esc(coalesce(nullif(j->>'insult_turi', ''), '—')) || '</b>' || nl
            || '📊 <b>NIHSS:</b> ' || coalesce(j->>'nihss_qabul', '—')
-           || ' | <b>GCS:</b> ' || coalesce(j->>'gcs_qabul', '—');
+           || ' | <b>GCS:</b> ' || coalesce(j->>'gcs_bali', j->>'gcs_qabul', '—');
     IF (j->>'nihss_qabul') ~ '^\d+$' AND (j->>'nihss_qabul')::int >= 15 THEN
       kritik := nl || '⚠️ <b>DIQQAT: OG''IR HOLAT! (NIHSS ≥ 15)</b>';
     END IF;

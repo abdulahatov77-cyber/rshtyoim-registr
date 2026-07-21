@@ -423,7 +423,7 @@ const InfarktYangiPage = {
         ${this.field('aha_bali','AHA (American Heart Association) savolnomasi bali',`<div class="flex gap-2 items-center"><input id="aha_bali" type="number" class="form-input w-full bg-slate-50 cursor-not-allowed" value="${d.aha_bali||''}" placeholder="Kalkulyator orqali to'ldiring" readonly style="pointer-events:none;opacity:0.8"/><button type="button" class="flex-shrink-0 bg-rose-100 text-rose-700 hover:bg-rose-200 px-3 py-2 rounded-lg text-sm font-bold shadow-sm transition-colors border border-rose-200 flex items-center gap-1" onclick="Calculators.openAHA('aha_bali')">🧮 Hisoblash</button></div>`,true)}
         ${this.field('simptom_vaqt','Simptomlar qachon boshlangan? (soat)',`
           <div class="flex gap-3 items-center">
-            <input id="simptom_soat_raw" type="number" min="0" max="999" class="form-input w-32"
+            <input id="simptom_soat_raw" type="number" min="1" max="999" class="form-input w-32"
               placeholder="Soat" value="${d._simptom_soat_raw||''}"
               oninput="InfarktYangiPage.onSimptomSoat(this.value)"/>
             <div id="simptom_vaqt_label" class="text-sm font-bold px-3 py-2 rounded-lg ${d.simptom_vaqt ? (d.simptom_vaqt.includes('ko\'p') || d.simptom_vaqt.includes('ortiq') ? 'bg-red-50 text-red-600 border border-red-200' : 'bg-green-50 text-green-700 border border-green-200') : 'text-slate-400'}">
@@ -575,9 +575,9 @@ const InfarktYangiPage = {
     const labelEl = document.getElementById('simptom_vaqt_label');
     const hiddenEl = document.getElementById('simptom_vaqt');
     if (!labelEl || !hiddenEl) return;
-    if (!val || isNaN(soat) || soat < 0) {
-      labelEl.textContent = '— soat kiriting';
-      labelEl.className = 'text-sm font-bold px-3 py-2 rounded-lg text-slate-400';
+    if (!val || isNaN(soat) || soat <= 0) {
+      labelEl.textContent = soat === 0 ? "0 bo'lmaydi — aniq soat kiriting" : '— soat kiriting';
+      labelEl.className = 'text-sm font-bold px-3 py-2 rounded-lg ' + (soat === 0 ? 'bg-red-50 text-red-600 border border-red-200' : 'text-slate-400');
       hiddenEl.value = '';
       InfarktYangiPage._data.simptom_vaqt = '';
       InfarktYangiPage._data._simptom_soat_raw = '';
@@ -774,6 +774,22 @@ const InfarktYangiPage = {
       else if (key === 'ekg_natija') showToast('EKG natijasini tanlang', 'warning');
       const errEl = document.getElementById('err-'+key);
       if (errEl) { errEl.textContent = msg; errEl.classList.remove('hidden'); }
+    }
+    // 0 yoki noreal qiymatlar — keyingi bosqichga o'tkazmaymiz
+    if (this._step === 2 && valid) {
+      if ((this._data.simptom_vaqt || '') === '0 soat') {
+        valid = false;
+        const el = document.getElementById('simptom_soat_raw');
+        if (el) el.classList.add('border-red-500');
+        showToast("⚠️ Simptom vaqti 0 bo'lishi mumkin emas — necha soat oldin boshlanganini kiriting!", 'error', 6000);
+      }
+      const puls = parseInt(this._data.puls);
+      if (this._data.puls !== undefined && this._data.puls !== '' && !(puls >= 20 && puls <= 300)) {
+        valid = false;
+        const el = document.getElementById('puls');
+        if (el) el.classList.add('border-red-500');
+        showToast("⚠️ Puls qiymati noreal (20–300 oralig'ida bo'lishi kerak)!", 'error', 6000);
+      }
     }
     // F.I.O — kamida bitta harf bo'lishi kerak (faqat raqam/belgi qabul qilinmaydi)
     if (this._step === 1 && valid && this._data.fio) {

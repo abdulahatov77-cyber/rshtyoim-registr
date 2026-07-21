@@ -335,7 +335,7 @@ const InsultYangiPage = {
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6">
         ${this.field('simptom_vaqt','Simptomlar qachon boshlangan? (soat)',`
           <div class="flex gap-3 items-center">
-            <input id="simptom_soat_raw" type="number" min="0" max="999" class="form-input w-32"
+            <input id="simptom_soat_raw" type="number" min="1" max="999" class="form-input w-32"
               placeholder="Soat" value="${d._simptom_soat_raw||''}"
               oninput="InsultYangiPage.onSimptomSoat(this.value)"/>
             <div id="simptom_vaqt_label" class="text-sm font-bold px-3 py-2 rounded-lg ${d.simptom_vaqt ? (d.simptom_vaqt.includes('ko\'p') || d.simptom_vaqt.includes('ortiq') ? 'bg-red-50 text-red-600 border border-red-200' : 'bg-green-50 text-green-700 border border-green-200') : 'text-slate-400'}">
@@ -561,9 +561,9 @@ const InsultYangiPage = {
     const labelEl = document.getElementById('simptom_vaqt_label');
     const hiddenEl = document.getElementById('simptom_vaqt');
     if (!labelEl || !hiddenEl) return;
-    if (!val || isNaN(soat) || soat < 0) {
-      labelEl.textContent = '— soat kiriting';
-      labelEl.className = 'text-sm font-bold px-3 py-2 rounded-lg text-slate-400';
+    if (!val || isNaN(soat) || soat <= 0) {
+      labelEl.textContent = soat === 0 ? "0 bo'lmaydi — aniq soat kiriting" : '— soat kiriting';
+      labelEl.className = 'text-sm font-bold px-3 py-2 rounded-lg ' + (soat === 0 ? 'bg-red-50 text-red-600 border border-red-200' : 'text-slate-400');
       hiddenEl.value = '';
       InsultYangiPage._data.simptom_vaqt = '';
       InsultYangiPage._data._simptom_soat_raw = '';
@@ -892,6 +892,29 @@ const InsultYangiPage = {
       else if (key === 'muolaja_turi') showToast('Muolaja turini tanlang', 'warning');
       const errEl = document.getElementById('err-'+key);
       if (errEl) { errEl.textContent = msg; errEl.classList.remove('hidden'); }
+    }
+    // 0 yoki noreal qiymatlar — keyingi bosqichga o'tkazmaymiz
+    if (this._step === 2 && valid) {
+      const nihss = parseInt(this._data.nihss_qabul);
+      if (!(nihss >= 1 && nihss <= 42)) {
+        valid = false;
+        const el = document.getElementById('nihss_qabul');
+        if (el) el.classList.add('border-red-500');
+        showToast("⚠️ NIHSS 0 yoki bo'sh bo'lishi mumkin emas — bemorni kalkulyator orqali baholang!", 'error', 6000);
+      }
+      const gcs = parseInt(this._data.gcs_bali);
+      if (!(gcs >= 3 && gcs <= 15)) {
+        valid = false;
+        const el = document.getElementById('gcs_bali');
+        if (el) el.classList.add('border-red-500');
+        showToast("⚠️ GCS 3–15 oralig'ida bo'lishi kerak — kalkulyator orqali baholang!", 'error', 6000);
+      }
+      if ((this._data.simptom_vaqt || '') === '0 soat') {
+        valid = false;
+        const el = document.getElementById('simptom_soat_raw');
+        if (el) el.classList.add('border-red-500');
+        showToast("⚠️ Simptom vaqti 0 bo'lishi mumkin emas — necha soat oldin boshlanganini kiriting!", 'error', 6000);
+      }
     }
     // F.I.O — kamida bitta harf bo'lishi kerak
     if (this._step === 1 && valid && this._data.fio) {
