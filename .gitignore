@@ -22,6 +22,9 @@ npm-debug.log*
 .env.local
 .env.production
 
+# Maxfiy kalitli lokal SQL (Supabase'da qo'lda ishga tushiriladi)
+telegram_dinamika_notify.sql
+
 # Supabase local
 supabase/.temp/
 supabase/functions/.deploy
