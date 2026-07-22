@@ -371,15 +371,19 @@ const DB = {
 
   // Chiqarish
   async insultChiqarish(data) {
-    const { data: result, error } = await getSupabase()
-      .from('insult_chiqarish').insert(data);
+    const sb = getSupabase();
+    // Bitta bemorda bitta varaqa — qayta to'ldirilsa eskisi almashtiriladi (takroriy bo'lmasin)
+    await sb.from('insult_chiqarish').delete().eq('kt_no', data.kt_no);
+    const { data: result, error } = await sb.from('insult_chiqarish').insert(data);
     if (error) throw error;
     return result;
   },
 
   async infarktChiqarish(data) {
-    const { data: result, error } = await getSupabase()
-      .from('infarkt_chiqarish').insert(data);
+    const sb = getSupabase();
+    // Bitta bemorda bitta varaqa — qayta to'ldirilsa eskisi almashtiriladi (takroriy bo'lmasin)
+    await sb.from('infarkt_chiqarish').delete().eq('kt_no', data.kt_no);
+    const { data: result, error } = await sb.from('infarkt_chiqarish').insert(data);
     if (error) throw error;
     return result;
   },
