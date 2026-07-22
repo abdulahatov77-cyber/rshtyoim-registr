@@ -7,7 +7,8 @@ const BemorKartaPage = {
   _navIndex: -1,
 
   async render(params) {
-    const { kt_no, type } = params || {};
+    const { kt_no } = params || {};
+    let type = params?.type;
     if (!kt_no || !type) { Router.go('bemorlar'); return; }
     // Clean up previous keyboard listener from any prior karta render
     if (BemorKartaPage._keyHandler) {
@@ -46,7 +47,16 @@ const BemorKartaPage = {
     try {
       const profile = await Profile.getCurrent();
       BemorKartaPage._profile = profile;
-      const patient = type === 'infarkt' ? await DB.infarktByKtNo(kt_no) : await DB.insultByKtNo(kt_no);
+      let patient;
+      try {
+        patient = type === 'infarkt' ? await DB.infarktByKtNo(kt_no) : await DB.insultByKtNo(kt_no);
+      } catch (eFirst) {
+        // Noto'g'ri registr bilan ochilgan bo'lishi mumkin — ikkinchisidan qidiramiz
+        const otherType = type === 'infarkt' ? 'insult' : 'infarkt';
+        patient = otherType === 'infarkt' ? await DB.infarktByKtNo(kt_no) : await DB.insultByKtNo(kt_no);
+        type = otherType;
+        BemorKartaPage._type = otherType;
+      }
       // O'tkazilgan sana — avval chiqarish jadvalidan, bo'lmasa dinamika jadvalidan
       try {
         const tbl = type === 'infarkt' ? 'infarkt_chiqarish' : 'insult_chiqarish';

@@ -233,17 +233,30 @@ const DB = {
     return { data: data || [], count: count || 0 };
   },
 
-  async infarktByKtNo(kt_no) {
+  // kt_no bo'yicha qidirish: avval aniq mos, topilmasa bo'shliq/belgi farqlariga chidamli qidiruv
+  async _byKtNo(table, kt_no) {
     const p = await Profile.getCurrent();
     const sb = getSupabase();
-    // kt_no har xil muassasada takrorlanishi mumkin — .single() emas, ro'yxat olamiz
-    let q = sb.from('infarkt_qabul').select('*').eq('kt_no', kt_no).order('created_at', { ascending: false });
-    if (p?.role !== 'super_admin' && p?.viloyat) q = q.eq('viloyat', p.viloyat);
-    const { data, error } = await q;
-    if (error) throw error;
-    if (!data || data.length === 0) throw new Error('Bemor topilmadi');
+    const run = async (build) => {
+      let q = build(sb.from(table).select('*')).order('created_at', { ascending: false });
+      if (p?.role !== 'super_admin' && p?.viloyat) q = q.eq('viloyat', p.viloyat);
+      const { data, error } = await q;
+      if (error) throw error;
+      return data || [];
+    };
+    let data = await run(q => q.eq('kt_no', kt_no));
+    if (data.length === 0) {
+      // Bo'shliq/ko'rinmas belgi farqi bo'lsa ham topamiz
+      const like = String(kt_no).trim().replace(/[%_]/g, '\\$&').replace(/\s+/g, '%');
+      if (like) data = await run(q => q.ilike('kt_no', `%${like}%`));
+    }
+    if (data.length === 0) throw new Error('Bemor topilmadi');
     if (data.length > 1) showToast(`⚠️ "${kt_no}" raqamli ${data.length} ta bemor bor — eng oxirgi kiritilgani ochildi`, 'warning', 7000);
     return data[0];
+  },
+
+  async infarktByKtNo(kt_no) {
+    return DB._byKtNo('infarkt_qabul', kt_no);
   },
 
   async infarktUpdate(kt_no, updates) {
@@ -343,16 +356,7 @@ const DB = {
   },
 
   async insultByKtNo(kt_no) {
-    const p = await Profile.getCurrent();
-    const sb = getSupabase();
-    // kt_no har xil muassasada takrorlanishi mumkin — .single() emas, ro'yxat olamiz
-    let q = sb.from('insult_qabul').select('*').eq('kt_no', kt_no).order('created_at', { ascending: false });
-    if (p?.role !== 'super_admin' && p?.viloyat) q = q.eq('viloyat', p.viloyat);
-    const { data, error } = await q;
-    if (error) throw error;
-    if (!data || data.length === 0) throw new Error('Bemor topilmadi');
-    if (data.length > 1) showToast(`⚠️ "${kt_no}" raqamli ${data.length} ta bemor bor — eng oxirgi kiritilgani ochildi`, 'warning', 7000);
-    return data[0];
+    return DB._byKtNo('insult_qabul', kt_no);
   },
 
   async insultUpdate(kt_no, updates) {
