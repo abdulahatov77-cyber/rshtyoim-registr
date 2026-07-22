@@ -516,6 +516,50 @@ const BemorKartaPage = {
     `;
   },
 
+  // ===== Sana/soat tanlash yordamchilari (retro kiritilgan bemorlar uchun) =====
+  // Ketgan bemorda kataklar bo'sh boshlanadi — operator majburan tanlaydi
+  vaqtInputsHtml(p, prefix) {
+    const ketgan = ['chiqarildi', 'otkazildi', 'vafot'].includes(p.status);
+    const chiqRaw = p._chiqarish?.chiqish_sana ? String(p._chiqarish.chiqish_sana) : '';
+    const nowTk = new Date(Date.now() + 5*3600000).toISOString();
+    const maxSana = ketgan && chiqRaw
+      ? (chiqRaw.length <= 10 ? chiqRaw : new Date(new Date(chiqRaw).getTime() + 5*3600000).toISOString().slice(0,10))
+      : nowTk.slice(0,10);
+    return `
+      <div class="form-group">
+        <label class="form-label ${ketgan ? 'required' : ''}">Sana va soat</label>
+        <div class="grid grid-cols-2 gap-2">
+          <input id="${prefix}-sana" type="date" class="form-input"
+            value="${ketgan ? '' : nowTk.slice(0,10)}"
+            min="${p.qabul_vaqt ? new Date(new Date(p.qabul_vaqt).getTime() + 5*3600000).toISOString().slice(0,10) : ''}"
+            max="${maxSana}">
+          <input id="${prefix}-soat" type="time" class="form-input" value="${ketgan ? '' : nowTk.slice(11,16)}">
+        </div>
+        ${ketgan ? `<p class="text-xs text-orange-600 font-medium mt-1">Bemor ketgan — yozuvning haqiqiy sanasi va soatini tanlang</p>` : ''}
+      </div>`;
+  },
+
+  // Tanlangan vaqtni o'qib tekshiradi. Xatolikda toast ko'rsatib null qaytaradi.
+  readVaqt(prefix) {
+    const sanaVal = document.getElementById(`${prefix}-sana`)?.value || '';
+    const soatVal = document.getElementById(`${prefix}-soat`)?.value || '';
+    if (!sanaVal || !soatVal) { showToast('Sana va soatni kiriting', 'warning'); return null; }
+    const vaqtDate = new Date(`${sanaVal}T${soatVal}:00+05:00`);
+    if (vaqtDate > new Date()) { showToast('Vaqt kelajakda bo\'lishi mumkin emas', 'warning'); return null; }
+    const p = BemorKartaPage._patient;
+    if (p?.qabul_vaqt && vaqtDate < new Date(p.qabul_vaqt)) {
+      showToast('Vaqt bemor qabul qilingan vaqtdan oldin bo\'lishi mumkin emas', 'warning'); return null;
+    }
+    if (['chiqarildi', 'otkazildi', 'vafot'].includes(p?.status) && p?._chiqarish?.chiqish_sana) {
+      const raw = String(p._chiqarish.chiqish_sana);
+      const chiqLimit = raw.length <= 10 ? new Date(raw + 'T23:59:59+05:00') : new Date(raw);
+      if (vaqtDate > chiqLimit) {
+        showToast('Vaqt bemor ketgan (chiqarilgan) vaqtdan keyin bo\'lishi mumkin emas', 'warning'); return null;
+      }
+    }
+    return vaqtDate.toISOString();
+  },
+
   async renderHolat(el, p, type) {
     const HOLATLAR = ['Yaxshi', 'Qoniqarli', "Og'ir", "Juda og'ir", 'Kritik'];
     el.innerHTML = `
@@ -547,6 +591,7 @@ const BemorKartaPage = {
                 <label class="form-label">Harorat (°C)</label>
                 <input id="holat-temp" type="number" step="0.1" class="form-input" placeholder="36.6"/>
               </div>
+              ${BemorKartaPage.vaqtInputsHtml(p, 'holat')}
               <div class="form-group">
                 <label class="form-label">Izoh</label>
                 <textarea id="holat-izoh" class="form-textarea" rows="2" placeholder="Qo'shimcha kuzatuvlar..."></textarea>
@@ -612,6 +657,8 @@ const BemorKartaPage = {
   async saveHolat() {
     const holat = document.getElementById('holat-holat')?.value;
     if (!holat) { showToast('Bemor holatini tanlang', 'warning'); return; }
+    const vaqt = BemorKartaPage.readVaqt('holat');
+    if (!vaqt) return;
     const btn = document.getElementById('btn-holat-save');
     setLoading(btn, true);
     try {
@@ -619,6 +666,7 @@ const BemorKartaPage = {
       await DB.addHolatDinamikasi({
         kt_no: BemorKartaPage._patient.kt_no,
         registr_turi: BemorKartaPage._type,
+        created_at: vaqt,
         holat,
         qon_bosimi: document.getElementById('holat-qb')?.value || null,
         puls: document.getElementById('holat-puls')?.value ? parseInt(document.getElementById('holat-puls').value) : null,
@@ -1141,6 +1189,7 @@ const BemorKartaPage = {
                 <label class="form-label">Topshirish qo'shimchasi / Ko'rsatmalar</label>
                 <textarea id="shift-izoh" class="form-textarea" rows="4" placeholder="Navbat davomida nima bo'ldi, keyingi shifokorga ko'rsatmalar..."></textarea>
               </div>
+              ${BemorKartaPage.vaqtInputsHtml(p, 'shift')}
               <button class="btn btn-primary w-full mt-2 flex items-center justify-center gap-2" id="btn-shift-save" onclick="BemorKartaPage.saveShift()">
                 ${icon('save', 18)} Navbatni topshirish
               </button>
@@ -1189,6 +1238,8 @@ const BemorKartaPage = {
   async saveShift() {
     const holat = document.getElementById('shift-holat')?.value;
     if (!holat) { showToast('Bemor holat baholashni tanlang', 'warning'); return; }
+    const vaqt = BemorKartaPage.readVaqt('shift');
+    if (!vaqt) return;
     const btn = document.getElementById('btn-shift-save');
     setLoading(btn, true);
     try {
@@ -1196,6 +1247,7 @@ const BemorKartaPage = {
       await DB.addNavbatchiJurnal({
         kt_no: BemorKartaPage._patient.kt_no,
         registr_turi: BemorKartaPage._type,
+        created_at: vaqt,
         holat_baholash: holat,
         keyingi_shifokor: document.getElementById('shift-keyingi')?.value || null,
         izoh: document.getElementById('shift-izoh')?.value || null,
