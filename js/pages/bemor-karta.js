@@ -671,18 +671,31 @@ const BemorKartaPage = {
                 </select>
                 <input id="din-otkazilgan-muassasa-custom" type="text" class="form-input mt-2" placeholder="Muassasa nomini kiriting..." style="display:none">
               </div>
-              <div class="form-group mt-3">
-                <label class="form-label">Muolaja sanasi va soati</label>
-                <div class="grid grid-cols-2 gap-2">
-                  <input id="din-sana" type="date" class="form-input"
-                    value="${new Date(Date.now() + 5*3600000).toISOString().slice(0,10)}"
-                    min="${p.qabul_vaqt ? new Date(new Date(p.qabul_vaqt).getTime() + 5*3600000).toISOString().slice(0,10) : ''}"
-                    max="${new Date(Date.now() + 5*3600000).toISOString().slice(0,10)}">
-                  <input id="din-soat" type="time" class="form-input"
-                    value="${new Date(Date.now() + 5*3600000).toISOString().slice(11,16)}">
-                </div>
-                <p class="text-xs text-gray-400 mt-1">Eski sana bilan kiritilgan bemor uchun haqiqiy muolaja vaqtini tanlang</p>
-              </div>
+              ${(() => {
+                // Ketgan bemor uchun sana bo'sh qoladi — operator majburan tanlaydi
+                const ketgan = ['chiqarildi', 'otkazildi', 'vafot'].includes(p.status);
+                const chiqRaw = p._chiqarish?.chiqish_sana ? String(p._chiqarish.chiqish_sana) : '';
+                const maxSana = ketgan && chiqRaw
+                  ? (chiqRaw.length <= 10 ? chiqRaw : new Date(new Date(chiqRaw).getTime() + 5*3600000).toISOString().slice(0,10))
+                  : new Date(Date.now() + 5*3600000).toISOString().slice(0,10);
+                return `
+                <div class="form-group mt-3">
+                  <label class="form-label ${ketgan ? 'required' : ''}">Muolaja sanasi va soati</label>
+                  <div class="grid grid-cols-2 gap-2">
+                    <input id="din-sana" type="date" class="form-input"
+                      value="${ketgan ? '' : new Date(Date.now() + 5*3600000).toISOString().slice(0,10)}"
+                      min="${p.qabul_vaqt ? new Date(new Date(p.qabul_vaqt).getTime() + 5*3600000).toISOString().slice(0,10) : ''}"
+                      max="${maxSana}">
+                    <input id="din-soat" type="time" class="form-input"
+                      value="${ketgan ? '' : new Date(Date.now() + 5*3600000).toISOString().slice(11,16)}">
+                  </div>
+                  <p class="text-xs ${ketgan ? 'text-orange-600 font-medium' : 'text-gray-400'} mt-1">
+                    ${ketgan
+                      ? `Bemor ketgan (${p.status === 'vafot' ? 'vafot' : p.status === 'otkazildi' ? "o'tkazilgan" : 'chiqarilgan'}) — muolajaning haqiqiy sanasi va soatini tanlang`
+                      : 'Muolaja haqiqatda o\'tkazilgan vaqtni tanlang'}
+                  </p>
+                </div>`;
+              })()}
               <div class="form-group mt-3">
                 <label class="form-label">Qo'shimcha izoh</label>
                 <textarea id="din-izoh" class="form-textarea" rows="2" placeholder="Ixtiyoriy..."></textarea>
@@ -827,6 +840,16 @@ const BemorKartaPage = {
     if (pQabul && vaqtDate < new Date(pQabul)) {
       showToast('Muolaja vaqti bemor qabul qilingan vaqtdan oldin bo\'lishi mumkin emas', 'warning'); return;
     }
+    // Ketgan bemor uchun — chiqarilgan vaqtdan keyingi muolaja taqiqlanadi
+    const pStatus = BemorKartaPage._patient?.status;
+    const chiqRaw = BemorKartaPage._patient?._chiqarish?.chiqish_sana;
+    if (['chiqarildi', 'otkazildi', 'vafot'].includes(pStatus) && chiqRaw) {
+      const raw = String(chiqRaw);
+      const chiqLimit = raw.length <= 10 ? new Date(raw + 'T23:59:59+05:00') : new Date(raw);
+      if (vaqtDate > chiqLimit) {
+        showToast('Muolaja vaqti bemor ketgan (chiqarilgan) vaqtdan keyin bo\'lishi mumkin emas', 'warning'); return;
+      }
+    }
     const muolajaVaqti = vaqtDate.toISOString();
     const btn = document.getElementById('btn-davolash-save');
     setLoading(btn, true);
@@ -942,6 +965,15 @@ const BemorKartaPage = {
       const pQabul = BemorKartaPage._patient?.qabul_vaqt;
       if (pQabul && vaqtDate < new Date(pQabul)) {
         showToast('Muolaja vaqti bemor qabul qilingan vaqtdan oldin bo\'lishi mumkin emas', 'warning'); return;
+      }
+      const pStatus = BemorKartaPage._patient?.status;
+      const chiqRaw = BemorKartaPage._patient?._chiqarish?.chiqish_sana;
+      if (['chiqarildi', 'otkazildi', 'vafot'].includes(pStatus) && chiqRaw) {
+        const raw = String(chiqRaw);
+        const chiqLimit = raw.length <= 10 ? new Date(raw + 'T23:59:59+05:00') : new Date(raw);
+        if (vaqtDate > chiqLimit) {
+          showToast('Muolaja vaqti bemor ketgan (chiqarilgan) vaqtdan keyin bo\'lishi mumkin emas', 'warning'); return;
+        }
       }
     }
     const btn = document.getElementById('btn-din-edit-save');
