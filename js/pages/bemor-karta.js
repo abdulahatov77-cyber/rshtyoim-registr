@@ -672,10 +672,15 @@ const BemorKartaPage = {
                 <input id="din-otkazilgan-muassasa-custom" type="text" class="form-input mt-2" placeholder="Muassasa nomini kiriting..." style="display:none">
               </div>
               <div class="form-group mt-3">
-                <label class="form-label">Muolaja vaqti</label>
-                <input id="din-vaqt" type="datetime-local" class="form-input"
-                  value="${new Date(Date.now() + 5*3600000).toISOString().slice(0,16)}"
-                  max="${new Date(Date.now() + 5*3600000).toISOString().slice(0,16)}">
+                <label class="form-label">Muolaja sanasi va soati</label>
+                <div class="grid grid-cols-2 gap-2">
+                  <input id="din-sana" type="date" class="form-input"
+                    value="${new Date(Date.now() + 5*3600000).toISOString().slice(0,10)}"
+                    min="${p.qabul_vaqt ? new Date(new Date(p.qabul_vaqt).getTime() + 5*3600000).toISOString().slice(0,10) : ''}"
+                    max="${new Date(Date.now() + 5*3600000).toISOString().slice(0,10)}">
+                  <input id="din-soat" type="time" class="form-input"
+                    value="${new Date(Date.now() + 5*3600000).toISOString().slice(11,16)}">
+                </div>
                 <p class="text-xs text-gray-400 mt-1">Eski sana bilan kiritilgan bemor uchun haqiqiy muolaja vaqtini tanlang</p>
               </div>
               <div class="form-group mt-3">
@@ -809,12 +814,20 @@ const BemorKartaPage = {
       : muassasaSelectVal;
     if (isOtk && !otkazilganMuassasa) { showToast('Muassasa nomini kiriting', 'warning'); return; }
     const izoh = document.getElementById('din-izoh')?.value || '';
-    // Tanlangan vaqt Toshkent (+05:00) vaqti sifatida qabul qilinadi
-    const vaqtVal = document.getElementById('din-vaqt')?.value || '';
-    const muolajaVaqti = vaqtVal ? new Date(vaqtVal + ':00+05:00').toISOString() : null;
-    if (vaqtVal && new Date(vaqtVal + ':00+05:00') > new Date()) {
+    // Tanlangan sana+soat Toshkent (+05:00) vaqti sifatida qabul qilinadi
+    const sanaVal = document.getElementById('din-sana')?.value || '';
+    const soatVal = document.getElementById('din-soat')?.value || '';
+    if (!sanaVal || !soatVal) { showToast('Muolaja sanasi va soatini kiriting', 'warning'); return; }
+    const vaqtVal = `${sanaVal}T${soatVal}`;
+    const vaqtDate = new Date(vaqtVal + ':00+05:00');
+    if (vaqtDate > new Date()) {
       showToast('Muolaja vaqti kelajakda bo\'lishi mumkin emas', 'warning'); return;
     }
+    const pQabul = BemorKartaPage._patient?.qabul_vaqt;
+    if (pQabul && vaqtDate < new Date(pQabul)) {
+      showToast('Muolaja vaqti bemor qabul qilingan vaqtdan oldin bo\'lishi mumkin emas', 'warning'); return;
+    }
+    const muolajaVaqti = vaqtDate.toISOString();
     const btn = document.getElementById('btn-davolash-save');
     setLoading(btn, true);
     try {
@@ -898,10 +911,15 @@ const BemorKartaPage = {
             <input id="edit-din-shifokor" class="form-input" value="${esc(r.shifokor_fio || '')}"/>
           </div>
           <div>
-            <label class="form-label">Muolaja vaqti</label>
-            <input id="edit-din-vaqt" type="datetime-local" class="form-input"
-              value="${r.created_at ? new Date(new Date(r.created_at).getTime() + 5*3600000).toISOString().slice(0,16) : ''}"
-              max="${new Date(Date.now() + 5*3600000).toISOString().slice(0,16)}">
+            <label class="form-label">Muolaja sanasi va soati</label>
+            <div class="grid grid-cols-2 gap-2">
+              <input id="edit-din-sana" type="date" class="form-input"
+                value="${r.created_at ? new Date(new Date(r.created_at).getTime() + 5*3600000).toISOString().slice(0,10) : ''}"
+                min="${BemorKartaPage._patient?.qabul_vaqt ? new Date(new Date(BemorKartaPage._patient.qabul_vaqt).getTime() + 5*3600000).toISOString().slice(0,10) : ''}"
+                max="${new Date(Date.now() + 5*3600000).toISOString().slice(0,10)}">
+              <input id="edit-din-soat" type="time" class="form-input"
+                value="${r.created_at ? new Date(new Date(r.created_at).getTime() + 5*3600000).toISOString().slice(11,16) : ''}">
+            </div>
           </div>
         </div>`,
       footer: `
@@ -913,9 +931,18 @@ const BemorKartaPage = {
   async saveDinamikaEdit(id) {
     const muolaja = document.getElementById('edit-din-muolaja')?.value;
     if (!muolaja) { showToast('Muolaja turini tanlang', 'warning'); return; }
-    const vaqtVal = document.getElementById('edit-din-vaqt')?.value || '';
-    if (vaqtVal && new Date(vaqtVal + ':00+05:00') > new Date()) {
-      showToast('Muolaja vaqti kelajakda bo\'lishi mumkin emas', 'warning'); return;
+    const sanaVal = document.getElementById('edit-din-sana')?.value || '';
+    const soatVal = document.getElementById('edit-din-soat')?.value || '';
+    const vaqtVal = sanaVal && soatVal ? `${sanaVal}T${soatVal}` : '';
+    if (vaqtVal) {
+      const vaqtDate = new Date(vaqtVal + ':00+05:00');
+      if (vaqtDate > new Date()) {
+        showToast('Muolaja vaqti kelajakda bo\'lishi mumkin emas', 'warning'); return;
+      }
+      const pQabul = BemorKartaPage._patient?.qabul_vaqt;
+      if (pQabul && vaqtDate < new Date(pQabul)) {
+        showToast('Muolaja vaqti bemor qabul qilingan vaqtdan oldin bo\'lishi mumkin emas', 'warning'); return;
+      }
     }
     const btn = document.getElementById('btn-din-edit-save');
     setLoading(btn, true);
