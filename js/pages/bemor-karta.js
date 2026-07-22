@@ -1491,7 +1491,7 @@ const BemorKartaPage = {
             <div class="form-group">
               <label class="form-label required">Chiqarilgan sana</label>
               <div class="grid grid-cols-2 gap-3">
-                <input type="date" id="ch-sana" class="form-input" required value="${new Date(Date.now()+5*3600000).toISOString().slice(0,10)}"/>
+                <input type="date" id="ch-sana" class="form-input" required value="${new Date(Date.now()+5*3600000).toISOString().slice(0,10)}" max="${new Date(Date.now()+5*3600000).toISOString().slice(0,10)}"/>
                 <input type="time" id="ch-vaqt" class="form-input" required value="${new Date(Date.now()+5*3600000).toISOString().slice(11,16)}"/>
               </div>
             </div>
@@ -2009,6 +2009,11 @@ const BemorKartaPage = {
     if (type === 'insult' && !mrsDaraja) return showToast('mRS darajasini tanlang', 'warning');
     if (natija === "Boshqa shifoxonaga o'tkazildi" && !boshqaShifoxona.trim()) return showToast('Boshqa shifoxona nomini kiriting', 'warning');
     if (natija === 'Reabilitatsiyaga yuborildi' && !reabilMarkaz.trim()) return showToast('Reabilitatsiya markazi nomini kiriting', 'warning');
+
+    // Chiqish vaqti kelajakda bo'lmasligi kerak
+    if (new Date(`${sana}T${vaqt || '00:00'}:00+05:00`) > new Date()) {
+      return showToast('⚠️ Chiqish sanasi kelajakda bo\'lishi mumkin emas!', 'error', 7000);
+    }
 
     // Chiqish vaqti qabul vaqtidan oldin bo'lmasligi kerak
     const qabulVaqt = BemorKartaPage._patient?.qabul_vaqt;
