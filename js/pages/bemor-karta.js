@@ -922,12 +922,18 @@ const BemorKartaPage = {
           ? oldTransfers[oldTransfers.length - 1].muassasa_ga
           : (p.otkazilgan_muassasa || p.muassasa);
         // transfer_log ga yozamiz — marshrutizatsiya (harakat) sahifasida ko'rinadi
-        await TransferLog.add({
+        const tRec = {
           kt_no: p.kt_no,
           muassasa_dan: currentMuassasa,
           muassasa_ga: otkazilganMuassasa,
-          sana: vaqtVal ? vaqtVal.slice(0,10) : new Date(Date.now() + 5*3600000).toISOString().slice(0,10)
-        }).catch(() => {});
+          sana: vaqtVal ? vaqtVal.slice(0,10) : new Date(Date.now() + 5*3600000).toISOString().slice(0,10),
+          vaqt: soatVal || null
+        };
+        // vaqt ustuni hali qo'shilmagan bo'lsa — usiz yozamiz
+        await TransferLog.add(tRec).catch(() => {
+          const { vaqt, ...noVaqt } = tRec;
+          return TransferLog.add(noVaqt).catch(() => {});
+        });
         const upd = { status: 'otkazildi' };
         // Agar hali otkazilgan_muassasa bo'sh bo'lsa — birinchi o'tkazishni ham yozamiz
         if (!p.otkazilgan_muassasa) upd.otkazilgan_muassasa = otkazilganMuassasa;

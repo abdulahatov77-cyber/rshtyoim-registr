@@ -563,6 +563,13 @@ const InfarktYangiPage = {
           <div id="otkazilgan-boshqa-div" style="display:${d.otkazilgan_muassasa==='__boshqa__'?'block':'none'}">
             ${this.field('otkazilgan_boshqa','Muassasa nomini qo\'lda yozing',`<input id="otkazilgan_boshqa" class="form-input" value="${d.otkazilgan_boshqa||''}" placeholder="Masalan: Toshkent shahar 1-son klinik shifoxonasi"/>`)}
           </div>
+          ${this.field('otkazish_sana','O\'tkazish sanasi va vaqti',`
+            <div class="grid grid-cols-2 gap-3">
+              <input id="otkazish_sana" type="date" class="form-input" value="${d.otkazish_sana||''}"
+                min="${(d.qabul_vaqt||'').slice(0,10)}"
+                max="${new Date(Date.now()+5*3600000).toISOString().slice(0,10)}"/>
+              <input id="otkazish_soat" type="time" class="form-input" value="${d.otkazish_soat||''}"/>
+            </div>`,true,'Qabul sanasidan oldin va kelajakda bo\'lishi mumkin emas')}
         </div>
         <div class="mt-4 border-t border-dashed border-gray-200 pt-4">
           ${this.field('shifokor_fio','Ushbu formani to\'ldiruvchi shifokor F.I.O',`<input id="shifokor_fio" class="form-input" value="${d.shifokor_fio||''}" placeholder="Familiya Ism Otasining ismi"/>`,true)}
@@ -697,7 +704,7 @@ const InfarktYangiPage = {
      'fio','vazn','boy','aha_bali','simptom_vaqt','birlamchi_yoki_takroriy',
      'yashash_viloyat','yashash_tuman','chet_el_davlati',
      'infarkt_turi','killip','puls','troponin','kkfmb',
-     'muolaja_turi','angio_natija','otkazilgan_muassasa','otkazilgan_boshqa','otkazish_sababi','shifokor_fio','shifokor_tel']
+     'muolaja_turi','angio_natija','otkazilgan_muassasa','otkazilgan_boshqa','otkazish_sababi','otkazish_sana','otkazish_soat','shifokor_fio','shifokor_tel']
     .forEach(id => {
       const el = document.getElementById(id);
       if (el) InfarktYangiPage._data[id] = el.value;
@@ -834,7 +841,7 @@ const InfarktYangiPage = {
     if (this._step === 2) required = ['aha_bali','simptom_vaqt','birlamchi_yoki_takroriy','infarkt_turi','killip','puls','troponin','kkfmb','ekg_natija'];
     if (this._step === 3) {
       required = ['muolaja_turi','shifokor_fio','shifokor_tel'];
-      if ((this._data.muolaja_turi || '').startsWith("Boshqa muassasaga o'tkazildi")) required.push('otkazilgan_muassasa');
+      if ((this._data.muolaja_turi || '').startsWith("Boshqa muassasaga o'tkazildi")) required.push('otkazilgan_muassasa','otkazish_sana','otkazish_soat');
       if (this._data.muolaja_turi === 'Faqat KAG (diagnostik koronar angiografiya)') required.push('angio_natija');
     }
 
@@ -862,6 +869,20 @@ const InfarktYangiPage = {
         valid = false;
         document.getElementById('otkazilgan_boshqa')?.classList.add('border-red-500', 'err-red');
         showToast("⚠️ O'tkazilgan muassasa nomini qo'lda yozing!", 'error', 5000);
+      }
+    }
+    // O'tkazish vaqti — qabuldan oldin va kelajakda bo'lishi mumkin emas
+    if (this._step === 3 && valid && (this._data.muolaja_turi || '').startsWith("Boshqa muassasaga o'tkazildi")) {
+      const otkDT = `${this._data.otkazish_sana}T${this._data.otkazish_soat}`;
+      const nowTk = new Date(Date.now() + 5*3600000).toISOString().slice(0, 16);
+      if (this._data.qabul_vaqt && otkDT < this._data.qabul_vaqt.slice(0, 16)) {
+        valid = false;
+        document.getElementById('otkazish_sana')?.classList.add('border-red-500', 'err-red');
+        showToast("⚠️ O'tkazish vaqti qabul vaqtidan oldin bo'lishi mumkin emas!", 'error', 5000);
+      } else if (otkDT > nowTk) {
+        valid = false;
+        document.getElementById('otkazish_sana')?.classList.add('border-red-500', 'err-red');
+        showToast("⚠️ O'tkazish vaqti kelajakda bo'lishi mumkin emas!", 'error', 5000);
       }
     }
     if (!valid) {
@@ -1198,6 +1219,9 @@ const InfarktYangiPage = {
         payload.otkazilgan_muassasa = (payload.otkazilgan_boshqa || '').trim();
       }
       delete payload.otkazilgan_boshqa;
+      // O'tkazish sana/soat — infarkt_qabul ustuni emas, transfer_log ga yoziladi
+      const otkSana = payload.otkazish_sana, otkSoat = payload.otkazish_soat;
+      delete payload.otkazish_sana; delete payload.otkazish_soat;
       if ((payload.muolaja_turi || '').startsWith("Boshqa muassasaga o'tkazildi")) {
         payload.status = 'otkazildi';
         // O'tkazish sababini muolaja matnidan ajratamiz (marshrut nazorati uchun)
@@ -1232,6 +1256,20 @@ const InfarktYangiPage = {
       // telegram_server_notify.sql). Brauzerdan yuborsak dublikat bo'ladi.
       // Telegram.notify(saved, 'infarkt').catch(() => {});
       const isOtk = payload.status === 'otkazildi';
+      if (isOtk && otkSana) {
+        const tRec = {
+          kt_no: payload.kt_no,
+          muassasa_dan: payload.muassasa,
+          muassasa_ga: payload.otkazilgan_muassasa,
+          sana: otkSana,
+          vaqt: otkSoat || null
+        };
+        // vaqt ustuni hali qo'shilmagan bo'lsa — usiz yozamiz
+        await TransferLog.add(tRec).catch(() => {
+          const { vaqt, ...noVaqt } = tRec;
+          return TransferLog.add(noVaqt).catch(() => {});
+        });
+      }
       showToast(isOtk ? `✅ Bemor ${payload.otkazilgan_muassasa || 'boshqa muassasa'}ga o'tkazildi!` : '🎉 Bemor muvaffaqiyatli saqlandi!', 'success');
       setTimeout(() => Router.go('dashboard'), 1500);
     } catch(err) {

@@ -489,6 +489,13 @@ const InsultYangiPage = {
           <div id="otkazilgan-boshqa-div" style="display:${d.otkazilgan_muassasa==='__boshqa__'?'block':'none'}">
             ${this.field('otkazilgan_boshqa','Muassasa nomini qo\'lda yozing',`<input id="otkazilgan_boshqa" class="form-input" value="${d.otkazilgan_boshqa||''}" placeholder="Masalan: Toshkent shahar 1-son klinik shifoxonasi"/>`)}
           </div>
+          ${this.field('otkazish_sana','O\'tkazish sanasi va vaqti',`
+            <div class="grid grid-cols-2 gap-3">
+              <input id="otkazish_sana" type="date" class="form-input" value="${d.otkazish_sana||''}"
+                min="${(d.qabul_vaqt||'').slice(0,10)}"
+                max="${new Date(Date.now()+5*3600000).toISOString().slice(0,10)}"/>
+              <input id="otkazish_soat" type="time" class="form-input" value="${d.otkazish_soat||''}"/>
+            </div>`,true,'Qabul sanasidan oldin va kelajakda bo\'lishi mumkin emas')}
         </div>
 
         <div class="mt-4 border-t border-dashed border-gray-200 pt-4">
@@ -806,7 +813,7 @@ const InsultYangiPage = {
      'tez_yordam_kelgan_vaqt',
      'fio','vazn','boy','simptom_vaqt','gcs_bali','birlamchi_yoki_takroriy','insult_turi','aha_bali','nihss_qabul','puls',
      'yashash_viloyat','yashash_tuman','chet_el_davlati',
-     'mskt','mskt_angiografiya','otkazilgan_muassasa','otkazilgan_boshqa','shifokor_fio','shifokor_tel']
+     'mskt','mskt_angiografiya','otkazilgan_muassasa','otkazilgan_boshqa','otkazish_sana','otkazish_soat','shifokor_fio','shifokor_tel']
     .forEach(id => {
       const el = document.getElementById(id);
       if (el) InsultYangiPage._data[id] = el.value;
@@ -943,7 +950,7 @@ const InsultYangiPage = {
     if (this._step === 2) required = ['aha_bali','simptom_vaqt','nihss_qabul','gcs_bali','birlamchi_yoki_takroriy','insult_turi','puls'];
     if (this._step === 3) {
       required = ['mskt','muolaja_turi','shifokor_fio','shifokor_tel'];
-      if ((this._data.muolaja_turi || '').startsWith("Boshqa muassasaga o'tkazildi")) required.push('otkazilgan_muassasa');
+      if ((this._data.muolaja_turi || '').startsWith("Boshqa muassasaga o'tkazildi")) required.push('otkazilgan_muassasa','otkazish_sana','otkazish_soat');
     }
 
     const errs = Utils.validate(this._data, required);
@@ -977,6 +984,20 @@ const InsultYangiPage = {
         valid = false;
         document.getElementById('otkazilgan_boshqa')?.classList.add('border-red-500', 'err-red');
         showToast("⚠️ O'tkazilgan muassasa nomini qo'lda yozing!", 'error', 5000);
+      }
+    }
+    // O'tkazish vaqti — qabuldan oldin va kelajakda bo'lishi mumkin emas
+    if (this._step === 3 && valid && (this._data.muolaja_turi || '').startsWith("Boshqa muassasaga o'tkazildi")) {
+      const otkDT = `${this._data.otkazish_sana}T${this._data.otkazish_soat}`;
+      const nowTk = new Date(Date.now() + 5*3600000).toISOString().slice(0, 16);
+      if (this._data.qabul_vaqt && otkDT < this._data.qabul_vaqt.slice(0, 16)) {
+        valid = false;
+        document.getElementById('otkazish_sana')?.classList.add('border-red-500', 'err-red');
+        showToast("⚠️ O'tkazish vaqti qabul vaqtidan oldin bo'lishi mumkin emas!", 'error', 5000);
+      } else if (otkDT > nowTk) {
+        valid = false;
+        document.getElementById('otkazish_sana')?.classList.add('border-red-500', 'err-red');
+        showToast("⚠️ O'tkazish vaqti kelajakda bo'lishi mumkin emas!", 'error', 5000);
       }
     }
     if (!valid) {
@@ -1292,6 +1313,9 @@ const InsultYangiPage = {
         payload.otkazilgan_muassasa = (payload.otkazilgan_boshqa || '').trim();
       }
       delete payload.otkazilgan_boshqa;
+      // O'tkazish sana/soat — insult_qabul ustuni emas, transfer_log ga yoziladi
+      const otkSana = payload.otkazish_sana, otkSoat = payload.otkazish_soat;
+      delete payload.otkazish_sana; delete payload.otkazish_soat;
       delete payload._simptom_soat_raw;
       // aspects_ball GENERATED ustun — bazaga yozmaymiz
       delete payload.aspects_ball;
@@ -1326,6 +1350,20 @@ const InsultYangiPage = {
       // telegram_server_notify.sql). Brauzerdan yuborsak dublikat bo'ladi.
       // Telegram.notify(saved, 'insult').catch(() => {});
       const isOtk = payload.status === 'otkazildi';
+      if (isOtk && otkSana) {
+        const tRec = {
+          kt_no: payload.kt_no,
+          muassasa_dan: payload.muassasa,
+          muassasa_ga: payload.otkazilgan_muassasa,
+          sana: otkSana,
+          vaqt: otkSoat || null
+        };
+        // vaqt ustuni hali qo'shilmagan bo'lsa — usiz yozamiz
+        await TransferLog.add(tRec).catch(() => {
+          const { vaqt, ...noVaqt } = tRec;
+          return TransferLog.add(noVaqt).catch(() => {});
+        });
+      }
       showToast(isOtk ? `✅ Bemor ${payload.otkazilgan_muassasa || 'boshqa muassasa'}ga o'tkazildi!` : '🎉 Bemor muvaffaqiyatli saqlandi!', 'success');
       setTimeout(() => Router.go('dashboard'), 1500);
     } catch(err) {
