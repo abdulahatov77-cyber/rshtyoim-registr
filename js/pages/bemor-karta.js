@@ -672,6 +672,13 @@ const BemorKartaPage = {
                 <input id="din-otkazilgan-muassasa-custom" type="text" class="form-input mt-2" placeholder="Muassasa nomini kiriting..." style="display:none">
               </div>
               <div class="form-group mt-3">
+                <label class="form-label">Muolaja vaqti</label>
+                <input id="din-vaqt" type="datetime-local" class="form-input"
+                  value="${new Date(Date.now() + 5*3600000).toISOString().slice(0,16)}"
+                  max="${new Date(Date.now() + 5*3600000).toISOString().slice(0,16)}">
+                <p class="text-xs text-gray-400 mt-1">Eski sana bilan kiritilgan bemor uchun haqiqiy muolaja vaqtini tanlang</p>
+              </div>
+              <div class="form-group mt-3">
                 <label class="form-label">Qo'shimcha izoh</label>
                 <textarea id="din-izoh" class="form-textarea" rows="2" placeholder="Ixtiyoriy..."></textarea>
               </div>
@@ -802,6 +809,12 @@ const BemorKartaPage = {
       : muassasaSelectVal;
     if (isOtk && !otkazilganMuassasa) { showToast('Muassasa nomini kiriting', 'warning'); return; }
     const izoh = document.getElementById('din-izoh')?.value || '';
+    // Tanlangan vaqt Toshkent (+05:00) vaqti sifatida qabul qilinadi
+    const vaqtVal = document.getElementById('din-vaqt')?.value || '';
+    const muolajaVaqti = vaqtVal ? new Date(vaqtVal + ':00+05:00').toISOString() : null;
+    if (vaqtVal && new Date(vaqtVal + ':00+05:00') > new Date()) {
+      showToast('Muolaja vaqti kelajakda bo\'lishi mumkin emas', 'warning'); return;
+    }
     const btn = document.getElementById('btn-davolash-save');
     setLoading(btn, true);
     try {
@@ -815,7 +828,8 @@ const BemorKartaPage = {
         registr_turi: BemorKartaPage._type,
         muolaja_turi: selected,
         izoh: finalIzoh,
-        shifokor_fio: profile?.fio || 'Dr. Navbatchi'
+        shifokor_fio: profile?.fio || 'Dr. Navbatchi',
+        ...(muolajaVaqti ? { created_at: muolajaVaqti } : {})
       });
       if (isOtk) {
         // Bemorning joriy (oxirgi) muassasasi — undan yangi muassasaga o'tkaziladi
@@ -828,7 +842,7 @@ const BemorKartaPage = {
           kt_no: p.kt_no,
           muassasa_dan: currentMuassasa,
           muassasa_ga: otkazilganMuassasa,
-          sana: new Date(Date.now() + 5*3600000).toISOString().slice(0,10)
+          sana: vaqtVal ? vaqtVal.slice(0,10) : new Date(Date.now() + 5*3600000).toISOString().slice(0,10)
         }).catch(() => {});
         const upd = { status: 'otkazildi' };
         // Agar hali otkazilgan_muassasa bo'sh bo'lsa — birinchi o'tkazishni ham yozamiz
@@ -883,7 +897,12 @@ const BemorKartaPage = {
             <label class="form-label">Shifokor F.I.O</label>
             <input id="edit-din-shifokor" class="form-input" value="${esc(r.shifokor_fio || '')}"/>
           </div>
-          <p class="text-xs text-slate-400">Yozuv sanasi: ${Utils.formatDateTime(r.created_at)} (o'zgartirilmaydi)</p>
+          <div>
+            <label class="form-label">Muolaja vaqti</label>
+            <input id="edit-din-vaqt" type="datetime-local" class="form-input"
+              value="${r.created_at ? new Date(new Date(r.created_at).getTime() + 5*3600000).toISOString().slice(0,16) : ''}"
+              max="${new Date(Date.now() + 5*3600000).toISOString().slice(0,16)}">
+          </div>
         </div>`,
       footer: `
         <button class="btn btn-secondary" onclick="closeModal()">Bekor qilish</button>
@@ -894,13 +913,18 @@ const BemorKartaPage = {
   async saveDinamikaEdit(id) {
     const muolaja = document.getElementById('edit-din-muolaja')?.value;
     if (!muolaja) { showToast('Muolaja turini tanlang', 'warning'); return; }
+    const vaqtVal = document.getElementById('edit-din-vaqt')?.value || '';
+    if (vaqtVal && new Date(vaqtVal + ':00+05:00') > new Date()) {
+      showToast('Muolaja vaqti kelajakda bo\'lishi mumkin emas', 'warning'); return;
+    }
     const btn = document.getElementById('btn-din-edit-save');
     setLoading(btn, true);
     try {
       await DB.updateDinamikaMuolaja(id, {
         muolaja_turi: muolaja,
         izoh: document.getElementById('edit-din-izoh')?.value || null,
-        shifokor_fio: document.getElementById('edit-din-shifokor')?.value || null
+        shifokor_fio: document.getElementById('edit-din-shifokor')?.value || null,
+        ...(vaqtVal ? { created_at: new Date(vaqtVal + ':00+05:00').toISOString() } : {})
       });
       closeModal();
       showToast('Muolaja yangilandi', 'success');

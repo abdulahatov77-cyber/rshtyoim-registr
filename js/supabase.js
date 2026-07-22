@@ -469,7 +469,7 @@ const DB = {
 
   async updateDinamikaMuolaja(id, updates) {
     // Faqat ruxsat etilgan maydonlar
-    const allowed = ['muolaja_turi', 'izoh', 'shifokor_fio'];
+    const allowed = ['muolaja_turi', 'izoh', 'shifokor_fio', 'created_at'];
     const clean = {};
     allowed.forEach(k => { if (updates[k] !== undefined) clean[k] = updates[k]; });
     const { error } = await getSupabase()
