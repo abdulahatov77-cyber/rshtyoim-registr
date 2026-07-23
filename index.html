@@ -103,7 +103,7 @@
   <!-- Auto-reload: checks for new version every 30 seconds -->
   <script>
     (function() {
-      const APP_BUILD = '20260723-101';
+      const APP_BUILD = '20260723-102';
       const BUILD_KEY = 'rshtyoim_build';
       const stored = localStorage.getItem(BUILD_KEY);
       if (stored && stored !== APP_BUILD) {
@@ -142,6 +142,17 @@
       document.addEventListener('visibilitychange', () => {
         if (document.visibilityState === 'visible') checkVersion();
       });
+
+      // Versiya ko'rsatkichi — pastki o'ng burchakda (telefon orqali diagnostika uchun)
+      function showBuild() {
+        const b = document.createElement('div');
+        b.id = 'app-build-label';
+        b.textContent = 'v' + APP_BUILD;
+        b.style.cssText = 'position:fixed;bottom:2px;right:6px;z-index:9999;font-size:10px;color:#94a3b8;pointer-events:none;font-family:monospace';
+        document.body.appendChild(b);
+      }
+      if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', showBuild);
+      else showBuild();
     })();
   </script>
 </body>
