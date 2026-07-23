@@ -402,11 +402,12 @@ const BemorKartaPage = {
             ${row('Jinsi', p.jins)}
             ${row('Tana vazni', p.vazn ? p.vazn + ' kg' : null)}
             ${row('Bo\'y uzunligi', p.boy ? p.boy + ' sm' : null)}
+            ${row('Fuqarolik', p.fuqarolik === 'Chet el' ? '🌍 Chet el fuqarosi' : (p.fuqarolik || null))}
             ${p.fuqarolik === 'Chet el'
-              ? row('Doimiy yashash manzili', p.chet_el_davlati ? `🌍 ${esc(p.chet_el_davlati)} (chet el fuqarosi)` : '🌍 Chet el fuqarosi')
-              : ((p.yashash_viloyat || p.yashash_tuman)
-                  ? row('Doimiy yashash manzili', `${esc(p.yashash_viloyat || '')}${p.yashash_tuman ? ', ' + esc(p.yashash_tuman) : ''}`)
-                  : '')}
+              ? row('Doimiy yashash manzili', p.chet_el_davlati ? `🌍 ${esc(p.chet_el_davlati)}` : null)
+              : row('Doimiy yashash manzili', (p.yashash_viloyat || p.yashash_tuman)
+                  ? `${esc(p.yashash_viloyat || '')}${p.yashash_tuman ? ', ' + esc(p.yashash_tuman) : ''}`
+                  : null)}
             ${row('Viloyat', p.viloyat)}
             ${row('Muassasa', p.muassasa)}
             ${row('Murojaat yo\'li', p.murojaat_yoli)}
