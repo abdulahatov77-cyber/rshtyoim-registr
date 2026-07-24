@@ -1,6 +1,6 @@
 // ==================== BEMORLAR RO'YXATI ====================
 const BemorlarPage = {
-  _filters: { type: 'all', status: '', viloyat: '', muassasa: '', search: '', date: '', dateTo: '', missingTime: false },
+  _filters: { type: 'all', status: '', viloyat: '', muassasa: '', tashxis: '', muolaja: '', search: '', date: '', dateTo: '', missingTime: false },
   _currentPage: 1,
   _perPage: 20,
   _selected: new Set(),
@@ -79,6 +79,32 @@ const BemorlarPage = {
             <select id="f-muassasa" class="form-select" onchange="BemorlarPage.applyFilter()">
               <option value="">Barchasi</option>
               ${BemorlarPage._getMuassasaOptions(f.viloyat, f.muassasa)}
+            </select>
+          </div>
+          <div>
+            <label class="form-label">${icon('stethoscope', 14)} Tashxis</label>
+            <select id="f-tashxis" class="form-select" onchange="BemorlarPage.applyFilter()">
+              <option value="">Barchasi</option>
+              <optgroup label="🫀 Infarkt">
+                <option value="STEMI" ${f.tashxis==='STEMI'?'selected':''}>O'KS ST elevatsiya bilan (STEMI)</option>
+                <option value="NSTEMI" ${f.tashxis==='NSTEMI'?'selected':''}>O'KS ST elevatsiyasiz (NSTEMI)</option>
+                <option value="AMI" ${f.tashxis==='AMI'?'selected':''}>O'tkir miokard infarkti (AMI)</option>
+              </optgroup>
+              <optgroup label="🧠 Insult">
+                ${(APP_CONFIG.INSULT_TURLARI||[]).map(t=>`<option value="${esc(t)}" ${f.tashxis===t?'selected':''}>${esc(t)}</option>`).join('')}
+              </optgroup>
+            </select>
+          </div>
+          <div>
+            <label class="form-label">${icon('syringe', 14)} Muolaja turi</label>
+            <select id="f-muolaja" class="form-select" onchange="BemorlarPage.applyFilter()">
+              <option value="">Barchasi</option>
+              <optgroup label="🫀 Infarkt">
+                ${(APP_CONFIG.INFARKT_MUOLAJALARI||[]).map(m=>`<option value="${esc(m)}" ${f.muolaja===m?'selected':''}>${esc(m)}</option>`).join('')}
+              </optgroup>
+              <optgroup label="🧠 Insult">
+                ${(APP_CONFIG.INSULT_MUOLAJALARI||[]).map(m=>`<option value="${esc(m)}" ${f.muolaja===m?'selected':''}>${esc(m)}</option>`).join('')}
+              </optgroup>
             </select>
           </div>
           <div>
@@ -184,6 +210,8 @@ const BemorlarPage = {
       BemorlarPage._filters.viloyat = BemorlarPage._profile?.viloyat || '';
     }
     BemorlarPage._filters.muassasa = document.getElementById('f-muassasa')?.value || '';
+    BemorlarPage._filters.tashxis = document.getElementById('f-tashxis')?.value || '';
+    BemorlarPage._filters.muolaja = document.getElementById('f-muolaja')?.value || '';
     BemorlarPage._filters.date = document.getElementById('f-date')?.value || '';
     BemorlarPage._filters.dateTo = document.getElementById('f-date-to')?.value || '';
     BemorlarPage._filters.search = document.getElementById('f-search')?.value || '';
@@ -195,7 +223,7 @@ const BemorlarPage = {
 
   resetFilters() {
     BemorlarPage._filters = {
-      type: 'all', status: '', muassasa: '', search: '', date: '', dateTo: '', missingTime: false, missingExit: false,
+      type: 'all', status: '', muassasa: '', tashxis: '', muolaja: '', search: '', date: '', dateTo: '', missingTime: false, missingExit: false,
       viloyat: BemorlarPage._profile?.role === 'super_admin' ? '' : (BemorlarPage._profile?.viloyat || '')
     };
     BemorlarPage._currentPage = 1;
@@ -212,6 +240,8 @@ const BemorlarPage = {
       status:   f.status   || undefined,
       viloyat:  f.viloyat  || undefined,
       muassasa: f.muassasa || undefined,
+      tashxis:  f.tashxis  || undefined,
+      muolaja:  f.muolaja  || undefined,
       search:   f.search   || undefined,
       page, pageSize
     };
@@ -320,13 +350,14 @@ const BemorlarPage = {
         <thead>
           <tr>
             ${isSuperAdmin ? `<th style="width:3%"><input type="checkbox" id="bl-select-all" style="width:16px;height:16px;cursor:pointer" onclick="BemorlarPage.toggleAll(this.checked)"/></th>` : ''}
-            <th style="width:11%">Tur</th>
-            <th style="width:11%">K/T No</th>
-            <th style="width:23%">Bemor F.I.O</th>
-            <th style="width:10%">Yosh / Jins</th>
-            <th style="width:14%">Viloyat</th>
-            <th style="width:13%">Qabul vaqti</th>
-            <th style="width:10%">Holat</th>
+            <th style="width:9%">Tur</th>
+            <th style="width:10%">K/T No</th>
+            <th style="width:17%">Bemor F.I.O</th>
+            <th style="width:9%">Yosh / Jins</th>
+            <th style="width:10%">Viloyat</th>
+            <th style="width:20%">Tashxis / Muolaja</th>
+            <th style="width:11%">Qabul vaqti</th>
+            <th style="width:12%">Holat</th>
             <th style="width:2%"></th>
           </tr>
         </thead>
@@ -352,6 +383,12 @@ const BemorlarPage = {
                 <td>${esc(age)} yosh · ${esc(p.jins || p.jinsi) || '—'}</td>
                 <td><div class="flex items-center gap-1.5 text-gray-600">${icon('map-pin', 14)} ${esc(p.viloyat) || '—'}</div></td>
                 <td>
+                  <div class="flex flex-col max-w-[220px]">
+                    <span class="text-xs font-semibold ${isInf?'text-red-700':'text-purple-700'} truncate" title="${esc((isInf ? p.infarkt_turi : p.insult_turi) || '')}">${esc((isInf ? p.infarkt_turi : p.insult_turi) || '—')}</span>
+                    <span class="text-xs text-gray-500 truncate" title="${esc(p.muolaja_turi || '')}">${esc(p.muolaja_turi || '—')}</span>
+                  </div>
+                </td>
+                <td>
                   <div class="flex flex-col">
                     <span class="text-gray-900">${Utils.formatDate(p.qabul_vaqt)}</span>
                     <span class="text-xs text-gray-500">${Utils.formatDateTime(p.qabul_vaqt).split(', ')[1] || ''}</span>
@@ -362,6 +399,7 @@ const BemorlarPage = {
                     ${Utils.statusBadge(p.status)}
                     ${p.status === 'otkazildi' && p.otkazilgan_muassasa ? `<span class="text-xs text-orange-600 font-medium truncate max-w-[140px]" title="${esc(p.otkazilgan_muassasa)}">→ ${esc(p.otkazilgan_muassasa)}</span>` : ''}
                     ${p._chiqarish?.chiqish_sana ? `<span class="text-xs text-gray-400">${Utils.formatDateTime(p._chiqarish.chiqish_sana)}</span>` : (p.status === 'chiqarildi' || p.status === 'vafot') ? `<span class="text-xs text-orange-600 font-semibold" title="Chiqarish varaqasi to'ldirilmagan">⚠️ varaqa yo'q</span>` : ''}
+                    ${p._chiqarish?.natija ? `<span class="text-xs text-green-700 truncate max-w-[140px]" title="${esc(p._chiqarish.natija)}">✓ ${esc(p._chiqarish.natija)}</span>` : ''}
                   </div>
                 </td>
                 <td class="text-right text-gray-400">${icon('chevron-right', 20)}</td>
@@ -421,9 +459,15 @@ const BemorlarPage = {
     }
     Utils.exportCSV(BemorlarPage._allData.map(p=>({
       Turi: p._type, 'K/T No': p.kt_no, 'F.I.O': p.fio,
+      Yosh: Utils.calculateAge(p.tugilgan_sana || p.tugilgan_yil) || '',
       Viloyat: p.viloyat, Muassasa: p.muassasa,
       'Qabul vaqti': Utils.formatDateTime(p.qabul_vaqt),
-      Holat: p.status, Jins: p.jins, 'Tug\'ilgan yili': p.tugilgan_yil
+      Tashxis: (p._type === 'infarkt' ? p.infarkt_turi : p.insult_turi) || '',
+      'Muolaja turi': p.muolaja_turi || '',
+      Holat: p.status,
+      'Ketgan sana': p._chiqarish?.chiqish_sana ? Utils.formatDateTime(p._chiqarish.chiqish_sana) : '',
+      'Davolash natijasi': p._chiqarish?.natija || '',
+      Jins: p.jins, 'Tug\'ilgan yili': p.tugilgan_yil
     })), 'bemorlar_royxati.csv');
     showToast('Eksport boshlandi', 'success');
   },

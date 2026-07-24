@@ -199,6 +199,15 @@ const DB = {
       if (filters.status)   q = q.eq('status',   filters.status);
       if (filters.viloyat)  q = q.eq('viloyat',  filters.viloyat);
       if (filters.muassasa) q = q.eq('muassasa', filters.muassasa);
+      if (filters.muolaja)  q = q.eq('muolaja_turi', filters.muolaja);
+      if (filters.tashxis) {
+        // Eski yozuvlarda qisqa ('STEMI'), yangilarida to'liq nom saqlangan — ikkalasini qamraymiz
+        const t = filters.tashxis;
+        if (t === 'STEMI')       q = q.or('infarkt_turi.eq.STEMI,infarkt_turi.ilike.%elevatsiya bilan%');
+        else if (t === 'NSTEMI') q = q.or('infarkt_turi.eq.NSTEMI,infarkt_turi.ilike.%elevatsiyasiz%');
+        else if (t === 'AMI')    q = q.ilike('infarkt_turi', '%miokard%');
+        else                     q = q.eq('infarkt_turi', t);
+      }
       if (filters.from)     q = q.gte('qabul_vaqt', filters.from);
       if (filters.to)       q = q.lte('qabul_vaqt', filters.to);
       if (filters.search) { const s = filters.search.replace(/[,()*%_.\\]/g, '').trim(); if (s) q = q.or(`fio.ilike.%${s}%,kt_no.ilike.%${s}%,muassasa.ilike.%${s}%`); }
@@ -321,6 +330,8 @@ const DB = {
       if (filters.status)   q = q.eq('status',   filters.status);
       if (filters.viloyat)  q = q.eq('viloyat',  filters.viloyat);
       if (filters.muassasa) q = q.eq('muassasa', filters.muassasa);
+      if (filters.muolaja)  q = q.eq('muolaja_turi', filters.muolaja);
+      if (filters.tashxis)  q = q.eq('insult_turi', filters.tashxis);
       if (filters.from)     q = q.gte('qabul_vaqt', filters.from);
       if (filters.to)       q = q.lte('qabul_vaqt', filters.to);
       if (filters.search) { const s = filters.search.replace(/[,()*%_.\\]/g, '').trim(); if (s) q = q.or(`fio.ilike.%${s}%,kt_no.ilike.%${s}%,muassasa.ilike.%${s}%`); }
