@@ -1,14 +1,11 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="uz">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>RSHTYOIM — Infarkt va Insult Registr</title>
-  <meta name=”description” content=”Respublika Shoshilinch Tibbiy Yordam Ilmiy Markazi — Infarkt va Insult bemorlari registri” />
+  <meta name="description" content="Respublika Shoshilinch Tibbiy Yordam Ilmiy Markazi — Infarkt va Insult bemorlari registri" />
   <meta name="theme-color" content="#0f172a" />
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-  <meta http-equiv="Pragma" content="no-cache" />
-  <meta http-equiv="Expires" content="0" />
 
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -100,15 +97,18 @@
   <!-- App init -->
   <script src="js/app.js?v=67"></script>
 
-  <!-- Auto-reload: checks for new version every 30 seconds -->
+  <!-- Versiya tekshiruvi: 30 daqiqada bir marta, barcha tablar uchun umumiy -->
   <script>
     (function() {
       const APP_BUILD = '20260723-103';
       const BUILD_KEY = 'rshtyoim_build';
+      const LAST_CHECK_KEY = 'rshtyoim_last_check';
+      const CHECK_INTERVAL = 30 * 60 * 1000; // 30 daqiqa
+
       const stored = localStorage.getItem(BUILD_KEY);
       if (stored && stored !== APP_BUILD) {
         localStorage.setItem(BUILD_KEY, APP_BUILD);
-        location.reload(true);
+        location.reload();
         return;
       }
       localStorage.setItem(BUILD_KEY, APP_BUILD);
@@ -116,29 +116,36 @@
       let _reloadBannerShown = false;
 
       async function checkVersion() {
+        if (_reloadBannerShown) return;
+
+        // Throttle: oxirgi tekshiruvdan 30 daqiqa o'tmagan bo'lsa — so'rov yubormaymiz.
+        // localStorage barcha tablar uchun umumiy, shuning uchun ko'p tab ochiq bo'lsa ham
+        // 30 daqiqada faqat bitta so'rov ketadi.
+        const now = Date.now();
+        const last = parseInt(localStorage.getItem(LAST_CHECK_KEY) || '0', 10);
+        if (now - last < CHECK_INTERVAL) return;
+        localStorage.setItem(LAST_CHECK_KEY, String(now));
+
         try {
-          const r = await fetch('/index.html?_=' + Date.now(), {
-            cache: 'no-store',
-            headers: { 'Pragma': 'no-cache', 'Cache-Control': 'no-cache' }
-          });
+          const r = await fetch('/index.html?_=' + now, { cache: 'no-store' });
           const txt = await r.text();
           const m = txt.match(/APP_BUILD\s*=\s*'([^']+)'/);
-          if (m && m[1] !== APP_BUILD && !_reloadBannerShown) {
+          if (m && m[1] !== APP_BUILD) {
             _reloadBannerShown = true;
             const div = document.createElement('div');
             div.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:#1d4ed8;color:white;text-align:center;padding:16px 20px;font-size:15px;font-weight:700;box-shadow:0 4px 24px rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;gap:16px';
-            div.innerHTML = '<span>🔄 Tizim yangilandi! Iltimos sahifani yangilang.</span><button onclick="location.reload(true)" style="background:white;color:#1d4ed8;border:none;border-radius:8px;padding:8px 20px;font-weight:800;cursor:pointer;font-size:14px;flex-shrink:0">Hozir yangilash ↺</button>';
+            div.innerHTML = '<span>🔄 Tizim yangilandi! Ishingizni saqlab, sahifani yangilang.</span><button onclick="location.reload()" style="background:white;color:#1d4ed8;border:none;border-radius:8px;padding:8px 20px;font-weight:800;cursor:pointer;font-size:14px;flex-shrink:0">Hozir yangilash ↺</button>';
             document.body.prepend(div);
-            // 5 sekunddan keyin avtomatik reload
-            setTimeout(() => location.reload(true), 5000);
+            // Majburiy avtomatik reload YO'Q — shifokor forma to'ldirayotgan bo'lsa
+            // ma'lumot yo'qolmasligi uchun. Faqat tugma orqali yangilanadi.
           }
         } catch(e) {}
       }
 
-      // Har 5 daqiqada tekshir
-      setInterval(checkVersion, 5 * 60 * 1000);
+      setInterval(checkVersion, CHECK_INTERVAL);
 
-      // Sahifa focus bo'lganda ham tekshir (boshqa tabdan qaytganda)
+      // Tabga qaytganda ham tekshiramiz, lekin yuqoridagi throttle tufayli
+      // 30 daqiqada bir martadan ko'p so'rov ketmaydi.
       document.addEventListener('visibilitychange', () => {
         if (document.visibilityState === 'visible') checkVersion();
       });
