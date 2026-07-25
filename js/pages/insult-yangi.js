@@ -786,6 +786,21 @@ const InsultYangiPage = {
   onMuolajaChange(val) {
     InsultYangiPage._data.muolaja_turi = val;
     const v = val.toLowerCase();
+    // Angiografiya talab qiladigan muolaja — muassasada apparat borligini tekshiramiz
+    if (DB.muolajaAngioKerak(val)) {
+      const muassasa = InsultYangiPage._data.muassasa === 'Boshqa'
+        ? (InsultYangiPage._data.boshqa_muassasa || '')
+        : (InsultYangiPage._data.muassasa || '');
+      DB.getMuassasaImkoniyat(muassasa).then(imk => {
+        if (imk && imk.angiografiya_bor === false) {
+          InsultYangiPage._data.muolaja_turi = '';
+          const sel = document.getElementById('muolaja_turi');
+          if (sel) sel.value = '';
+          InsultYangiPage.onMuolajaChange('');
+          showToast(`⚠️ ${muassasa} da angiografiya apparati mavjud emas — bu muolajani tanlab bo'lmaydi. "Boshqa muassasaga o'tkazildi — angiografiya va endovaskulyar muolaja uchun" variantini tanlang.`, 'error', 8000);
+        }
+      });
+    }
     const isOtk = val.startsWith("Boshqa muassasaga o'tkazildi");
     // O'tkazish variantlarida muolaja vaqtlari so'ralmaydi
     const isTLT = !isOtk && (v.includes('trombolizis') || v.includes('tlt'));
@@ -1391,6 +1406,16 @@ const InsultYangiPage = {
         const imk = await DB.getMuassasaImkoniyat(payload.muassasa).catch(() => null);
         if (imk && imk.mskt_bor === false) {
           showToast(`⚠️ ${payload.muassasa} da MSKT apparati mavjud emas — "MSKT o'tkazildi" deb saqlab bo'lmaydi!`, 'error', 8000);
+          setLoading(btn, false);
+          InsultYangiPage._saving = false;
+          return;
+        }
+      }
+      // Angiografiya talab qiladigan muolaja — yakuniy tekshiruv
+      if (DB.muolajaAngioKerak(payload.muolaja_turi)) {
+        const imk = await DB.getMuassasaImkoniyat(payload.muassasa).catch(() => null);
+        if (imk && imk.angiografiya_bor === false) {
+          showToast(`⚠️ ${payload.muassasa} da angiografiya apparati mavjud emas — bu muolajani saqlab bo'lmaydi!`, 'error', 8000);
           setLoading(btn, false);
           InsultYangiPage._saving = false;
           return;

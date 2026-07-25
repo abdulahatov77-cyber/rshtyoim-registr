@@ -667,6 +667,21 @@ const InfarktYangiPage = {
 
   onMuolajaChange(val) {
     InfarktYangiPage._data.muolaja_turi = val;
+    // Angiografiya (KAG) talab qiladigan muolaja — muassasada apparat borligini tekshiramiz
+    if (DB.muolajaAngioKerak(val)) {
+      const muassasa = InfarktYangiPage._data.muassasa === 'Boshqa'
+        ? (InfarktYangiPage._data.boshqa_muassasa || '')
+        : (InfarktYangiPage._data.muassasa || '');
+      DB.getMuassasaImkoniyat(muassasa).then(imk => {
+        if (imk && imk.angiografiya_bor === false) {
+          InfarktYangiPage._data.muolaja_turi = '';
+          const sel = document.getElementById('muolaja_turi');
+          if (sel) sel.value = '';
+          InfarktYangiPage.onMuolajaChange('');
+          showToast(`⚠️ ${muassasa} da angiografiya apparati mavjud emas — bu muolajani tanlab bo'lmaydi. "Boshqa muassasaga o'tkazildi — KAG/angiografiya uchun" variantini tanlang.`, 'error', 8000);
+        }
+      });
+    }
     const isOtk = val.startsWith("Boshqa muassasaga o'tkazildi");
     const angioDiv = document.getElementById('angio-div');
     const otkazDiv = document.getElementById('otkazilgan-div');
@@ -1270,6 +1285,17 @@ const InfarktYangiPage = {
       // FIO ni normalize qil: KARIMOV JASUR → Karimov Jasur
       if (payload.fio) payload.fio = Utils.toTitleCase(payload.fio);
       if (payload.shifokor_fio) payload.shifokor_fio = Utils.toTitleCase(payload.shifokor_fio);
+
+      // Angiografiya (KAG) talab qiladigan muolaja — yakuniy tekshiruv
+      if (DB.muolajaAngioKerak(payload.muolaja_turi)) {
+        const imk = await DB.getMuassasaImkoniyat(payload.muassasa).catch(() => null);
+        if (imk && imk.angiografiya_bor === false) {
+          showToast(`⚠️ ${payload.muassasa} da angiografiya apparati mavjud emas — bu muolajani saqlab bo'lmaydi!`, 'error', 8000);
+          setLoading(btn, false);
+          InfarktYangiPage._saving = false;
+          return;
+        }
+      }
 
       // Duplikat tekshiruv — bir xil bemor (F.I.O + tug'ilgan yili + qabul sanasi) bazada bormi?
       const dup = await DB.checkDuplicate('infarkt_qabul', payload.fio, payload.tugilgan_yil, payload.qabul_vaqt);

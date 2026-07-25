@@ -852,6 +852,16 @@ const DB = {
     } catch (e) { return null; }
   },
 
+  // Muolaja bemor yotgan muassasada angiografiya apparatini talab qiladimi
+  // (o'tkazish variantlari talab qilmaydi — bemor apparatli muassasaga yuboriladi)
+  muolajaAngioKerak(muolaja) {
+    const s = (muolaja || '').toLowerCase();
+    if (!s || s.startsWith('boshqa muassasaga')) return false;
+    return s.includes('kag') || s.includes('angiograf') || s.includes('stentlash') ||
+           s.includes('tlbap') || s.includes('trombektomiya') || s.includes('tromboekstraksiya') ||
+           s.includes('tromboaspiratsiya');
+  },
+
   // O'tkazish sababi matnidan qaysi imkoniyat kerakligini aniqlaydi
   muassasaTalab(sabab) {
     const s = (sabab || '').toLowerCase();
