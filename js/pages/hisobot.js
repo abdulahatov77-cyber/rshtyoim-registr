@@ -427,11 +427,7 @@ const HisobotPage = {
                 <th class="p-2.5 text-center text-white font-bold">Ishemik</th>
                 <th class="p-2.5 text-center text-white font-bold">Gemorragik</th>
                 <th class="p-2.5 text-center text-white font-bold">TIA</th>
-                <th class="p-2.5 text-center text-white font-bold" style="background:#1d4ed8">Jami insult</th>
-                <th class="p-2.5 text-center text-white font-bold">O'tkazilgan (inf.)</th>
-                <th class="p-2.5 text-center text-white font-bold" style="background:#7c3aed" title="O'tkazilgan (inf.) ichidan aniq KAG/koronarografiya sababi bilan belgilanganlar">— KAG uchun</th>
-                <th class="p-2.5 text-center text-white font-bold" title="Barchasi angiografiya/endovaskulyar muolaja (trombektomiya) uchun o'tkazilgan">O'tkazilgan (ins.)</th>
-                <th class="p-2.5 text-center text-white font-bold rounded-tr-lg" style="background:#16a34a" title="STEMI bemorlardan necha foizi qabuldan PCI gacha 120 daqiqa ichida yetkazilgan">STEMI ≤120 daq (D2B)</th>
+                <th class="p-2.5 text-center text-white font-bold rounded-tr-lg" style="background:#1d4ed8">Jami insult</th>
               </tr>
             </thead>
             <tbody>
@@ -446,10 +442,6 @@ const HisobotPage = {
                   <td class="p-2.5 text-center text-slate-700 border-b border-slate-200">${r.gemorragik}</td>
                   <td class="p-2.5 text-center text-slate-700 border-b border-slate-200">${r.tia}</td>
                   <td class="p-2.5 text-center font-bold text-blue-700 border-b border-slate-200">${r.jamiInsult}</td>
-                  <td class="p-2.5 text-center text-orange-600 font-semibold border-b border-slate-200">${r.otkazilganInf}</td>
-                  <td class="p-2.5 text-center text-purple-700 font-semibold border-b border-slate-200">${r.otkazilganKAG}</td>
-                  <td class="p-2.5 text-center text-orange-600 font-semibold border-b border-slate-200">${r.otkazilganIns}</td>
-                  <td class="p-2.5 text-center font-semibold border-b border-slate-200" style="color:${r.stemi120total===0?'#94a3b8':(r.stemi120n/r.stemi120total>=0.8?'#16a34a':'#dc2626')}">${r.stemi120total>0 ? `${r.stemi120n}/${r.stemi120total} (${Math.round(r.stemi120n/r.stemi120total*100)}%)` : '—'}</td>
                 </tr>`).join('')}
               <tr style="background:#dbeafe">
                 <td class="p-2.5 font-bold text-blue-900">JAMI</td>
@@ -461,10 +453,6 @@ const HisobotPage = {
                 <td class="p-2.5 text-center font-bold text-blue-900">${totals.gemorragik}</td>
                 <td class="p-2.5 text-center font-bold text-blue-900">${totals.tia}</td>
                 <td class="p-2.5 text-center font-bold text-blue-900">${totals.jamiInsult}</td>
-                <td class="p-2.5 text-center font-bold text-blue-900">${totals.otkazilganInf}</td>
-                <td class="p-2.5 text-center font-bold text-purple-700">${totals.otkazilganKAG}</td>
-                <td class="p-2.5 text-center font-bold text-blue-900">${totals.otkazilganIns}</td>
-                <td class="p-2.5 text-center font-bold text-blue-900">${totals.stemi120total>0 ? `${totals.stemi120n}/${totals.stemi120total} (${Math.round(totals.stemi120n/totals.stemi120total*100)}%)` : '—'}</td>
               </tr>
             </tbody>
           </table>
@@ -533,11 +521,7 @@ const HisobotPage = {
       'Ishemik insult': r.ishemik,
       'Gemorragik insult': r.gemorragik,
       'TIA': r.tia,
-      'Jami insult': r.jamiInsult,
-      "O'tkazilgan (infarkt)": r.otkazilganInf,
-      "— KAG uchun": r.otkazilganKAG,
-      "O'tkazilgan (insult)": r.otkazilganIns,
-      "STEMI ≤120 daq (D2B)": r.stemi120total>0 ? `${r.stemi120n}/${r.stemi120total} (${Math.round(r.stemi120n/r.stemi120total*100)}%)` : '—'
+      'Jami insult': r.jamiInsult
     }));
     data.push({
       [cn]: 'JAMI',
@@ -548,11 +532,7 @@ const HisobotPage = {
       'Ishemik insult': d.totals.ishemik,
       'Gemorragik insult': d.totals.gemorragik,
       'TIA': d.totals.tia,
-      'Jami insult': d.totals.jamiInsult,
-      "O'tkazilgan (infarkt)": d.totals.otkazilganInf,
-      "— KAG uchun": d.totals.otkazilganKAG,
-      "O'tkazilgan (insult)": d.totals.otkazilganIns,
-      "STEMI ≤120 daq (D2B)": d.totals.stemi120total>0 ? `${d.totals.stemi120n}/${d.totals.stemi120total} (${Math.round(d.totals.stemi120n/d.totals.stemi120total*100)}%)` : '—'
+      'Jami insult': d.totals.jamiInsult
     });
     const scope = d.scopeName ? d.scopeName.replace(/[\\/:*?"<>|]/g, '-') + '_' : '';
     Utils.exportXLSX(data, `viloyatlar_hisobot_${scope}${d.from}_${d.to}.xlsx`, 'Kesim hisoboti');
