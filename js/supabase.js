@@ -838,6 +838,20 @@ const DB = {
     return data;
   },
 
+  // Bitta muassasaning imkoniyatlari (null = jadvalda topilmadi/jadval yo'q)
+  async getMuassasaImkoniyat(nomi) {
+    if (!nomi) return null;
+    try {
+      const { data, error } = await getSupabase()
+        .from('muassasalar')
+        .select('mskt_bor,angiografiya_bor')
+        .eq('nomi', nomi)
+        .maybeSingle();
+      if (error) return null;
+      return data;
+    } catch (e) { return null; }
+  },
+
   // O'tkazish sababi matnidan qaysi imkoniyat kerakligini aniqlaydi
   muassasaTalab(sabab) {
     const s = (sabab || '').toLowerCase();

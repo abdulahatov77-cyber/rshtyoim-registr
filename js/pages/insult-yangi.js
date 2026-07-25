@@ -705,6 +705,27 @@ const InsultYangiPage = {
     if (val !== "Ha – o'tkazildi") {
       InsultYangiPage._data.mskt_angiografiya = '';
     }
+    // "Ha" tanlanganda — bemor yotgan muassasada MSKT apparati borligini tekshiramiz
+    if (val === "Ha – o'tkazildi") {
+      const muassasa = InsultYangiPage._data.muassasa === 'Boshqa'
+        ? (InsultYangiPage._data.boshqa_muassasa || '')
+        : (InsultYangiPage._data.muassasa || '');
+      DB.getMuassasaImkoniyat(muassasa).then(imk => {
+        if (imk && imk.mskt_bor === false) {
+          // Rad etamiz — tanlovni bekor qilib, tugmalarni boshlang'ich holatga qaytaramiz
+          InsultYangiPage._data.mskt = '';
+          InsultYangiPage._data.mskt_angiografiya = '';
+          const div = document.getElementById('mskt-vaqt-div');
+          if (div && !(InsultYangiPage._data.muolaja_turi || '').toLowerCase().includes('mskt')) div.style.display = 'none';
+          const haB = document.getElementById('mskt-ha');
+          const yoB = document.getElementById('mskt-yoq');
+          if (haB) haB.className = 'flex-1 py-2.5 rounded-xl font-bold text-sm border-2 transition-all bg-white text-slate-600 border-slate-200 hover:border-purple-400';
+          if (yoB) yoB.className = 'flex-1 py-2.5 rounded-xl font-bold text-sm border-2 transition-all bg-white text-slate-600 border-slate-200 hover:border-slate-400';
+          InsultYangiPage._updateAspectsVisibility();
+          showToast(`⚠️ ${muassasa} da MSKT apparati mavjud emas — "Ha" deb belgilab bo'lmaydi. Bemorni MSKT uchun boshqa muassasaga yo'naltiring ("Boshqa muassasaga o'tkazildi — MSKT uchun" muolajasi).`, 'error', 8000);
+        }
+      });
+    }
     const muolaja = (InsultYangiPage._data.muolaja_turi || '').toLowerCase();
     const show = val === "Ha – o'tkazildi" || muolaja.includes('mskt');
     const div = document.getElementById('mskt-vaqt-div');
@@ -1364,6 +1385,17 @@ const InsultYangiPage = {
       // FIO ni normalize qil: KARIMOV JASUR → Karimov Jasur
       if (payload.fio) payload.fio = Utils.toTitleCase(payload.fio);
       if (payload.shifokor_fio) payload.shifokor_fio = Utils.toTitleCase(payload.shifokor_fio);
+
+      // MSKT "Ha" — bemor yotgan muassasada MSKT apparati borligini yakuniy tekshiruv
+      if (Utils.msktDone(payload.mskt)) {
+        const imk = await DB.getMuassasaImkoniyat(payload.muassasa).catch(() => null);
+        if (imk && imk.mskt_bor === false) {
+          showToast(`⚠️ ${payload.muassasa} da MSKT apparati mavjud emas — "MSKT o'tkazildi" deb saqlab bo'lmaydi!`, 'error', 8000);
+          setLoading(btn, false);
+          InsultYangiPage._saving = false;
+          return;
+        }
+      }
 
       // Duplikat tekshiruv — bir xil bemor (F.I.O + tug'ilgan yili + qabul sanasi) bazada bormi?
       const dup = await DB.checkDuplicate('insult_qabul', payload.fio, payload.tugilgan_yil, payload.qabul_vaqt);
