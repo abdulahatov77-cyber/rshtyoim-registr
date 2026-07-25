@@ -113,8 +113,10 @@ const UserLog = {
 // ==================== DATABASE ====================
 const DB = {
   // Bemorni VA barcha bog'liq (child) yozuvlarini o'chiradi (orphan qolmasin)
-  // Kasallik tarixi (K/T) raqamini o'zgartirish — asosiy va barcha bog'liq jadvallarda
-  async renameKtNo(oldKt, newKt, type) {
+  // Kasallik tarixi (K/T) raqamini o'zgartirish — asosiy va barcha bog'liq jadvallarda.
+  // MUHIM: bazada kt_no unique emas — bir xil raqamli bemorlar bo'lsa amal rad etiladi,
+  // aks holda bola-yozuvlarni kimga tegishliligini aniqlab bo'lmaydi.
+  async renameKtNo(oldKt, newKt, type, patientId) {
     const sb = getSupabase();
     newKt = (newKt || '').trim();
     if (!newKt) throw new Error('Yangi K/T raqami bo\'sh bo\'lishi mumkin emas');
@@ -125,7 +127,14 @@ const DB = {
     }
     const mainTable = type === 'infarkt' ? 'infarkt_qabul' : 'insult_qabul';
     const chiqarishTable = type === 'infarkt' ? 'infarkt_chiqarish' : 'insult_chiqarish';
-    const { error } = await sb.from(mainTable).update({ kt_no: newKt }).eq('kt_no', oldKt);
+    // Eski raqamda nechta bemor borligini tekshiramiz
+    const { data: sameKt } = await sb.from(mainTable).select('id,fio').eq('kt_no', oldKt);
+    if (sameKt && sameKt.length > 1) {
+      throw new Error(`"${oldKt}" raqami ${sameKt.length} ta bemorda bir xil (${sameKt.map(x => x.fio).join(', ')}). ` +
+        `Avval takroriy raqamlarni ajratish kerak — aks holda muolaja va chiqarish yozuvlari qaysi bemorniki ekani noaniq qoladi.`);
+    }
+    if (!patientId) throw new Error('Bemor identifikatori topilmadi — sahifani yangilab qayta urinib ko\'ring');
+    const { error } = await sb.from(mainTable).update({ kt_no: newKt }).eq('id', patientId);
     if (error) throw error;
     // Bog'liq jadvallar — deletePatientCascade bilan bir xil ro'yxat
     const childTables = [chiqarishTable, 'holat_dinamikasi', 'navbatchi_jurnal',

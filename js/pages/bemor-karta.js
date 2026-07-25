@@ -1972,7 +1972,7 @@ const BemorKartaPage = {
     }
     try {
       // Avval K/T raqamini ko'chiramiz (band bo'lsa xato beradi va hech narsa o'zgarmaydi)
-      if (ktChanged) await DB.renameKtNo(p.kt_no, newKtRaw, type);
+      if (ktChanged) await DB.renameKtNo(p.kt_no, newKtRaw, type, p.id);
       const ktNo = ktChanged ? newKtRaw : p.kt_no;
       const result = isInf
         ? await DB.infarktUpdate(ktNo, updates)
