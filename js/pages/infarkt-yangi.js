@@ -560,6 +560,7 @@ const InfarktYangiPage = {
             ${this.getAllMuassasalar().map(m => `<option value="${m}" ${d.otkazilgan_muassasa===m?'selected':''}>${m}</option>`).join('')}
             <option value="__boshqa__" ${d.otkazilgan_muassasa==='__boshqa__'?'selected':''}>➕ Boshqa (ro'yxatda yo'q) — qo'lda yozish</option>
           </select>`)}
+          <small id="otkaz-hint" class="text-xs text-blue-600 block -mt-2 mb-2"></small>
           <div id="otkazilgan-boshqa-div" style="display:${d.otkazilgan_muassasa==='__boshqa__'?'block':'none'}">
             ${this.field('otkazilgan_boshqa','Muassasa nomini qo\'lda yozing',`<input id="otkazilgan_boshqa" class="form-input" value="${d.otkazilgan_boshqa||''}" placeholder="Masalan: Toshkent shahar 1-son klinik shifoxonasi"/>`)}
           </div>
@@ -638,6 +639,32 @@ const InfarktYangiPage = {
     }
   },
 
+  // Muassasa ro'yxatini imkoniyat (MSKT/angiografiya) bo'yicha filtrlash.
+  // RPC hali o'rnatilmagan bo'lsa yoki ro'yxat bo'sh bo'lsa — to'liq ro'yxat qoladi.
+  async refreshOtkazMuassasa() {
+    const sel = document.getElementById('otkazilgan_muassasa');
+    if (!sel) return;
+    const talab = DB.muassasaTalab(InfarktYangiPage._data.muolaja_turi);
+    const current = InfarktYangiPage._data.otkazilgan_muassasa || '';
+    let names = null;
+    if (talab) {
+      try {
+        const list = await DB.getMuassasalarFiltered(talab, null);
+        if (list.length) names = list.map(x => x.nomi);
+      } catch (e) { /* jadval hali yaratilmagan — to'liq ro'yxat */ }
+    }
+    const filtered = !!names;
+    if (!names) names = InfarktYangiPage.getAllMuassasalar();
+    if (current && current !== '__boshqa__' && !names.includes(current)) names = [current, ...names];
+    sel.innerHTML = `<option value="">Muassasani tanlang...</option>` +
+      names.map(m => `<option value="${esc(m)}" ${current === m ? 'selected' : ''}>${esc(m)}</option>`).join('') +
+      `<option value="__boshqa__" ${current === '__boshqa__' ? 'selected' : ''}>➕ Boshqa (ro'yxatda yo'q) — qo'lda yozish</option>`;
+    const hint = document.getElementById('otkaz-hint');
+    if (hint) hint.textContent = (talab && filtered)
+      ? `Faqat ${talab === 'mskt' ? 'MSKT' : 'angiografiya'} imkoniyati bor ${names.length} ta muassasa ko'rsatilmoqda`
+      : '';
+  },
+
   onMuolajaChange(val) {
     InfarktYangiPage._data.muolaja_turi = val;
     const isOtk = val.startsWith("Boshqa muassasaga o'tkazildi");
@@ -668,6 +695,7 @@ const InfarktYangiPage = {
       }
     }
     if (otkazDiv) otkazDiv.style.display = isOtk ? 'block' : 'none';
+    if (isOtk) InfarktYangiPage.refreshOtkazMuassasa();
     const btn = document.getElementById('save-btn');
     if (btn) {
       btn.className = `flex items-center gap-2 px-10 py-3 ${isOtk ? 'bg-orange-500 hover:bg-orange-600 shadow-orange-200' : 'bg-green-600 hover:bg-green-700 shadow-green-200'} text-white rounded-xl font-bold text-sm shadow-lg transition-all active:scale-95`;

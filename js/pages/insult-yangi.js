@@ -486,6 +486,7 @@ const InsultYangiPage = {
             ${this.getAllMuassasalar().map(m => `<option value="${m}" ${d.otkazilgan_muassasa===m?'selected':''}>${m}</option>`).join('')}
             <option value="__boshqa__" ${d.otkazilgan_muassasa==='__boshqa__'?'selected':''}>➕ Boshqa (ro'yxatda yo'q) — qo'lda yozish</option>
           </select>`)}
+          <small id="otkaz-hint" class="text-xs text-blue-600 block -mt-2 mb-2"></small>
           <div id="otkazilgan-boshqa-div" style="display:${d.otkazilgan_muassasa==='__boshqa__'?'block':'none'}">
             ${this.field('otkazilgan_boshqa','Muassasa nomini qo\'lda yozing',`<input id="otkazilgan_boshqa" class="form-input" value="${d.otkazilgan_boshqa||''}" placeholder="Masalan: Toshkent shahar 1-son klinik shifoxonasi"/>`)}
           </div>
@@ -778,6 +779,7 @@ const InsultYangiPage = {
     if (!isTrombektomiya) { InsultYangiPage._data.trombektomiya_vaqti = ''; const e=document.getElementById('trombektomiya_vaqti'); if(e) e.value=''; }
     if (!isOtk) { InsultYangiPage._data.otkazilgan_muassasa = ''; InsultYangiPage._data.otkazish_sababi = ''; }
     if (otkazDiv) otkazDiv.style.display = isOtk ? 'block' : 'none';
+    if (isOtk) InsultYangiPage.refreshOtkazMuassasa();
     if (tltDiv) tltDiv.style.display = isTLT ? 'block' : 'none';
     if (trombDiv) {
       trombDiv.style.display = isTrombektomiya ? 'block' : 'none';
@@ -795,6 +797,32 @@ const InsultYangiPage = {
       btn.innerHTML = `${icon(isOtk ? 'log-out' : 'save', 18)} ${isOtk ? 'Chiqarish' : 'Saqlash'}`;
       initIcons();
     }
+  },
+
+  // Muassasa ro'yxatini imkoniyat (MSKT/angiografiya) bo'yicha filtrlash.
+  // RPC hali o'rnatilmagan bo'lsa yoki ro'yxat bo'sh bo'lsa — to'liq ro'yxat qoladi.
+  async refreshOtkazMuassasa() {
+    const sel = document.getElementById('otkazilgan_muassasa');
+    if (!sel) return;
+    const talab = DB.muassasaTalab(InsultYangiPage._data.muolaja_turi);
+    const current = InsultYangiPage._data.otkazilgan_muassasa || '';
+    let names = null;
+    if (talab) {
+      try {
+        const list = await DB.getMuassasalarFiltered(talab, null);
+        if (list.length) names = list.map(x => x.nomi);
+      } catch (e) { /* jadval hali yaratilmagan — to'liq ro'yxat */ }
+    }
+    const filtered = !!names;
+    if (!names) names = InsultYangiPage.getAllMuassasalar();
+    if (current && current !== '__boshqa__' && !names.includes(current)) names = [current, ...names];
+    sel.innerHTML = `<option value="">Muassasani tanlang...</option>` +
+      names.map(m => `<option value="${esc(m)}" ${current === m ? 'selected' : ''}>${esc(m)}</option>`).join('') +
+      `<option value="__boshqa__" ${current === '__boshqa__' ? 'selected' : ''}>➕ Boshqa (ro'yxatda yo'q) — qo'lda yozish</option>`;
+    const hint = document.getElementById('otkaz-hint');
+    if (hint) hint.textContent = (talab && filtered)
+      ? `Faqat ${talab === 'mskt' ? 'MSKT' : 'angiografiya'} imkoniyati bor ${names.length} ta muassasa ko'rsatilmoqda`
+      : '';
   },
 
   saveCurrentStep() {

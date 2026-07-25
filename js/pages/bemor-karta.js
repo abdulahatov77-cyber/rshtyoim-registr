@@ -728,6 +728,7 @@ const BemorKartaPage = {
                   ${Object.values(APP_CONFIG.MUASSASALAR).flat().sort().map(m=>`<option value="${m}">${m}</option>`).join('')}
                   <option value="__boshqa__">— Ro'yxatda yo'q (qo'lda kiritish) —</option>
                 </select>
+                <small id="din-otkaz-hint" class="text-xs text-blue-700 block mt-1"></small>
                 <input id="din-otkazilgan-muassasa-custom" type="text" class="form-input mt-2" placeholder="Muassasa nomini kiriting..." style="display:none">
               </div>
               ${(() => {
@@ -795,6 +796,7 @@ const BemorKartaPage = {
         const isOtk = input.value.includes("Boshqa muassasaga o'tkazildi");
         const otkazDiv = document.getElementById('din-otkazish-div');
         if (otkazDiv) otkazDiv.style.display = isOtk ? 'block' : 'none';
+        if (isOtk) BemorKartaPage.refreshDinMuassasa(input.value);
         const saveBtn = document.getElementById('btn-davolash-save');
         if (saveBtn) {
           saveBtn.className = `${isOtk ? 'btn btn-warning' : 'btn btn-primary'} w-full mt-4 flex items-center justify-center gap-2`;
@@ -874,6 +876,31 @@ const BemorKartaPage = {
       const histEl = document.getElementById('din-history');
       if (histEl) histEl.innerHTML = `<div class="p-6 text-center text-red-500">Xatolik: ${esc(err.message)}</div>`;
     }
+  },
+
+  // Dinamik o'tkazishda muassasa ro'yxatini imkoniyat bo'yicha filtrlash
+  async refreshDinMuassasa(sabab) {
+    const sel = document.getElementById('din-otkazilgan-muassasa');
+    if (!sel) return;
+    const talab = DB.muassasaTalab(sabab);
+    const current = sel.value || '';
+    let names = null;
+    if (talab) {
+      try {
+        const list = await DB.getMuassasalarFiltered(talab, null);
+        if (list.length) names = list.map(x => x.nomi);
+      } catch (e) { /* jadval hali yaratilmagan — to'liq ro'yxat */ }
+    }
+    const filtered = !!names;
+    if (!names) names = Object.values(APP_CONFIG.MUASSASALAR).flat().sort();
+    if (current && current !== '__boshqa__' && !names.includes(current)) names = [current, ...names];
+    sel.innerHTML = `<option value="">Muassasani tanlang...</option>` +
+      names.map(m => `<option value="${esc(m)}" ${current === m ? 'selected' : ''}>${esc(m)}</option>`).join('') +
+      `<option value="__boshqa__" ${current === '__boshqa__' ? 'selected' : ''}>— Ro'yxatda yo'q (qo'lda kiritish) —</option>`;
+    const hint = document.getElementById('din-otkaz-hint');
+    if (hint) hint.textContent = (talab && filtered)
+      ? `Faqat ${talab === 'mskt' ? 'MSKT' : 'angiografiya'} imkoniyati bor ${names.length} ta muassasa ko'rsatilmoqda`
+      : '';
   },
 
   async saveDavolash() {

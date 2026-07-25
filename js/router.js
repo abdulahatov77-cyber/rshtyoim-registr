@@ -16,6 +16,7 @@ const Router = {
     'bemorlar':         () => BemorlarPage.render(),
     'hisobot':          () => HisobotPage.render(),
     'admin':            () => AdminPage.render(),
+    'muassasa-imkoniyat': () => MuassasaImkoniyatPage.render(),
     'settings':         () => SettingsPage.render(),
     'harakat':          () => HarakatPage.render(),
   },

@@ -95,6 +95,7 @@ const Components = {
       { id: 'harakat', label: 'Bemor harakati', icon: 'git-fork' },
 
       { id: 'admin', label: 'Foydalanuvchilar', icon: 'user-cog', section: 'Tizim', superOnly: true },
+      { id: 'muassasa-imkoniyat', label: 'Muassasa imkoniyati', icon: 'building-2', superOnly: true },
       { id: 'settings', label: 'Sozlamalar', icon: 'settings' }
     ];
 

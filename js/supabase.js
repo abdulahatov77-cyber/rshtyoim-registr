@@ -819,6 +819,33 @@ const DB = {
     return (data || []).map(r => [r.nom, r.jami, r.infarkt_count, r.insult_count]);
   },
 
+  // Muassasa imkoniyatlari (MSKT/Angiografiya) — filtrlangan ro'yxat
+  async getMuassasalarFiltered(talab = null, viloyat = null) {
+    const { data, error } = await getSupabase().rpc('get_muassasalar_filtered', {
+      p_talab: talab,
+      p_viloyat: viloyat
+    });
+    if (error) throw error;
+    return data || [];
+  },
+
+  // Imkoniyat galochkalarini saqlash (faqat super_admin, RPC ichida tekshiriladi)
+  async setMuassasaImkoniyat(items) {
+    const { data, error } = await getSupabase().rpc('set_muassasa_imkoniyat', {
+      p_items: items
+    });
+    if (error) throw error;
+    return data;
+  },
+
+  // O'tkazish sababi matnidan qaysi imkoniyat kerakligini aniqlaydi
+  muassasaTalab(sabab) {
+    const s = (sabab || '').toLowerCase();
+    if (s.includes('mskt')) return 'mskt';
+    if (s.includes('angiograf') || s.includes('kag') || s.includes('endovaskul')) return 'angiografiya';
+    return null;
+  },
+
   // PQ-20 rasmiy hisoboti — bitta RPC, ikkala jadvalni ham JSON da qaytaradi
   async getPQ20Hisobot(muassasa, viloyat, fromISO, toISO) {
     const { data, error } = await getSupabase().rpc('get_pq20_hisobot', {
