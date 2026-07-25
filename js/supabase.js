@@ -114,26 +114,33 @@ const UserLog = {
 const DB = {
   // Bemorni VA barcha bog'liq (child) yozuvlarini o'chiradi (orphan qolmasin)
   // Kasallik tarixi (K/T) raqamini o'zgartirish — asosiy va barcha bog'liq jadvallarda.
-  // MUHIM: bazada kt_no unique emas — bir xil raqamli bemorlar bo'lsa amal rad etiladi,
-  // aks holda bola-yozuvlarni kimga tegishliligini aniqlab bo'lmaydi.
+  // MUHIM: bazada UNIQUE (kt_no, muassasa) — raqam turli muassasalarda takrorlanishi mumkin.
+  // Bola-jadvallar esa faqat kt_no bo'yicha bog'langan, shuning uchun eski raqam bir nechta
+  // bemorda uchrasa amal rad etiladi (yozuvlar kimniki ekani noaniq bo'lib qoladi).
   async renameKtNo(oldKt, newKt, type, patientId) {
     const sb = getSupabase();
     newKt = (newKt || '').trim();
     if (!newKt) throw new Error('Yangi K/T raqami bo\'sh bo\'lishi mumkin emas');
-    // Yangi raqam band emasligini tekshirish (ikkala registrda)
-    for (const [t, nom] of [['infarkt_qabul', 'infarkt'], ['insult_qabul', 'insult']]) {
-      const { data } = await sb.from(t).select('kt_no').eq('kt_no', newKt).limit(1);
-      if (data && data.length) throw new Error(`"${newKt}" raqami allaqachon band (${nom} registrida)`);
-    }
+    if (!patientId) throw new Error('Bemor identifikatori topilmadi — sahifani yangilab qayta urinib ko\'ring');
     const mainTable = type === 'infarkt' ? 'infarkt_qabul' : 'insult_qabul';
     const chiqarishTable = type === 'infarkt' ? 'infarkt_chiqarish' : 'insult_chiqarish';
+    // Bazada UNIQUE (kt_no, muassasa) — bir xil raqam turli muassasalarda bo'lishi normal.
+    // Shuning uchun band-lik faqat SHU muassasa doirasida tekshiriladi.
+    const { data: p0 } = await sb.from(mainTable).select('muassasa').eq('id', patientId).maybeSingle();
+    const muassasa = p0?.muassasa || null;
+    if (muassasa) {
+      const { data: taken } = await sb.from(mainTable).select('fio')
+        .eq('kt_no', newKt).eq('muassasa', muassasa).limit(1);
+      if (taken && taken.length) {
+        throw new Error(`"${newKt}" raqami shu muassasada allaqachon band (${taken[0].fio})`);
+      }
+    }
     // Eski raqamda nechta bemor borligini tekshiramiz
     const { data: sameKt } = await sb.from(mainTable).select('id,fio').eq('kt_no', oldKt);
     if (sameKt && sameKt.length > 1) {
       throw new Error(`"${oldKt}" raqami ${sameKt.length} ta bemorda bir xil (${sameKt.map(x => x.fio).join(', ')}). ` +
         `Avval takroriy raqamlarni ajratish kerak — aks holda muolaja va chiqarish yozuvlari qaysi bemorniki ekani noaniq qoladi.`);
     }
-    if (!patientId) throw new Error('Bemor identifikatori topilmadi — sahifani yangilab qayta urinib ko\'ring');
     const { error } = await sb.from(mainTable).update({ kt_no: newKt }).eq('id', patientId);
     if (error) throw error;
     // Bog'liq jadvallar — deletePatientCascade bilan bir xil ro'yxat
