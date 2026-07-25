@@ -203,7 +203,14 @@ const HisobotPage = {
             <h3 class="h-title !mb-1">${icon('table', 18)} Viloyatlar kesimida hisobot</h3>
             <p class="text-sm text-slate-500">Har bir viloyat bo'yicha STEMI/NSTEMI, Ishemik/Gemorragik/TIA va marshrutizatsiya statistikasi</p>
           </div>
-          <div class="flex items-center gap-2">
+          <div class="flex flex-wrap items-center gap-2">
+            <select id="vhf-viloyat" class="form-select bg-slate-50 text-blue-900 border-blue-200 font-medium" style="max-width:180px" onchange="HisobotPage.onVHViloyatChange(this.value)">
+              <option value="">— Barcha viloyatlar —</option>
+              ${Object.keys(APP_CONFIG.MUASSASALAR).map(v => `<option value="${v}">${v}</option>`).join('')}
+            </select>
+            <select id="vhf-muassasa" class="form-select bg-slate-50 text-blue-900 border-blue-200 font-medium" style="max-width:210px">
+              <option value="">— Barcha muassasalar —</option>
+            </select>
             <input id="vh-from" type="date" class="form-input bg-slate-50 text-blue-900 border-blue-200 font-medium" value="${_uztDate(Date.now()-90*864e5)}"/>
             <span class="text-slate-400">—</span>
             <input id="vh-to" type="date" class="form-input bg-slate-50 text-blue-900 border-blue-200 font-medium" value="${today}"/>
@@ -277,11 +284,15 @@ const HisobotPage = {
     if (exportBtn) { exportBtn.disabled = true; exportBtn.style.opacity = '0.5'; }
 
     try {
+      const selVil = document.getElementById('vhf-viloyat')?.value || '';
+      const selMua = document.getElementById('vhf-muassasa')?.value || '';
       const fromUTC = new Date(from + 'T00:00:00+05:00').toISOString();
       const toUTC   = new Date(to   + 'T23:59:59+05:00').toISOString();
+      const listFilter = { from: fromUTC, to: toUTC, allCols: true,
+        viloyat: selVil || undefined, muassasa: selMua || undefined };
       const [infResult, insResult] = await Promise.allSettled([
-        DB.infarktList({ from: fromUTC, to: toUTC, allCols: true }),
-        DB.insultList({ from: fromUTC, to: toUTC, allCols: true })
+        DB.infarktList(listFilter),
+        DB.insultList(listFilter)
       ]);
       if (infResult.status === 'rejected') throw new Error('Infarkt ma\'lumotlari yuklanmadi: ' + infResult.reason?.message);
       if (insResult.status === 'rejected') throw new Error('Insult ma\'lumotlari yuklanmadi: ' + insResult.reason?.message);
@@ -309,10 +320,27 @@ const HisobotPage = {
         return (diff > 0 && diff < 1440) ? diff : null;
       };
 
-      const viloyatlar = APP_CONFIG.VILOYATLAR;
-      const rows = viloyatlar.map(vil => {
-        const vInfs = infs.filter(p => p.viloyat === vil);
-        const vIns  = ins.filter(p => p.viloyat === vil);
+      // Guruhlash: viloyat tanlanmagan — viloyatlar kesimi;
+      // viloyat tanlangan — o'sha viloyat muassasalari kesimi;
+      // muassasa ham tanlangan — faqat o'sha muassasa.
+      let groupField = 'viloyat';
+      let groupList  = APP_CONFIG.VILOYATLAR;
+      let colName    = 'Viloyat';
+      if (selVil) {
+        groupField = 'muassasa';
+        colName = 'Muassasa';
+        if (selMua) {
+          groupList = [selMua];
+        } else {
+          const set = new Set(APP_CONFIG.MUASSASALAR[selVil] || []);
+          infs.forEach(p => { if (p.muassasa) set.add(p.muassasa); });
+          ins.forEach(p => { if (p.muassasa) set.add(p.muassasa); });
+          groupList = [...set].sort();
+        }
+      }
+      const rows = groupList.map(vil => {
+        const vInfs = infs.filter(p => p[groupField] === vil);
+        const vIns  = ins.filter(p => p[groupField] === vil);
         const vStemi = vInfs.filter(isSTEMI);
         const stemiPciFilled = vStemi.filter(p => pciMinutes(p) !== null);
         const stemiUnder120 = stemiPciFilled.filter(p => pciMinutes(p) <= 120);
@@ -385,14 +413,14 @@ const HisobotPage = {
 
       HisobotPage._lastChainData = chainStats;
 
-      HisobotPage._lastViloyatData = { rows, totals, from, to };
+      HisobotPage._lastViloyatData = { rows, totals, from, to, colName, scopeName: selMua || selVil || '' };
 
       el.innerHTML = `
         <div class="overflow-x-auto">
           <table class="w-full text-sm border-collapse">
             <thead>
               <tr style="background:#1e3a8a">
-                <th class="p-2.5 text-left text-white font-bold rounded-tl-lg">Viloyat</th>
+                <th class="p-2.5 text-left text-white font-bold rounded-tl-lg">${colName}</th>
                 <th class="p-2.5 text-center text-white font-bold">STEMI</th>
                 <th class="p-2.5 text-center text-white font-bold">NSTEMI</th>
                 <th class="p-2.5 text-center text-white font-bold">AMI</th>
@@ -496,8 +524,9 @@ const HisobotPage = {
   exportViloyatReport() {
     const d = HisobotPage._lastViloyatData;
     if (!d) { showToast('Avval hisobotni shakllantiring', 'warning'); return; }
+    const cn = d.colName || 'Viloyat';
     const data = d.rows.map(r => ({
-      'Viloyat': r.viloyat,
+      [cn]: r.viloyat,
       'STEMI': r.stemi,
       'NSTEMI': r.nstemi,
       'AMI': r.ami,
@@ -512,7 +541,7 @@ const HisobotPage = {
       "STEMI ≤120 daq (D2B)": r.stemi120total>0 ? `${r.stemi120n}/${r.stemi120total} (${Math.round(r.stemi120n/r.stemi120total*100)}%)` : '—'
     }));
     data.push({
-      'Viloyat': 'JAMI',
+      [cn]: 'JAMI',
       'STEMI': d.totals.stemi,
       'NSTEMI': d.totals.nstemi,
       'AMI': d.totals.ami,
@@ -526,7 +555,8 @@ const HisobotPage = {
       "O'tkazilgan (insult)": d.totals.otkazilganIns,
       "STEMI ≤120 daq (D2B)": d.totals.stemi120total>0 ? `${d.totals.stemi120n}/${d.totals.stemi120total} (${Math.round(d.totals.stemi120n/d.totals.stemi120total*100)}%)` : '—'
     });
-    Utils.exportXLSX(data, `viloyatlar_hisobot_${d.from}_${d.to}.xlsx`, 'Viloyatlar hisoboti');
+    const scope = d.scopeName ? d.scopeName.replace(/[\\/:*?"<>|]/g, '-') + '_' : '';
+    Utils.exportXLSX(data, `viloyatlar_hisobot_${scope}${d.from}_${d.to}.xlsx`, 'Kesim hisoboti');
     showToast('✅ Excel fayl yuklab olindi', 'success');
   },
 
@@ -549,6 +579,14 @@ const HisobotPage = {
 
   onHViloyatChange(viloyat) {
     const sel = document.getElementById('h-muassasa');
+    if (!sel) return;
+    const muassasalar = APP_CONFIG.MUASSASALAR[viloyat] || [];
+    sel.innerHTML = `<option value="">— Barcha muassasalar —</option>` +
+      muassasalar.map(m => `<option value="${m}">${m}</option>`).join('');
+  },
+
+  onVHViloyatChange(viloyat) {
+    const sel = document.getElementById('vhf-muassasa');
     if (!sel) return;
     const muassasalar = APP_CONFIG.MUASSASALAR[viloyat] || [];
     sel.innerHTML = `<option value="">— Barcha muassasalar —</option>` +
