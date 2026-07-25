@@ -211,9 +211,9 @@ const HisobotPage = {
             <select id="vhf-muassasa" class="form-select bg-slate-50 text-blue-900 border-blue-200 font-medium" style="max-width:210px">
               <option value="">— Barcha muassasalar —</option>
             </select>
-            <input id="vh-from" type="date" class="form-input bg-slate-50 text-blue-900 border-blue-200 font-medium" value="${_uztDate(Date.now()-90*864e5)}"/>
+            <input id="vh-from" type="date" class="form-input bg-slate-50 text-blue-900 border-blue-200 font-medium" style="max-width:150px" value="${_uztDate(Date.now()-90*864e5)}"/>
             <span class="text-slate-400">—</span>
-            <input id="vh-to" type="date" class="form-input bg-slate-50 text-blue-900 border-blue-200 font-medium" value="${today}"/>
+            <input id="vh-to" type="date" class="form-input bg-slate-50 text-blue-900 border-blue-200 font-medium" style="max-width:150px" value="${today}"/>
             <button class="btn btn-primary shadow-md hover:shadow-lg flex items-center gap-2 px-4 rounded-xl" onclick="HisobotPage.loadViloyatReport()">
               ${icon('bar-chart-2', 16)} Shakllantirish
             </button>
@@ -244,9 +244,9 @@ const HisobotPage = {
               <option value="">— Barcha muassasalar —</option>
               ${(!isSuperAdmin && myViloyat) ? (APP_CONFIG.MUASSASALAR[myViloyat]||[]).map(m=>`<option value="${m}">${m}</option>`).join('') : ''}
             </select>
-            <input id="pq-from" type="date" class="form-input bg-slate-50 text-blue-900 border-blue-200 font-medium" value="${today.slice(0,4)}-01-01"/>
+            <input id="pq-from" type="date" class="form-input bg-slate-50 text-blue-900 border-blue-200 font-medium" style="max-width:150px" value="${today.slice(0,4)}-01-01"/>
             <span class="text-slate-400">—</span>
-            <input id="pq-to" type="date" class="form-input bg-slate-50 text-blue-900 border-blue-200 font-medium" value="${today}"/>
+            <input id="pq-to" type="date" class="form-input bg-slate-50 text-blue-900 border-blue-200 font-medium" style="max-width:150px" value="${today}"/>
             <button class="btn btn-primary shadow-md hover:shadow-lg flex items-center gap-2 px-4 rounded-xl" onclick="HisobotPage.loadPQ20Report()">
               ${icon('bar-chart-2', 16)} Shakllantirish
             </button>
