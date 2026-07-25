@@ -229,8 +229,7 @@ const HisobotPage = {
       <div class="h-card">
         <div class="flex flex-wrap items-center justify-between gap-3 mb-2">
           <div>
-            <h3 class="h-title !mb-1">${icon('file-text', 18)} PQ-20 rasmiy hisoboti</h3>
-            <p class="text-sm text-slate-500">Infarkt va insult bemorlari, muolaja guruhlari va letallik xisoboti</p>
+            <h3 class="h-title !mb-1">${icon('file-text', 18)} Infarkt va insult bemorlari, muolaja guruhlari va letallik xisoboti</h3>
           </div>
           <div class="flex flex-wrap items-center gap-2">
             ${isSuperAdmin ? `
