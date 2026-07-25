@@ -113,6 +113,30 @@ const UserLog = {
 // ==================== DATABASE ====================
 const DB = {
   // Bemorni VA barcha bog'liq (child) yozuvlarini o'chiradi (orphan qolmasin)
+  // Kasallik tarixi (K/T) raqamini o'zgartirish — asosiy va barcha bog'liq jadvallarda
+  async renameKtNo(oldKt, newKt, type) {
+    const sb = getSupabase();
+    newKt = (newKt || '').trim();
+    if (!newKt) throw new Error('Yangi K/T raqami bo\'sh bo\'lishi mumkin emas');
+    // Yangi raqam band emasligini tekshirish (ikkala registrda)
+    for (const [t, nom] of [['infarkt_qabul', 'infarkt'], ['insult_qabul', 'insult']]) {
+      const { data } = await sb.from(t).select('kt_no').eq('kt_no', newKt).limit(1);
+      if (data && data.length) throw new Error(`"${newKt}" raqami allaqachon band (${nom} registrida)`);
+    }
+    const mainTable = type === 'infarkt' ? 'infarkt_qabul' : 'insult_qabul';
+    const chiqarishTable = type === 'infarkt' ? 'infarkt_chiqarish' : 'insult_chiqarish';
+    const { error } = await sb.from(mainTable).update({ kt_no: newKt }).eq('kt_no', oldKt);
+    if (error) throw error;
+    // Bog'liq jadvallar — deletePatientCascade bilan bir xil ro'yxat
+    const childTables = [chiqarishTable, 'holat_dinamikasi', 'navbatchi_jurnal',
+      'dinamika_muolajalar', 'holat_baxolash', 'kuzatuv', 'davolash',
+      'transfer_log', 'bemor_fayllari'];
+    for (const t of childTables) {
+      try { await sb.from(t).update({ kt_no: newKt }).eq('kt_no', oldKt); } catch (e) { /* jadval yo'q bo'lsa o'tkazamiz */ }
+    }
+    return newKt;
+  },
+
   async deletePatientCascade(kt_no, type) {
     const sb = getSupabase();
     const mainTable = type === 'infarkt' ? 'infarkt_qabul' : 'insult_qabul';

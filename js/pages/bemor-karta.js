@@ -1644,6 +1644,12 @@ const BemorKartaPage = {
         ${mismatchWarn}
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div class="form-group col-span-2">
+            <label class="form-label">Kasallik tarixi raqami (K/T No)</label>
+            <input id="edit-kt-no" class="form-input font-mono" value="${esc(p.kt_no||'')}"
+              ${['admin','super_admin'].includes(BemorKartaPage._profile?.role) ? '' : 'readonly style="opacity:0.6;cursor:not-allowed" title="Faqat admin o\'zgartira oladi"'}/>
+            <small class="text-xs text-slate-400">O'zgartirilsa barcha bog'liq yozuvlar (muolajalar, chiqarish varaqasi, fayllar, harakat) yangi raqamga ko'chiriladi</small>
+          </div>
+          <div class="form-group col-span-2">
             <label class="form-label required">F.I.O</label>
             <input id="edit-fio" class="form-input" value="${esc(p.fio||'')}"/>
           </div>
@@ -1856,6 +1862,13 @@ const BemorKartaPage = {
     const isInf = type === 'infarkt';
     const fio = Utils.toTitleCase(document.getElementById('edit-fio')?.value?.trim());
     if (!fio) { showToast('F.I.O ni kiriting', 'warning'); return; }
+    // K/T raqami o'zgarishi — faqat admin/super_admin, tasdiq bilan
+    const newKtRaw = (document.getElementById('edit-kt-no')?.value || '').trim();
+    const ktChanged = !!newKtRaw && newKtRaw !== p.kt_no;
+    if (ktChanged && !['admin', 'super_admin'].includes(BemorKartaPage._profile?.role)) {
+      showToast('K/T raqamini faqat admin o\'zgartira oladi', 'error'); return;
+    }
+    if (ktChanged && !confirm(`Kasallik tarixi raqami o'zgartirilsinmi?\n\n"${p.kt_no}"  →  "${newKtRaw}"\n\nBarcha bog'liq yozuvlar (muolajalar, chiqarish varaqasi, fayllar, harakat) yangi raqamga ko'chiriladi.`)) return;
     const g = id => document.getElementById(id);
     const now = new Date();
     const qabulD = g('edit-qabul-vaqt-d')?.value;
@@ -1958,28 +1971,37 @@ const BemorKartaPage = {
       updates.trombektomiya_vaqti = splitToUTC('edit-trombektomiya-vaqti-d', 'edit-trombektomiya-vaqti-t');
     }
     try {
+      // Avval K/T raqamini ko'chiramiz (band bo'lsa xato beradi va hech narsa o'zgarmaydi)
+      if (ktChanged) await DB.renameKtNo(p.kt_no, newKtRaw, type);
+      const ktNo = ktChanged ? newKtRaw : p.kt_no;
       const result = isInf
-        ? await DB.infarktUpdate(p.kt_no, updates)
-        : await DB.insultUpdate(p.kt_no, updates);
+        ? await DB.infarktUpdate(ktNo, updates)
+        : await DB.insultUpdate(ktNo, updates);
       // Chiqarilgan sana/vaqt — chiqarish jadvalidagi yozuvni yangilaymiz yoki yaratamiz
       if (chiqishIso && newStatus !== 'active') {
         const tbl = isInf ? 'infarkt_chiqarish' : 'insult_chiqarish';
         const sb = getSupabase();
-        const { data: exRows } = await sb.from(tbl).select('id').eq('kt_no', p.kt_no)
+        const { data: exRows } = await sb.from(tbl).select('id').eq('kt_no', ktNo)
           .order('created_at', { ascending: false }).limit(1);
         if (exRows && exRows.length > 0) {
           await sb.from(tbl).update({ chiqish_sana: chiqishIso }).eq('id', exRows[0].id);
         } else {
-          const rec = { kt_no: p.kt_no, chiqish_sana: chiqishIso };
+          const rec = { kt_no: ktNo, chiqish_sana: chiqishIso };
           if (isInf) rec.chiqish_holat = newStatus === 'vafot' ? 'Vafot etdi' : null;
           else { rec.natija = newStatus === 'vafot' ? 'Vafot etdi' : null; rec.viloyat = updates.viloyat || p.viloyat || null; }
           await sb.from(tbl).insert(rec);
         }
-        BemorKartaPage._patient = { ...p, ...result, _chiqarish: { ...(p._chiqarish || {}), chiqish_sana: chiqishIso } };
+        BemorKartaPage._patient = { ...p, ...result, kt_no: ktNo, _chiqarish: { ...(p._chiqarish || {}), chiqish_sana: chiqishIso } };
       } else {
-        BemorKartaPage._patient = { ...p, ...result, _chiqarish: p._chiqarish };
+        BemorKartaPage._patient = { ...p, ...result, kt_no: ktNo, _chiqarish: p._chiqarish };
       }
       closeModal();
+      if (ktChanged) {
+        showToast(`✅ K/T raqami "${ktNo}" ga o'zgartirildi, ma'lumotlar yangilandi`, 'success', 5000);
+        // URL va sahifani yangi raqam bilan qayta ochamiz
+        Router.go('bemor-karta', { kt_no: ktNo, type });
+        return;
+      }
       showToast('Ma\'lumotlar yangilandi', 'success');
       BemorKartaPage.renderContent(BemorKartaPage._patient, type);
     } catch(err) {
