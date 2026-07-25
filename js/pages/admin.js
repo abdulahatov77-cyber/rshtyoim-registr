@@ -245,6 +245,7 @@ const AdminPage = {
                 <option value="" ${!AdminPage._filterRole?'selected':''}>Barcha rol</option>
                 <option value="super_admin" ${AdminPage._filterRole==='super_admin'?'selected':''}>👑 Super Admin</option>
                 <option value="admin" ${AdminPage._filterRole==='admin'?'selected':''}>🛡 Viloyat Admin</option>
+                <option value="rahbar" ${AdminPage._filterRole==='rahbar'?'selected':''}>👁 Rahbar</option>
                 <option value="user" ${AdminPage._filterRole==='user'?'selected':''}>👤 Shifokor</option>
               </select>
               <button class="btn btn-ghost btn-sm" onclick="AdminPage._loadProfiles()">${icon('refresh-cw',14)} Yangilash</button>
@@ -345,6 +346,8 @@ const AdminPage = {
       ? `<span class="badge" style="background:rgba(139,92,246,0.2);color:#c4b5fd;border:1px solid rgba(139,92,246,0.3)">${icon('crown',12)} Super Admin</span>`
       : p.role === 'admin'
       ? `<span class="badge" style="background:rgba(14,165,233,0.15);color:#38bdf8;border:1px solid rgba(14,165,233,0.3)">${icon('shield',12)} Viloyat Admin</span>`
+      : p.role === 'rahbar'
+      ? `<span class="badge" style="background:rgba(234,179,8,0.15);color:#a16207;border:1px solid rgba(234,179,8,0.3)">${icon('eye',12)} Rahbar</span>`
       : `<span class="badge badge-blue">${icon('user',12)} Shifokor</span>`;
     const vilOpts = ['', ...APP_CONFIG.VILOYATLAR]
       .map(v => `<option value="${v}" ${p.viloyat===v?'selected':''}>${v||'— Tanlang —'}</option>`).join('');
@@ -362,6 +365,7 @@ const AdminPage = {
             ${isMain?'disabled':''}>
             <option value="user" ${p.role==='user'?'selected':''}>👤 Shifokor</option>
             <option value="admin" ${p.role==='admin'?'selected':''}>🛡 Viloyat Admin</option>
+            <option value="rahbar" ${p.role==='rahbar'?'selected':''}>👁 Rahbar (faqat ko'rish)</option>
             <option value="super_admin" ${p.role==='super_admin'?'selected':''}>👑 Super Admin</option>
           </select>
           <select id="vil-${p.id}" onchange="AdminPage.changeViloyat('${p.id}',this.value)"

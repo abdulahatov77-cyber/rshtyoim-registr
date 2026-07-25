@@ -819,6 +819,18 @@ const DB = {
     return (data || []).map(r => [r.nom, r.jami, r.infarkt_count, r.insult_count]);
   },
 
+  // PQ-20 rasmiy hisoboti — bitta RPC, ikkala jadvalni ham JSON da qaytaradi
+  async getPQ20Hisobot(muassasa, viloyat, fromISO, toISO) {
+    const { data, error } = await getSupabase().rpc('get_pq20_hisobot', {
+      p_muassasa: muassasa || null,
+      p_viloyat:  viloyat  || null,
+      p_from:     fromISO  || null,
+      p_to:       toISO    || null
+    });
+    if (error) throw error;
+    return data;
+  },
+
   // Detailed Registry Stats (Viloyat or Muassasa level)
   async getRegistryStats(type, viloyat = null) {
     const sb = getSupabase();
@@ -1220,6 +1232,15 @@ const Profile = {
       console.warn('Profile get error:', error);
       return null;
     }
+    // 'rahbar' roli — respublika bo'yicha FAQAT O'QISH.
+    // Ko'rish doirasi super_admin bilan bir xil bo'lishi uchun role ni shu yerda
+    // 'super_admin' ga o'giramiz; haqiqiy rol real_role da qoladi.
+    // Yozish huquqlari real_role bo'yicha tekshiriladi (pastdagi funksiyalar).
+    // ASOSIY HIMOYA — bazadagi RESTRICTIVE RLS siyosatlari; bu faqat UI uchun.
+    if (data && data.role === 'rahbar') {
+      data.real_role = 'rahbar';
+      data.role = 'super_admin';
+    }
     if (data) this._cache[userId] = data;
     return data;
   },
@@ -1231,26 +1252,31 @@ const Profile = {
   // super_admin yoki admin bo'lsa true
   async isAdmin() {
     const p = await this.getCurrent();
+    if (p?.real_role === 'rahbar') return false;
     return p?.role === 'admin' || p?.role === 'super_admin';
   },
   // Faqat super_admin uchun
   async isSuperAdmin() {
     const p = await this.getCurrent();
+    if (p?.real_role === 'rahbar') return false;
     return p?.role === 'super_admin';
   },
   // Tahrirlash huquqi: super_admin va admin uchun
   async canEdit() {
     const p = await this.getCurrent();
+    if (p?.real_role === 'rahbar') return false;
     return p?.role === 'admin' || p?.role === 'super_admin';
   },
   // Foydalanuvchilarni boshqarish: faqat super_admin
   async canManageUsers() {
     const p = await this.getCurrent();
+    if (p?.real_role === 'rahbar') return false;
     return p?.role === 'super_admin';
   },
   // O'chirish huquqi: faqat super_admin
   async canDelete() {
     const p = await this.getCurrent();
+    if (p?.real_role === 'rahbar') return false;
     return p?.role === 'super_admin';
   },
   async listAll() {

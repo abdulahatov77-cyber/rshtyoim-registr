@@ -219,6 +219,38 @@ const HisobotPage = {
         <div id="vh-route-results" class="mt-6"></div>
       </div>` : ''}
 
+      <div class="h-card">
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-2">
+          <div>
+            <h3 class="h-title !mb-1">${icon('file-text', 18)} PQ-20 rasmiy hisoboti</h3>
+            <p class="text-sm text-slate-500">Prezident qarori bo'yicha rasmiy shakl — infarkt va insult bemorlari, muolaja guruhlari va letallik</p>
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+            ${isSuperAdmin ? `
+            <select id="pq-viloyat" class="form-select bg-slate-50 text-blue-900 border-blue-200 font-medium" style="max-width:180px" onchange="HisobotPage.onPQViloyatChange(this.value)">
+              <option value="">— Respublika —</option>
+              ${Object.keys(APP_CONFIG.MUASSASALAR).map(v => `<option value="${v}">${v}</option>`).join('')}
+            </select>` : `
+            <input id="pq-viloyat" type="hidden" value="${myViloyat}"/>
+            <div class="form-input bg-slate-100 text-blue-900 border-blue-200 font-semibold cursor-not-allowed opacity-80" style="max-width:180px">${myViloyat || '—'}</div>`}
+            <select id="pq-muassasa" class="form-select bg-slate-50 text-blue-900 border-blue-200 font-medium" style="max-width:220px">
+              <option value="">— Barcha muassasalar —</option>
+              ${(!isSuperAdmin && myViloyat) ? (APP_CONFIG.MUASSASALAR[myViloyat]||[]).map(m=>`<option value="${m}">${m}</option>`).join('') : ''}
+            </select>
+            <input id="pq-from" type="date" class="form-input bg-slate-50 text-blue-900 border-blue-200 font-medium" value="${today.slice(0,4)}-01-01"/>
+            <span class="text-slate-400">—</span>
+            <input id="pq-to" type="date" class="form-input bg-slate-50 text-blue-900 border-blue-200 font-medium" value="${today}"/>
+            <button class="btn btn-primary shadow-md hover:shadow-lg flex items-center gap-2 px-4 rounded-xl" onclick="HisobotPage.loadPQ20Report()">
+              ${icon('bar-chart-2', 16)} Shakllantirish
+            </button>
+            <button id="pq-export-btn" class="btn btn-success shadow-md hover:shadow-lg flex items-center gap-2 px-4 rounded-xl" onclick="HisobotPage.exportPQ20Report()" disabled style="opacity:0.5">
+              ${icon('download', 16)} Excel
+            </button>
+          </div>
+        </div>
+        <div id="pq-results"></div>
+      </div>
+
       <div id="h-results">
         <div class="h-card text-center py-20 flex flex-col items-center justify-center">
           <div class="text-blue-200 mb-4 animate-pulse">${icon('pie-chart', 64)}</div>
@@ -521,6 +553,192 @@ const HisobotPage = {
     const muassasalar = APP_CONFIG.MUASSASALAR[viloyat] || [];
     sel.innerHTML = `<option value="">— Barcha muassasalar —</option>` +
       muassasalar.map(m => `<option value="${m}">${m}</option>`).join('');
+  },
+
+  // ==================== PQ-20 RASMIY HISOBOTI ====================
+
+  onPQViloyatChange(viloyat) {
+    const sel = document.getElementById('pq-muassasa');
+    if (!sel) return;
+    const muassasalar = APP_CONFIG.MUASSASALAR[viloyat] || [];
+    sel.innerHTML = `<option value="">— Barcha muassasalar —</option>` +
+      muassasalar.map(m => `<option value="${m}">${m}</option>`).join('');
+  },
+
+  // Muolaja guruhlari — rasmiy shakl tartibida [sarlavha, maydon prefiksi, 1-ustun nomi?]
+  _PQ_INF_GROUPS: [
+    ['Medikamentoz davo', 'medik', 'bemor soni'],
+    ['KAG', 'kag'],
+    ['KAG + TLBAP', 'kag_tlbap'],
+    ['KAG + TLBAP + Stent / KAG + Stent', 'kag_stent'],
+    ['KAG + AKSH', 'kag_aksh'],
+    ['KAG + Stent (TLBAP) + AKSH', 'kag_stent_aksh'],
+    ['TLT', 'tlt'],
+    ['TLT + qutqaruvchi TOKA', 'tlt_toka'],
+    ['TLT + AKSH', 'tlt_aksh'],
+    ['AKSH', 'aksh']
+  ],
+  _PQ_INS_GROUPS: [
+    ['MSKT', 'mskt'],
+    ['MSKT angiografiya', 'mskt_angio'],
+    ['Medikamentoz davo', 'medik', 'bemor soni'],
+    ['Dekompressiv trepanatsiya / Freza', 'trepanatsiya'],
+    ['TLT', 'tlt'],
+    ['Tromboekstraksiya / tromboaspiratsiya', 'trombo'],
+    ['TLT + tromboekstraksiya / tromboaspiratsiya', 'tlt_trombo']
+  ],
+
+  async loadPQ20Report() {
+    const from = document.getElementById('pq-from')?.value;
+    const to   = document.getElementById('pq-to')?.value;
+    if (!from || !to) { showToast('Sana oralig\'ini tanlang', 'warning'); return; }
+    const el = document.getElementById('pq-results');
+    if (!el) return;
+    el.innerHTML = `
+      <div class="flex flex-col items-center justify-center py-12">
+        <div class="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-3"></div>
+        <p class="text-blue-900 font-semibold text-sm">PQ-20 hisoboti shakllantirilmoqda...</p>
+      </div>`;
+    const exportBtn = document.getElementById('pq-export-btn');
+    if (exportBtn) { exportBtn.disabled = true; exportBtn.style.opacity = '0.5'; }
+
+    try {
+      const muassasa = document.getElementById('pq-muassasa')?.value || '';
+      const viloyat  = document.getElementById('pq-viloyat')?.value  || '';
+      const fromUTC = new Date(from + 'T00:00:00+05:00').toISOString();
+      const toUTC   = new Date(to   + 'T23:59:59+05:00').toISOString();
+      const data = await DB.getPQ20Hisobot(muassasa, viloyat, fromUTC, toUTC);
+      if (!data || !Array.isArray(data.infarkt) || !Array.isArray(data.insult)) {
+        throw new Error('RPC bo\'sh yoki noto\'g\'ri ma\'lumot qaytardi');
+      }
+      HisobotPage._lastPQ20 = { data, muassasa, viloyat, from, to };
+
+      const scope = muassasa || viloyat || 'O\'zbekiston Respublikasi';
+      el.innerHTML = `
+        <div class="text-sm text-slate-500 mb-3">${esc(scope)} · ${esc(from)} — ${esc(to)}</div>
+        ${HisobotPage._pq20Table('1-JADVAL — O\'TKIR MIOKARD INFARKTI', data.infarkt, HisobotPage._PQ_INF_GROUPS)}
+        ${HisobotPage._pq20Nazorat(data, 'infarkt')}
+        <div class="mt-8"></div>
+        ${HisobotPage._pq20Table('2-JADVAL — O\'TKIR INSULT', data.insult, HisobotPage._PQ_INS_GROUPS)}
+        ${HisobotPage._pq20Nazorat(data, 'insult')}`;
+      if (exportBtn) { exportBtn.disabled = false; exportBtn.style.opacity = ''; }
+      initIcons();
+    } catch (err) {
+      el.innerHTML = `
+        <div class="text-center py-10">
+          <div class="text-red-500 mb-3">${icon('alert-circle', 36, 'mx-auto')}</div>
+          <p class="text-red-600 font-semibold mb-4">${esc(err.message || 'Xatolik yuz berdi')}</p>
+          <button class="btn btn-secondary" onclick="HisobotPage.loadPQ20Report()">${icon('refresh-cw', 16)} Qayta urinish</button>
+        </div>`;
+      initIcons();
+    }
+  },
+
+  // Bitta PQ-20 jadvalini chizadi (ikki darajali sarlavha bilan)
+  _pq20Table(title, rows, groups) {
+    const n = v => v == null ? 0 : +v;
+    const cell = (v, extra = '') => {
+      const val = n(v);
+      return `<td class="p-1.5 text-center border border-slate-200 text-xs ${extra}" style="color:${val === 0 ? '#94a3b8' : '#334155'}">${val}</td>`;
+    };
+    const th = (txt, attrs = '') => `<th class="p-1.5 text-center text-white font-bold text-xs border border-blue-800" style="background:#1e3a8a" ${attrs}>${txt}</th>`;
+    return `
+      <div class="font-bold text-blue-900 text-sm mb-2">${esc(title)}</div>
+      <div class="overflow-x-auto">
+        <table class="border-collapse" style="min-width:100%">
+          <thead>
+            <tr>
+              ${th('№', 'rowspan="2"')}
+              ${th('Nozologiya', 'rowspan="2" style="background:#1e3a8a;min-width:120px"')}
+              ${th("Umumiy ko'rsatkichlar", 'colspan="4"')}
+              ${groups.map(g => th(esc(g[0]), 'colspan="2"')).join('')}
+            </tr>
+            <tr>
+              ${th('bemorlar soni')}
+              ${th("amaliyot o'tkazilganlar soni")}
+              ${th("o'lganlar soni")}
+              ${th('letallik, %')}
+              ${groups.map(g => th(g[2] || "amaliyot o'tkazilganlar soni") + th("o'lganlar soni")).join('')}
+            </tr>
+          </thead>
+          <tbody>
+            ${rows.map((r, i) => {
+              const isJami = /^jami$/i.test((r.nozologiya || '').trim());
+              const rowStyle = isJami ? 'background:#dbeafe;font-weight:700' : `background:${i % 2 === 0 ? '#f8fafc' : '#ffffff'}`;
+              return `
+              <tr style="${rowStyle}">
+                <td class="p-1.5 text-center border border-slate-200 text-xs text-slate-500">${isJami ? '' : i + 1}</td>
+                <td class="p-1.5 border border-slate-200 text-xs font-semibold text-slate-800" style="white-space:nowrap">${esc(r.nozologiya || '—')}</td>
+                ${cell(r.bemorlar)}
+                ${cell(r.amaliyot)}
+                ${cell(r.olgan)}
+                <td class="p-1.5 text-center border border-slate-200 text-xs font-semibold" style="color:${n(r.letallik) === 0 ? '#94a3b8' : '#b91c1c'}">${Number(r.letallik || 0).toFixed(1)}</td>
+                ${groups.map(g => cell(r[g[1]]) + cell(r[g[1] + '_olgan'])).join('')}
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>`;
+  },
+
+  // Jadval ostidagi nazorat satri — ma'lumot to'liqligini tekshirish
+  _pq20Nazorat(data, turi) {
+    const rows = turi === 'infarkt' ? data.infarkt : data.insult;
+    const j = rows.find(r => /^jami$/i.test((r.nozologiya || '').trim())) || rows[rows.length - 1] || {};
+    const n = v => +(v || 0);
+    const N = n(j.bemorlar), A = n(j.amaliyot), M = n(j.medik),
+          O = n(j.nazorat_otkazildi), B = n(j.nazorat_boshqa);
+    const ok = (A + M + O + B) === N;
+    const notes = [];
+    if (B > 0) notes.push(`${B} ta bemorda muolaja kiritilmagan`);
+    if (turi === 'insult') {
+      const endo = n(j.nazorat_boshqa_endo);
+      if (endo > 0) notes.push(`${endo} ta bemorda serebral angiografiya + stentlash/TLBAP — rasmiy shaklda ustuni yo'q`);
+      const tia = n(data.tashqari?.insult_tia);
+      if (tia > 0) notes.push(`TIA bemorlari (${tia} ta) rasmiy shaklga kirmaydi`);
+    }
+    return `
+      <div class="mt-2 px-3 py-2 rounded-lg text-xs ${ok ? 'bg-slate-50 text-slate-500 border border-slate-200' : 'bg-red-50 text-red-700 border border-red-200 font-semibold'}">
+        ${ok ? '' : '⚠️ NOMUVOFIQLIK: '}Nazorat: bemorlar (${N}) ${ok ? '=' : '≠'} amaliyot (${A}) + medikamentoz (${M}) + o'tkazildi (${O}) + boshqa (${B})
+        ${notes.length ? `<div class="mt-1">${notes.map(t => `· ${esc(t)}`).join('<br>')}</div>` : ''}
+      </div>`;
+  },
+
+  exportPQ20Report() {
+    const d = HisobotPage._lastPQ20;
+    if (!d) { showToast('Avval hisobotni shakllantiring', 'warning'); return; }
+    const n = v => +(v || 0);
+    const letl = v => Number(v || 0).toFixed(1);
+
+    // Bitta jadvalni AOA (array of arrays) ko'rinishida yig'adi
+    const tableAOA = (title, rows, groups) => {
+      const head = ['№', 'Nozologiya', 'Bemorlar soni', "Amaliyot o'tkazilganlar soni", "O'lganlar soni", 'Letallik, %'];
+      groups.forEach(g => {
+        head.push(`${g[0]} — ${g[2] || "amaliyot o'tkazilganlar soni"}`);
+        head.push(`${g[0]} — o'lganlar soni`);
+      });
+      const body = rows.map((r, i) => {
+        const isJami = /^jami$/i.test((r.nozologiya || '').trim());
+        const row = [isJami ? '' : i + 1, r.nozologiya || '', n(r.bemorlar), n(r.amaliyot), n(r.olgan), letl(r.letallik)];
+        groups.forEach(g => { row.push(n(r[g[1]])); row.push(n(r[g[1] + '_olgan'])); });
+        return row;
+      });
+      return [[title], head, ...body];
+    };
+
+    const aoa = [
+      ...tableAOA("1-JADVAL — O'TKIR MIOKARD INFARKTI", d.data.infarkt, HisobotPage._PQ_INF_GROUPS),
+      [],
+      ...tableAOA("2-JADVAL — O'TKIR INSULT", d.data.insult, HisobotPage._PQ_INS_GROUPS)
+    ];
+
+    const ws = XLSX.utils.aoa_to_sheet(aoa);
+    ws['!cols'] = aoa[1].map((h, c) => ({ wch: c < 2 ? (c === 0 ? 5 : 22) : Math.min(Math.max(String(h).length / 2 + 6, 10), 30) }));
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'PQ-20');
+    const scope = (d.muassasa || d.viloyat || 'respublika').replace(/[\\/:*?"<>|]/g, '-');
+    XLSX.writeFile(wb, `pq20_hisobot_${scope}_${d.from}_${d.to}.xlsx`);
+    showToast('✅ Excel fayl yuklab olindi', 'success');
   },
 
   async loadReport() {
