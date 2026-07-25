@@ -1370,6 +1370,12 @@ const MuassasaDB = {
     if (existing && existing.length > 0) return;
     const { error } = await sb.from('muassasa_overrides').insert({ viloyat, nomi, action });
     if (error) throw error;
+    // Yangi muassasa imkoniyat jadvalida ham ko'rinsin (galochkalar false bilan boshlanadi)
+    if (action === 'add') {
+      try {
+        await sb.from('muassasalar').upsert({ nomi, viloyat }, { onConflict: 'nomi', ignoreDuplicates: true });
+      } catch (e) { /* jadval/ruxsat hali yo'q bo'lsa — sync_muassasa_overrides.sql orqali keyin tushadi */ }
+    }
   },
 
   async deleteOverride(id) {
