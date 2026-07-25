@@ -1,96 +1,123 @@
 -- =====================================================================
--- XATO KT RENAME NI TIKLASH (2026-07-26)
+-- XATO KT RENAME NI TIKLASH (2026-07-26, v2)
 --
--- Muammo: "8915" raqami IKKI bemorda bir xil edi. Bemor kartasidan
--- birinchisining (Alimova Mavludaxon, Sirdaryo, qabul 25.07.2026)
--- raqami "sirl18915" ga o'zgartirilganda, ikkinchisi ham
--- (Kudratov Kudratillo, Jizzax, qabul 22.06.2026) o'zgarib qolgan.
+-- Muammo: "8915" raqami IKKI bemorda bir xil edi:
+--   A) Alimova Mavludaxon  — Sirdaryo, qabul 25.07.2026, AKTIV
+--   B) Kudratov Kudratillo — Jizzax,   qabul 22.06.2026, O'TKAZILDI
+-- Bemor kartasidan raqam o'zgartirilganda IKKALASI ham o'zgarib ketgan
+-- (kod xatosi — endi tuzatilgan).
 --
--- Yechim: Kudratovni eski "8915" raqamiga qaytaramiz va uning
--- bola-yozuvlarini (muolaja, holat, chiqarish...) ham qaytaramiz.
--- Ajratish mezoni: Alimova 25.07.2026 da qabul qilingan, ya'ni
--- 25.07.2026 dan OLDINGI yozuvlar — Kudratovniki.
+-- Yechim: Kudratovni eski "8915" raqamiga qaytaramiz, bola-yozuvlarini
+-- ham qaytaramiz. Ajratish mezoni: Alimova 25.07.2026 da qabul qilingan,
+-- ya'ni 25.07.2026 dan OLDINGI yozuvlar — Kudratovniki.
 --
+-- v2: joriy (o'zgargan) raqam qanday bo'lishidan qat'i nazar ishlaydi.
 -- TARTIB: 1 (preview) -> 2 (tiklash) -> 3 (tekshiruv)
 -- =====================================================================
 
 -- ============ 1) PREVIEW — hozirgi holat ============
--- 1a. "sirl18915" raqamli bemorlar
+-- 1a. Ikkala bemor va ularning joriy raqami
 select id, kt_no, fio, viloyat, muassasa, status,
        qabul_vaqt at time zone 'Asia/Tashkent' as qabul
 from public.insult_qabul
-where kt_no in ('sirl18915', '8915')
+where fio ilike 'Alimova Mavludaxon%' or fio ilike 'Kudratov Kudratillo%'
+   or kt_no = '8915'
 order by qabul_vaqt;
 
--- 1b. Shu raqam ostidagi barcha bola-yozuvlar (qaysi biri kimniki)
-select 'dinamika_muolajalar' as jadval, id::text, created_at at time zone 'Asia/Tashkent' as vaqt,
-       muolaja_turi as tafsilot
-from public.dinamika_muolajalar where kt_no = 'sirl18915'
+-- 1b. Joriy raqam ostidagi barcha bola-yozuvlar (kimniki ekanini ko'rish uchun)
+with shared as (
+  select kt_no from public.insult_qabul where fio ilike 'Alimova Mavludaxon%' limit 1
+)
+select 'dinamika_muolajalar' as jadval, d.created_at at time zone 'Asia/Tashkent' as vaqt, d.muolaja_turi as tafsilot
+from public.dinamika_muolajalar d, shared s where d.kt_no = s.kt_no
 union all
-select 'holat_dinamikasi', id::text, created_at at time zone 'Asia/Tashkent', coalesce(holat,'')
-from public.holat_dinamikasi where kt_no = 'sirl18915'
+select 'holat_dinamikasi', h.created_at at time zone 'Asia/Tashkent', coalesce(h.holat,'')
+from public.holat_dinamikasi h, shared s where h.kt_no = s.kt_no
 union all
-select 'navbatchi_jurnal', id::text, created_at at time zone 'Asia/Tashkent', coalesce(holat_baholash,'')
-from public.navbatchi_jurnal where kt_no = 'sirl18915'
+select 'navbatchi_jurnal', n.created_at at time zone 'Asia/Tashkent', coalesce(n.holat_baholash,'')
+from public.navbatchi_jurnal n, shared s where n.kt_no = s.kt_no
 union all
-select 'insult_chiqarish', id::text, created_at at time zone 'Asia/Tashkent',
-       'chiqish: ' || coalesce(chiqish_sana::date::text,'—') || ' · ' || coalesce(natija,'')
-from public.insult_chiqarish where kt_no = 'sirl18915'
+select 'insult_chiqarish', c.created_at at time zone 'Asia/Tashkent',
+       'chiqish: ' || coalesce(c.chiqish_sana::date::text,'—') || ' · ' || coalesce(c.natija,'')
+from public.insult_chiqarish c, shared s where c.kt_no = s.kt_no
 union all
-select 'transfer_log', id::text, sana::timestamptz, coalesce(muassasa_ga,'')
-from public.transfer_log where kt_no = 'sirl18915'
+select 'transfer_log', t.sana::timestamptz, coalesce(t.muassasa_ga,'')
+from public.transfer_log t, shared s where t.kt_no = s.kt_no
 union all
-select 'kuzatuv', id::text, created_at at time zone 'Asia/Tashkent', coalesce(kuzatuv_davri,'')
-from public.kuzatuv where kt_no = 'sirl18915'
+select 'kuzatuv', k.created_at at time zone 'Asia/Tashkent', coalesce(k.kuzatuv_davri,'')
+from public.kuzatuv k, shared s where k.kt_no = s.kt_no
 union all
-select 'bemor_fayllari', id::text, created_at at time zone 'Asia/Tashkent', coalesce(nomi,'')
-from public.bemor_fayllari where kt_no = 'sirl18915'
-order by 3;
+select 'bemor_fayllari', f.created_at at time zone 'Asia/Tashkent', coalesce(f.nomi,'')
+from public.bemor_fayllari f, shared s where f.kt_no = s.kt_no
+order by 2;
 
--- ============ 2) TIKLASH ============
--- 2a. Kudratovni (Jizzax, qabul 22.06.2026) eski raqamiga qaytaramiz
+-- ============ 2) TIKLASH — butun blokni bitta Run bilan ============
+-- 2a. Kudratovni (Jizzax) eski raqamiga qaytaramiz
 update public.insult_qabul
 set kt_no = '8915'
-where kt_no = 'sirl18915'
-  and fio ilike 'Kudratov%'
+where fio ilike 'Kudratov Kudratillo%'
   and viloyat = 'Jizzax viloyati';
 
 -- 2b. Bola-yozuvlar: 25.07.2026 dan OLDINGILARI Kudratovniki
-update public.dinamika_muolajalar set kt_no = '8915'
-where kt_no = 'sirl18915' and created_at < '2026-07-25 00:00:00+05';
-
-update public.holat_dinamikasi set kt_no = '8915'
-where kt_no = 'sirl18915' and created_at < '2026-07-25 00:00:00+05';
-
-update public.navbatchi_jurnal set kt_no = '8915'
-where kt_no = 'sirl18915' and created_at < '2026-07-25 00:00:00+05';
-
-update public.kuzatuv set kt_no = '8915'
-where kt_no = 'sirl18915' and created_at < '2026-07-25 00:00:00+05';
-
-update public.bemor_fayllari set kt_no = '8915'
-where kt_no = 'sirl18915' and created_at < '2026-07-25 00:00:00+05';
-
--- Chiqarish varaqasi — chiqish sanasi bo'yicha (Kudratov 29.06.2026 da chiqarilgan)
-update public.insult_chiqarish set kt_no = '8915'
-where kt_no = 'sirl18915' and chiqish_sana::date < '2026-07-25';
-
--- Transfer (harakat) — sanasi bo'yicha
-update public.transfer_log set kt_no = '8915'
-where kt_no = 'sirl18915' and sana::date < '2026-07-25';
+--     (endi shared kt faqat Alimovaga tegishli)
+with shared as (
+  select kt_no from public.insult_qabul where fio ilike 'Alimova Mavludaxon%' limit 1
+),
+u1 as (
+  update public.dinamika_muolajalar d set kt_no = '8915'
+  from shared s where d.kt_no = s.kt_no and d.created_at < '2026-07-25 00:00:00+05'
+  returning 1
+),
+u2 as (
+  update public.holat_dinamikasi h set kt_no = '8915'
+  from shared s where h.kt_no = s.kt_no and h.created_at < '2026-07-25 00:00:00+05'
+  returning 1
+),
+u3 as (
+  update public.navbatchi_jurnal n set kt_no = '8915'
+  from shared s where n.kt_no = s.kt_no and n.created_at < '2026-07-25 00:00:00+05'
+  returning 1
+),
+u4 as (
+  update public.kuzatuv k set kt_no = '8915'
+  from shared s where k.kt_no = s.kt_no and k.created_at < '2026-07-25 00:00:00+05'
+  returning 1
+),
+u5 as (
+  update public.bemor_fayllari f set kt_no = '8915'
+  from shared s where f.kt_no = s.kt_no and f.created_at < '2026-07-25 00:00:00+05'
+  returning 1
+),
+u6 as (
+  update public.insult_chiqarish c set kt_no = '8915'
+  from shared s where c.kt_no = s.kt_no and c.chiqish_sana::date < '2026-07-25'
+  returning 1
+),
+u7 as (
+  update public.transfer_log t set kt_no = '8915'
+  from shared s where t.kt_no = s.kt_no and t.sana::date < '2026-07-25'
+  returning 1
+)
+select (select count(*) from u1) as dinamika_qaytdi,
+       (select count(*) from u2) as holat_qaytdi,
+       (select count(*) from u3) as navbatchi_qaytdi,
+       (select count(*) from u4) as kuzatuv_qaytdi,
+       (select count(*) from u5) as fayl_qaytdi,
+       (select count(*) from u6) as chiqarish_qaytdi,
+       (select count(*) from u7) as transfer_qaytdi;
 
 -- ============ 3) TEKSHIRUV ============
--- 3a. Ikkala bemor o'z raqamida turibdimi
+-- 3a. Ikkala bemor endi turli raqamda
 select kt_no, fio, viloyat, status,
        qabul_vaqt at time zone 'Asia/Tashkent' as qabul
 from public.insult_qabul
-where kt_no in ('sirl18915', '8915')
+where fio ilike 'Alimova Mavludaxon%' or fio ilike 'Kudratov Kudratillo%'
 order by qabul_vaqt;
 
--- 3b. Har bir raqamdagi bola-yozuvlar soni
-select kt_no,
-  (select count(*) from public.dinamika_muolajalar d where d.kt_no = x.kt_no) as dinamika,
-  (select count(*) from public.holat_dinamikasi h where h.kt_no = x.kt_no)    as holat,
-  (select count(*) from public.insult_chiqarish c where c.kt_no = x.kt_no)    as chiqarish,
-  (select count(*) from public.transfer_log t where t.kt_no = x.kt_no)        as transfer
-from (select unnest(array['sirl18915','8915']) as kt_no) x;
+-- 3b. Butun bazada takroriy kt_no qolganmi (0 qator kutiladi)
+select 'insult' as turi, kt_no, count(*) as bemor_soni, string_agg(fio, ' | ') as bemorlar
+from public.insult_qabul group by kt_no having count(*) > 1
+union all
+select 'infarkt', kt_no, count(*), string_agg(fio, ' | ')
+from public.infarkt_qabul group by kt_no having count(*) > 1
+order by 1, 2;
