@@ -1280,6 +1280,19 @@ const InsultYangiPage = {
           document.getElementById('kt_soat')?.classList.add('border-red-500');
           document.getElementById('kt_soat')?.focus();
           showToast('⚠️ KT/MSKT soatini kiriting!', 'error', 5000);
+        } else {
+          const ktDt = new Date(`${ktSana}T${ktSoat}:00+05:00`);
+          if (ktDt > now) {
+            valid = false;
+            document.getElementById('kt_sana')?.classList.add('border-red-500');
+            document.getElementById('kt_soat')?.classList.add('border-red-500');
+            showToast('⚠️ KT/MSKT vaqti kelajakda bo\'lishi mumkin emas!', 'error', 5000);
+          } else if (qv && ktDt < qv) {
+            valid = false;
+            document.getElementById('kt_sana')?.classList.add('border-red-500');
+            document.getElementById('kt_soat')?.classList.add('border-red-500');
+            showToast('⚠️ KT/MSKT vaqti bemor qabul vaqtidan oldin bo\'lishi mumkin emas!', 'error', 6000);
+          }
         }
       } else {
         // MSKT tanlanmagan — stale qiymatni tozalaymiz
