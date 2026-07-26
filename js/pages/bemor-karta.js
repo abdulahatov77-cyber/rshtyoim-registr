@@ -1,4 +1,4 @@
-// ==================== BEMOR KARTA ====================
+﻿// ==================== BEMOR KARTA ====================
 const BemorKartaPage = {
   _activeTab: 0,
   _patient: null,
@@ -683,7 +683,7 @@ const BemorKartaPage = {
         puls: document.getElementById('holat-puls')?.value ? parseInt(document.getElementById('holat-puls').value) : null,
         temperatura: document.getElementById('holat-temp')?.value ? parseFloat(document.getElementById('holat-temp').value) : null,
         izoh: document.getElementById('holat-izoh')?.value || null,
-        shifokor_fio: profile?.fio || 'Dr. Navbatchi'
+        shifokor_fio: await Profile.currentName()
       });
       showToast('O\'lchov saqlandi', 'success');
       BemorKartaPage.loadTab(2);
@@ -857,7 +857,7 @@ const BemorKartaPage = {
             </div>
             <p class="text-sm font-semibold text-gray-800">${esc(r.muolaja_turi)}</p>
             ${r.izoh ? `<p class="text-xs text-gray-500 mt-1 italic">"${esc(r.izoh)}"</p>` : ''}
-            <p class="text-xs text-gray-400 mt-1">— Dr. ${esc(r.shifokor_fio) || 'Noma\'lum'}</p>
+            <p class="text-xs text-gray-400 mt-1">— ${esc(BemorKartaPage._drName(r.shifokor_fio))}</p>
           </div>
         </div>`).join('');
       // Tahrirlash uchun yozuvlarni saqlab qo'yamiz
@@ -867,6 +867,13 @@ const BemorKartaPage = {
       const histEl = document.getElementById('din-history');
       if (histEl) histEl.innerHTML = `<div class="p-6 text-center text-red-500">Xatolik: ${esc(err.message)}</div>`;
     }
+  },
+
+  // Shifokor ismini ko'rsatish — "Dr." ikki marta chiqmasin
+  _drName(v) {
+    const s = (v || '').trim();
+    if (!s) return 'Noma\'lum';
+    return /^dr\.?\s/i.test(s) ? s : 'Dr. ' + s;
   },
 
   // Dinamik muolaja tanlanganda: o'tkazish oynasini boshqarish.
@@ -1010,7 +1017,7 @@ const BemorKartaPage = {
         registr_turi: BemorKartaPage._type,
         muolaja_turi: saqlanMuolaja,
         izoh: finalIzoh,
-        shifokor_fio: profile?.fio || 'Dr. Navbatchi',
+        shifokor_fio: await Profile.currentName(),
         ...(muolajaVaqti ? { created_at: muolajaVaqti } : {})
       });
       if (isOtk) {
@@ -1181,7 +1188,7 @@ const BemorKartaPage = {
               </div>
               ${r.nogironlik_guruhi ? `<div class="text-xs text-gray-600 mb-1"><b>Nogironlik:</b> ${r.nogironlik_guruhi}</div>` : ''}
               ${r.izoh ? `<p class="text-sm text-gray-600 mt-2 italic">"${r.izoh}"</p>` : ''}
-              <div class="text-xs text-gray-400 mt-2 text-right">— Dr. ${r.shifokor_fio||'Noma\'lum'}</div>
+              <div class="text-xs text-gray-400 mt-2 text-right">— ${esc(BemorKartaPage._drName(r.shifokor_fio))}</div>
             </div>
           `).join('');
 
@@ -1256,7 +1263,7 @@ const BemorKartaPage = {
       qayta_xuruj: document.getElementById('k-xuruj').checked,
       nogironlik_guruhi: document.getElementById('k-nogironlik').value,
       izoh: document.getElementById('k-izoh').value,
-      shifokor_fio: (await Profile.getCurrent())?.fio || 'Dr. Navbatchi'
+      shifokor_fio: await Profile.currentName()
     };
 
     setLoading(btn, true);
@@ -1332,7 +1339,7 @@ const BemorKartaPage = {
             <span class="text-xs text-gray-400">${Utils.formatDateTime(r.created_at)}</span>
           </div>
           ${r.izoh ? `<p class="text-sm text-gray-700 mt-2">${esc(r.izoh)}</p>` : ''}
-          <div class="text-xs text-gray-400 mt-2 text-right">— Dr. ${r.shifokor_fio||'Noma\'lum'}</div>
+          <div class="text-xs text-gray-400 mt-2 text-right">— ${esc(BemorKartaPage._drName(r.shifokor_fio))}</div>
         </div>`).join('');
       initIcons();
     } catch(err) {
@@ -1357,7 +1364,7 @@ const BemorKartaPage = {
         holat_baholash: holat,
         keyingi_shifokor: document.getElementById('shift-keyingi')?.value || null,
         izoh: document.getElementById('shift-izoh')?.value || null,
-        shifokor_fio: profile?.fio || 'Dr. Navbatchi'
+        shifokor_fio: await Profile.currentName()
       });
       showToast('Navbat muvaffaqiyatli topshirildi', 'success');
       BemorKartaPage.loadTab(4);

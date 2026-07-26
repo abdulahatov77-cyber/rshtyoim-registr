@@ -1340,6 +1340,13 @@ const Profile = {
     if (!user) return null;
     return await this.get(user.id);
   },
+  // Yozuvlarda "shifokor" sifatida saqlanadigan nom.
+  // Eski profillarda ism `full_name` da, yangilarida `fio` da bo'lishi mumkin.
+  async currentName() {
+    const p = await this.getCurrent();
+    const user = await Auth.getUser();
+    return (p?.fio || p?.full_name || user?.email || '').trim() || 'Noma\'lum';
+  },
   // super_admin yoki admin bo'lsa true
   async isAdmin() {
     const p = await this.getCurrent();
