@@ -888,9 +888,11 @@ const BemorKartaPage = {
     }
 
     let majburiy = false;
+    let joyMuassasa = '';
     if (talab) {
       const p = BemorKartaPage._patient;
-      const imk = await DB.getMuassasaImkoniyat(p?.otkazilgan_muassasa || p?.muassasa).catch(() => null);
+      joyMuassasa = p?.otkazilgan_muassasa || p?.muassasa || '';
+      const imk = await DB.getMuassasaImkoniyat(joyMuassasa).catch(() => null);
       const bor = talab === 'mskt' ? imk?.mskt_bor : imk?.angiografiya_bor;
       if (imk && bor === false) {
         majburiy = true;
@@ -898,12 +900,18 @@ const BemorKartaPage = {
       }
     }
 
+    const apparat = talab === 'mskt' ? 'MSKT' : 'angiografiya';
     const koretish = isOtkTanlov || majburiy;
     if (otkazDiv) otkazDiv.style.display = koretish ? 'block' : 'none';
     if (labelEl) {
       labelEl.innerHTML = majburiy
-        ? `⚠️ Muassasangizda ${talab === 'mskt' ? 'MSKT' : 'angiografiya'} yo'q — bemor qaysi muassasaga yuboriladi?`
+        ? `⚠️ <b>${esc(joyMuassasa)}</b> da ${apparat} apparati yo'q — bu muolajani shu yerda bajarib bo'lmaydi.<br>Bemor qaysi muassasaga yuboriladi?`
         : "Qaysi muassasaga o'tkaziladi?";
+    }
+    if (majburiy) {
+      showToast(`⚠️ ${joyMuassasa} da ${apparat} apparati mavjud emas — "${value}" muolajasini shu muassasada bajarib bo'lmaydi. ` +
+        `Bemorni imkoniyati bor muassasaga yo'naltiring (pastdagi ro'yxatdan tanlang).`, 'warning', 9000);
+      otkazDiv?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
     if (koretish) BemorKartaPage.refreshDinMuassasa(majburiy ? talab : value);
 
