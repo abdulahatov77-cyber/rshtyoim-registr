@@ -722,7 +722,7 @@ const BemorKartaPage = {
                   </label>`).join('')}
               </div>
               <div id="din-otkazish-div" class="form-group mt-3 p-3 bg-orange-50 border border-orange-200 rounded-xl" style="display:none">
-                <label class="form-label required text-orange-900">Qaysi muassasaga o'tkaziladi?</label>
+                <label class="form-label required text-orange-900" id="din-otkazish-label">Qaysi muassasaga o'tkaziladi?</label>
                 <select id="din-otkazilgan-muassasa" class="form-select mt-1">
                   <option value="">Muassasani tanlang...</option>
                   ${Object.values(APP_CONFIG.MUASSASALAR).flat().sort().map(m=>`<option value="${m}">${m}</option>`).join('')}
@@ -793,16 +793,7 @@ const BemorKartaPage = {
         dot.className = `w-5 h-5 rounded-full border flex items-center justify-center flex-shrink-0 ${dotClass} text-white`;
         dot.innerHTML = '<div class="w-2 h-2 bg-white rounded-full"></div>';
 
-        const isOtk = input.value.includes("Boshqa muassasaga o'tkazildi");
-        const otkazDiv = document.getElementById('din-otkazish-div');
-        if (otkazDiv) otkazDiv.style.display = isOtk ? 'block' : 'none';
-        if (isOtk) BemorKartaPage.refreshDinMuassasa(input.value);
-        const saveBtn = document.getElementById('btn-davolash-save');
-        if (saveBtn) {
-          saveBtn.className = `${isOtk ? 'btn btn-warning' : 'btn btn-primary'} w-full mt-4 flex items-center justify-center gap-2`;
-          saveBtn.innerHTML = `${icon(isOtk ? 'log-out' : 'save', 18)} ${isOtk ? 'Chiqarish' : 'Saqlash'}`;
-          initIcons();
-        }
+        BemorKartaPage.onDinMuolajaChange(input.value);
       });
     });
 
@@ -878,11 +869,57 @@ const BemorKartaPage = {
     }
   },
 
-  // Dinamik o'tkazishda muassasa ro'yxatini imkoniyat bo'yicha filtrlash
+  // Dinamik muolaja tanlanganda: o'tkazish oynasini boshqarish.
+  // Agar muolaja apparat talab qilsa-yu, bemor yotgan muassasada u bo'lmasa —
+  // bloklamaymiz, balki imkoniyati bor muassasaga yo'naltirish oynasini ochamiz.
+  async onDinMuolajaChange(value) {
+    const otkazDiv = document.getElementById('din-otkazish-div');
+    const saveBtn  = document.getElementById('btn-davolash-save');
+    const labelEl  = document.getElementById('din-otkazish-label');
+    const isOtkTanlov = value.includes("Boshqa muassasaga o'tkazildi");
+    BemorKartaPage._dinTalab = null;
+
+    // Qaysi apparat kerak: MSKT yoki angiografiya
+    let talab = null;
+    if (!isOtkTanlov) {
+      const v = (value || '').toLowerCase();
+      if (v.includes('mskt')) talab = 'mskt';
+      else if (DB.muolajaAngioKerak(value)) talab = 'angiografiya';
+    }
+
+    let majburiy = false;
+    if (talab) {
+      const p = BemorKartaPage._patient;
+      const imk = await DB.getMuassasaImkoniyat(p?.otkazilgan_muassasa || p?.muassasa).catch(() => null);
+      const bor = talab === 'mskt' ? imk?.mskt_bor : imk?.angiografiya_bor;
+      if (imk && bor === false) {
+        majburiy = true;
+        BemorKartaPage._dinTalab = talab;
+      }
+    }
+
+    const koretish = isOtkTanlov || majburiy;
+    if (otkazDiv) otkazDiv.style.display = koretish ? 'block' : 'none';
+    if (labelEl) {
+      labelEl.innerHTML = majburiy
+        ? `⚠️ Muassasangizda ${talab === 'mskt' ? 'MSKT' : 'angiografiya'} yo'q — bemor qaysi muassasaga yuboriladi?`
+        : "Qaysi muassasaga o'tkaziladi?";
+    }
+    if (koretish) BemorKartaPage.refreshDinMuassasa(majburiy ? talab : value);
+
+    if (saveBtn) {
+      saveBtn.className = `${koretish ? 'btn btn-warning' : 'btn btn-primary'} w-full mt-4 flex items-center justify-center gap-2`;
+      saveBtn.innerHTML = `${icon(koretish ? 'log-out' : 'save', 18)} ${koretish ? 'Yo\'naltirish' : 'Saqlash'}`;
+      initIcons();
+    }
+  },
+
+  // Dinamik o'tkazishda muassasa ro'yxatini imkoniyat bo'yicha filtrlash.
+  // sabab — muolaja matni yoki to'g'ridan-to'g'ri talab kodi ('mskt' | 'angiografiya')
   async refreshDinMuassasa(sabab) {
     const sel = document.getElementById('din-otkazilgan-muassasa');
     if (!sel) return;
-    const talab = DB.muassasaTalab(sabab);
+    const talab = (sabab === 'mskt' || sabab === 'angiografiya') ? sabab : DB.muassasaTalab(sabab);
     const current = sel.value || '';
     let names = null;
     if (talab) {
@@ -906,12 +943,19 @@ const BemorKartaPage = {
   async saveDavolash() {
     const selected = document.querySelector('input[name="din-muolaja"]:checked')?.value;
     if (!selected) { showToast('Muolaja turini tanlang', 'warning'); return; }
-    const isOtk = selected.includes("Boshqa muassasaga o'tkazildi");
+    // Majburiy yo'naltirish — muassasada kerakli apparat yo'q (onDinMuolajaChange aniqlaydi)
+    const talabMajburiy = BemorKartaPage._dinTalab || null;
+    const isOtk = selected.includes("Boshqa muassasaga o'tkazildi") || !!talabMajburiy;
     const muassasaSelectVal = document.getElementById('din-otkazilgan-muassasa')?.value || '';
     const otkazilganMuassasa = muassasaSelectVal === '__boshqa__'
       ? (document.getElementById('din-otkazilgan-muassasa-custom')?.value || '').trim()
       : muassasaSelectVal;
-    if (isOtk && !otkazilganMuassasa) { showToast('Muassasa nomini kiriting', 'warning'); return; }
+    if (isOtk && !otkazilganMuassasa) {
+      showToast(talabMajburiy
+        ? `Bemor yuboriladigan muassasani tanlang (${talabMajburiy === 'mskt' ? 'MSKT' : 'angiografiya'} imkoniyati bor)`
+        : 'Muassasa nomini kiriting', 'warning');
+      return;
+    }
     const izoh = document.getElementById('din-izoh')?.value || '';
     // Tanlangan sana+soat Toshkent (+05:00) vaqti sifatida qabul qilinadi
     const sanaVal = document.getElementById('din-sana')?.value || '';
@@ -942,13 +986,21 @@ const BemorKartaPage = {
     try {
       const p = BemorKartaPage._patient;
       const profile = await Profile.getCurrent();
-      const finalIzoh = isOtk
-        ? `O'tkazilgan: ${otkazilganMuassasa}${izoh ? ' | ' + izoh : ''}`
-        : (izoh || null);
+      // Majburiy yo'naltirishda yozuv "o'tkazildi" sifatida saqlanadi —
+      // muolaja bu muassasada bajarilmagan, faqat rejalashtirilgan
+      const otkazOption = (BemorKartaPage._type === 'infarkt'
+        ? APP_CONFIG.DINAMIKA_MUOLAJALAR : APP_CONFIG.DINAMIKA_MUOLAJALAR_INSULT)
+        .find(m => m.startsWith("Boshqa muassasaga o'tkazildi"));
+      const saqlanMuolaja = talabMajburiy ? (otkazOption || selected) : selected;
+      const finalIzoh = talabMajburiy
+        ? `${selected} uchun yo'naltirildi | O'tkazilgan: ${otkazilganMuassasa}${izoh ? ' | ' + izoh : ''}`
+        : (isOtk
+            ? `O'tkazilgan: ${otkazilganMuassasa}${izoh ? ' | ' + izoh : ''}`
+            : (izoh || null));
       await DB.addDinamikaMuolaja({
         kt_no: p.kt_no,
         registr_turi: BemorKartaPage._type,
-        muolaja_turi: selected,
+        muolaja_turi: saqlanMuolaja,
         izoh: finalIzoh,
         shifokor_fio: profile?.fio || 'Dr. Navbatchi',
         ...(muolajaVaqti ? { created_at: muolajaVaqti } : {})
@@ -982,7 +1034,9 @@ const BemorKartaPage = {
         // O'CHIRILDI: dinamika_muolajalar jadvaliga yozuv tushganda server-bot ("DINAMIKA YANGILANDI")
         // avtomatik xabar yuboradi. Bu qatorni qoldirsak, bitta hodisaga ikkita xabar ketadi (dublikat).
         // Telegram.notifyDinamika(p, BemorKartaPage._type, selected, profile?.fio, otkazilganMuassasa).catch(()=>{});
-        showToast(`✅ Bemor ${otkazilganMuassasa}ga o'tkazildi`, 'success');
+        showToast(talabMajburiy
+          ? `✅ Bemor ${otkazilganMuassasa}ga "${selected}" uchun yo'naltirildi`
+          : `✅ Bemor ${otkazilganMuassasa}ga o'tkazildi`, 'success', 6000);
         setTimeout(() => Router.go('bemorlar'), 1500);
       } else {
         // Telegram xabar — yangi dinamik muolaja
