@@ -425,6 +425,12 @@ const BemorKartaPage = {
               ${row('KFK-MB', p.kkfmb)}
               ${row('Puls', p.puls || null)}
               ${row('AHA bali', p.aha_bali ? p.aha_bali + ' ball' : null)}
+              ${(p.infarkt_turi || '').toUpperCase().includes('NSTEMI') ? row('GRACE Score', (() => {
+                const gb = parseInt(p.grace_bali);
+                if (isNaN(gb)) return `<span class="text-orange-600">kiritilmagan</span>`;
+                const r = gb > 140 ? ['Yuqori xavf', '#b91c1c'] : (gb >= 109 ? ["O'rta xavf", '#b45309'] : ['Past xavf', '#15803d']);
+                return `${gb} ball <span style="color:${r[1]}">(${r[0]})</span>`;
+              })()) : ''}
             `: `
               ${row('Insult turi', p.insult_turi)}
               ${row('NIHSS (qabul)', p.nihss_qabul!=null ? p.nihss_qabul+' ball' : null)}
@@ -867,6 +873,25 @@ const BemorKartaPage = {
       const histEl = document.getElementById('din-history');
       if (histEl) histEl.innerHTML = `<div class="p-6 text-center text-red-500">Xatolik: ${esc(err.message)}</div>`;
     }
+  },
+
+  // Tahrirlash oynasidan GRACE kalkulyatorini ochish.
+  // Kalkulyator avtomatik to'ldirish uchun InfarktYangiPage._data ni o'qiydi —
+  // shuning uchun unga joriy bemor qiymatlarini beramiz (forma qayta ochilganda o'zi tozalanadi).
+  openGraceCalc() {
+    const p = BemorKartaPage._patient || {};
+    if (typeof InfarktYangiPage !== 'undefined') {
+      InfarktYangiPage._data = {
+        tugilgan_sana: p.tugilgan_sana || p.tugilgan_yil || '',
+        killip:        p.killip || '',
+        qon_bosimi:    document.getElementById('edit-qb')?.value || p.qon_bosimi || '',
+        puls:          document.getElementById('edit-puls')?.value || p.puls || '',
+        troponin:      document.getElementById('edit-troponin')?.value || p.troponin || '',
+        kkfmb:         document.getElementById('edit-kkfmb')?.value || p.kkfmb || '',
+        ekg_natija:    p.ekg_natija || []
+      };
+    }
+    Calculators.openGRACE('edit-grace');
   },
 
   // Shifokor ismini ko'rsatish — "Dr." ikki marta chiqmasin
@@ -1840,6 +1865,15 @@ const BemorKartaPage = {
             <label class="form-label">KFK-MB</label>
             <input id="edit-kkfmb" class="form-input" value="${p.kkfmb||''}" placeholder="O'lchanmagan"/>
           </div>
+          <div class="form-group col-span-2" id="edit-grace-wrap" style="display:${(p.infarkt_turi||'').toUpperCase().includes('NSTEMI') ? '' : 'none'}">
+            <label class="form-label">GRACE Score (NSTEMI xavf baholash)</label>
+            <div class="flex gap-2 items-center">
+              <input id="edit-grace" type="number" min="0" max="400" class="form-input w-full" value="${p.grace_bali||''}" placeholder="Kalkulyator orqali hisoblang"/>
+              <button type="button" class="flex-shrink-0 bg-indigo-100 text-indigo-700 hover:bg-indigo-200 px-3 py-2 rounded-lg text-sm font-bold border border-indigo-200"
+                onclick="BemorKartaPage.openGraceCalc()">🧮 Hisoblash</button>
+            </div>
+            <div id="grace-result-box">${p.grace_bali ? Calculators.graceResultBadgeHtml(parseInt(p.grace_bali)) : ''}</div>
+          </div>
           <div class="form-group">
             <label class="form-label">EKG vaqti</label>
             <div class="flex gap-2">
@@ -2025,6 +2059,10 @@ const BemorKartaPage = {
       updates.killip       = g('edit-killip')?.value || null;
       updates.troponin     = g('edit-troponin')?.value || null;
       updates.kkfmb        = g('edit-kkfmb')?.value || null;
+      // GRACE — faqat NSTEMI uchun saqlanadi, boshqa turlarda tozalanadi
+      updates.grace_bali   = (updates.infarkt_turi || '').toUpperCase().includes('NSTEMI')
+        ? (g('edit-grace')?.value ? parseInt(g('edit-grace').value) : null)
+        : null;
       const ekgD = g('edit-ekg-vaqti-d')?.value, ekgT = g('edit-ekg-vaqti-t')?.value;
       updates.ekg_vaqti    = ekgT || null;
       updates.ekg_vaqti_ts = (ekgD && ekgT) ? new Date(`${ekgD}T${ekgT}:00+05:00`).toISOString() : null;
