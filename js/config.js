@@ -115,7 +115,7 @@ const APP_CONFIG = {
 
   MUASSASALAR: {
     "Andijon viloyati": [
-      "RSHTYOIM Andijon filiali", "Andijon ShTB", "Baliqchi TTB",
+      "RSHTYOIM Andijon filiali", "Andijon ShTB", "Andijon TTB", "Baliqchi TTB",
       "Buloqboshi TTB", "Bo'ston TTB", "Izboskan TTB",
       "Jalaquduq TTB", "Marhamat TTB", "Oltinko'l TTB",
       "Paxtaobod TTB", "Ulug'nor TTB", "Xonobod ShTB",
