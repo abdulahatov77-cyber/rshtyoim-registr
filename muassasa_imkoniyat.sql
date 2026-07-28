@@ -382,9 +382,10 @@ begin
     return new; -- qo'lda kiritilgan/ro'yxatda yo'q muassasa вЂ” bloklamaymiz
   end if;
 
-  v_sabab := coalesce(
-    case when tg_table_name = 'infarkt_qabul' then new.otkazish_sababi end,
-    new.muolaja_turi, '');
+  -- MUHIM: otkazish_sababi faqat infarkt_qabul da bor. PL/pgSQL da NEW.<ustun>
+  -- ni to'g'ridan-to'g'ri o'qish CASE ichida bo'lsa ham xato beradi
+  -- (record "new" has no field ...) — shuning uchun jsonb orqali o'qiymiz.
+  v_sabab := coalesce(to_jsonb(new)->>'otkazish_sababi', new.muolaja_turi, '');
 
   if v_sabab ilike '%MSKT%' and coalesce(v_mskt, false) = false then
     raise exception 'Tanlangan muassasada MSKT mavjud emas: %', new.otkazilgan_muassasa;
