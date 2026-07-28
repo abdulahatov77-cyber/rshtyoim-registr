@@ -37,14 +37,17 @@ const HarakatPage = {
         }
         return all;
       };
-      const [infData, insData, logRes] = await Promise.all([
+      const [infData, insData, logRes, angioList] = await Promise.all([
         fetchAllTransfers('infarkt_qabul', 'kt_no,fio,muassasa,viloyat,otkazilgan_muassasa,otkazish_sababi,qabul_vaqt,muolaja_turi,infarkt_turi'),
         fetchAllTransfers('insult_qabul', 'kt_no,fio,muassasa,viloyat,otkazilgan_muassasa,qabul_vaqt,muolaja_turi,mskt,mskt_angiografiya'),
         getSupabase()
           .from('transfer_log')
           .select('*')
-          .order('sana', { ascending: true })
+          .order('sana', { ascending: true }),
+        // Angiografiya imkoniyati bor muassasalar — marshrut to'g'riligini shu ro'yxat aniqlaydi
+        DB.getMuassasalarFiltered('angiografiya', null).catch(() => [])
       ]);
+      HarakatPage._angioSet = new Set((angioList || []).map(m => (m.nomi || '').toLowerCase().trim()));
 
       // transfer_log ni kt_no bo'yicha map
       const logMap = {};
@@ -98,11 +101,15 @@ const HarakatPage = {
     }
   },
 
-  // Muassasa bosqichи (marshrut darajasi): 1=TTB, 2=Politravma, 3=Angio/RSHTYOIM
+  // Muassasa bosqichи (marshrut darajasi): 1=TTB, 2=Politravma, 3=Angio markaz.
+  // 3-daraja avval "Muassasa imkoniyati" jadvalidan (angiografiya_bor) aniqlanadi;
+  // jadvalda topilmasa — nom bo'yicha eski usul (zaxira sifatida).
   _muassasaLevel(m) {
-    const s = (m || '').toLowerCase();
+    const s = (m || '').toLowerCase().trim();
+    if (!s) return 1;
+    if (HarakatPage._angioSet?.has(s)) return 3;
     if (s.includes('rshtyoim') || s.includes('angiografiya') || s.includes('angio markaz') ||
-        s.includes('endovaskulyar') || s.includes('kardiologiya markaz') || s.includes('respublika shoshilinch')) return 3;
+        s.includes('endovaskulyar') || s.includes('kardiolog') || s.includes('respublika shoshilinch')) return 3;
     if (s.includes('politravma')) return 2;
     return 1; // TTB, ShTB va boshqalar
   },
