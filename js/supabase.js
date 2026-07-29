@@ -169,22 +169,35 @@ const DB = {
   },
 
   // F.I.O normalize qilingan holda bir xil bemor bazada bormi tekshiradi
-  async checkDuplicate(table, fio, tugilganYil, qabulVaqtIso) {
+  // Dublikat tekshiruvi — o'sha kunning barcha yozuvlari ikkala registrdan olinadi.
+  // Qaytaradi: null | { row, exact, turi }
+  //   exact=true  — F.I.O to'liq va tug'ilgan yil mos (aniq dublikat, saqlash bloklanadi)
+  //   exact=false — familiya+ism mos va muassasa bir xil (shubhali, tasdiq so'raladi)
+  async checkDuplicate(table, fio, tugilganYil, qabulVaqtIso, muassasa) {
     if (!fio || !qabulVaqtIso) return null;
-    const normFio = Utils.normalizeFio(fio);
+    const sb = getSupabase();
+    const norm = s => Utils.normalizeFio(s || '').toLowerCase().replace(/\s+/g, ' ').trim();
+    const ikkiSoz = s => norm(s).split(' ').slice(0, 2).join(' ');
+    const nFio = norm(fio), nIkki = ikkiSoz(fio);
     // UZT (UTC+5) bo'yicha kun — yarim tunda off-by-one bo'lmasligi uchun
     const day = new Date(new Date(qabulVaqtIso).getTime() + 5*3600000).toISOString().slice(0, 10);
-    const { data } = await getSupabase()
-      .from(table)
-      .select('kt_no,fio,tugilgan_yil,qabul_vaqt,muassasa')
-      .gte('qabul_vaqt', `${day}T00:00:00+05:00`)
-      .lte('qabul_vaqt', `${day}T23:59:59+05:00`);
-    if (!data) return null;
-    return data.find(r => {
-      const rFio = Utils.normalizeFio(r.fio || '').toLowerCase();
-      const nFio = normFio.toLowerCase();
-      return rFio === nFio && String(r.tugilgan_yil||'') === String(tugilganYil||'');
-    }) || null;
+    const cols = 'kt_no,fio,tugilgan_yil,qabul_vaqt,muassasa';
+    const olish = async t => {
+      const { data } = await sb.from(t).select(cols)
+        .gte('qabul_vaqt', `${day}T00:00:00+05:00`)
+        .lte('qabul_vaqt', `${day}T23:59:59+05:00`);
+      return (data || []).map(r => ({ ...r, _turi: t === 'infarkt_qabul' ? 'infarkt' : 'insult' }));
+    };
+    // Bir xil bemor boshqa registrga ham kiritilgan bo'lishi mumkin — ikkalasini ko'ramiz
+    const [insRows, infRows] = await Promise.all([olish('insult_qabul'), olish('infarkt_qabul')]);
+    const rows = [...insRows, ...infRows];
+    const aniq = rows.find(r => norm(r.fio) === nFio &&
+      String(r.tugilgan_yil || '') === String(tugilganYil || ''));
+    if (aniq) return { row: aniq, exact: true, turi: aniq._turi };
+    // Familiya+ism mos, o'sha kuni, o'sha muassasada — "Xxx" kabi to'ldirmalar tufayli
+    // to'liq mos kelmaydigan qayta kiritishlarni ushlaydi
+    const shubhali = muassasa ? rows.find(r => ikkiSoz(r.fio) === nIkki && r.muassasa === muassasa) : null;
+    return shubhali ? { row: shubhali, exact: false, turi: shubhali._turi } : null;
   },
 
   // Infarkt CRUD

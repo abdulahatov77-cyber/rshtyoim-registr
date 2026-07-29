@@ -1298,11 +1298,18 @@ const InfarktYangiPage = {
       }
 
       // Duplikat tekshiruv — bir xil bemor (F.I.O + tug'ilgan yili + qabul sanasi) bazada bormi?
-      const dup = await DB.checkDuplicate('infarkt_qabul', payload.fio, payload.tugilgan_yil, payload.qabul_vaqt);
-      if (dup) {
-        showToast(`❌ Bu bemor allaqachon ro'yxatda: ${dup.fio} · ${dup.muassasa} · K/T: ${dup.kt_no}`, 'error', 8000);
+      const dup = await DB.checkDuplicate('infarkt_qabul', payload.fio, payload.tugilgan_yil, payload.qabul_vaqt, payload.muassasa);
+      if (dup?.exact) {
+        showToast(`❌ Bu bemor allaqachon ro'yxatda: ${dup.row.fio} · ${dup.row.muassasa} · K/T: ${dup.row.kt_no}`, 'error', 8000);
         setLoading(btn, false);
+        InfarktYangiPage._saving = false;
         return;
+      }
+      if (dup && !dup.exact) {
+        const ok = confirm(`⚠️ Shubhali dublikat!\n\nShu kuni shu muassasada o'xshash bemor bor:\n` +
+          `${dup.row.fio} · ${dup.turi} registri · K/T: ${dup.row.kt_no}\n\n` +
+          `Bu boshqa bemormi? "OK" — baribir saqlash, "Bekor" — to'xtatish.`);
+        if (!ok) { setLoading(btn, false); InfarktYangiPage._saving = false; return; }
       }
 
       const saved = await DB.infarktQabul(payload);
