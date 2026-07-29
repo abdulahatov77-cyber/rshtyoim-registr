@@ -78,6 +78,50 @@ order by 4, 2;
 -- Bu ro'yxat 37 qator bo'lishi kerak. Kam bo'lsa — nomlar mos kelmagan,
 -- o'chirishni boshlamang, menga xabar bering.
 
+-- ============ 1b) ZAXIRA NUSXA — O'CHIRISHDAN OLDIN MAJBURIY! ============
+-- O'chiriladigan yozuvlar va ularning bog'liq ma'lumotlari alohida
+-- jadvallarga ko'chiriladi. Xato bo'lsa shu jadvallardan qaytarish mumkin.
+-- (Supabase PITR yoqilmagani uchun bu yagona aniq qaytarish yo'li.)
+create table if not exists public.bkp_insult_qabul_20260729 as
+select q.* from public.insult_qabul q join public.v_ochiriladigan o
+  on q.kt_no = o.kt_no and q.muassasa = o.muassasa;
+
+create table if not exists public.bkp_infarkt_qabul_20260729 as
+select q.* from public.infarkt_qabul q join public.v_ochiriladigan o
+  on q.kt_no = o.kt_no and q.muassasa = o.muassasa;
+
+-- Bog'liq yozuvlar (o'chiriladigan kt_no lar bo'yicha)
+create table if not exists public.bkp_bogliq_20260729 as
+select 'dinamika_muolajalar' as jadval, to_jsonb(d) as qator from public.dinamika_muolajalar d
+  where d.kt_no in (select kt_no from public.v_ochiriladigan)
+union all
+select 'holat_dinamikasi', to_jsonb(d) from public.holat_dinamikasi d
+  where d.kt_no in (select kt_no from public.v_ochiriladigan)
+union all
+select 'navbatchi_jurnal', to_jsonb(d) from public.navbatchi_jurnal d
+  where d.kt_no in (select kt_no from public.v_ochiriladigan)
+union all
+select 'kuzatuv', to_jsonb(d) from public.kuzatuv d
+  where d.kt_no in (select kt_no from public.v_ochiriladigan)
+union all
+select 'bemor_fayllari', to_jsonb(d) from public.bemor_fayllari d
+  where d.kt_no in (select kt_no from public.v_ochiriladigan)
+union all
+select 'transfer_log', to_jsonb(d) from public.transfer_log d
+  where d.kt_no in (select kt_no from public.v_ochiriladigan)
+union all
+select 'insult_chiqarish', to_jsonb(d) from public.insult_chiqarish d
+  where d.kt_no in (select kt_no from public.v_ochiriladigan)
+union all
+select 'infarkt_chiqarish', to_jsonb(d) from public.infarkt_chiqarish d
+  where d.kt_no in (select kt_no from public.v_ochiriladigan);
+
+-- Zaxira olinganini tasdiqlash (37 va bog'liq yozuvlar soni)
+select (select count(*) from public.bkp_insult_qabul_20260729)  as insult_zaxira,
+       (select count(*) from public.bkp_infarkt_qabul_20260729) as infarkt_zaxira,
+       (select count(*) from public.bkp_bogliq_20260729)        as bogliq_zaxira;
+-- insult_zaxira + infarkt_zaxira = 37 bo'lishi SHART. Aks holda davom etmang!
+
 -- ============ 2) O'CHIRISH — butun blokni bitta Run bilan ============
 delete from public.insult_qabul q
 using public.v_ochiriladigan o
@@ -162,3 +206,43 @@ having count(*) > 0;
 select 'insult' as turi, count(*) from public.insult_qabul
 union all
 select 'infarkt', count(*) from public.infarkt_qabul;
+
+-- =====================================================================
+-- 6) QAYTARISH (agar xato bo'lsa) — zaxira jadvallardan tiklash
+-- Faqat zarurat bo'lganda ishlating.
+-- =====================================================================
+/*
+insert into public.insult_qabul  select * from public.bkp_insult_qabul_20260729
+  on conflict do nothing;
+insert into public.infarkt_qabul select * from public.bkp_infarkt_qabul_20260729
+  on conflict do nothing;
+
+-- Bog'liq yozuvlar jsonb dan qaytariladi
+insert into public.dinamika_muolajalar
+select * from jsonb_populate_recordset(null::public.dinamika_muolajalar,
+  (select coalesce(jsonb_agg(qator),'[]') from public.bkp_bogliq_20260729 where jadval='dinamika_muolajalar'))
+on conflict do nothing;
+
+insert into public.insult_chiqarish
+select * from jsonb_populate_recordset(null::public.insult_chiqarish,
+  (select coalesce(jsonb_agg(qator),'[]') from public.bkp_bogliq_20260729 where jadval='insult_chiqarish'))
+on conflict do nothing;
+
+insert into public.infarkt_chiqarish
+select * from jsonb_populate_recordset(null::public.infarkt_chiqarish,
+  (select coalesce(jsonb_agg(qator),'[]') from public.bkp_bogliq_20260729 where jadval='infarkt_chiqarish'))
+on conflict do nothing;
+
+insert into public.transfer_log
+select * from jsonb_populate_recordset(null::public.transfer_log,
+  (select coalesce(jsonb_agg(qator),'[]') from public.bkp_bogliq_20260729 where jadval='transfer_log'))
+on conflict do nothing;
+*/
+
+-- =====================================================================
+-- 7) TOZALASH (hammasi to'g'ri ekaniga ishonch hosil qilgach, 1-2 haftadan keyin)
+-- =====================================================================
+-- drop table if exists public.bkp_insult_qabul_20260729;
+-- drop table if exists public.bkp_infarkt_qabul_20260729;
+-- drop table if exists public.bkp_bogliq_20260729;
+-- drop view  if exists public.v_ochiriladigan;
