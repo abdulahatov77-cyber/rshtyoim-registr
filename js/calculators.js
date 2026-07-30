@@ -555,35 +555,58 @@ const Calculators = {
     };
   },
 
-  // NIHSS — insult og'irligi bo'yicha
-  nihssTavsiya(total) {
+  // NIHSS — insult og'irligi bo'yicha.
+  // MUHIM: gemorragik insultda TLT va endovaskulyar muolaja QARSHI KO'RSATMA —
+  // shuning uchun tavsiya tashxisga qarab o'zgaradi.
+  nihssTavsiya(total, insultTuri) {
     const n = parseInt(total);
     if (isNaN(n) || n < 0 || n > 42) return null;
+    const gem = /gemorragik/i.test(insultTuri || '');
+
     if (n === 0) return {
       daraja: 'Simptom yo‘q',
-      matn: 'Nevrologik defitsit aniqlanmadi. Tashxisni qayta baholang (TIA ehtimoli).',
+      matn: gem
+        ? 'Nevrologik defitsit aniqlanmadi. Qon bosimini nazorat qiling, KT dinamikasini kuzating.'
+        : 'Nevrologik defitsit aniqlanmadi. Tashxisni qayta baholang (TIA ehtimoli).',
       rang: '#15803d', fon: '#f0fdf4', chegara: '#bbf7d0', belgi: '🟢'
     };
     if (n <= 4) return {
-      daraja: 'Yengil insult',
-      matn: 'Yengil defitsit. Trombolitik terapiya ko‘rsatmasi individual baholanadi (vaqt oynasi va defitsit ahamiyatiga qarab).',
+      daraja: 'Yengil',
+      matn: gem
+        ? "Yengil defitsit. <b>Qon bosimi nazorati</b> (sistolik &lt; 140 mm sim.ust.), takroriy KT bilan gematoma dinamikasini kuzating. TLT va endovaskulyar muolaja <b>ko'rsatilmagan</b>."
+        : 'Yengil defitsit. Trombolitik terapiya ko‘rsatmasi individual baholanadi (vaqt oynasi va defitsit ahamiyatiga qarab).',
       rang: '#15803d', fon: '#f0fdf4', chegara: '#bbf7d0', belgi: '🟢'
     };
     if (n <= 15) return {
       daraja: "O'rtacha",
-      matn: "Vaqt oynasi ichida bo'lsa <b>TLT ko'rsatmasini baholang</b>. NIHSS ≥ 6 da yirik tomir okklyuziyasi ehtimoli yuqori — <b>angiografiya / tromboekstraksiya</b> imkoniyatini ko'rib chiqing.",
+      matn: gem
+        ? "<b>Neyroxirurg konsultatsiyasi</b> va qon bosimi nazorati talab etiladi. Gematoma hajmi va siljish belgilariga qarab jarrohlik ko'rsatmasi baholanadi. TLT va tromboekstraksiya <b>qarshi ko'rsatma</b>."
+        : "Vaqt oynasi ichida bo'lsa <b>TLT ko'rsatmasini baholang</b>. NIHSS ≥ 6 da yirik tomir okklyuziyasi ehtimoli yuqori — <b>angiografiya / tromboekstraksiya</b> imkoniyatini ko'rib chiqing.",
       rang: '#b45309', fon: '#fffbeb', chegara: '#fde68a', belgi: '🟡'
     };
     if (n <= 20) return {
       daraja: "O'rtacha-og'ir",
-      matn: "Yirik tomir okklyuziyasi ehtimoli yuqori — <b>angiografiya va endovaskulyar muolaja</b> ko'rsatmasini shoshilinch baholang. Intensiv kuzatuv talab etiladi.",
+      matn: gem
+        ? "<b>Neyroxirurgni shoshilinch chaqiring</b> — dekompressiv trepanatsiya yoki gematoma evakuatsiyasi ko'rsatmasini baholang. Intensiv kuzatuv, qon bosimi va ichki bosh bosimi nazorati."
+        : "Yirik tomir okklyuziyasi ehtimoli yuqori — <b>angiografiya va endovaskulyar muolaja</b> ko'rsatmasini shoshilinch baholang. Intensiv kuzatuv talab etiladi.",
       rang: '#c2410c', fon: '#fff7ed', chegara: '#fed7aa', belgi: '🟠'
     };
     return {
-      daraja: "Og'ir insult",
-      matn: "Yuqori asorat va o'lim xavfi. <b>Reanimatsiya sharoitida intensiv kuzatuv</b>, nafas va gemodinamika nazorati. Endovaskulyar muolaja ko'rsatmasi shoshilinch baholanadi.",
+      daraja: "Og'ir",
+      matn: gem
+        ? "Yuqori o'lim xavfi. <b>Reanimatsiya va shoshilinch neyroxirurgik baholash</b>, nafas va gemodinamika nazorati. Endovaskulyar muolaja va TLT <b>ko'rsatilmagan</b>."
+        : "Yuqori asorat va o'lim xavfi. <b>Reanimatsiya sharoitida intensiv kuzatuv</b>, nafas va gemodinamika nazorati. Endovaskulyar muolaja ko'rsatmasi shoshilinch baholanadi.",
       rang: '#b91c1c', fon: '#fef2f2', chegara: '#fecaca', belgi: '🔴'
     };
+  },
+
+  // Formadagi yoki kartadagi joriy insult turini aniqlash
+  _joriyInsultTuri() {
+    return document.getElementById('insult_turi')?.value
+        || document.getElementById('edit-turi')?.value
+        || (typeof InsultYangiPage !== 'undefined' ? (InsultYangiPage._data || {}).insult_turi : '')
+        || (typeof BemorKartaPage !== 'undefined' ? (BemorKartaPage._patient || {}).insult_turi : '')
+        || '';
   },
 
   // Tavsiya blokining HTML ko'rinishi
@@ -611,7 +634,7 @@ const Calculators = {
     if (!box) return;
     box.innerHTML = isGcs
       ? this.tavsiyaHtml(this.gcsTavsiya(total), total, 'Glazgo (GCS)')
-      : this.tavsiyaHtml(this.nihssTavsiya(total), total, 'NIHSS');
+      : this.tavsiyaHtml(this.nihssTavsiya(total, this._joriyInsultTuri()), total, 'NIHSS');
   },
 
   saveResult(groupClass) {

@@ -434,7 +434,7 @@ const BemorKartaPage = {
             `: `
               ${row('Insult turi', p.insult_turi)}
               ${row('NIHSS (qabul)', p.nihss_qabul!=null ? p.nihss_qabul+' ball' : null)}
-              ${p.nihss_qabul!=null ? Calculators.tavsiyaHtml(Calculators.nihssTavsiya(p.nihss_qabul), p.nihss_qabul, 'NIHSS') : ''}
+              ${p.nihss_qabul!=null ? Calculators.tavsiyaHtml(Calculators.nihssTavsiya(p.nihss_qabul, p.insult_turi), p.nihss_qabul, 'NIHSS') : ''}
               ${row('GCS (Glazgo)', p.gcs_bali!=null ? p.gcs_bali+' ball' : null)}
               ${p.gcs_bali!=null ? Calculators.tavsiyaHtml(Calculators.gcsTavsiya(p.gcs_bali), p.gcs_bali, 'Glazgo (GCS)') : ''}
               ${row('Puls', p.puls || null)}
