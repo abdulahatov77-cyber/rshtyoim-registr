@@ -532,6 +532,88 @@ const Calculators = {
     this.closeModal();
   },
 
+  // ===== Klinik tavsiyalar (ball qo'yilgandan keyin avtomatik ko'rsatiladi) =====
+
+  // Glazgo (GCS) — ong darajasi bo'yicha
+  gcsTavsiya(total) {
+    const g = parseInt(total);
+    if (isNaN(g) || g < 3 || g > 15) return null;
+    if (g <= 8) return {
+      daraja: "Og'ir (chuqur ong buzilishi)",
+      matn: "Nafas yo'llari himoyalanmagan — <b>intubatsiya va sun'iy nafas olish apparatiga ulash</b> tavsiya etiladi. Bemorni reanimatsiya bo'limiga o'tkazing.",
+      rang: '#b91c1c', fon: '#fef2f2', chegara: '#fecaca', belgi: '🔴'
+    };
+    if (g <= 12) return {
+      daraja: "O'rtacha",
+      matn: "Ong o'rtacha darajada buzilgan. Nafas va ong holatini uzluksiz kuzating; yomonlashsa <b>intubatsiyaga tayyor turing</b>.",
+      rang: '#b45309', fon: '#fffbeb', chegara: '#fde68a', belgi: '🟡'
+    };
+    return {
+      daraja: 'Yengil',
+      matn: 'Ong saqlangan. Standart kuzatuv va davolash rejimi.',
+      rang: '#15803d', fon: '#f0fdf4', chegara: '#bbf7d0', belgi: '🟢'
+    };
+  },
+
+  // NIHSS — insult og'irligi bo'yicha
+  nihssTavsiya(total) {
+    const n = parseInt(total);
+    if (isNaN(n) || n < 0 || n > 42) return null;
+    if (n === 0) return {
+      daraja: 'Simptom yo‘q',
+      matn: 'Nevrologik defitsit aniqlanmadi. Tashxisni qayta baholang (TIA ehtimoli).',
+      rang: '#15803d', fon: '#f0fdf4', chegara: '#bbf7d0', belgi: '🟢'
+    };
+    if (n <= 4) return {
+      daraja: 'Yengil insult',
+      matn: 'Yengil defitsit. Trombolitik terapiya ko‘rsatmasi individual baholanadi (vaqt oynasi va defitsit ahamiyatiga qarab).',
+      rang: '#15803d', fon: '#f0fdf4', chegara: '#bbf7d0', belgi: '🟢'
+    };
+    if (n <= 15) return {
+      daraja: "O'rtacha",
+      matn: "Vaqt oynasi ichida bo'lsa <b>TLT ko'rsatmasini baholang</b>. NIHSS ≥ 6 da yirik tomir okklyuziyasi ehtimoli yuqori — <b>angiografiya / tromboekstraksiya</b> imkoniyatini ko'rib chiqing.",
+      rang: '#b45309', fon: '#fffbeb', chegara: '#fde68a', belgi: '🟡'
+    };
+    if (n <= 20) return {
+      daraja: "O'rtacha-og'ir",
+      matn: "Yirik tomir okklyuziyasi ehtimoli yuqori — <b>angiografiya va endovaskulyar muolaja</b> ko'rsatmasini shoshilinch baholang. Intensiv kuzatuv talab etiladi.",
+      rang: '#c2410c', fon: '#fff7ed', chegara: '#fed7aa', belgi: '🟠'
+    };
+    return {
+      daraja: "Og'ir insult",
+      matn: "Yuqori asorat va o'lim xavfi. <b>Reanimatsiya sharoitida intensiv kuzatuv</b>, nafas va gemodinamika nazorati. Endovaskulyar muolaja ko'rsatmasi shoshilinch baholanadi.",
+      rang: '#b91c1c', fon: '#fef2f2', chegara: '#fecaca', belgi: '🔴'
+    };
+  },
+
+  // Tavsiya blokining HTML ko'rinishi
+  tavsiyaHtml(t, ball, nomi) {
+    if (!t) return '';
+    return `<div class="mt-2 p-3 rounded-xl border" style="background:${t.fon};border-color:${t.chegara}">
+      <div class="flex items-start gap-2">
+        <span style="font-size:16px;line-height:1.2">${t.belgi}</span>
+        <div>
+          <div style="color:${t.rang};font-weight:800;font-size:12px;text-transform:uppercase;letter-spacing:.03em">
+            ${nomi} ${ball} — ${t.daraja}
+          </div>
+          <div style="color:#334155;font-size:13px;margin-top:2px;line-height:1.45">${t.matn}</div>
+        </div>
+      </div>
+    </div>`;
+  },
+
+  // Ball qo'yilgandan keyin tavsiya blokini yangilash
+  tavsiyaniYangilash(inputId, total) {
+    const isGcs   = /gcs/i.test(inputId);
+    const isNihss = /nihss/i.test(inputId);
+    if (!isGcs && !isNihss) return;
+    const box = document.getElementById(isGcs ? 'gcs-tavsiya' : 'nihss-tavsiya');
+    if (!box) return;
+    box.innerHTML = isGcs
+      ? this.tavsiyaHtml(this.gcsTavsiya(total), total, 'Glazgo (GCS)')
+      : this.tavsiyaHtml(this.nihssTavsiya(total), total, 'NIHSS');
+  },
+
   saveResult(groupClass) {
     let total = 0;
     document.querySelectorAll('.' + groupClass + ':checked').forEach(el => {
@@ -553,6 +635,9 @@ const Calculators = {
       // Kichik vizual effekt (miltillash)
       input.classList.add('bg-green-100', 'border-green-500', 'text-green-800');
       setTimeout(() => input.classList.remove('bg-green-100', 'border-green-500', 'text-green-800'), 1000);
+
+      // Klinik tavsiyani ko'rsatamiz (GCS ≤ 8 — intubatsiya va h.k.)
+      this.tavsiyaniYangilash(id, total);
     }
     this.closeModal();
   }
