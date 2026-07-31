@@ -349,7 +349,7 @@ const DB = {
       'fuqarolik','yashash_viloyat','yashash_tuman','chet_el_davlati',
       'simptom_vaqt','birlamchi_yoki_takroriy','nihss_qabul','gcs_bali','insult_turi','qon_bosimi','puls',
       'xavf_omil','aha_bali',
-      'mskt','mskt_angiografiya','muolaja_turi','otkazilgan_muassasa',
+      'mskt','mskt_angiografiya','okklyuziya_segmenti','muolaja_turi','otkazilgan_muassasa',
       'aspects_c','aspects_l','aspects_ic','aspects_i',
       'aspects_m1','aspects_m2','aspects_m3','aspects_m4','aspects_m5','aspects_m6',
       'tez_yordam_kelgan_vaqt','kt_vaqti','trombolizis_vaqti','trombektomiya_vaqti',

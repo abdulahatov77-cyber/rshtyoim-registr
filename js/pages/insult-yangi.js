@@ -447,6 +447,15 @@ const InsultYangiPage = {
         <!-- ASPECTS bloki — faqat MSKT Angiografiya Ha + Ishemik insult -->
         <div id="aspects-div" style="display:${showAspects?'block':'none'}">
           ${this._renderAspects(d)}
+          ${this.field('okklyuziya_segmenti','Okklyuziya segmenti (MSKT angiografiya bo\'yicha)',`
+            <select id="okklyuziya_segmenti" class="form-select border-purple-300 focus:border-purple-500"
+              onchange="InsultYangiPage._data.okklyuziya_segmenti=this.value;Calculators.taktikaniYangilash()">
+              ${['','M1','M2','M3','M4','Okklyuziya aniqlanmadi']
+                .map(s => `<option value="${s}" ${d.okklyuziya_segmenti===s?'selected':''}>${s || 'Tanlang...'}</option>`).join('')}
+            </select>`,false,'M1–M2 (proksimal) — tromboekstraksiya, M3–M4 (distal) — TLT ko\'rsatmasi baholanadi')}
+          <div id="taktika-tavsiya">${Calculators.tavsiyaHtml(
+            Calculators.taktikaTavsiya(this._calcAspects(d), d.okklyuziya_segmenti, d.insult_turi, d.mskt_angiografiya),
+            '', 'Davolash taktikasi')}</div>
         </div>
 
         ${this.field('muolaja_turi','Bajarilgan muolaja turi',`<select id="muolaja_turi" class="form-select border-purple-300 focus:border-purple-500" onchange="InsultYangiPage.onMuolajaChange(this.value)">
@@ -687,6 +696,8 @@ const InsultYangiPage = {
       label.style.border = `1.5px solid ${checked ? '#7c3aed' : '#e2e8f0'}`;
       label.style.background = checked ? '#f5f3ff' : '#fafafa';
     }
+    // ASPECTS o'zgardi — davolash taktikasi tavsiyasini qayta hisoblaymiz
+    Calculators.taktikaniYangilash();
   },
 
   setSimptomUyqu() {
@@ -879,7 +890,7 @@ const InsultYangiPage = {
      'tez_yordam_kelgan_vaqt',
      'fio','vazn','boy','simptom_vaqt','gcs_bali','birlamchi_yoki_takroriy','insult_turi','aha_bali','nihss_qabul','puls',
      'yashash_viloyat','yashash_tuman','chet_el_davlati',
-     'mskt','mskt_angiografiya','otkazilgan_muassasa','otkazilgan_boshqa','otkazish_sana','otkazish_soat','shifokor_fio','shifokor_tel']
+     'mskt','mskt_angiografiya','okklyuziya_segmenti','otkazilgan_muassasa','otkazilgan_boshqa','otkazish_sana','otkazish_soat','shifokor_fio','shifokor_tel']
     .forEach(id => {
       const el = document.getElementById(id);
       if (el) InsultYangiPage._data[id] = el.value;

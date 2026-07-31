@@ -440,6 +440,12 @@ const BemorKartaPage = {
               ${row('Puls', p.puls || null)}
               ${row('AHA bali', p.aha_bali!=null ? p.aha_bali+' ball' : null)}
               ${row('MSKT o\'tkazilganmi?', p.mskt)}
+              ${p.mskt_angiografiya ? row('MSKT angiografiya', p.mskt_angiografiya) : ''}
+              ${p.aspects_ball!=null ? row('ASPECTS', p.aspects_ball + ' / 10') : ''}
+              ${p.okklyuziya_segmenti ? row('Okklyuziya segmenti', p.okklyuziya_segmenti) : ''}
+              ${Calculators.tavsiyaHtml(
+                  Calculators.taktikaTavsiya(p.aspects_ball, p.okklyuziya_segmenti, p.insult_turi, p.mskt_angiografiya),
+                  '', 'Davolash taktikasi')}
             `}
             ${row('Asosiy muolaja', p.muolaja_turi)}
             ${p.otkazilgan_muassasa ? row('O\'tkazilgan muassasa', p.otkazilgan_muassasa) : ''}

@@ -595,9 +595,56 @@ const Calculators = {
       daraja: "Og'ir",
       matn: gem
         ? "Yuqori o'lim xavfi. <b>Reanimatsiya va shoshilinch neyroxirurgik baholash</b>, nafas va gemodinamika nazorati. Endovaskulyar muolaja va TLT <b>ko'rsatilmagan</b>."
-        : "Yuqori asorat va o'lim xavfi. <b>Reanimatsiya sharoitida intensiv kuzatuv</b>, nafas va gemodinamika nazorati. <b>MSKT angiografiya</b> va endovaskulyar muolaja ko'rsatmasi shoshilinch baholanadi.",
+        : "Yuqori asorat va o'lim xavfi. <b>Reanimatsiya sharoitida intensiv kuzatuv</b>, nafas va gemodinamika nazorati. Shoshilinch <b>MSKT angiografiya</b> o'tkazing.",
       rang: '#b91c1c', fon: '#fef2f2', chegara: '#fecaca', belgi: '🔴'
     };
+  },
+
+  // Davolash taktikasi — MSKT angiografiya natijasiga asoslanadi.
+  // MSKT angiografiyasiz TLT/tromboekstraksiya haqida xulosa chiqarilmaydi.
+  //   ASPECTS ≥ 6 + M1/M2 → tromboekstraksiya ko'rsatmasini ko'rib chiqish
+  //   ASPECTS ≥ 6 + M3/M4 → TLT ko'rsatmasini ko'rib chiqish
+  //   ASPECTS < 6         → konservativ davolash
+  taktikaTavsiya(aspectsBall, segment, insultTuri, msktAngio) {
+    // Gemorragik insultda bu algoritm qo'llanmaydi
+    if (/gemorragik/i.test(insultTuri || '')) return null;
+    if (msktAngio !== 'Ha') return null;
+    const a = parseInt(aspectsBall);
+    if (isNaN(a)) return null;
+
+    if (a < 6) return {
+      daraja: `ASPECTS ${a} — konservativ`,
+      matn: "Keng shakllangan infarkt (ASPECTS &lt; 6) — <b>konservativ davolash</b>. Reperfuzion muolajalar gemorragik transformatsiya xavfi tufayli tavsiya etilmaydi.",
+      rang: '#b45309', fon: '#fffbeb', chegara: '#fde68a', belgi: '🟡'
+    };
+
+    const s = String(segment || '').toUpperCase().trim();
+    if (s === 'M1' || s === 'M2') return {
+      daraja: `ASPECTS ${a} · ${s} segment`,
+      matn: "Proksimal okklyuziya va ASPECTS ≥ 6 — <b>tromboekstraksiya (mexanik trombektomiya) ko'rsatmasini ko'rib chiqing</b>. Endovaskulyar imkoniyati bor muassasaga zudlik bilan yo'naltiring.",
+      rang: '#b91c1c', fon: '#fef2f2', chegara: '#fecaca', belgi: '🔴'
+    };
+    if (s === 'M3' || s === 'M4') return {
+      daraja: `ASPECTS ${a} · ${s} segment`,
+      matn: "Distal okklyuziya va ASPECTS ≥ 6 — <b>trombolitik terapiya (TLT) ko'rsatmasini ko'rib chiqing</b> (vaqt oynasi va qarshi ko'rsatmalarni baholab).",
+      rang: '#c2410c', fon: '#fff7ed', chegara: '#fed7aa', belgi: '🟠'
+    };
+    return {
+      daraja: `ASPECTS ${a}`,
+      matn: "ASPECTS ≥ 6 — reperfuzion muolaja uchun nomzod. Taktikani aniqlash uchun <b>okklyuziya segmentini belgilang</b> (M1/M2 — tromboekstraksiya, M3/M4 — TLT).",
+      rang: '#2563eb', fon: '#eff6ff', chegara: '#bfdbfe', belgi: '🔵'
+    };
+  },
+
+  // Taktika blokini yangilash (ASPECTS yoki segment o'zgarganda)
+  taktikaniYangilash() {
+    const box = document.getElementById('taktika-tavsiya');
+    if (!box) return;
+    const d = (typeof InsultYangiPage !== 'undefined' ? InsultYangiPage._data : null) || {};
+    const ball = (typeof InsultYangiPage !== 'undefined' && InsultYangiPage._calcAspects)
+      ? InsultYangiPage._calcAspects(d) : null;
+    const t = this.taktikaTavsiya(ball, d.okklyuziya_segmenti, d.insult_turi, d.mskt_angiografiya);
+    box.innerHTML = t ? this.tavsiyaHtml(t, '', 'Davolash taktikasi') : '';
   },
 
   // Formadagi yoki kartadagi joriy insult turini aniqlash
