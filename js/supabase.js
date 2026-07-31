@@ -1,4 +1,4 @@
-﻿// ==================== SUPABASE CLIENT ====================
+// ==================== SUPABASE CLIENT ====================
 let _supabase = null;
 
 function getSupabase() {
@@ -224,8 +224,12 @@ const DB = {
     // INTEGER maydonlar: bo'sh string → null
     if (clean.grace_bali === '' || clean.grace_bali === null) delete clean.grace_bali;
     else if (clean.grace_bali !== undefined) clean.grace_bali = parseInt(clean.grace_bali) || null;
-    // (kt_no, muassasa) juftligi takrorlansa — yangi kt_no bilan qayta urinish
-    for (let attempt = 0; attempt < 5; attempt++) {
+    // (kt_no, muassasa) juftligi takrorlansa:
+    //   - AVTOMATIK raqam bo'lsa  → yangisini o'ylab topamiz (5 urinish)
+    //   - QO'LDA yozilgan raqam bo'lsa → jimgina almashtirmaymiz, xato ko'rsatamiz
+    //     (aks holda kasallik tarixi qog'ozidagi raqam bilan reyestr bog'lanmay qoladi)
+    const _avto = /^[A-Z]+-\d{6}-\d+$/.test(clean.kt_no || '');
+    for (let attempt = 0; attempt < (_avto ? 5 : 1); attempt++) {
       if (attempt > 0) clean.kt_no = Utils.generateKtNo(clean.muassasa || '');
       const { data: result, error } = await getSupabase()
         .from('infarkt_qabul')
@@ -357,7 +361,12 @@ const DB = {
       if (data[k] !== undefined) clean[k] = data[k];
     }
     if (clean.fio) clean.fio = Utils.normalizeFio(clean.fio);
-    for (let attempt = 0; attempt < 5; attempt++) {
+    // (kt_no, muassasa) juftligi takrorlansa:
+    //   - AVTOMATIK raqam bo'lsa  → yangisini o'ylab topamiz (5 urinish)
+    //   - QO'LDA yozilgan raqam bo'lsa → jimgina almashtirmaymiz, xato ko'rsatamiz
+    //     (aks holda kasallik tarixi qog'ozidagi raqam bilan reyestr bog'lanmay qoladi)
+    const _avto = /^[A-Z]+-\d{6}-\d+$/.test(clean.kt_no || '');
+    for (let attempt = 0; attempt < (_avto ? 5 : 1); attempt++) {
       if (attempt > 0) clean.kt_no = Utils.generateKtNo(clean.muassasa || '');
       const { data: result, error } = await getSupabase()
         .from('insult_qabul')
@@ -1566,5 +1575,3 @@ const MuassasaDB = {
       });
   }
 };
-
-
