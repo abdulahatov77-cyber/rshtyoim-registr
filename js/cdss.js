@@ -192,7 +192,7 @@
      Ikki shkala har xil narsani o'lchaydi: GCS — ong va nafas yo'llari,
      NIHSS — o'choqli defitsit. Ularning MOS KELMASLIGI klinik ma'lumot beradi. */
   function gcsNihss(gcs, nihss, r, ishemik, gemorragik) {
-    var faqatIntub = ishemik && gcs !== null && gcs <= 8 && nihss !== null && nihss >= 20;
+    var faqatIntub = ishemik && nihss !== null && nihss >= 20;
     if (gcs === null || nihss === null) return;
 
     // 1) Ichki ziddiyat: koma NIHSS ning ong punktlari orqali avtomatik ball beradi
@@ -308,9 +308,9 @@
 
     /* --- Ong chuqur buzilgan: nafas yo'llari -> KEYIN vizualizatsiya --- */
     var chuqurOng = gcs !== null && gcs <= 8;
-    // Ishemik insultda GCS ≤8 va NIHSS ≥20 bo'lsa — birinchi va yagona
-    // shoshilinch ko'rsatma intubatsiya; angiografiya bu blokda ko'rsatilmaydi.
-    var faqatIntubatsiya = ishemik && chuqurOng && nihss !== null && nihss >= 20;
+    // Ishemik insultda NIHSS ≥20 bo'lsa angiografiya umuman tavsiya etilmaydi —
+    // GCS qanday bo'lishidan qat'i nazar.
+    var faqatIntubatsiya = ishemik && nihss !== null && nihss >= 20;
     if (chuqurOng) {
       r.kodlar.push('INTUBATSIYA');
       r.tavsiya.push({ matn: 'Endotraxeal intubatsiya — GCS ≤8, nafas yo\'llari himoyalanmagan', muhim: true });

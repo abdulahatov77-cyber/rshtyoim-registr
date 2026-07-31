@@ -558,19 +558,16 @@ const Calculators = {
   // NIHSS — insult og'irligi bo'yicha.
   // MUHIM: gemorragik insultda TLT/endovaskulyar muolaja umuman ko'rib chiqilmaydi —
   // shuning uchun tavsiyada bu muolajalar tilga ham olinmaydi.
-  nihssTavsiya(total, insultTuri, gcsBall) {
+  nihssTavsiya(total, insultTuri) {
     const n = parseInt(total);
     if (isNaN(n) || n < 0 || n > 42) return null;
     const gem = /gemorragik/i.test(insultTuri || '');
 
-    // QOIDA: ishemik insult + GCS ≤ 8 + NIHSS ≥ 20 —
-    // yagona shoshilinch ko'rsatma intubatsiya. Bu bosqichda angiografiya
-    // (KTA / MSKT angiografiya) umuman tavsiya etilmaydi.
-    // Ikkala ball ham chegaradan o'tishi shart; GCS bo'sh bo'lsa qoida ishlamaydi.
-    const g = parseInt(gcsBall);
-    if (/ishemik/i.test(insultTuri || '') && !isNaN(g) && g <= 8 && n >= 20) return {
-      daraja: "Og'ir — nafas yo'llari xavf ostida",
-      matn: "Juda og'ir ishemik insult. Birinchi navbatda <b>nafas yo'llarini himoyalash</b> (yuqoridagi GCS ko'rsatmasiga qarang), so'ng reanimatsiyada intensiv kuzatuv.",
+    // QOIDA: ishemik insultda NIHSS ≥ 20 bo'lsa angiografiya (KTA / MSKT
+    // angiografiya) umuman tavsiya etilmaydi — GCS qanday bo'lishidan qat'i nazar.
+    if (/ishemik/i.test(insultTuri || '') && n >= 20) return {
+      daraja: "Juda og'ir",
+      matn: "Juda og'ir ishemik insult. <b>Reanimatsiya sharoitida intensiv kuzatuv</b>, nafas yo'llarini himoyalash birinchi darajali vazifa.",
       rang: '#b91c1c', fon: '#fef2f2', chegara: '#fecaca', belgi: '🔴'
     };
 
@@ -668,14 +665,6 @@ const Calculators = {
         || '';
   },
 
-  // Formadagi yoki kartadagi joriy GCS bali
-  _joriyGcs() {
-    return document.getElementById('gcs_bali')?.value
-        || (typeof InsultYangiPage !== 'undefined' ? (InsultYangiPage._data || {}).gcs_bali : '')
-        || (typeof BemorKartaPage !== 'undefined' ? (BemorKartaPage._patient || {}).gcs_bali : '')
-        || '';
-  },
-
   // Tavsiya blokining HTML ko'rinishi
   tavsiyaHtml(t, ball, nomi) {
     if (!t) return '';
@@ -701,13 +690,7 @@ const Calculators = {
     if (!box) return;
     box.innerHTML = isGcs
       ? this.tavsiyaHtml(this.gcsTavsiya(total), total, 'Glazgo (GCS)')
-      : this.tavsiyaHtml(this.nihssTavsiya(total, this._joriyInsultTuri(), this._joriyGcs()), total, 'NIHSS');
-    // GCS o'zgarsa NIHSS tavsiyasi ham qayta hisoblanadi (ikkalasi bir qoidada bog'liq)
-    if (isGcs) {
-      const nBox = document.getElementById('nihss-tavsiya');
-      const nVal = document.getElementById('nihss_qabul')?.value;
-      if (nBox) nBox.innerHTML = this.tavsiyaHtml(this.nihssTavsiya(nVal, this._joriyInsultTuri(), total), nVal, 'NIHSS');
-    }
+      : this.tavsiyaHtml(this.nihssTavsiya(total, this._joriyInsultTuri()), total, 'NIHSS');
     if (typeof InsultYangiPage !== 'undefined' && InsultYangiPage.cdssYangilash) InsultYangiPage.cdssYangilash();
   },
 
