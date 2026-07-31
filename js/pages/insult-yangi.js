@@ -84,6 +84,7 @@ const InsultYangiPage = {
       </div>
     `;
     initIcons();
+    InsultYangiPage.cdssYangilash();
   },
 
   field(id, label, inputHtml, required = false, hint = '') {
@@ -349,7 +350,7 @@ const InsultYangiPage = {
           <p class="text-xs text-slate-400 mt-1">24 soatgacha — aniq soat, 24 soatdan ko'p bo'lsa "24 soatdan ortiq" avtomatik ko'rinadi. Uyquda boshlangan bo'lsa <span class="underline cursor-pointer text-blue-500" onclick="InsultYangiPage.setSimptomUyqu()">shu yerni bosing</span>.</p>
         `,true)}
         ${this.field('nihss_qabul','NIHSS qabul paytida (0–42 ball)',`<div class="flex gap-2 items-center"><input id="nihss_qabul" type="number" min="0" max="42" class="form-input w-full bg-slate-50 cursor-not-allowed" value="${d.nihss_qabul||''}" placeholder="Kalkulyator orqali to'ldiring" readonly style="pointer-events:none;opacity:0.8"/><button type="button" class="flex-shrink-0 bg-blue-100 text-blue-700 hover:bg-blue-200 px-3 py-2 rounded-lg text-sm font-bold shadow-sm transition-colors border border-blue-200 flex items-center gap-1" onclick="Calculators.openNIHSS('nihss_qabul')">🧮 Hisoblash</button></div>
-          <div id="nihss-tavsiya">${Calculators.tavsiyaHtml(Calculators.nihssTavsiya(d.nihss_qabul, d.insult_turi), d.nihss_qabul, 'NIHSS')}</div>`,true)}
+          <div id="nihss-tavsiya">${Calculators.tavsiyaHtml(Calculators.nihssTavsiya(d.nihss_qabul, d.insult_turi, d.gcs_bali), d.nihss_qabul, 'NIHSS')}</div>`,true)}
         ${this.field('gcs_bali','Glazgo shkalasi (GCS), (3-15 ball)',`<div class="flex gap-2 items-center"><input id="gcs_bali" type="number" min="3" max="15" class="form-input w-full bg-slate-50 cursor-not-allowed" value="${d.gcs_bali||''}" placeholder="Kalkulyator orqali to'ldiring" readonly style="pointer-events:none;opacity:0.8"/><button type="button" class="flex-shrink-0 bg-purple-100 text-purple-700 hover:bg-purple-200 px-3 py-2 rounded-lg text-sm font-bold shadow-sm transition-colors border border-purple-200 flex items-center gap-1" onclick="Calculators.openGCS('gcs_bali')">🧮 Hisoblash</button></div>
           <div id="gcs-tavsiya">${Calculators.tavsiyaHtml(Calculators.gcsTavsiya(d.gcs_bali), d.gcs_bali, 'Glazgo (GCS)')}</div>`,true)}
         ${this.field('birlamchi_yoki_takroriy','Birlamchi yoki takroriy?',`<select id="birlamchi_yoki_takroriy" class="form-select">
@@ -382,7 +383,40 @@ const InsultYangiPage = {
       <div class="mt-4 border-t border-dashed border-gray-200 pt-4">
         ${this.field('aha_bali','AHA (American Heart Association) savolnomasi bali',`<div class="flex gap-2 items-center"><input id="aha_bali" type="number" class="form-input w-full bg-slate-50 cursor-not-allowed" value="${d.aha_bali||''}" placeholder="Kalkulyator orqali to'ldiring" readonly style="pointer-events:none;opacity:0.8"/><button type="button" class="flex-shrink-0 bg-rose-100 text-rose-700 hover:bg-rose-200 px-3 py-2 rounded-lg text-sm font-bold shadow-sm transition-colors border border-rose-200 flex items-center gap-1" onclick="Calculators.openAHA('aha_bali')">🧮 Hisoblash</button></div>`,true)}
       </div>
+
+      <!-- CDSS — klinik qarorlarni qo'llab-quvvatlash bloki (cdss.js) -->
+      <div id="cdss-baholash"></div>
     `;
+  },
+
+  // CDSS blokini qayta hisoblash. Ballardan biri o'zgarganda chaqiriladi.
+  // Bo'sh maydonlar 0 ga aylantirilmaydi — null holida uzatiladi (modul o'zi
+  // ogohlantirish chiqaradi).
+  cdssYangilash() {
+    const box = document.getElementById('cdss-baholash');
+    if (!box) return;
+    if (typeof CDSS === 'undefined' || typeof CDSSUI === 'undefined') return;
+    const d = InsultYangiPage._data || {};
+
+    // Klinik ma'lumot boshlanmaguncha blok chizilmaydi (bo'sh formada shovqin bo'lmasin)
+    if (!d.insult_turi && !d.gcs_bali && !d.nihss_qabul && !d.mskt) { box.innerHTML = ''; return; }
+
+    const [sys, dia] = String(d.qon_bosimi || '').split('/');
+    const soatRaw = parseInt(d._simptom_soat_raw);
+    const uyqu = /uyqu/i.test(d.simptom_vaqt || '');
+
+    CDSSUI.baholash(box, CDSS.insult({
+      insult_turi: d.insult_turi || null,
+      gcs:         d.gcs_bali   || null,
+      nihss:       d.nihss_qabul || null,
+      aspects:     d.mskt_angiografiya === 'Ha' ? InsultYangiPage._calcAspects(d) : null,
+      mskt:        d.mskt || null,
+      boshlanish_daqiqa: (!uyqu && !isNaN(soatRaw) && soatRaw > 0) ? soatRaw * 60 : null,
+      uygonish:    uyqu,
+      qabul_vaqt:  d.qabul_vaqt || null,
+      sbp:         sys || null,
+      dbp:         dia || null
+    }));
   },
 
   // ============ 4-BO'LIM: Diagnostika va Muolaja ============
@@ -599,6 +633,7 @@ const InsultYangiPage = {
     labelEl.className = `text-sm font-bold px-3 py-2 rounded-lg border ${isOver ? 'bg-red-50 text-red-600 border-red-200' : 'bg-green-50 text-green-700 border-green-200'}`;
     hiddenEl.value = label;
     InsultYangiPage._data.simptom_vaqt = label;
+    InsultYangiPage.cdssYangilash();
   },
 
   _renderAspects(d) {
@@ -710,6 +745,7 @@ const InsultYangiPage = {
     if (rawEl) rawEl.value = '';
     InsultYangiPage._data.simptom_vaqt = label;
     InsultYangiPage._data._simptom_soat_raw = '';
+    InsultYangiPage.cdssYangilash();
   },
 
   onMsktChange(val) {
@@ -783,6 +819,7 @@ const InsultYangiPage = {
       ['aspects_c','aspects_l','aspects_ic','aspects_i','aspects_m1','aspects_m2','aspects_m3','aspects_m4','aspects_m5','aspects_m6']
         .forEach(k => { if (d[k]) d[k] = false; });
     }
+    InsultYangiPage.cdssYangilash();
   },
 
   onOtkazilganMuassasa(val) {
