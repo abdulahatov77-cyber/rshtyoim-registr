@@ -581,21 +581,21 @@ const Calculators = {
       daraja: "O'rtacha",
       matn: gem
         ? "<b>Neyroxirurg konsultatsiyasi</b> va qon bosimi nazorati talab etiladi. Gematoma hajmi va siljish belgilariga qarab jarrohlik ko'rsatmasi baholanadi. TLT va tromboekstraksiya <b>qarshi ko'rsatma</b>."
-        : "Vaqt oynasi ichida bo'lsa <b>TLT ko'rsatmasini baholang</b>. NIHSS ≥ 6 da yirik tomir okklyuziyasi ehtimoli yuqori — <b>angiografiya / tromboekstraksiya</b> imkoniyatini ko'rib chiqing.",
+        : "Yirik tomir okklyuziyasi ehtimoli bor — <b>MSKT angiografiya ko'rsatmasini baholang</b>. Vaqt oynasi ichida bo'lsa TLT imkoniyati ham ko'rib chiqiladi.",
       rang: '#b45309', fon: '#fffbeb', chegara: '#fde68a', belgi: '🟡'
     };
     if (n <= 20) return {
       daraja: "O'rtacha-og'ir",
       matn: gem
         ? "<b>Neyroxirurgni shoshilinch chaqiring</b> — dekompressiv trepanatsiya yoki gematoma evakuatsiyasi ko'rsatmasini baholang. Intensiv kuzatuv, qon bosimi va ichki bosh bosimi nazorati."
-        : "Yirik tomir okklyuziyasi ehtimoli yuqori — <b>angiografiya va endovaskulyar muolaja</b> ko'rsatmasini shoshilinch baholang. Intensiv kuzatuv talab etiladi.",
+        : "Yirik tomir okklyuziyasi ehtimoli yuqori — <b>MSKT angiografiya</b> o'tkazib, tromboekstraksiya ko'rsatmasini shoshilinch baholang. Intensiv kuzatuv talab etiladi.",
       rang: '#c2410c', fon: '#fff7ed', chegara: '#fed7aa', belgi: '🟠'
     };
     return {
       daraja: "Og'ir",
       matn: gem
         ? "Yuqori o'lim xavfi. <b>Reanimatsiya va shoshilinch neyroxirurgik baholash</b>, nafas va gemodinamika nazorati. Endovaskulyar muolaja va TLT <b>ko'rsatilmagan</b>."
-        : "Yuqori asorat va o'lim xavfi. <b>Reanimatsiya sharoitida intensiv kuzatuv</b>, nafas va gemodinamika nazorati. Endovaskulyar muolaja ko'rsatmasi shoshilinch baholanadi.",
+        : "Yuqori asorat va o'lim xavfi. <b>Reanimatsiya sharoitida intensiv kuzatuv</b>, nafas va gemodinamika nazorati. <b>MSKT angiografiya</b> va endovaskulyar muolaja ko'rsatmasi shoshilinch baholanadi.",
       rang: '#b91c1c', fon: '#fef2f2', chegara: '#fecaca', belgi: '🔴'
     };
   },
