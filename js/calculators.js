@@ -556,8 +556,8 @@ const Calculators = {
   },
 
   // NIHSS — insult og'irligi bo'yicha.
-  // MUHIM: gemorragik insultda TLT va endovaskulyar muolaja QARSHI KO'RSATMA —
-  // shuning uchun tavsiya tashxisga qarab o'zgaradi.
+  // MUHIM: gemorragik insultda TLT/endovaskulyar muolaja umuman ko'rib chiqilmaydi —
+  // shuning uchun tavsiyada bu muolajalar tilga ham olinmaydi.
   nihssTavsiya(total, insultTuri) {
     const n = parseInt(total);
     if (isNaN(n) || n < 0 || n > 42) return null;
@@ -573,14 +573,14 @@ const Calculators = {
     if (n <= 4) return {
       daraja: 'Yengil',
       matn: gem
-        ? "Yengil defitsit. <b>Qon bosimi nazorati</b> (sistolik &lt; 140 mm sim.ust.), takroriy KT bilan gematoma dinamikasini kuzating. TLT va endovaskulyar muolaja <b>ko'rsatilmagan</b>."
+        ? "Yengil defitsit. <b>Qon bosimi nazorati</b> (sistolik &lt; 140 mm sim.ust.), takroriy KT bilan gematoma dinamikasini kuzating."
         : 'Yengil defitsit. Trombolitik terapiya ko‘rsatmasi individual baholanadi (vaqt oynasi va defitsit ahamiyatiga qarab).',
       rang: '#15803d', fon: '#f0fdf4', chegara: '#bbf7d0', belgi: '🟢'
     };
     if (n <= 15) return {
       daraja: "O'rtacha",
       matn: gem
-        ? "<b>Neyroxirurg konsultatsiyasi</b> va qon bosimi nazorati talab etiladi. Gematoma hajmi va siljish belgilariga qarab jarrohlik ko'rsatmasi baholanadi. TLT va tromboekstraksiya <b>qarshi ko'rsatma</b>."
+        ? "<b>Neyroxirurg konsultatsiyasi</b> va qon bosimi nazorati talab etiladi. Gematoma hajmi va siljish belgilariga qarab jarrohlik ko'rsatmasi baholanadi."
         : "Yirik tomir okklyuziyasi ehtimoli bor — <b>MSKT angiografiya ko'rsatmasini baholang</b>. Vaqt oynasi ichida bo'lsa TLT imkoniyati ham ko'rib chiqiladi.",
       rang: '#b45309', fon: '#fffbeb', chegara: '#fde68a', belgi: '🟡'
     };
@@ -594,7 +594,7 @@ const Calculators = {
     return {
       daraja: "Og'ir",
       matn: gem
-        ? "Yuqori o'lim xavfi. <b>Reanimatsiya va shoshilinch neyroxirurgik baholash</b>, nafas va gemodinamika nazorati. Endovaskulyar muolaja va TLT <b>ko'rsatilmagan</b>."
+        ? "Yuqori o'lim xavfi. <b>Reanimatsiya va shoshilinch neyroxirurgik baholash</b>, nafas va gemodinamika nazorati."
         : "Yuqori asorat va o'lim xavfi. <b>Reanimatsiya sharoitida intensiv kuzatuv</b>, nafas va gemodinamika nazorati. Shoshilinch <b>MSKT angiografiya</b> o'tkazing.",
       rang: '#b91c1c', fon: '#fef2f2', chegara: '#fecaca', belgi: '🔴'
     };
