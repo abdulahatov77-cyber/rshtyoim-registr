@@ -31,7 +31,13 @@ function showToast(msg, type = 'info', duration = 4000) {
 
 function showModal({ title, body, footer, id = 'modal-main', size = 'md' }) {
   closeModal();
-  const container = document.getElementById('modal-container');
+  let container = document.getElementById('modal-container');
+  // Konteyner yo'q bo'lsa (masalan DOM qayta qurilgan bo'lsa) — yaratamiz
+  if (!container) {
+    container = document.createElement('div');
+    container.id = 'modal-container';
+    document.body.appendChild(container);
+  }
   const maxW = size === 'lg' ? '720px' : size === 'sm' ? '380px' : '520px';
   container.innerHTML = `
     <div class="modal-overlay" id="${id}-backdrop" onclick="if(event.target===this)closeModal()">

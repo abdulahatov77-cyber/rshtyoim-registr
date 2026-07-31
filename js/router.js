@@ -77,11 +77,17 @@ const Router = {
         Router.go('login');
         return;
       }
+      // Xato izini ham ko'rsatamiz — qaysi fayl/qatorda sinayotgani darhol ko'rinadi
+      const stack = esc(String(err.stack || '').split('\n').slice(0, 6).join('\n'));
       app.innerHTML = `<div class="flex items-center justify-center min-h-screen">
-        <div class="text-center p-8">
+        <div class="text-center p-8 max-w-2xl">
           <div class="text-5xl mb-4">⚠️</div>
           <h2 class="text-lg font-bold text-slate-700 mb-2">Sahifani yuklashda xato</h2>
           <p class="text-slate-400 text-sm mb-4">${esc(err.message)}</p>
+          ${stack ? `<details class="text-left mb-4">
+            <summary class="text-xs text-slate-400 cursor-pointer select-none">Texnik tafsilot (dasturchi uchun)</summary>
+            <pre style="white-space:pre-wrap;font-size:11px;color:#64748b;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:10px;margin-top:6px;text-align:left">${stack}</pre>
+          </details>` : ''}
           <button class="btn btn-primary" onclick="Router.go('dashboard')">Dashboard ga qaytish</button>
         </div>
       </div>`;

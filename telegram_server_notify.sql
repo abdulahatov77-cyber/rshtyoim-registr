@@ -34,7 +34,7 @@ REVOKE ALL ON telegram_notify_throttle FROM anon, authenticated;
 CREATE OR REPLACE FUNCTION notify_telegram_new_patient() RETURNS trigger
 LANGUAGE plpgsql SECURITY DEFINER AS $fn$
 DECLARE
-  SERVER_KEY constant text := 'SIZNING_MAXFIY_KALIT';
+  SERVER_KEY constant text := '821534f334a317790be1802bd757d5e4d664b4c9449313b6';
   API_URL    constant text := 'https://rshtyoim-registr.vercel.app/api/telegram';
   MAX_MSGS   constant int  := 30;              -- 5 daqiqadagi maksimal xabar
   j        jsonb := to_jsonb(NEW);
@@ -50,6 +50,7 @@ DECLARE
   g        int;
   gi       text;
   gt       text;
+  gcs_v    text;
   after_muolaja text := '';
   detail   text;
   shifokor text;
@@ -117,9 +118,43 @@ BEGIN
            || '📊 <b>NIHSS:</b> ' || coalesce(j->>'nihss_qabul', '—')
            || ' | <b>GCS:</b> ' || coalesce(j->>'gcs_bali', j->>'gcs_qabul', '—') || nl
            || '📋 <b>AHA:</b> ' || coalesce(nullif(j->>'aha_bali', ''), '—');
-    IF (j->>'nihss_qabul') ~ '^\d+$' AND (j->>'nihss_qabul')::int >= 15 THEN
-      kritik := nl || '⚠️ <b>DIQQAT: OG''IR HOLAT! (NIHSS ≥ 15)</b>';
+
+    -- Klinik tavsiya: Glazgo (GCS) bo'yicha
+    gcs_v := coalesce(j->>'gcs_bali', j->>'gcs_qabul', '');
+    IF gcs_v ~ '^\d+$' THEN
+      g := gcs_v::int;
+      IF g BETWEEN 3 AND 8 THEN
+        detail := detail || nl || '🔴 <b>GCS ' || g::text || ' — og''ir:</b> intubatsiya va sun''iy nafas olish apparatiga ulash tavsiya etiladi, reanimatsiyaga o''tkazing';
+      ELSIF g BETWEEN 9 AND 12 THEN
+        detail := detail || nl || '🟡 <b>GCS ' || g::text || ' — o''rtacha:</b> nafas va ong holatini uzluksiz kuzating, intubatsiyaga tayyor turing';
+      END IF;
     END IF;
+
+    -- Klinik tavsiya: NIHSS bo'yicha.
+    -- MUHIM: gemorragik insultda TLT va endovaskulyar muolaja QARSHI KO'RSATMA.
+    IF (j->>'nihss_qabul') ~ '^\d+$' THEN
+      g := (j->>'nihss_qabul')::int;
+      IF coalesce(j->>'insult_turi', '') ILIKE '%gemorragik%' THEN
+        IF g >= 21 THEN
+          detail := detail || nl || '🔴 <b>NIHSS ' || g::text || ' — og''ir:</b> reanimatsiya va shoshilinch neyroxirurgik baholash. TLT/endovaskulyar muolaja ko''rsatilmagan';
+        ELSIF g >= 16 THEN
+          detail := detail || nl || '🟠 <b>NIHSS ' || g::text || ' — o''rtacha-og''ir:</b> neyroxirurgni shoshilinch chaqiring — dekompressiv trepanatsiya/gematoma evakuatsiyasi ko''rsatmasini baholang';
+        ELSIF g >= 6 THEN
+          detail := detail || nl || '🟡 <b>NIHSS ' || g::text || ':</b> neyroxirurg konsultatsiyasi va qon bosimi nazorati. TLT/tromboekstraksiya qarshi ko''rsatma';
+        END IF;
+      ELSE
+        IF g >= 21 THEN
+          detail := detail || nl || '🔴 <b>NIHSS ' || g::text || ' — og''ir insult:</b> reanimatsiyada intensiv kuzatuv, endovaskulyar muolaja ko''rsatmasini shoshilinch baholang';
+        ELSIF g >= 16 THEN
+          detail := detail || nl || '🟠 <b>NIHSS ' || g::text || ' — o''rtacha-og''ir:</b> yirik tomir okklyuziyasi ehtimoli yuqori, angiografiya/tromboekstraksiyani shoshilinch baholang';
+        ELSIF g >= 6 THEN
+          detail := detail || nl || '🟡 <b>NIHSS ' || g::text || ':</b> yirik tomir okklyuziyasi ehtimoli bor — TLT va angiografiya ko''rsatmasini baholang';
+        END IF;
+      END IF;
+    END IF;
+
+    -- Eski "DIQQAT: OG'IR HOLAT (NIHSS ≥ 15)" qatori olib tashlandi —
+    -- yuqoridagi NIHSS tavsiyasi allaqachon og'irlik darajasini aytadi (takror bo'lardi).
   END IF;
 
   shifokor := tg_esc(coalesce(nullif(j->>'shifokor_fio', ''), '—'));
