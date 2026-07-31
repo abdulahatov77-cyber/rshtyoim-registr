@@ -594,8 +594,8 @@ const Calculators = {
     return {
       daraja: "Og'ir",
       matn: gem
-        ? "Yuqori o'lim xavfi. <b>Reanimatsiya va shoshilinch neyroxirurgik baholash</b>, nafas va gemodinamika nazorati."
-        : "Yuqori asorat va o'lim xavfi. <b>Reanimatsiya sharoitida intensiv kuzatuv</b>, nafas va gemodinamika nazorati. Shoshilinch <b>MSKT angiografiya</b> o'tkazing.",
+        ? "Yuqori o'lim xavfi. <b>Reanimatsiya va shoshilinch neyroxirurgik baholash</b>."
+        : "Yuqori asorat va o'lim xavfi. <b>Reanimatsiya sharoitida intensiv kuzatuv</b>. Shoshilinch <b>MSKT angiografiya</b> o'tkazing.",
       rang: '#b91c1c', fon: '#fef2f2', chegara: '#fecaca', belgi: '🔴'
     };
   },
