@@ -181,6 +181,22 @@ h2, .section-title { font-size: var(--h2-size); font-weight: var(--h2-weight); c
 .card-header { margin-bottom:20px; display:flex; align-items:center; justify-content:space-between; }
 .card-title { font-size:16px; font-weight:700; color:var(--text-dark); }
 
+/* Statistika kartochkalari (admin, bemor harakati) */
+.stat-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:16px; }
+.stat-card {
+  display:flex; align-items:center; gap:14px;
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: 18px 20px;
+  box-shadow: var(--shadow-sm); transition: box-shadow 0.2s, transform 0.2s;
+}
+.stat-card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
+.stat-icon {
+  width:46px; height:46px; flex-shrink:0; border-radius:var(--radius-md);
+  display:flex; align-items:center; justify-content:center;
+}
+.stat-value { font-size:24px; font-weight:800; line-height:1.15; color:var(--text-dark); }
+.stat-label { font-size:12px; font-weight:600; color:var(--text-gray); margin-top:2px; }
+
 
 /* ==================== BUTTONS ==================== */
 .btn {
@@ -405,6 +421,12 @@ input:focus, select:focus {
 
   /* 2 ustunli kichik maydonlar (badge, jins) saqlansin */
   .grid-cols-2-keep { grid-template-columns: repeat(2, 1fr) !important; }
+
+  /* Statistika kartochkalari — inline grid-template-columns'ni ham bekor qilamiz */
+  .stat-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 10px !important; }
+  .stat-card { padding: 12px !important; gap: 10px !important; }
+  .stat-icon { width: 36px !important; height: 36px !important; }
+  .stat-value { font-size: 19px !important; }
 
   /* Jadval — gorizontal scroll */
   .overflow-x-auto, table { overflow-x: auto !important; -webkit-overflow-scrolling: touch; }
