@@ -158,6 +158,8 @@ const BemorlarPage = {
         <div class="card-header bg-gray-50 !mb-0 !border-b-gray-200">
           <span class="card-title text-gray-900" id="bl-count">Yuklanmoqda...</span>
           <div class="flex gap-3 items-center">
+            <!-- Shaxsiy ma'lumot maskasi — ko'z tugmasi shu yerga qo'yiladi -->
+            <span id="pdToggleBox"></span>
             ${BemorlarPage._profile?.role === 'super_admin' ? `
             <button id="bl-delete-btn" class="btn flex items-center gap-2 bg-red-600 text-white hover:bg-red-700 transition-colors" style="display:none" onclick="BemorlarPage.deleteSelected()">
               ${icon('trash-2', 16)} <span id="bl-delete-count">O'chirish</span>
@@ -181,6 +183,14 @@ const BemorlarPage = {
     `;
     BemorlarPage.searchDebounced = Utils.debounce(BemorlarPage.applyFilter, 500);
     initIcons();
+
+    // Ko'z tugmasi — takroriy qo'shilmasin. Holat o'zgarganda faqat jadval
+    // qayta chiziladi (renderTable _allData dan ishlaydi, yangi so'rov yubormaydi).
+    if (typeof PD !== 'undefined' && !document.getElementById('pdToggleBtn')) {
+      PD.mountToggle('#pdToggleBox', () => {
+        if (BemorlarPage._allData) BemorlarPage.renderTable();
+      });
+    }
   },
 
   _getMuassasaOptions(viloyat, selected) {
@@ -378,8 +388,8 @@ const BemorlarPage = {
                     ${icon(isInf ? 'heart' : 'brain', 14)} ${isInf ? 'Infarkt' : 'Insult'}
                   </span>
                 </td>
-                <td class="font-mono text-xs text-gray-500">${esc(p.kt_no)}</td>
-                <td><div class="font-semibold text-gray-900">${esc(p.fio) || '—'}</div></td>
+                <td class="font-mono text-xs text-gray-500">${esc(PD.ktno(p.kt_no))}</td>
+                <td><div class="font-semibold text-gray-900">${esc(PD.fio(p.fio)) || '—'}</div></td>
                 <td>${esc(age)} yosh · ${esc(p.jins || p.jinsi) || '—'}</td>
                 <td><div class="flex items-center gap-1.5 text-gray-600">${icon('map-pin', 14)} ${esc(p.viloyat) || '—'}</div></td>
                 <td>
@@ -457,8 +467,9 @@ const BemorlarPage = {
     if (BemorlarPage._totalCount > BemorlarPage._allData.length) {
       showToast(`⚠️ Faqat ko\'rinayotgan ${BemorlarPage._allData.length} ta bemor eksport qilinadi (jami: ${BemorlarPage._totalCount}). To\'liq eksport uchun barcha sahifalarni ko\'ring yoki sana filtri bilan cheklang.`, 'warning', 8000);
     }
+    // Eksport joriy holatga ergashadi: tugma yopiq bo'lsa F.I.O. maskalangan chiqadi
     Utils.exportCSV(BemorlarPage._allData.map(p=>({
-      Turi: p._type, 'K/T No': p.kt_no, 'F.I.O': p.fio,
+      Turi: p._type, 'K/T No': PD.ktno(p.kt_no), 'F.I.O': PD.fio(p.fio),
       Yosh: Utils.calculateAge(p.tugilgan_sana || p.tugilgan_yil) || '',
       Viloyat: p.viloyat, Muassasa: p.muassasa,
       'Qabul vaqti': Utils.formatDateTime(p.qabul_vaqt),
