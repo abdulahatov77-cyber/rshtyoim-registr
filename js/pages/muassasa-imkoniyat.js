@@ -5,6 +5,21 @@ const MuassasaImkoniyatPage = {
   rows: [],
   dirty: new Map(),
 
+  // Marshrut oqimi tahlili uchun daraja. Tartib — yuqoridan pastga.
+  DARAJALAR: [
+    ['bosh_markaz',    'Bosh markaz'],
+    ['filial',         'Filial'],
+    ['politravma',     'Politravma markazi'],
+    ['ixtisoslashgan', 'Ixtisoslashgan markaz'],
+    ['shtb',           'ShTB (shahar)'],
+    ['ttb',            'TTB (tuman)'],
+    ['boshqa',         'Boshqa']
+  ],
+
+  darajaNomi(k) {
+    return (this.DARAJALAR.find(d => d[0] === k) || [])[1] || '';
+  },
+
   async render() {
     const user = await Auth.getUser();
     const isSA = await Profile.isSuperAdmin();
@@ -26,6 +41,11 @@ const MuassasaImkoniyatPage = {
                 <option value="angio">Faqat Angiografiya bor</option>
                 <option value="none">Hech qaysisi yo'q</option>
               </select>
+              <select id="mi-daraja-filter" class="form-select" style="max-width:220px">
+                <option value="">Barcha darajalar</option>
+                <option value="__bosh__">⚠️ Daraja belgilanmagan</option>
+                ${MuassasaImkoniyatPage.DARAJALAR.map(([k, n]) => `<option value="${k}">${n}</option>`).join('')}
+              </select>
             </div>
             <button id="mi-save" class="btn btn-primary flex items-center gap-2" disabled style="opacity:0.5">
               ${icon('save', 16)} Saqlash
@@ -39,14 +59,15 @@ const MuassasaImkoniyatPage = {
               <thead style="position:sticky;top:0;z-index:1">
                 <tr>
                   <th style="width:4%">#</th>
-                  <th style="width:22%">Viloyat</th>
+                  <th style="width:18%">Viloyat</th>
                   <th>Muassasa</th>
-                  <th style="width:10%;text-align:center">MSKT</th>
-                  <th style="width:12%;text-align:center">Angiografiya</th>
+                  <th style="width:18%">Daraja</th>
+                  <th style="width:9%;text-align:center">MSKT</th>
+                  <th style="width:11%;text-align:center">Angiografiya</th>
                 </tr>
               </thead>
               <tbody id="mi-tbody">
-                <tr><td colspan="5" class="text-center py-10 text-gray-400">Yuklanmoqda...</td></tr>
+                <tr><td colspan="6" class="text-center py-10 text-gray-400">Yuklanmoqda...</td></tr>
               </tbody>
             </table>
           </div>
@@ -61,8 +82,8 @@ const MuassasaImkoniyatPage = {
       this.rows = await DB.getMuassasalarFiltered(null, null);
     } catch (e) {
       document.getElementById('mi-tbody').innerHTML =
-        `<tr><td colspan="5" class="text-center py-10 text-red-500">Xatolik: ${esc(e.message)}<br>
-         <span class="text-xs text-gray-400">muassasa_imkoniyat.sql skripti Supabase'da ishga tushirilganini tekshiring</span></td></tr>`;
+        `<tr><td colspan="6" class="text-center py-10 text-red-500">Xatolik: ${esc(e.message)}<br>
+         <span class="text-xs text-gray-400">muassasa_imkoniyat.sql va muassasa_daraja.sql skriptlari Supabase'da ishga tushirilganini tekshiring</span></td></tr>`;
       return;
     }
     this.dirty.clear();
@@ -73,17 +94,27 @@ const MuassasaImkoniyatPage = {
   bind() {
     document.getElementById('mi-search').oninput  = Utils.debounce(() => this.draw(), 300);
     document.getElementById('mi-filter').onchange = () => this.draw();
+    document.getElementById('mi-daraja-filter').onchange = () => this.draw();
     document.getElementById('mi-save').onclick    = () => this.save();
 
     document.getElementById('mi-tbody').onchange = (e) => {
-      const cb = e.target;
-      if (cb.type !== 'checkbox') return;
-      const id  = Number(cb.dataset.id);
+      const el = e.target;
+      const id  = Number(el.dataset.id);
+      if (!id) return;
       const row = this.rows.find(r => r.id === id);
       if (!row) return;
-      if (cb.dataset.field === 'mskt') row.mskt_bor = cb.checked;
-      else                             row.angiografiya_bor = cb.checked;
-      this.dirty.set(id, { id, mskt: row.mskt_bor, angio: row.angiografiya_bor });
+
+      if (el.dataset.field === 'daraja')    row.daraja = el.value || null;
+      else if (el.dataset.field === 'mskt') row.mskt_bor = el.checked;
+      else if (el.dataset.field === 'angio') row.angiografiya_bor = el.checked;
+      else return;
+
+      this.dirty.set(id, {
+        id,
+        mskt:   row.mskt_bor,
+        angio:  row.angiografiya_bor,
+        daraja: row.daraja || ''
+      });
       const btn = document.getElementById('mi-save');
       btn.disabled = false;
       btn.style.opacity = '';
@@ -96,6 +127,7 @@ const MuassasaImkoniyatPage = {
   filtered() {
     const q = (document.getElementById('mi-search')?.value || '').toLowerCase().trim();
     const f = document.getElementById('mi-filter')?.value || '';
+    const d = document.getElementById('mi-daraja-filter')?.value || '';
     return this.rows.filter(r => {
       const okQ = !q
         || (r.nomi || '').toLowerCase().includes(q)
@@ -104,7 +136,10 @@ const MuassasaImkoniyatPage = {
                 : f === 'mskt'  ? r.mskt_bor
                 : f === 'angio' ? r.angiografiya_bor
                 : (!r.mskt_bor && !r.angiografiya_bor);
-      return okQ && okF;
+      const okD = d === ''         ? true
+                : d === '__bosh__' ? !r.daraja
+                : r.daraja === d;
+      return okQ && okF && okD;
     });
   },
 
@@ -116,6 +151,15 @@ const MuassasaImkoniyatPage = {
             <td class="text-xs text-gray-400">${i + 1}</td>
             <td class="text-sm text-gray-600">${esc(r.viloyat || '—')}</td>
             <td class="text-sm font-semibold text-gray-800">${esc(r.nomi)}</td>
+            <td>
+              <select data-id="${r.id}" data-field="daraja"
+                      class="form-select !py-1 !text-xs"
+                      style="${r.daraja ? '' : 'border-color:#fca5a5;background:#fef2f2'}">
+                <option value="">— belgilanmagan —</option>
+                ${this.DARAJALAR.map(([k, n]) =>
+                  `<option value="${k}" ${r.daraja === k ? 'selected' : ''}>${n}</option>`).join('')}
+              </select>
+            </td>
             <td style="text-align:center">
               <input type="checkbox" data-id="${r.id}" data-field="mskt"
                      style="width:18px;height:18px;accent-color:#2563eb;cursor:pointer"
@@ -127,18 +171,21 @@ const MuassasaImkoniyatPage = {
                      ${r.angiografiya_bor ? 'checked' : ''}>
             </td>
           </tr>`).join('')
-      : `<tr><td colspan="5" class="text-center py-10 text-gray-400">Topilmadi</td></tr>`;
+      : `<tr><td colspan="6" class="text-center py-10 text-gray-400">Topilmadi</td></tr>`;
     this.drawSummary(list.length);
   },
 
   drawSummary(shown) {
     const m = this.rows.filter(r => r.mskt_bor).length;
     const a = this.rows.filter(r => r.angiografiya_bor).length;
+    const d = this.rows.filter(r => !r.daraja).length;
     const n = shown ?? this.filtered().length;
     const el = document.getElementById('mi-summary');
-    if (el) el.textContent =
+    if (!el) return;
+    el.innerHTML =
       `Jami ${this.rows.length} muassasa · MSKT: ${m} ta · Angiografiya: ${a} ta · Ko'rsatilmoqda: ${n} ta` +
-      (this.dirty.size ? ` · Saqlanmagan o'zgarish: ${this.dirty.size} ta` : '');
+      (this.dirty.size ? ` · <b>Saqlanmagan o'zgarish: ${this.dirty.size} ta</b>` : '') +
+      (d ? ` · <span style="color:#b91c1c;font-weight:600">Daraja belgilanmagan: ${d} ta</span>` : '');
   },
 
   async save() {
