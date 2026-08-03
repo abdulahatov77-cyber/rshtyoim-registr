@@ -6,14 +6,12 @@ const MuassasaImkoniyatPage = {
   dirty: new Map(),
 
   // Marshrut oqimi tahlili uchun daraja. Tartib — yuqoridan pastga.
+  // Raqam ierarxiyani bildiradi: manzil raqami manbadan katta bo'lsa — eskalatsiya.
   DARAJALAR: [
-    ['bosh_markaz',    'Bosh markaz'],
-    ['filial',         'Filial'],
-    ['politravma',     'Politravma markazi'],
-    ['ixtisoslashgan', 'Ixtisoslashgan markaz'],
-    ['shtb',           'ShTB (shahar)'],
-    ['ttb',            'TTB (tuman)'],
-    ['boshqa',         'Boshqa']
+    ['markaz',     '4 · Respublika markazi'],
+    ['filial',     '3 · Viloyat filiali'],
+    ['politravma', '2 · Politravma markazi'],
+    ['ttb',        '1 · TTB / ShTB']
   ],
 
   darajaNomi(k) {
