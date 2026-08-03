@@ -96,8 +96,11 @@ const HarakatPage = {
 
       HarakatPage._render();
     } catch(e) {
-      document.getElementById('harakat-content').innerHTML =
-        `<div class="text-red-500 p-8 text-center">${e.message}</div>`;
+      // Foydalanuvchi yuklanish tugashini kutmasdan boshqa sahifaga o'tgan
+      // bo'lishi mumkin — u holda konteyner yo'q, hech narsa yozmaymiz.
+      // Aks holda catch ning o'zi xato tashlab, butun sahifani yiqitadi.
+      const el = document.getElementById('harakat-content');
+      if (el) el.innerHTML = `<div class="text-red-500 p-8 text-center">${esc(e.message)}</div>`;
     }
   },
 
@@ -257,6 +260,8 @@ const HarakatPage = {
   },
 
   _render() {
+    // Sahifa almashgan bo'lsa konteyner yo'q — chizmaymiz
+    if (!document.getElementById('harakat-content')) return;
     const list = HarakatPage._getFiltered();
     const total = HarakatPage._data.length;
     const infCount = HarakatPage._data.filter(d => d.bemor_turi === 'infarkt').length;
@@ -406,7 +411,9 @@ const HarakatPage = {
             </div>`;
         }).join('');
 
-    document.getElementById('harakat-content').innerHTML = `
+    const wrap = document.getElementById('harakat-content');
+    if (!wrap) return;
+    wrap.innerHTML = `
       <div class="animate-fadein">
         <!-- Statistika -->
         <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px">

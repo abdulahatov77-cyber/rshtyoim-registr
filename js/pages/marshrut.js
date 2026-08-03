@@ -111,7 +111,9 @@ const MarshrutPage = {
       MarshrutPage.drawMatritsa();
       MarshrutPage.drawAudit();
     } catch (e) {
-      document.getElementById('mr-matritsa').innerHTML = `
+      const box = document.getElementById('mr-matritsa');
+      if (!box) return;   // sahifa almashgan
+      box.innerHTML = `
         <div class="py-16 text-center">
           <div class="text-red-500 mb-3">${icon('alert-circle', 40, 'mx-auto')}</div>
           <h3 class="text-lg font-bold text-gray-900 mb-2">Ma'lumot yuklanmadi</h3>

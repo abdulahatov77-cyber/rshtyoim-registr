@@ -70,6 +70,9 @@ const Router = {
       }
     } catch (err) {
       console.error('Router error:', err);
+      // Eskirgan navigatsiya: foydalanuvchi sahifa yuklanib bo'lishini kutmasdan
+      // boshqasiga o'tgan bo'lsa, eski sahifaning xatosi yangisini yiqitmasin.
+      if (Router._current !== route) return;
       // Sessiya muddati tugagan / JWT xatosi — login sahifasiga yo'naltiramiz
       const m = (err.message || '') + ' ' + (err.code || '');
       if (/jwt|token|401|not authenticated|session|expired|refresh/i.test(m)) {
