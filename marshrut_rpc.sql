@@ -211,4 +211,15 @@ grant execute on function public.get_marshrut_audit(text, date, date, int) to au
 
 
 -- ============ 4. TEKSHIRUV ============
-select * from public.get_marshrut_xulosa();
+-- DIQQAT: funksiyalarni bu yerdan chaqirib bo'lmaydi — SQL Editor'da
+-- auth.uid() NULL bo'ladi va "Ruxsat yo'q" xatosi butun tranzaksiyani
+-- bekor qiladi (jumladan yuqoridagi create function larni ham).
+-- Shuning uchun faqat yaratilganini tekshiramiz; natijani ilovada ko'rasiz.
+select p.proname       as funksiya,
+       p.prosecdef     as security_definer,
+       pg_get_function_identity_arguments(p.oid) as argumentlar
+from pg_proc p
+join pg_namespace n on n.oid = p.pronamespace
+where n.nspname = 'public'
+  and p.proname like 'get_marshrut%'
+order by p.proname;
