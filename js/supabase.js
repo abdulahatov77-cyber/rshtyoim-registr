@@ -900,6 +900,33 @@ const DB = {
     return data;
   },
 
+  // ===== MARSHRUT (v_marshrut ustidagi RPC'lar) =====
+  // Agregatsiya serverda — 8000+ qator brauzerga tortilmaydi.
+  async marshrutXulosa(viloyat, from, to) {
+    const { data, error } = await getSupabase().rpc('get_marshrut_xulosa', {
+      p_viloyat: viloyat || null, p_from: from || null, p_to: to || null
+    });
+    if (error) throw error;
+    return data || [];
+  },
+
+  async marshrutMatritsa(bosqich, viloyat, from, to, limit = 50) {
+    const { data, error } = await getSupabase().rpc('get_marshrut_matritsa', {
+      p_bosqich: bosqich || null, p_viloyat: viloyat || null,
+      p_from: from || null, p_to: to || null, p_limit: limit
+    });
+    if (error) throw error;
+    return data || [];
+  },
+
+  async marshrutAudit(viloyat, from, to, limit = 200) {
+    const { data, error } = await getSupabase().rpc('get_marshrut_audit', {
+      p_viloyat: viloyat || null, p_from: from || null, p_to: to || null, p_limit: limit
+    });
+    if (error) throw error;
+    return data || [];
+  },
+
   // Bitta muassasaning imkoniyatlari (null = jadvalda topilmadi/jadval yo'q)
   async getMuassasaImkoniyat(nomi) {
     if (!nomi) return null;

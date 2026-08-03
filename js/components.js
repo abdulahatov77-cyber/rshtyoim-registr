@@ -99,6 +99,7 @@ const Components = {
 
       { id: 'hisobot', label: 'Hisobotlar', icon: 'file-text', section: 'Tahlil va Hisobot' },
       { id: 'harakat', label: 'Bemor harakati', icon: 'git-fork' },
+      { id: 'marshrut', label: 'Marshrut', icon: 'route' },
 
       { id: 'admin', label: 'Foydalanuvchilar', icon: 'user-cog', section: 'Tizim', superOnly: true },
       { id: 'muassasa-imkoniyat', label: 'Muassasa imkoniyati', icon: 'building-2', superOnly: true },

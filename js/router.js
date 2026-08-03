@@ -19,6 +19,7 @@ const Router = {
     'muassasa-imkoniyat': () => MuassasaImkoniyatPage.render(),
     'settings':         () => SettingsPage.render(),
     'harakat':          () => HarakatPage.render(),
+    'marshrut':         () => MarshrutPage.render(),
   },
 
   back() {
