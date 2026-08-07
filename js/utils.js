@@ -295,6 +295,63 @@ const Utils = {
     XLSX.writeFile(wb, filename);
   },
 
+  // Ko'p varaqli eksport. sheets = [{ nom: '1-INFARKT', rows: [{...}, ...] }, ...]
+  // Bo'sh varaq ham qo'shiladi (etalon tuzilishi saqlanishi uchun) — faqat sarlavha bilan.
+  exportXLSXMulti(sheets, filename = 'hisobot.xlsx') {
+    if (!sheets || !sheets.length) return;
+    const clean = v => {
+      if (v === null || v === undefined) return '';
+      if (Array.isArray(v)) return v.join(', ');
+      return String(v);
+    };
+    const wb = XLSX.utils.book_new();
+
+    sheets.forEach(sh => {
+      const rows = sh.rows || [];
+      const headers = rows.length ? Object.keys(rows[0]) : (sh.headers || ['—']);
+      const body = rows.map(r => headers.map(h => clean(r[h])));
+      const ws = XLSX.utils.aoa_to_sheet([headers, ...body]);
+
+      ws['!cols'] = headers.map((h, c) => {
+        let max = String(h).length;
+        for (const row of body) if (row[c].length > max) max = row[c].length;
+        return { wch: Math.min(Math.max(max + 2, 9), 45) };
+      });
+      ws['!rows'] = [{ hpt: 34 }];
+      if (headers.length) {
+        const lastCol = XLSX.utils.encode_col(headers.length - 1);
+        ws['!autofilter'] = { ref: `A1:${lastCol}1` };
+        // Birinchi ustun va sarlavha qatori qotirib qo'yiladi
+        ws['!freeze'] = { xSplit: 1, ySplit: 1 };
+      }
+
+      headers.forEach((_, c) => {
+        const cell = ws[XLSX.utils.encode_cell({ r: 0, c })];
+        if (cell) cell.s = {
+          font: { bold: true, color: { rgb: 'FFFFFF' }, sz: 10 },
+          fill: { fgColor: { rgb: '1D4ED8' } },
+          alignment: { horizontal: 'center', vertical: 'center', wrapText: true },
+          border: { bottom: { style: 'medium', color: { rgb: '1E3A8A' } } }
+        };
+      });
+
+      const dataStyle = {
+        alignment: { vertical: 'top' },
+        border: { bottom: { style: 'hair', color: { rgb: 'E2E8F0' } } }
+      };
+      for (let r = 1; r <= body.length; r++) {
+        for (let c = 0; c < headers.length; c++) {
+          const cell = ws[XLSX.utils.encode_cell({ r, c })];
+          if (cell) cell.s = dataStyle;
+        }
+      }
+      // Varaq nomi Excelda 31 belgidan oshmasligi kerak
+      XLSX.utils.book_append_sheet(wb, ws, String(sh.nom).slice(0, 31));
+    });
+
+    XLSX.writeFile(wb, filename);
+  },
+
   // Set element HTML safely
   setHTML(el, html) {
     if (typeof el === 'string') el = document.getElementById(el);

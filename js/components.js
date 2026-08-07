@@ -99,6 +99,7 @@ const Components = {
       { id: 'insult-reyestri', label: 'Insult reyestri', icon: 'brain' },
 
       { id: 'hisobot', label: 'Hisobotlar', icon: 'file-text', section: 'Tahlil va Hisobot' },
+      { id: 'keng-hisobot', label: 'Kengaytirilgan hisobot', icon: 'table' },
       { id: 'harakat', label: 'Bemor harakati', icon: 'git-fork' },
       { id: 'marshrut', label: 'Marshrut', icon: 'route' },
 

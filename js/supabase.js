@@ -206,6 +206,49 @@ const DB = {
     return shubhali ? { row: shubhali, exact: false, turi: shubhali._turi } : null;
   },
 
+  // ===== KENGAYTIRILGAN HISOBOT (hisobot_rpc.sql) =====
+  // Barcha agregatsiya serverda. Foizlar ham SQL da hisoblanadi —
+  // ekranda va Excelda bir xil raqam chiqishi uchun.
+  async hisobotInfarkt(from, to, viloyat) {
+    const { data, error } = await getSupabase().rpc('get_hisobot_infarkt', {
+      p_from: from, p_to: to, p_viloyat: viloyat || null
+    });
+    if (error) throw error;
+    return data || [];
+  },
+
+  async hisobotInsult(from, to, viloyat) {
+    const { data, error } = await getSupabase().rpc('get_hisobot_insult', {
+      p_from: from, p_to: to, p_viloyat: viloyat || null
+    });
+    if (error) throw error;
+    return data || [];
+  },
+
+  async hisobotMarshrutMuassasa(from, to, kasallik, viloyat) {
+    const { data, error } = await getSupabase().rpc('get_hisobot_marshrut_muassasa', {
+      p_from: from, p_to: to, p_kasallik: kasallik, p_viloyat: viloyat || null
+    });
+    if (error) throw error;
+    return data || [];
+  },
+
+  async hisobotMarshrutMatritsa(from, to, kasallik) {
+    const { data, error } = await getSupabase().rpc('get_hisobot_marshrut_matritsa', {
+      p_from: from, p_to: to, p_kasallik: kasallik
+    });
+    if (error) throw error;
+    return data || [];
+  },
+
+  async hisobotKaskad(from, to, kasallik, viloyat) {
+    const { data, error } = await getSupabase().rpc('get_hisobot_kaskad', {
+      p_from: from, p_to: to, p_kasallik: kasallik, p_viloyat: viloyat || null
+    });
+    if (error) throw error;
+    return data || [];
+  },
+
   // ===== QABUL KUTILMOQDA =====
   // Boshqa muassasadan shu muassasaga yuborilgan, lekin hali qabul qilinmagan
   // bemorlar. "Qabul qilingan" belgisi — transfer_log da shu muassasaga

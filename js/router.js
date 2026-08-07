@@ -21,6 +21,7 @@ const Router = {
     'harakat':          () => HarakatPage.render(),
     'marshrut':         () => MarshrutPage.render(),
     'qabul':            () => QabulPage.render(),
+    'keng-hisobot':     () => KengHisobotPage.render(),
   },
 
   back() {
