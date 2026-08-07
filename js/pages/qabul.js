@@ -13,9 +13,13 @@ const QabulPage = {
     const user = await Auth.getUser();
     const profile = await Profile.getCurrent();
     QabulPage._profile = profile;
-    const muassasa = profile?.muassasa || '';
-    const viloyat  = profile?.viloyat  || '';
+    // Super_admin va rahbarda ish joyi bo'lmaydi — ular bemor qabul qilmaydi.
+    // Ularga respublika bo'yicha kuzatuv ro'yxati ko'rsatiladi.
+    const kuzatuvchi = profile?.role === 'super_admin' || profile?.real_role === 'rahbar';
+    const muassasa = kuzatuvchi ? '' : (profile?.muassasa || '');
+    const viloyat  = kuzatuvchi ? '' : (profile?.viloyat  || '');
     QabulPage._aniqMuassasa = !!muassasa;
+    QabulPage._kuzatuvchi   = kuzatuvchi;
 
     document.getElementById('app').innerHTML = Components.renderLayout(
       'qabul', '🚑 Qabul kutilmoqda', 'Boshqa muassasadan yuborilgan bemorlar',
@@ -31,13 +35,13 @@ const QabulPage = {
     Components.startClock();
     initIcons();
 
-    if (!muassasa && !viloyat) {
+    if (!kuzatuvchi && !muassasa && !viloyat) {
       QabulPage._xabar('info', 'Profilingizda viloyat ko\'rsatilmagan',
         'Bu ro\'yxat foydalanuvchining viloyati yoki muassasasi bo\'yicha shakllanadi. Administratorga murojaat qiling.');
       return;
     }
     try {
-      QabulPage._rows = await DB.kutilayotganBemorlar(muassasa, viloyat);
+      QabulPage._rows = await DB.kutilayotganBemorlar(muassasa, viloyat, 14, kuzatuvchi);
       QabulPage._draw();
     } catch (e) {
       QabulPage._xabar('error', 'Ma\'lumot yuklanmadi', e.message);
@@ -71,15 +75,21 @@ const QabulPage = {
       <div class="card mb-4 !py-3 flex items-start gap-3 bg-blue-50 border-blue-200">
         ${icon('info', 18)}
         <span class="text-sm text-blue-900">
-          <b>${rows.length} ta bemor</b>
-          ${QabulPage._aniqMuassasa ? 'muassasangizga' : 'viloyatingizdagi muassasalarga'} yuborilgan.
-          "Qabul qilish" bosilganda kelish vaqti so'raladi va forma bemorning
-          shaxsiy ma'lumotlari bilan to'ldirilgan holda ochiladi.
-          ${QabulPage._aniqMuassasa ? '' : `
-          <div class="mt-1 text-xs text-blue-800">
-            ⚠️ Profilingizda muassasa ko'rsatilmagani uchun ro'yxat butun viloyat bo'yicha chiqyapti.
-            Har bir kartochkada bemor <b>qaysi muassasaga</b> yuborilgani yozilgan — faqat o'zingiznikini qabul qiling.
-          </div>`}
+          ${QabulPage._kuzatuvchi ? `
+            <b>${rows.length} ta bemor</b> respublika bo'yicha yuborilgan va hali qabul qilinmagan.
+            <div class="mt-1 text-xs text-blue-800">
+              Siz kuzatuvchi rolidasiz — bu ro'yxat nazorat uchun. Bemorni qabul qilishni
+              qabul qiluvchi muassasa shifokori bajaradi.
+            </div>` : `
+            <b>${rows.length} ta bemor</b>
+            ${QabulPage._aniqMuassasa ? 'muassasangizga' : 'viloyatingizdagi muassasalarga'} yuborilgan.
+            "Qabul qilish" bosilganda kelish vaqti so'raladi va forma bemorning
+            shaxsiy ma'lumotlari bilan to'ldirilgan holda ochiladi.
+            ${QabulPage._aniqMuassasa ? '' : `
+            <div class="mt-1 text-xs text-blue-800">
+              ⚠️ Profilingizda muassasa ko'rsatilmagani uchun ro'yxat butun viloyat bo'yicha chiqyapti.
+              Har bir kartochkada bemor <b>qaysi muassasaga</b> yuborilgani yozilgan — faqat o'zingiznikini qabul qiling.
+            </div>`}`}
         </span>
       </div>
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -111,10 +121,11 @@ const QabulPage = {
                 ${esc(yosh || '—')} yosh · ${esc(r.jins || '—')}
               </div>
             </div>
+            ${QabulPage._kuzatuvchi ? '' : `
             <button class="btn btn-primary !py-2 !px-3 flex items-center gap-1 shrink-0"
                     onclick="QabulPage.qabulQil(${i})">
               ${icon('log-in', 14)} Qabul qilish
-            </button>
+            </button>`}
           </div>
 
           <div class="border-t border-dashed border-gray-200 pt-3 grid grid-cols-1 sm:grid-cols-2 gap-y-1 text-xs">

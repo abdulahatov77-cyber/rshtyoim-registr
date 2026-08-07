@@ -256,23 +256,27 @@ const DB = {
   // muassasa berilsa — aniq manzil bo'yicha. Bo'sh bo'lsa (profilda muassasa
   // to'ldirilmagan) viloyatdagi barcha muassasalar bo'yicha ko'rsatamiz —
   // shifokor qaysi biriga yuborilganini kartochkada ko'radi.
-  async kutilayotganBemorlar(muassasa, viloyat, kunlar = 14) {
-    const manzillar = muassasa
+  // hammasi=true — super_admin/rahbar uchun: respublika bo'yicha barcha
+  // kutilayotgan bemorlar (ularda ish joyi bo'lmaydi, kuzatuv uchun ko'radi).
+  async kutilayotganBemorlar(muassasa, viloyat, kunlar = 14, hammasi = false) {
+    const manzillar = hammasi ? null : (muassasa
       ? [muassasa]
-      : (viloyat ? (APP_CONFIG.MUASSASALAR[viloyat] || []) : []);
-    if (!manzillar.length) return [];
+      : (viloyat ? (APP_CONFIG.MUASSASALAR[viloyat] || []) : []));
+    if (!hammasi && !manzillar.length) return [];
     const sb = getSupabase();
     const chegara = new Date(Date.now() - kunlar * 864e5).toISOString();
     const cols = 'kt_no,fio,tugilgan_sana,tugilgan_yil,jins,vazn,boy,fuqarolik,' +
                  'yashash_viloyat,yashash_tuman,chet_el_davlati,viloyat,muassasa,' +
                  'qabul_vaqt,muolaja_turi,otkazilgan_muassasa,status';
     const olish = async (t, turi) => {
-      const { data } = await sb.from(t)
+      let q = sb.from(t)
         .select(cols + (turi === 'infarkt' ? ',infarkt_turi,otkazish_sababi' : ',insult_turi'))
-        .in('otkazilgan_muassasa', manzillar)
         .eq('status', 'otkazildi')
         .gte('qabul_vaqt', chegara)
-        .order('qabul_vaqt', { ascending: false });
+        .not('otkazilgan_muassasa', 'is', null)
+        .neq('otkazilgan_muassasa', '');
+      if (manzillar) q = q.in('otkazilgan_muassasa', manzillar);
+      const { data } = await q.order('qabul_vaqt', { ascending: false }).limit(500);
       return (data || []).map(r => ({ ...r, _turi: turi }));
     };
     const [inf, ins] = await Promise.all([
@@ -284,11 +288,13 @@ const DB = {
 
     // Allaqachon qabul qilinganlarni chiqarib tashlaymiz
     const ktList = rows.map(r => r.kt_no);
-    const manzilSet = new Set(manzillar);
+    const manzilSet = manzillar ? new Set(manzillar) : null;
     const { data: logs } = await sb.from('transfer_log')
       .select('kt_no,muassasa_ga').in('kt_no', ktList);
     const qabulQilingan = new Set(
-      (logs || []).filter(l => manzilSet.has(l.muassasa_ga || '')).map(l => l.kt_no)
+      (logs || [])
+        .filter(l => !manzilSet || manzilSet.has(l.muassasa_ga || ''))
+        .map(l => l.kt_no)
     );
     return rows
       .filter(r => !qabulQilingan.has(r.kt_no))

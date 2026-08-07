@@ -82,8 +82,11 @@ const DashboardPage = {
   // Boshqa muassasadan yuborilgan, hali qabul qilinmagan bemorlar bo'lsa —
   // dashboard tepasida ogohlantiruvchi kartochka chiqaramiz.
   async qabulBanner() {
-    const mua = DashboardPage._profile?.muassasa;
-    const vil = DashboardPage._profile?.viloyat;
+    const p = DashboardPage._profile;
+    // Kuzatuvchi rollar bemor qabul qilmaydi — ularga eslatma chiqmaydi
+    if (p?.role === 'super_admin' || p?.real_role === 'rahbar') return;
+    const mua = p?.muassasa;
+    const vil = p?.viloyat;
     if (!mua && !vil) return;
     let rows = [];
     try { rows = await DB.kutilayotganBemorlar(mua, vil); } catch (e) { return; }
