@@ -349,10 +349,12 @@ const HisobotPage = {
           nstemi: vInfs.filter(isNSTEMI).length,
           ami: vInfs.filter(isAMI).length,
           jamiInfarkt: vInfs.length,
+          vafotInf: vInfs.filter(p => p.status === 'vafot').length,
           ishemik: vIns.filter(isIshemik).length,
           gemorragik: vIns.filter(isGemorragik).length,
           tia: vIns.filter(isTIA).length,
           jamiInsult: vIns.length,
+          vafotIns: vIns.filter(p => p.status === 'vafot').length,
           otkazilganInf: vInfs.filter(p => p.otkazilgan_muassasa).length,
           otkazilganKAG: vInfs.filter(p => p.otkazilgan_muassasa && p.otkazish_sababi === 'Koronarografiya (KAG) uchun').length,
           otkazilganIns: vIns.filter(p => p.otkazilgan_muassasa).length,
@@ -362,7 +364,7 @@ const HisobotPage = {
       });
 
       const totals = rows.reduce((acc, r) => {
-        for (const k of ['stemi','nstemi','ami','jamiInfarkt','ishemik','gemorragik','tia','jamiInsult','otkazilganInf','otkazilganKAG','otkazilganIns','stemi120n','stemi120total']) {
+        for (const k of ['stemi','nstemi','ami','jamiInfarkt','vafotInf','ishemik','gemorragik','tia','jamiInsult','vafotIns','otkazilganInf','otkazilganKAG','otkazilganIns','stemi120n','stemi120total']) {
           acc[k] = (acc[k]||0) + r[k];
         }
         return acc;
@@ -414,6 +416,16 @@ const HisobotPage = {
 
       HisobotPage._lastViloyatData = { rows, totals, from, to, colName, scopeName: selMua || selVil || '' };
 
+      // Letallik: vafot etganlar ulushi. Maxraj 0 bo'lsa "—" chiqadi.
+      const letallik = (olgan, jami) => jami > 0 ? (Math.round(olgan / jami * 1000) / 10) : null;
+      const letallikKatak = (olgan, jami, bold) => {
+        const f = letallik(olgan, jami);
+        const rang = f === null ? '#94a3b8' : f >= 20 ? '#b91c1c' : f >= 10 ? '#c2410c' : '#334155';
+        return `<td class="p-2.5 text-center border-b border-slate-200" style="color:${rang};${bold?'font-weight:700':''}">
+          ${olgan}${f === null ? '' : ` <span style="font-size:11px;opacity:.85">(${f}%)</span>`}
+        </td>`;
+      };
+
       el.innerHTML = `
         <div class="overflow-x-auto">
           <table class="w-full text-sm border-collapse">
@@ -424,10 +436,12 @@ const HisobotPage = {
                 <th class="p-2.5 text-center text-white font-bold">NSTEMI</th>
                 <th class="p-2.5 text-center text-white font-bold">AMI</th>
                 <th class="p-2.5 text-center text-white font-bold" style="background:#1d4ed8">Jami infarkt</th>
+                <th class="p-2.5 text-center text-white font-bold" style="background:#991b1b" title="Infarkt bo'yicha vafot etganlar soni va ulushi">O'lim (infarkt)</th>
                 <th class="p-2.5 text-center text-white font-bold">Ishemik</th>
                 <th class="p-2.5 text-center text-white font-bold">Gemorragik</th>
                 <th class="p-2.5 text-center text-white font-bold">TIA</th>
-                <th class="p-2.5 text-center text-white font-bold rounded-tr-lg" style="background:#1d4ed8">Jami insult</th>
+                <th class="p-2.5 text-center text-white font-bold" style="background:#1d4ed8">Jami insult</th>
+                <th class="p-2.5 text-center text-white font-bold rounded-tr-lg" style="background:#991b1b" title="Insult bo'yicha vafot etganlar soni va ulushi">O'lim (insult)</th>
               </tr>
             </thead>
             <tbody>
@@ -438,10 +452,12 @@ const HisobotPage = {
                   <td class="p-2.5 text-center text-slate-700 border-b border-slate-200">${r.nstemi}</td>
                   <td class="p-2.5 text-center text-slate-700 border-b border-slate-200">${r.ami}</td>
                   <td class="p-2.5 text-center font-bold text-blue-700 border-b border-slate-200">${r.jamiInfarkt}</td>
+                  ${letallikKatak(r.vafotInf, r.jamiInfarkt)}
                   <td class="p-2.5 text-center text-slate-700 border-b border-slate-200">${r.ishemik}</td>
                   <td class="p-2.5 text-center text-slate-700 border-b border-slate-200">${r.gemorragik}</td>
                   <td class="p-2.5 text-center text-slate-700 border-b border-slate-200">${r.tia}</td>
                   <td class="p-2.5 text-center font-bold text-blue-700 border-b border-slate-200">${r.jamiInsult}</td>
+                  ${letallikKatak(r.vafotIns, r.jamiInsult)}
                 </tr>`).join('')}
               <tr style="background:#dbeafe">
                 <td class="p-2.5 font-bold text-blue-900">JAMI</td>
@@ -449,10 +465,12 @@ const HisobotPage = {
                 <td class="p-2.5 text-center font-bold text-blue-900">${totals.nstemi}</td>
                 <td class="p-2.5 text-center font-bold text-blue-900">${totals.ami}</td>
                 <td class="p-2.5 text-center font-bold text-blue-900">${totals.jamiInfarkt}</td>
+                ${letallikKatak(totals.vafotInf, totals.jamiInfarkt, true)}
                 <td class="p-2.5 text-center font-bold text-blue-900">${totals.ishemik}</td>
                 <td class="p-2.5 text-center font-bold text-blue-900">${totals.gemorragik}</td>
                 <td class="p-2.5 text-center font-bold text-blue-900">${totals.tia}</td>
                 <td class="p-2.5 text-center font-bold text-blue-900">${totals.jamiInsult}</td>
+                ${letallikKatak(totals.vafotIns, totals.jamiInsult, true)}
               </tr>
             </tbody>
           </table>
@@ -512,16 +530,21 @@ const HisobotPage = {
     const d = HisobotPage._lastViloyatData;
     if (!d) { showToast('Avval hisobotni shakllantiring', 'warning'); return; }
     const cn = d.colName || 'Viloyat';
+    const foiz = (olgan, jami) => jami > 0 ? Math.round(olgan / jami * 1000) / 10 : '';
     const data = d.rows.map(r => ({
       [cn]: r.viloyat,
       'STEMI': r.stemi,
       'NSTEMI': r.nstemi,
       'AMI': r.ami,
       'Jami infarkt': r.jamiInfarkt,
+      'Infarkt — vafot': r.vafotInf,
+      'Infarkt — letallik %': foiz(r.vafotInf, r.jamiInfarkt),
       'Ishemik insult': r.ishemik,
       'Gemorragik insult': r.gemorragik,
       'TIA': r.tia,
-      'Jami insult': r.jamiInsult
+      'Jami insult': r.jamiInsult,
+      'Insult — vafot': r.vafotIns,
+      'Insult — letallik %': foiz(r.vafotIns, r.jamiInsult)
     }));
     data.push({
       [cn]: 'JAMI',
@@ -529,10 +552,14 @@ const HisobotPage = {
       'NSTEMI': d.totals.nstemi,
       'AMI': d.totals.ami,
       'Jami infarkt': d.totals.jamiInfarkt,
+      'Infarkt — vafot': d.totals.vafotInf,
+      'Infarkt — letallik %': foiz(d.totals.vafotInf, d.totals.jamiInfarkt),
       'Ishemik insult': d.totals.ishemik,
       'Gemorragik insult': d.totals.gemorragik,
       'TIA': d.totals.tia,
-      'Jami insult': d.totals.jamiInsult
+      'Jami insult': d.totals.jamiInsult,
+      'Insult — vafot': d.totals.vafotIns,
+      'Insult — letallik %': foiz(d.totals.vafotIns, d.totals.jamiInsult)
     });
     const scope = d.scopeName ? d.scopeName.replace(/[\\/:*?"<>|]/g, '-') + '_' : '';
     Utils.exportXLSX(data, `viloyatlar_hisobot_${scope}${d.from}_${d.to}.xlsx`, 'Kesim hisoboti');
