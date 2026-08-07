@@ -38,6 +38,11 @@ DROP POLICY IF EXISTS inf_chiq_insert           ON public.infarkt_chiqarish;
 DROP POLICY IF EXISTS infarkt_chiqarish_select  ON public.infarkt_chiqarish;
 DROP POLICY IF EXISTS infarkt_chiqarish_update  ON public.infarkt_chiqarish;
 DROP POLICY IF EXISTS infarkt_chiqarish_insert  ON public.infarkt_chiqarish;
+-- Skript qayta ishga tushirilsa ham xato bermasin
+DROP POLICY IF EXISTS inf_chiq_select_v3        ON public.infarkt_chiqarish;
+DROP POLICY IF EXISTS inf_chiq_insert_v3        ON public.infarkt_chiqarish;
+DROP POLICY IF EXISTS inf_chiq_update_v3        ON public.infarkt_chiqarish;
+DROP POLICY IF EXISTS inf_chiq_delete_v3        ON public.infarkt_chiqarish;
 
 CREATE POLICY inf_chiq_select_v3 ON public.infarkt_chiqarish
   FOR SELECT TO authenticated
@@ -84,6 +89,10 @@ DROP POLICY IF EXISTS i_chiq_insert           ON public.insult_chiqarish;
 DROP POLICY IF EXISTS insult_chiqarish_select ON public.insult_chiqarish;
 DROP POLICY IF EXISTS insult_chiqarish_update ON public.insult_chiqarish;
 DROP POLICY IF EXISTS insult_chiqarish_insert ON public.insult_chiqarish;
+DROP POLICY IF EXISTS ins_chiq_select_v3      ON public.insult_chiqarish;
+DROP POLICY IF EXISTS ins_chiq_insert_v3      ON public.insult_chiqarish;
+DROP POLICY IF EXISTS ins_chiq_update_v3      ON public.insult_chiqarish;
+DROP POLICY IF EXISTS ins_chiq_delete_v3      ON public.insult_chiqarish;
 
 CREATE POLICY ins_chiq_select_v3 ON public.insult_chiqarish
   FOR SELECT TO authenticated
@@ -123,8 +132,10 @@ CREATE POLICY ins_chiq_delete_v3 ON public.insult_chiqarish
   );
 
 -- ==================== dinamika_muolajalar ====================
-DROP POLICY IF EXISTS dm_select ON public.dinamika_muolajalar;
-DROP POLICY IF EXISTS dm_delete ON public.dinamika_muolajalar;
+DROP POLICY IF EXISTS dm_select    ON public.dinamika_muolajalar;
+DROP POLICY IF EXISTS dm_delete    ON public.dinamika_muolajalar;
+DROP POLICY IF EXISTS dm_select_v3 ON public.dinamika_muolajalar;
+DROP POLICY IF EXISTS dm_delete_v3 ON public.dinamika_muolajalar;
 
 CREATE POLICY dm_select_v3 ON public.dinamika_muolajalar
   FOR SELECT TO authenticated
