@@ -91,6 +91,7 @@ const Components = {
     const menuItems = [
       { id: 'dashboard', label: 'Dashboard', icon: 'layout-dashboard', section: 'Asosiy' },
       { id: 'bemorlar', label: 'Bemorlar', icon: 'users' },
+      { id: 'qabul', label: 'Qabul kutilmoqda', icon: 'ambulance' },
       { id: 'infarkt-yangi', label: 'Yangi Infarkt', icon: 'heart-pulse' },
       { id: 'insult-yangi', label: 'Yangi Insult', icon: 'brain-circuit' },
 

@@ -17,12 +17,37 @@ const InsultYangiPage = {
       fuqarolik: "O'zbekiston"
     };
 
+    // "Qabul kutilmoqda" dan kelgan bo'lsa — shaxsiy ma'lumotlarni to'ldiramiz.
+    // Tashxis, ballar va tekshiruvlar KO'CHIRILMAYDI (bu yerda qayta baholanadi).
+    const manba = await InsultYangiPage._qabulManbasi();
+
     document.getElementById('app').innerHTML = Components.renderLayout(
-      'insult-yangi', 'Yangi Insult Bemori', 'Bemor qabul qilish formasi',
+      'insult-yangi', 'Yangi Insult Bemori',
+      manba ? `${manba.muassasa} dan kelgan bemorni qabul qilish` : 'Bemor qabul qilish formasi',
       `<div id="insult-form-wrap"></div>`, user
     );
     Components.startClock();
     InsultYangiPage.renderStep();
+  },
+
+  // Router parametrlaridan yuboruvchi bemorni o'qib _data ni to'ldiradi
+  async _qabulManbasi() {
+    const p = Router._params || {};
+    InsultYangiPage._manba = null;
+    if (!p.qabul_kt || p.qabul_turi !== 'insult') return null;
+    const src = await DB.yuborilganBemor(p.qabul_kt, 'insult').catch(() => null);
+    if (!src) return null;
+    const d = InsultYangiPage._data;
+    // Faqat shaxsiy ma'lumotlar
+    ['fio','tugilgan_sana','tugilgan_yil','jins','vazn','boy','fuqarolik',
+     'yashash_viloyat','yashash_tuman','chet_el_davlati'].forEach(k => {
+      if (src[k] !== null && src[k] !== undefined && src[k] !== '') d[k] = src[k];
+    });
+    d.murojaat_yoli     = 'Boshqa muassasadan';
+    d.yuborgan_muassasa = src.muassasa || '';
+    if (p.kelish_vaqt) d.qabul_vaqt = p.kelish_vaqt;
+    InsultYangiPage._manba = src;
+    return src;
   },
 
   renderStep() {
@@ -1493,7 +1518,9 @@ const InsultYangiPage = {
         // marshrutning davomi. Bloklamaymiz, tasdiq so'raymiz.
         const boshqaJoy = (dup.row.muassasa || '') !== (payload.muassasa || '');
         if (dup.otkazilgan && boshqaJoy) {
-          const ok = confirm(`🚑 Bu bemor "${dup.row.muassasa}" dan o'tkazilgan.\n\n` +
+          // "Qabul kutilmoqda" dan kelgan bo'lsa — shifokor allaqachon tasdiqlagan
+          const oldinTasdiq = InsultYangiPage._manba?.kt_no === dup.row.kt_no;
+          const ok = oldinTasdiq || confirm(`🚑 Bu bemor "${dup.row.muassasa}" dan o'tkazilgan.\n\n` +
             `${dup.row.fio} · K/T: ${dup.row.kt_no}\n\n` +
             `Uni "${payload.muassasa}" da qabul qilyapsizmi?\n` +
             `"OK" — qabul qilib saqlash, "Bekor" — to'xtatish.`);
@@ -1515,9 +1542,12 @@ const InsultYangiPage = {
       }
 
       const saved = await DB.insultQabul(payload);
-      // O'tkazilgan bemor qabul qilindi — marshrutni transfer_log ga yozamiz
-      if (_qabulQilindi) {
-        await DB.marshrutQabulYoz(_qabulQilindi, payload.muassasa, payload.qabul_vaqt);
+      // O'tkazilgan bemor qabul qilindi — marshrutni transfer_log ga yozamiz.
+      // Manba: dublikat tekshiruvidan (o'sha kuni) yoki "Qabul kutilmoqda" dan
+      // (bemor ertasiga yetib kelgan bo'lsa dublikat tekshiruvi topmaydi).
+      const marshrutManba = _qabulQilindi || InsultYangiPage._manba;
+      if (marshrutManba) {
+        await DB.marshrutQabulYoz(marshrutManba, payload.muassasa, payload.qabul_vaqt);
       }
       // Telegram xabar endi server tomondan yuboriladi (insult_qabul INSERT trigger —
       // telegram_server_notify.sql). Brauzerdan yuborsak dublikat bo'ladi.

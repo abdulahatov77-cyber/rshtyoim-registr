@@ -206,6 +206,53 @@ const DB = {
     return shubhali ? { row: shubhali, exact: false, turi: shubhali._turi } : null;
   },
 
+  // ===== QABUL KUTILMOQDA =====
+  // Boshqa muassasadan shu muassasaga yuborilgan, lekin hali qabul qilinmagan
+  // bemorlar. "Qabul qilingan" belgisi — transfer_log da shu muassasaga
+  // yozuv bor yoki shu muassasada bemorning yangi kartasi ochilgan.
+  async kutilayotganBemorlar(muassasa, kunlar = 14) {
+    if (!muassasa) return [];
+    const sb = getSupabase();
+    const chegara = new Date(Date.now() - kunlar * 864e5).toISOString();
+    const cols = 'kt_no,fio,tugilgan_sana,tugilgan_yil,jins,vazn,boy,fuqarolik,' +
+                 'yashash_viloyat,yashash_tuman,chet_el_davlati,viloyat,muassasa,' +
+                 'qabul_vaqt,muolaja_turi,otkazilgan_muassasa,status';
+    const olish = async (t, turi) => {
+      const { data } = await sb.from(t)
+        .select(cols + (turi === 'infarkt' ? ',infarkt_turi,otkazish_sababi' : ',insult_turi'))
+        .eq('otkazilgan_muassasa', muassasa)
+        .eq('status', 'otkazildi')
+        .gte('qabul_vaqt', chegara)
+        .order('qabul_vaqt', { ascending: false });
+      return (data || []).map(r => ({ ...r, _turi: turi }));
+    };
+    const [inf, ins] = await Promise.all([
+      olish('infarkt_qabul', 'infarkt'),
+      olish('insult_qabul', 'insult')
+    ]);
+    const rows = [...inf, ...ins];
+    if (!rows.length) return [];
+
+    // Allaqachon qabul qilinganlarni chiqarib tashlaymiz
+    const ktList = rows.map(r => r.kt_no);
+    const { data: logs } = await sb.from('transfer_log')
+      .select('kt_no,muassasa_ga').in('kt_no', ktList);
+    const qabulQilingan = new Set(
+      (logs || []).filter(l => (l.muassasa_ga || '') === muassasa).map(l => l.kt_no)
+    );
+    return rows
+      .filter(r => !qabulQilingan.has(r.kt_no))
+      .sort((a, b) => new Date(b.qabul_vaqt) - new Date(a.qabul_vaqt));
+  },
+
+  // Bitta yuborilgan bemorni kt_no bo'yicha olish (formani to'ldirish uchun)
+  async yuborilganBemor(kt_no, turi) {
+    if (!kt_no) return null;
+    const t = turi === 'infarkt' ? 'infarkt_qabul' : 'insult_qabul';
+    const { data } = await getSupabase().from(t).select('*').eq('kt_no', kt_no).maybeSingle();
+    return data || null;
+  },
+
   // O'tkazilgan bemor yangi muassasada qabul qilinganda marshrutni yozamiz.
   // Shu sabab o'tkir yo'naltirish endi transfer_log ga tushadi va "Marshrut"
   // sahifasidagi oqim matritsasida ko'rinadi.

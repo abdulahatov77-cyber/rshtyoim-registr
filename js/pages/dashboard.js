@@ -43,7 +43,44 @@ const DashboardPage = {
     );
     Components.startClock();
     await DashboardPage.loadData();
+    DashboardPage.qabulBanner();
     DashboardPage.subscribeRealtime();
+  },
+
+  // Boshqa muassasadan yuborilgan, hali qabul qilinmagan bemorlar bo'lsa —
+  // dashboard tepasida ogohlantiruvchi kartochka chiqaramiz.
+  async qabulBanner() {
+    const mua = DashboardPage._profile?.muassasa;
+    if (!mua) return;
+    let rows = [];
+    try { rows = await DB.kutilayotganBemorlar(mua); } catch (e) { return; }
+    if (!rows.length) return;
+    const inner = document.getElementById('dashboard-inner');
+    if (!inner) return;   // sahifa almashgan
+
+    const nomlar = rows.slice(0, 3).map(r => PD.fio(r.fio)).filter(Boolean).join(', ');
+    const div = document.createElement('div');
+    div.className = 'card mb-4 border-l-4 border-l-orange-500 bg-orange-50 border-orange-200';
+    div.innerHTML = `
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <div class="flex items-start gap-3 min-w-0">
+          <div class="text-orange-600 shrink-0 mt-0.5">${icon('ambulance', 22)}</div>
+          <div class="min-w-0">
+            <div class="font-bold text-orange-900">
+              ${rows.length} ta bemor sizga yuborilgan — hali qabul qilinmagan
+            </div>
+            <div class="text-sm text-orange-800 truncate">
+              ${esc(nomlar)}${rows.length > 3 ? ` va yana ${rows.length - 3} ta` : ''}
+            </div>
+          </div>
+        </div>
+        <button class="btn btn-primary flex items-center gap-2 shrink-0"
+                onclick="Router.go('qabul')">
+          ${icon('log-in', 16)} Ro'yxatni ochish
+        </button>
+      </div>`;
+    inner.prepend(div);
+    initIcons();
   },
 
   async loadData() {

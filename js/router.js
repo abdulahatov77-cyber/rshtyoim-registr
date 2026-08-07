@@ -20,6 +20,7 @@ const Router = {
     'settings':         () => SettingsPage.render(),
     'harakat':          () => HarakatPage.render(),
     'marshrut':         () => MarshrutPage.render(),
+    'qabul':            () => QabulPage.render(),
   },
 
   back() {
