@@ -14,6 +14,8 @@ const QabulPage = {
     const profile = await Profile.getCurrent();
     QabulPage._profile = profile;
     const muassasa = profile?.muassasa || '';
+    const viloyat  = profile?.viloyat  || '';
+    QabulPage._aniqMuassasa = !!muassasa;
 
     document.getElementById('app').innerHTML = Components.renderLayout(
       'qabul', '🚑 Qabul kutilmoqda', 'Boshqa muassasadan yuborilgan bemorlar',
@@ -29,13 +31,13 @@ const QabulPage = {
     Components.startClock();
     initIcons();
 
-    if (!muassasa) {
-      QabulPage._xabar('info', 'Profilingizda muassasa ko\'rsatilmagan',
-        'Bu ro\'yxat foydalanuvchining muassasasi bo\'yicha shakllanadi. Sozlamalarda muassasangizni belgilang.');
+    if (!muassasa && !viloyat) {
+      QabulPage._xabar('info', 'Profilingizda viloyat ko\'rsatilmagan',
+        'Bu ro\'yxat foydalanuvchining viloyati yoki muassasasi bo\'yicha shakllanadi. Administratorga murojaat qiling.');
       return;
     }
     try {
-      QabulPage._rows = await DB.kutilayotganBemorlar(muassasa);
+      QabulPage._rows = await DB.kutilayotganBemorlar(muassasa, viloyat);
       QabulPage._draw();
     } catch (e) {
       QabulPage._xabar('error', 'Ma\'lumot yuklanmadi', e.message);
@@ -66,12 +68,18 @@ const QabulPage = {
     }
 
     el.innerHTML = `
-      <div class="card mb-4 !py-3 flex items-center gap-3 bg-blue-50 border-blue-200">
+      <div class="card mb-4 !py-3 flex items-start gap-3 bg-blue-50 border-blue-200">
         ${icon('info', 18)}
         <span class="text-sm text-blue-900">
-          <b>${rows.length} ta bemor</b> muassasangizga yuborilgan.
+          <b>${rows.length} ta bemor</b>
+          ${QabulPage._aniqMuassasa ? 'muassasangizga' : 'viloyatingizdagi muassasalarga'} yuborilgan.
           "Qabul qilish" bosilganda kelish vaqti so'raladi va forma bemorning
           shaxsiy ma'lumotlari bilan to'ldirilgan holda ochiladi.
+          ${QabulPage._aniqMuassasa ? '' : `
+          <div class="mt-1 text-xs text-blue-800">
+            ⚠️ Profilingizda muassasa ko'rsatilmagani uchun ro'yxat butun viloyat bo'yicha chiqyapti.
+            Har bir kartochkada bemor <b>qaysi muassasaga</b> yuborilgani yozilgan — faqat o'zingiznikini qabul qiling.
+          </div>`}
         </span>
       </div>
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -110,6 +118,10 @@ const QabulPage = {
           </div>
 
           <div class="border-t border-dashed border-gray-200 pt-3 grid grid-cols-1 sm:grid-cols-2 gap-y-1 text-xs">
+            <div class="sm:col-span-2 mb-1 p-2 rounded-lg bg-blue-50 border border-blue-100">
+              <span class="text-gray-500">Qaysi muassasaga yuborilgan:</span>
+              <span class="font-bold text-blue-900">${esc(r.otkazilgan_muassasa || '—')}</span>
+            </div>
             <div><span class="text-gray-400">Yuborgan:</span>
                  <span class="font-semibold text-gray-700">${esc(r.muassasa || '—')}</span></div>
             <div><span class="text-gray-400">Yuborilgan vaqt:</span>

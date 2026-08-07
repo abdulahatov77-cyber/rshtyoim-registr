@@ -351,12 +351,21 @@ const AdminPage = {
       : `<span class="badge badge-blue">${icon('user',12)} Shifokor</span>`;
     const vilOpts = ['', ...APP_CONFIG.VILOYATLAR]
       .map(v => `<option value="${v}" ${p.viloyat===v?'selected':''}>${v||'— Tanlang —'}</option>`).join('');
+    // Muassasa — "Qabul kutilmoqda" ro'yxati aynan shu maydon bo'yicha aniqlanadi
+    const muaList = p.viloyat ? (APP_CONFIG.MUASSASALAR[p.viloyat] || []) : [];
+    const muaOpts = ['', ...muaList]
+      .map(m => `<option value="${esc(m)}" ${p.muassasa===m?'selected':''}>${esc(m)||'— Muassasa —'}</option>`).join('');
     return `<tr>
       <td style="color:#64748b;font-size:11px">${num}</td>
       <td style="font-weight:600;font-size:12px;color:#0f172a">${p.email||'—'}${isMain?'<span style="font-size:10px;background:rgba(139,92,246,0.15);color:#6d28d9;padding:1px 6px;border-radius:10px;margin-left:4px">Asosiy</span>':''}</td>
       <td style="font-size:12px;color:#0f172a;font-weight:600">${p.fio||p.full_name||'—'}</td>
       <td>${roleBadge}</td>
-      <td style="font-size:12px;color:#1e293b;font-weight:600">${p.viloyat||'<span style="color:#94a3b8">Belgilanmagan</span>'}</td>
+      <td style="font-size:12px;color:#1e293b;font-weight:600">
+        ${p.viloyat||'<span style="color:#94a3b8">Belgilanmagan</span>'}
+        <div style="font-size:11px;font-weight:500;color:${p.muassasa?'#475569':'#f59e0b'};margin-top:2px">
+          ${p.muassasa ? esc(p.muassasa) : '⚠ muassasa yo\'q'}
+        </div>
+      </td>
       <td style="font-size:11px;color:#475569">${p.created_at?new Date(p.created_at).toLocaleDateString('uz-UZ',{timeZone:'Asia/Tashkent',day:'2-digit',month:'2-digit',year:'numeric'}):'—'}</td>
       <td>
         <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
@@ -372,6 +381,12 @@ const AdminPage = {
             style="background:#0f172a;border:1px solid rgba(99,118,158,0.2);border-radius:8px;padding:5px 8px;color:#e2e8f0;font-size:12px;cursor:pointer"
             ${isSA?'disabled':''}>
             ${vilOpts}
+          </select>
+          <select id="mua-${p.id}" onchange="AdminPage.changeMuassasa('${p.id}',this.value)"
+            title="Muassasa — 'Qabul kutilmoqda' ro'yxati shu maydon bo'yicha ishlaydi"
+            style="background:#0f172a;border:1px solid rgba(99,118,158,0.2);border-radius:8px;padding:5px 8px;color:#e2e8f0;font-size:12px;cursor:pointer;max-width:190px"
+            ${(isSA || !p.viloyat) ? 'disabled' : ''}>
+            ${muaOpts}
           </select>
           <button onclick="AdminPage.sendPasswordReset('${(p.email||'').replace(/'/g,"\\'")}')"
             title="Parol tiklash emaili yuborish"
@@ -399,7 +414,28 @@ const AdminPage = {
       await Profile.setViloyat(userId, viloyat);
       showToast(`✅ Viloyat o'zgartirildi`, 'success');
       const idx = AdminPage._profiles.findIndex(p => p.id === userId);
-      if (idx !== -1) AdminPage._profiles[idx].viloyat = viloyat;
+      if (idx !== -1) {
+        AdminPage._profiles[idx].viloyat = viloyat;
+        // Viloyat o'zgarsa eski muassasa mos kelmay qoladi — tozalaymiz
+        if (AdminPage._profiles[idx].muassasa) {
+          const list = APP_CONFIG.MUASSASALAR[viloyat] || [];
+          if (!list.includes(AdminPage._profiles[idx].muassasa)) {
+            await Profile.setMuassasa(userId, null).catch(() => {});
+            AdminPage._profiles[idx].muassasa = null;
+          }
+        }
+      }
+      AdminPage._renderTable();
+    } catch (err) { showToast('❌ ' + err.message, 'error'); }
+  },
+
+  async changeMuassasa(userId, muassasa) {
+    try {
+      await Profile.setMuassasa(userId, muassasa || null);
+      showToast(muassasa ? `✅ Muassasa belgilandi` : `Muassasa tozalandi`, 'success');
+      const idx = AdminPage._profiles.findIndex(p => p.id === userId);
+      if (idx !== -1) AdminPage._profiles[idx].muassasa = muassasa || null;
+      AdminPage._renderTable();
     } catch (err) { showToast('❌ ' + err.message, 'error'); }
   },
 

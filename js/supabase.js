@@ -210,8 +210,14 @@ const DB = {
   // Boshqa muassasadan shu muassasaga yuborilgan, lekin hali qabul qilinmagan
   // bemorlar. "Qabul qilingan" belgisi — transfer_log da shu muassasaga
   // yozuv bor yoki shu muassasada bemorning yangi kartasi ochilgan.
-  async kutilayotganBemorlar(muassasa, kunlar = 14) {
-    if (!muassasa) return [];
+  // muassasa berilsa — aniq manzil bo'yicha. Bo'sh bo'lsa (profilda muassasa
+  // to'ldirilmagan) viloyatdagi barcha muassasalar bo'yicha ko'rsatamiz —
+  // shifokor qaysi biriga yuborilganini kartochkada ko'radi.
+  async kutilayotganBemorlar(muassasa, viloyat, kunlar = 14) {
+    const manzillar = muassasa
+      ? [muassasa]
+      : (viloyat ? (APP_CONFIG.MUASSASALAR[viloyat] || []) : []);
+    if (!manzillar.length) return [];
     const sb = getSupabase();
     const chegara = new Date(Date.now() - kunlar * 864e5).toISOString();
     const cols = 'kt_no,fio,tugilgan_sana,tugilgan_yil,jins,vazn,boy,fuqarolik,' +
@@ -220,7 +226,7 @@ const DB = {
     const olish = async (t, turi) => {
       const { data } = await sb.from(t)
         .select(cols + (turi === 'infarkt' ? ',infarkt_turi,otkazish_sababi' : ',insult_turi'))
-        .eq('otkazilgan_muassasa', muassasa)
+        .in('otkazilgan_muassasa', manzillar)
         .eq('status', 'otkazildi')
         .gte('qabul_vaqt', chegara)
         .order('qabul_vaqt', { ascending: false });
@@ -235,10 +241,11 @@ const DB = {
 
     // Allaqachon qabul qilinganlarni chiqarib tashlaymiz
     const ktList = rows.map(r => r.kt_no);
+    const manzilSet = new Set(manzillar);
     const { data: logs } = await sb.from('transfer_log')
       .select('kt_no,muassasa_ga').in('kt_no', ktList);
     const qabulQilingan = new Set(
-      (logs || []).filter(l => (l.muassasa_ga || '') === muassasa).map(l => l.kt_no)
+      (logs || []).filter(l => manzilSet.has(l.muassasa_ga || '')).map(l => l.kt_no)
     );
     return rows
       .filter(r => !qabulQilingan.has(r.kt_no))
@@ -1525,6 +1532,13 @@ const Profile = {
   },
   async setViloyat(userId, viloyat) {
     const { data, error } = await getSupabase().from('profiles').update({ viloyat }).eq('id', userId).select().single();
+    if (error) throw error;
+    this._cache[userId] = data;
+    return data;
+  },
+  // "Qabul kutilmoqda" ro'yxati aynan shu maydon bo'yicha aniq ishlaydi
+  async setMuassasa(userId, muassasa) {
+    const { data, error } = await getSupabase().from('profiles').update({ muassasa }).eq('id', userId).select().single();
     if (error) throw error;
     this._cache[userId] = data;
     return data;

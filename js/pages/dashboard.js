@@ -51,9 +51,10 @@ const DashboardPage = {
   // dashboard tepasida ogohlantiruvchi kartochka chiqaramiz.
   async qabulBanner() {
     const mua = DashboardPage._profile?.muassasa;
-    if (!mua) return;
+    const vil = DashboardPage._profile?.viloyat;
+    if (!mua && !vil) return;
     let rows = [];
-    try { rows = await DB.kutilayotganBemorlar(mua); } catch (e) { return; }
+    try { rows = await DB.kutilayotganBemorlar(mua, vil); } catch (e) { return; }
     if (!rows.length) return;
     const inner = document.getElementById('dashboard-inner');
     if (!inner) return;   // sahifa almashgan
@@ -67,7 +68,7 @@ const DashboardPage = {
           <div class="text-orange-600 shrink-0 mt-0.5">${icon('ambulance', 22)}</div>
           <div class="min-w-0">
             <div class="font-bold text-orange-900">
-              ${rows.length} ta bemor sizga yuborilgan — hali qabul qilinmagan
+              ${rows.length} ta bemor ${mua ? 'sizga' : 'viloyatingizga'} yuborilgan — hali qabul qilinmagan
             </div>
             <div class="text-sm text-orange-800 truncate">
               ${esc(nomlar)}${rows.length > 3 ? ` va yana ${rows.length - 3} ta` : ''}
