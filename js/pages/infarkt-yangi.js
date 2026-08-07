@@ -10,10 +10,14 @@ const InfarktYangiPage = {
     InfarktYangiPage._profile = profile;
     InfarktYangiPage._saving = false;
     InfarktYangiPage._step = 0;
+    // Viloyat va muassasa profildan avtomatik to'ladi. Admin/super_admin
+    // bo'lsa bo'sh qoladi — ular istalgan joyni tanlashi mumkin.
+    const oziniki = profile?.role !== 'admin' && profile?.role !== 'super_admin';
     InfarktYangiPage._data = {
       kt_no: Utils.generateKtNo(profile?.muassasa || ''),
       qabul_vaqt: Utils.formatDateInput(new Date()),
-      viloyat: (profile?.role === 'admin' || profile?.role === 'super_admin') ? '' : (profile?.viloyat || ''),
+      viloyat:  oziniki ? (profile?.viloyat  || '') : '',
+      muassasa: oziniki ? (profile?.muassasa || '') : '',
       fuqarolik: "O'zbekiston"
     };
 
@@ -238,13 +242,22 @@ const InfarktYangiPage = {
   },
 
   // ============ 1-BO'LIM: Muassasa ============
+  // Muassasa profilda belgilangan bo'lsa — o'zgartirib bo'lmaydi (viloyat kabi).
+  // Admin va super_admin uchun ochiq qoladi.
+  _muassasaQulf() {
+    const p = InfarktYangiPage._profile;
+    if (p?.role === 'admin' || p?.role === 'super_admin') return false;
+    return !!(p?.muassasa || '').trim();
+  },
+
   renderStep0() {
     const d = InfarktYangiPage._data;
     return `
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6">
         ${this.field('viloyat','Viloyat / Shahar',`<select id="viloyat" class="form-select" onchange="InfarktYangiPage.onViloyatChange(this.value)" ${InfarktYangiPage._profile?.role !== 'admin' && InfarktYangiPage._profile?.role !== 'super_admin' ? 'disabled' : ''}><option value="">Tanlang...</option>
           ${APP_CONFIG.VILOYATLAR.map(v=>`<option value="${v}" ${d.viloyat===v?'selected':''}>${v}</option>`).join('')}</select>`,true)}
-        ${this.field('muassasa','Muassasa',`<select id="muassasa" class="form-select" onchange="InfarktYangiPage.onMuassasaChange(this.value)"><option value="">Tanlang...</option>${(APP_CONFIG.MUASSASALAR[d.viloyat]||[]).map(m=>`<option value="${m}" ${d.muassasa===m?'selected':''}>${m}</option>`).join('')}<option value="Boshqa" ${d.muassasa==='Boshqa'?'selected':''}>Boshqa</option></select>`,true)}
+        ${this.field('muassasa','Muassasa',`<select id="muassasa" class="form-select" onchange="InfarktYangiPage.onMuassasaChange(this.value)" ${this._muassasaQulf() ? 'disabled' : ''}><option value="">Tanlang...</option>${(APP_CONFIG.MUASSASALAR[d.viloyat]||[]).map(m=>`<option value="${m}" ${d.muassasa===m?'selected':''}>${m}</option>`).join('')}<option value="Boshqa" ${d.muassasa==='Boshqa'?'selected':''}>Boshqa</option></select>`,true,
+          this._muassasaQulf() ? 'Profilingizdagi ish joyi' : '')}
         <div class="col-span-1 sm:col-span-2" id="boshqa-muassasa-div" style="display:${d.muassasa==='Boshqa'?'block':'none'}">
           ${this.field('boshqa_muassasa','Boshqa muassasa nomi',`<input id="boshqa_muassasa" class="form-input" value="${d.boshqa_muassasa||''}" placeholder="Muassasa nomini kiriting"/>`,true)}
         </div>
