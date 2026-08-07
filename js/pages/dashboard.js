@@ -85,7 +85,8 @@ const DashboardPage = {
     const p = DashboardPage._profile;
     // Kuzatuvchi rollar bemor qabul qilmaydi — ularga eslatma chiqmaydi
     if (p?.role === 'super_admin' || p?.real_role === 'rahbar') return;
-    const mua = p?.muassasa;
+    // Viloyat admini — butun viloyat bo'yicha, bitta muassasa bo'yicha emas
+    const mua = p?.role === 'admin' ? null : p?.muassasa;
     const vil = p?.viloyat;
     if (!mua && !vil) return;
     let rows = [];

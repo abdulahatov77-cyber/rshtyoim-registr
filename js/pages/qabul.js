@@ -16,7 +16,10 @@ const QabulPage = {
     // Super_admin va rahbarda ish joyi bo'lmaydi — ular bemor qabul qilmaydi.
     // Ularga respublika bo'yicha kuzatuv ro'yxati ko'rsatiladi.
     const kuzatuvchi = profile?.role === 'super_admin' || profile?.real_role === 'rahbar';
-    const muassasa = kuzatuvchi ? '' : (profile?.muassasa || '');
+    // Viloyat admini butun viloyatni boshqaradi — profilida muassasa bo'lsa ham
+    // ro'yxat viloyat bo'yicha chiqadi.
+    const viloyatAdmin = profile?.role === 'admin';
+    const muassasa = (kuzatuvchi || viloyatAdmin) ? '' : (profile?.muassasa || '');
     const viloyat  = kuzatuvchi ? '' : (profile?.viloyat  || '');
     QabulPage._aniqMuassasa = !!muassasa;
     QabulPage._kuzatuvchi   = kuzatuvchi;
