@@ -1518,10 +1518,27 @@ const Profile = {
     if (data) this._cache[userId] = data;
     return data;
   },
+  _muaSync: false,
   async getCurrent() {
     const user = await Auth.getUser();
     if (!user) return null;
-    return await this.get(user.id);
+    const p = await this.get(user.id);
+
+    // Ro'yxatdan o'tishda tanlangan muassasa profilga ko'chirilmagan bo'lsa —
+    // birinchi kirishda bir marta ko'chiramiz. (Profil qatorini baza triggeri
+    // yaratadi; u faqat viloyatni ko'chiradi.) Siyosat muassasani bo'sh
+    // bo'lgandagina yozishga ruxsat beradi, ya'ni qayta yozib yubormaydi.
+    const meta = user.user_metadata || {};
+    if (p && !this._muaSync && !(p.muassasa || '').trim() && (meta.muassasa || '').trim()) {
+      this._muaSync = true;
+      try {
+        await getSupabase().from('profiles')
+          .update({ muassasa: meta.muassasa }).eq('id', user.id);
+        p.muassasa = meta.muassasa;
+        this._cache[user.id] = p;
+      } catch (e) { /* muhim emas — Sozlamalarda qo'lda tanlanadi */ }
+    }
+    return p;
   },
   // Yozuvlarda "shifokor" sifatida saqlanadigan nom.
   // Eski profillarda ism `full_name` da, yangilarida `fio` da bo'lishi mumkin.

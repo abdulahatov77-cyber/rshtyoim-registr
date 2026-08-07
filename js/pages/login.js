@@ -70,11 +70,21 @@ const LoginPage = {
                 </div>
                 <div>
                   <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Viloyat</label>
-                  <select id="reg-viloyat" required
+                  <select id="reg-viloyat" required onchange="LoginPage.onRegViloyat(this.value)"
                     class="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-medium focus:bg-white outline-none cursor-pointer">
                     <option value="">Tanlang...</option>
                     ${APP_CONFIG.VILOYATLAR.map(v=>`<option value="${v}">${v}</option>`).join('')}
                   </select>
+                </div>
+                <div>
+                  <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Muassasa (ish joyingiz)</label>
+                  <select id="reg-muassasa" required disabled
+                    class="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-medium focus:bg-white outline-none cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed">
+                    <option value="">Avval viloyatni tanlang</option>
+                  </select>
+                  <p class="text-[11px] text-slate-400 mt-1.5">
+                    Ish joyingiz bir marta belgilanadi — keyin uni faqat administrator o'zgartira oladi.
+                  </p>
                 </div>
                 <div>
                   <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Email</label>
@@ -171,26 +181,43 @@ const LoginPage = {
     }
   },
 
+  // Viloyat tanlanganda muassasa ro'yxati to'ldiriladi
+  onRegViloyat(viloyat) {
+    const sel = document.getElementById('reg-muassasa');
+    if (!sel) return;
+    const list = APP_CONFIG.MUASSASALAR[viloyat] || [];
+    sel.disabled = !list.length;
+    sel.innerHTML = list.length
+      ? `<option value="">Muassasangizni tanlang...</option>` +
+        list.map(m => `<option value="${esc(m)}">${esc(m)}</option>`).join('')
+      : `<option value="">Avval viloyatni tanlang</option>`;
+  },
+
   async handleRegister(e) {
     e.preventDefault();
     const name      = document.getElementById('reg-name').value.trim();
     const viloyat   = document.getElementById('reg-viloyat').value;
+    const muassasa  = document.getElementById('reg-muassasa').value;
     const email     = document.getElementById('reg-email').value.trim();
     const password  = document.getElementById('reg-password').value;
     const btn       = document.getElementById('register-btn');
     const errEl     = document.getElementById('reg-error');
     const succEl    = document.getElementById('reg-success');
-    
+
     errEl.classList.add('hidden'); succEl.classList.add('hidden');
-    
-    if (password.length < 6) { 
-      errEl.textContent = 'Parol kamida 6 belgi bo\'lishi kerak'; 
-      errEl.classList.remove('hidden'); return; 
+
+    if (!viloyat)  { errEl.textContent = 'Viloyatni tanlang';  errEl.classList.remove('hidden'); return; }
+    if (!muassasa) { errEl.textContent = 'Ish joyingizni (muassasa) tanlang'; errEl.classList.remove('hidden'); return; }
+    if (password.length < 6) {
+      errEl.textContent = 'Parol kamida 6 belgi bo\'lishi kerak';
+      errEl.classList.remove('hidden'); return;
     }
-    
+
     setLoading(btn, true, 'Kutilmoqda...');
     try {
-      await Auth.signUp(email, password, { full_name: name, viloyat: viloyat, role: 'user' });
+      await Auth.signUp(email, password, {
+        full_name: name, viloyat: viloyat, muassasa: muassasa, role: 'user'
+      });
       succEl.innerHTML = '<b>Muvaffaqiyatli!</b> Emailingizni tasdiqlang va tizimga kiring.';
       succEl.classList.remove('hidden');
       setLoading(btn, false);
