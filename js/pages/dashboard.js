@@ -43,8 +43,40 @@ const DashboardPage = {
     );
     Components.startClock();
     await DashboardPage.loadData();
+    DashboardPage.muassasaBanner();
     DashboardPage.qabulBanner();
     DashboardPage.subscribeRealtime();
+  },
+
+  // Muassasa belgilanmagan bo'lsa — sozlamalarga yo'naltiruvchi eslatma.
+  // Bu maydonsiz "Qabul kutilmoqda" aniq ishlamaydi.
+  muassasaBanner() {
+    const p = DashboardPage._profile;
+    if (!p || p.role === 'super_admin' || p.role === 'rahbar') return;
+    if ((p.muassasa || '').trim()) return;
+    const inner = document.getElementById('dashboard-inner');
+    if (!inner) return;
+    const div = document.createElement('div');
+    div.className = 'card mb-4 border-l-4 border-l-amber-500 bg-amber-50 border-amber-200';
+    div.innerHTML = `
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <div class="flex items-start gap-3 min-w-0">
+          <div class="text-amber-600 shrink-0 mt-0.5">${icon('building-2', 22)}</div>
+          <div class="min-w-0">
+            <div class="font-bold text-amber-900">Ish joyingiz belgilanmagan</div>
+            <div class="text-sm text-amber-800">
+              Sozlamalarda muassasangizni bir marta tanlang — shundan keyin sizga
+              yuborilgan bemorlar aniq ko'rinadi.
+            </div>
+          </div>
+        </div>
+        <button class="btn btn-primary flex items-center gap-2 shrink-0"
+                onclick="Router.go('settings')">
+          ${icon('settings', 16)} Sozlamalarga o'tish
+        </button>
+      </div>`;
+    inner.prepend(div);
+    initIcons();
   },
 
   // Boshqa muassasadan yuborilgan, hali qabul qilinmagan bemorlar bo'lsa —

@@ -66,7 +66,9 @@ const SettingsPage = {
               ${viloyatOptions}
             </select>
             <p class="text-xs text-gray-400 mt-1">Viloyatni faqat Super Administrator o'zgartira oladi</p>
-          </div>`}
+          </div>
+
+          ${SettingsPage._muassasaBlok(profile)}`}
 
           <div class="flex justify-end pt-2">
             <button type="submit" id="save-profile-btn" class="btn btn-primary flex items-center gap-2">
@@ -120,6 +122,46 @@ const SettingsPage = {
     initIcons();
   },
 
+  // Muassasa — foydalanuvchi BIR MARTA o'zi tanlaydi, keyin qulflanadi.
+  // Keyinchalik faqat Super Administrator o'zgartira oladi (baza darajasida ham).
+  _muassasaBlok(profile) {
+    const belgilangan = (profile?.muassasa || '').trim();
+    if (belgilangan) {
+      return `
+        <div class="form-group">
+          <label class="form-label">Muassasa</label>
+          <input type="text" class="form-input bg-gray-50 text-gray-500 cursor-not-allowed"
+                 value="${esc(belgilangan)}" disabled />
+          <p class="text-xs text-gray-400 mt-1">
+            Muassasa bir marta belgilanadi. O'zgartirish uchun Super Administratorga murojaat qiling.
+          </p>
+        </div>`;
+    }
+    const list = APP_CONFIG.MUASSASALAR[profile?.viloyat] || [];
+    if (!profile?.viloyat) {
+      return `
+        <div class="form-group">
+          <label class="form-label">Muassasa</label>
+          <div class="p-3 rounded-xl bg-amber-50 border border-amber-200 text-sm text-amber-800">
+            Avval viloyatingiz belgilanishi kerak — Super Administratorga murojaat qiling.
+          </div>
+        </div>`;
+    }
+    return `
+      <div class="form-group">
+        <label class="form-label required">Muassasa</label>
+        <div class="p-3 mb-2 rounded-xl bg-amber-50 border border-amber-200 text-sm text-amber-900">
+          ${icon('alert-triangle', 14)} Ish joyingizni tanlang. <b>Bir marta belgilanadi</b> —
+          keyin uni faqat Super Administrator o'zgartira oladi.
+          Bu tanlov "Qabul kutilmoqda" ro'yxati va hisobotlar uchun ishlatiladi.
+        </div>
+        <select id="s-muassasa" class="form-select">
+          <option value="">— Muassasangizni tanlang —</option>
+          ${list.map(m => `<option value="${esc(m)}">${esc(m)}</option>`).join('')}
+        </select>
+      </div>`;
+  },
+
   async saveProfile(e) {
     e.preventDefault();
     const fio = document.getElementById('s-fio').value.trim();
@@ -129,12 +171,26 @@ const SettingsPage = {
 
     const updates = { fio, full_name: fio };
 
+    // Muassasa faqat hali belgilanmagan bo'lsa yuboriladi
+    const muaEl = document.getElementById('s-muassasa');
+    if (muaEl) {
+      const mua = (muaEl.value || '').trim();
+      if (!mua) { showToast('Muassasangizni tanlang', 'warning'); return; }
+      const ok = confirm(`Ish joyingiz sifatida quyidagi muassasa belgilanadi:\n\n${mua}\n\n` +
+        `Bu tanlov bir marta qilinadi — keyin uni faqat Super Administrator o'zgartira oladi.\n\n` +
+        `Tasdiqlaysizmi?`);
+      if (!ok) return;
+      updates.muassasa = mua;
+    }
+
     setLoading(btn, true, 'Saqlanmoqda...');
     try {
       await Profile.update(updates);
       showToast('Profil muvaffaqiyatli yangilandi', 'success');
+      Profile._cache = {};   // muassasa o'zgargan bo'lsa keshni yangilaymiz
       const profile = await Profile.getCurrent();
       SettingsPage._profile = profile;
+      if (updates.muassasa) SettingsPage.renderContent(profile, SettingsPage._user);
     } catch (err) {
       showToast('Xatolik: ' + err.message, 'error');
     } finally {
