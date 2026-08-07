@@ -1299,11 +1299,25 @@ const InfarktYangiPage = {
 
       // Duplikat tekshiruv — bir xil bemor (F.I.O + tug'ilgan yili + qabul sanasi) bazada bormi?
       const dup = await DB.checkDuplicate('infarkt_qabul', payload.fio, payload.tugilgan_yil, payload.qabul_vaqt, payload.muassasa);
+      let _qabulQilindi = null;   // o'tkazilgan bemorni qabul qilyapmizmi
       if (dup?.exact) {
-        showToast(`❌ Bu bemor allaqachon ro'yxatda: ${dup.row.fio} · ${dup.row.muassasa} · K/T: ${dup.row.kt_no}`, 'error', 8000);
-        setLoading(btn, false);
-        InfarktYangiPage._saving = false;
-        return;
+        // O'tkazilgan bemor boshqa muassasada qabul qilinsa — bu dublikat emas,
+        // marshrutning davomi. Bloklamaymiz, tasdiq so'raymiz.
+        const boshqaJoy = (dup.row.muassasa || '') !== (payload.muassasa || '');
+        if (dup.otkazilgan && boshqaJoy) {
+          const ok = confirm(`🚑 Bu bemor "${dup.row.muassasa}" dan o'tkazilgan.\n\n` +
+            `${dup.row.fio} · K/T: ${dup.row.kt_no}\n\n` +
+            `Uni "${payload.muassasa}" da qabul qilyapsizmi?\n` +
+            `"OK" — qabul qilib saqlash, "Bekor" — to'xtatish.`);
+          if (!ok) { setLoading(btn, false); InfarktYangiPage._saving = false; return; }
+          if (!payload.yuborgan_muassasa) payload.yuborgan_muassasa = dup.row.muassasa;
+          _qabulQilindi = dup.row;
+        } else {
+          showToast(`❌ Bu bemor allaqachon ro'yxatda: ${dup.row.fio} · ${dup.row.muassasa} · K/T: ${dup.row.kt_no}`, 'error', 8000);
+          setLoading(btn, false);
+          InfarktYangiPage._saving = false;
+          return;
+        }
       }
       if (dup && !dup.exact) {
         const ok = confirm(`⚠️ Shubhali dublikat!\n\nShu kuni shu muassasada o'xshash bemor bor:\n` +
@@ -1313,6 +1327,10 @@ const InfarktYangiPage = {
       }
 
       const saved = await DB.infarktQabul(payload);
+      // O'tkazilgan bemor qabul qilindi — marshrutni transfer_log ga yozamiz
+      if (_qabulQilindi) {
+        await DB.marshrutQabulYoz(_qabulQilindi, payload.muassasa, payload.qabul_vaqt);
+      }
       // Telegram xabar endi server tomondan yuboriladi (infarkt_qabul INSERT trigger —
       // telegram_server_notify.sql). Brauzerdan yuborsak dublikat bo'ladi.
       // Telegram.notify(saved, 'infarkt').catch(() => {});

@@ -181,7 +181,7 @@ const DB = {
     const nFio = norm(fio), nIkki = ikkiSoz(fio);
     // UZT (UTC+5) bo'yicha kun — yarim tunda off-by-one bo'lmasligi uchun
     const day = new Date(new Date(qabulVaqtIso).getTime() + 5*3600000).toISOString().slice(0, 10);
-    const cols = 'kt_no,fio,tugilgan_yil,qabul_vaqt,muassasa';
+    const cols = 'kt_no,fio,tugilgan_yil,qabul_vaqt,muassasa,status';
     const olish = async t => {
       const { data } = await sb.from(t).select(cols)
         .gte('qabul_vaqt', `${day}T00:00:00+05:00`)
@@ -193,11 +193,42 @@ const DB = {
     const rows = [...insRows, ...infRows];
     const aniq = rows.find(r => norm(r.fio) === nFio &&
       String(r.tugilgan_yil || '') === String(tugilganYil || ''));
-    if (aniq) return { row: aniq, exact: true, turi: aniq._turi };
+    // otkazilgan=true — bu bemor boshqa muassasadan o'tkazilgan. U holda ikkinchi
+    // yozuv dublikat emas, marshrutning davomi (qabul qiluvchi muassasa o'z
+    // yozuvini kiritadi). Chaqiruvchi buni tekshirib, ruxsat berishi mumkin.
+    if (aniq) return {
+      row: aniq, exact: true, turi: aniq._turi,
+      otkazilgan: (aniq.status || '') === 'otkazildi'
+    };
     // Familiya+ism mos, o'sha kuni, o'sha muassasada — "Xxx" kabi to'ldirmalar tufayli
     // to'liq mos kelmaydigan qayta kiritishlarni ushlaydi
     const shubhali = muassasa ? rows.find(r => ikkiSoz(r.fio) === nIkki && r.muassasa === muassasa) : null;
     return shubhali ? { row: shubhali, exact: false, turi: shubhali._turi } : null;
+  },
+
+  // O'tkazilgan bemor yangi muassasada qabul qilinganda marshrutni yozamiz.
+  // Shu sabab o'tkir yo'naltirish endi transfer_log ga tushadi va "Marshrut"
+  // sahifasidagi oqim matritsasida ko'rinadi.
+  async marshrutQabulYoz(oldRow, yangiMuassasa, qabulVaqtIso) {
+    if (!oldRow?.kt_no || !yangiMuassasa || !qabulVaqtIso) return;
+    try {
+      const mavjud = await TransferLog.getByKtNo(oldRow.kt_no).catch(() => []);
+      // Yuboruvchi tomon allaqachon yozgan bo'lsa — takrorlamaymiz
+      if (mavjud.some(r => (r.muassasa_ga || '') === yangiMuassasa)) return;
+      const d = new Date(new Date(qabulVaqtIso).getTime() + 5 * 3600000);
+      const rec = {
+        kt_no: oldRow.kt_no,
+        muassasa_dan: oldRow.muassasa || '',
+        muassasa_ga: yangiMuassasa,
+        sana: d.toISOString().slice(0, 10),
+        vaqt: d.toISOString().slice(11, 16)
+      };
+      // vaqt ustuni hali qo'shilmagan bazalarda usiz yozamiz
+      await TransferLog.add(rec).catch(() => {
+        const { vaqt, ...noVaqt } = rec;
+        return TransferLog.add(noVaqt);
+      });
+    } catch (e) { /* marshrut yozuvi ixtiyoriy — saqlashni to'xtatmaydi */ }
   },
 
   // Infarkt CRUD
