@@ -1,4 +1,4 @@
-// ==================== KENGAYTIRILGAN HISOBOT ====================
+﻿// ==================== KENGAYTIRILGAN HISOBOT ====================
 // Etalon: Hisobot-jadvali-STRUKTURA.md (10 varaq)
 // Manba: hisobot_rpc.sql dagi beshta RPC. Barcha agregatsiya va foizlar
 // serverda hisoblanadi — ekran va Excel bir xil raqam beradi.
@@ -6,7 +6,7 @@
 // Uchta tab: Jadval (1/2-varaq) · Marshrut (4/5/6-varaq) · Kaskad (7/8-varaq)
 // Eksport — 10 varaqli xlsx.
 const KengHisobotPage = {
-  _f: { from: '', to: '', viloyat: '' },
+  _f: { from: '', to: '', viloyat: '', muassasa: '' },
   _d: {},          // { inf, ins, mInf, mIns, matInf, matIns, kInf, kIns }
   _tab: 'jadval',
 
@@ -29,11 +29,11 @@ const KengHisobotPage = {
       'Viloyat va muassasa kesimida to\'liq tahlil — jadval, marshrut, kaskad',
       `<div id="kh-inner" class="animate-fadein">
         <div class="card mb-4">
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
             ${keng ? `
             <div>
               <label class="form-label">${icon('map-pin', 14)} Viloyat</label>
-              <select id="kh-viloyat" class="form-select">
+              <select id="kh-viloyat" class="form-select" onchange="KengHisobotPage.onViloyat(this.value)">
                 <option value="">— Respublika —</option>
                 ${APP_CONFIG.VILOYATLAR.map(v =>
                   `<option value="${esc(v)}" ${f.viloyat === v ? 'selected' : ''}>${esc(v)}</option>`).join('')}
@@ -43,6 +43,12 @@ const KengHisobotPage = {
               <label class="form-label">${icon('map-pin', 14)} Viloyat</label>
               <div class="form-input bg-slate-50 text-slate-500">${esc(f.viloyat || '—')}</div>
             </div>`}
+            <div>
+              <label class="form-label">${icon('building-2', 14)} Muassasa</label>
+              <select id="kh-muassasa" class="form-select" onchange="KengHisobotPage.onMuassasa(this.value)">
+                ${KengHisobotPage._muassasaOptions()}
+              </select>
+            </div>
             <div>
               <label class="form-label">${icon('calendar', 14)} Sana (dan)</label>
               <input type="date" id="kh-from" class="form-input" value="${f.from}"/>
@@ -79,6 +85,45 @@ const KengHisobotPage = {
 
     document.getElementById('kh-run').onclick    = () => KengHisobotPage.load();
     document.getElementById('kh-export').onclick = () => KengHisobotPage.eksport();
+  },
+
+  // Muassasa ro'yxati — tanlangan viloyat bo'yicha. Viloyat tanlanmagan
+  // bo'lsa ro'yxat bo'sh: respublika bo'yicha 237 ta muassasani bitta
+  // ro'yxatga sig'dirish foydasiz, avval viloyat tanlansin.
+  _muassasaOptions() {
+    const f = KengHisobotPage._f;
+    if (!f.viloyat) return `<option value="">— avval viloyatni tanlang —</option>`;
+    const list = APP_CONFIG.MUASSASALAR[f.viloyat] || [];
+    return `<option value="">— barcha muassasalar —</option>` +
+      list.map(m => `<option value="${esc(m)}" ${f.muassasa === m ? 'selected' : ''}>${esc(m)}</option>`).join('');
+  },
+
+  onViloyat(v) {
+    KengHisobotPage._f.viloyat = v;
+    KengHisobotPage._f.muassasa = '';          // viloyat o'zgardi — muassasa tozalanadi
+    const sel = document.getElementById('kh-muassasa');
+    if (sel) sel.innerHTML = KengHisobotPage._muassasaOptions();
+  },
+
+  // Muassasa o'zgarganda qayta so'rov yubormaymiz — ma'lumot allaqachon
+  // muassasa darajasida kelgan, faqat qayta chiziladi.
+  onMuassasa(v) {
+    KengHisobotPage._f.muassasa = v;
+    if (KengHisobotPage._d.inf) KengHisobotPage.draw();
+  },
+
+  // Tanlangan muassasa bo'yicha filtrlangan ko'rinish.
+  // Viloyatlararo matritsa filtrlanmaydi — u viloyat darajasidagi oqim.
+  D() {
+    const d = KengHisobotPage._d;
+    const m = KengHisobotPage._f.muassasa;
+    if (!m) return d;
+    const f = a => (a || []).filter(r => r.muassasa === m);
+    return { ...d,
+      inf: f(d.inf), ins: f(d.ins),
+      mInf: f(d.mInf), mIns: f(d.mIns),
+      kInf: f(d.kInf), kIns: f(d.kIns),
+      oInf: f(d.oInf), oIns: f(d.oIns) };
   },
 
   drawTabs() {
@@ -176,7 +221,7 @@ const KengHisobotPage = {
   ],
 
   htmlOyna() {
-    const d = KengHisobotPage._d;
+    const d = KengHisobotPage.D();
     return `
       <div class="card mb-4 !py-3 flex items-start gap-3 bg-blue-50 border-blue-200">
         ${icon('info', 18)}
@@ -261,7 +306,7 @@ const KengHisobotPage = {
 
   // Viloyat kesimida qisqa jamlanma
   _oynaXulosaRows() {
-    const d = KengHisobotPage._d;
+    const d = KengHisobotPage.D();
     const N = KengHisobotPage._n;
     const vil = [...new Set([...(d.oInf || []).map(r => r.viloyat),
                              ...(d.oIns || []).map(r => r.viloyat)])].filter(Boolean).sort();
@@ -345,7 +390,7 @@ const KengHisobotPage = {
   ],
 
   htmlJadval() {
-    const d = KengHisobotPage._d;
+    const d = KengHisobotPage.D();
     return `
       ${KengHisobotPage._tbl('🫀 1-INFARKT', d.inf, KengHisobotPage.GURUH_INF)}
       ${KengHisobotPage._tbl('🧠 2-INSULT',  d.ins, KengHisobotPage.GURUH_INS)}
@@ -417,7 +462,7 @@ const KengHisobotPage = {
 
   // 3-XULOSA varag'i — viloyat kesimida jamlanma
   _xulosaRows() {
-    const d = KengHisobotPage._d;
+    const d = KengHisobotPage.D();
     const vil = [...new Set([...d.inf.map(r => r.viloyat), ...d.ins.map(r => r.viloyat)])]
       .filter(Boolean).sort();
     const N = KengHisobotPage._n;
@@ -481,7 +526,7 @@ const KengHisobotPage = {
 
   // ================= 2. MARSHRUT TABI =================
   htmlMarshrut() {
-    const d = KengHisobotPage._d;
+    const d = KengHisobotPage.D();
     return `
       ${KengHisobotPage._matritsa('🫀 Infarkt — viloyatlararo oqim', d.matInf)}
       ${KengHisobotPage._matritsa('🧠 Insult — viloyatlararo oqim',  d.matIns)}
@@ -593,7 +638,7 @@ const KengHisobotPage = {
   KASKAD_INS: ['Ishemik bemor', 'MSKT qilingan', 'ASPECTS baholangan', 'Reperfuziya ko\'rsatmasi', 'Reperfuziya bajarilgan', 'Me\'yoriy vaqtda (≤60 daq)'],
 
   htmlKaskad() {
-    const d = KengHisobotPage._d;
+    const d = KengHisobotPage.D();
     return `
       ${KengHisobotPage._voronka('🫀 7-KASKAD-INF', d.kInf, KengHisobotPage.KASKAD_INF, 'STEMI o\'limi')}
       ${KengHisobotPage._voronka('🧠 8-KASKAD-INS', d.kIns, KengHisobotPage.KASKAD_INS, 'mRS 0-2 bilan chiqqan')}`;
@@ -678,7 +723,7 @@ const KengHisobotPage = {
 
   // ================= EKSPORT — 10 varaq =================
   eksport() {
-    const d = KengHisobotPage._d;
+    const d = KengHisobotPage.D();
     if (!d.inf) { showToast('Avval hisobotni shakllantiring', 'warning'); return; }
     const f = KengHisobotPage._f;
 
@@ -738,13 +783,14 @@ const KengHisobotPage = {
       { nom: '13-OYNA-XULOSA',  rows: KengHisobotPage._oynaXulosaRows() }
     ];
 
-    const scope = (f.viloyat || 'Respublika').replace(/[:*?"<>|\\/]/g, '-');
+    const scope = (f.muassasa || f.viloyat || 'Respublika')
+      .replace(/[:*?"<>|\\/]/g, '-').slice(0, 60);
     Utils.exportXLSXMulti(varaqlar, `hisobot_${scope}_${f.from}_${f.to}.xlsx`);
-    showToast('✅ Excel fayl yuklab olindi — 10 varaq', 'success');
+    showToast(`✅ Excel yuklab olindi — ${varaqlar.length} varaq`, 'success');
   },
 
   _kaskadXulosa() {
-    const d = KengHisobotPage._d;
+    const d = KengHisobotPage.D();
     const N = KengHisobotPage._n;
     const chiq = (rows, nomlar, turi) => {
       const vil = [...new Set(rows.map(r => r.viloyat))].filter(Boolean).sort();
