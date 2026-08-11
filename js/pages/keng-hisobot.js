@@ -167,7 +167,8 @@ const KengHisobotPage = {
   // muassasa kesimida. Foizlar faqat aniq vaqtli yozuvlar bo'yicha.
   OYNA_COLS: [
     ['viloyat','Viloyat','t'],['muassasa','Muassasa','t'],['bosqich','Bosqich','t'],
-    ['jami','Bemor jami','b'],['aniq','Aniq vaqtli'],['nomalum','Vaqti noaniq'],
+    ['jami','Bemor jami','b'],['aniq','Aniq soat'],['oraliqli','Oraliq (eski)'],
+    ['uyqu','Uyquda'],['kiritilmagan','Kiritilmagan'],
     ['s0_3','0–3 soat'],['s3_6','3–6 soat'],['s6_12','6–12 soat'],
     ['s12_24','12–24 soat'],['s24p','24+ soat'],
     ['ortacha_soat','O\'rtacha soat','n'],
@@ -181,10 +182,12 @@ const KengHisobotPage = {
         ${icon('info', 18)}
         <span class="text-sm text-blue-900">
           Simptom boshlanganidan kasalxonaga kelguncha o'tgan vaqt.
-          <b>Foizlar faqat "Aniq vaqtli" ustundagi yozuvlar bo'yicha</b> hisoblanadi —
-          2026-yil 4-iyungacha forma faqat oraliq so'ragan, u yozuvlarda haqiqiy vaqt noma'lum.
           <div class="mt-1 text-xs text-blue-800">
-            Klinik chegaralar: insultda trombolizis oynasi 4,5 soat (butun soatda ≤4),
+            <b>Taqsimot ustunlari</b> (0–3, 3–6 …) faqat aniq soat kiritilgan yozuvlardan.
+            <b>Foizlar</b> esa oraliqli yozuvlarni ham hisobga oladi — masalan "0–3 soat ichida"
+            deb belgilangan bemor ≤4 va ≤6 oynasiga aniq kiradi. Chegara oraliq ichiga
+            tushib qolgan holatlar (masalan "3–6" va ≤4) maxrajdan ham chiqariladi.
+            <br>Klinik chegaralar: insultda trombolizis oynasi 4,5 soat (butun soatda ≤4),
             infarktda birlamchi PCI oynasi 12 soat.
           </div>
         </span>
@@ -202,15 +205,12 @@ const KengHisobotPage = {
     const cols = KengHisobotPage.OYNA_COLS;
     const sonlar = cols.filter(c => !c[2] || c[2] === 'b').map(c => c[0]);
     const t = KengHisobotPage._jami(rows, sonlar);
-    // JAMI qatoridagi foizlar yig'indidan qayta hisoblanadi (foizlar o'rtachasi emas).
-    // ≤4 soat ustuni bu yerda chiqmaydi — 0–3 va 3–6 guruhlari orasida qolib
-    // ketadi va yig'indidan aniq hisoblab bo'lmaydi.
-    const N = KengHisobotPage._n;
-    const sum = k => rows.reduce((s, r) => s + N(r[k]), 0);
-    t.f4  = null;
-    t.f6  = t.aniq ? Math.round(100 * (sum('s0_3') + sum('s3_6')) / t.aniq * 10) / 10 : null;
-    t.f12 = t.aniq ? Math.round(100 * (sum('s0_3') + sum('s3_6') + sum('s6_12')) / t.aniq * 10) / 10 : null;
-    t.ortacha_soat = null;
+    // JAMI qatorida foiz ko'rsatilmaydi. Sababi: har bir chegara uchun maxraj
+    // alohida (noaniq holatlar chiqarib tashlanadi) va uni qatorlar yig'indisidan
+    // qayta tiklab bo'lmaydi. Foizlarning o'rtachasini olish esa xato bo'lardi —
+    // kichik muassasa katta muassasa bilan bir xil vaznga ega bo'lib qolardi.
+    // Viloyat kesimidagi jamlanma pastdagi alohida jadvalda.
+    t.f4 = null; t.f6 = null; t.f12 = null; t.ortacha_soat = null;
 
     const katak = (r, c) => {
       const [k, , tur] = c;
@@ -229,9 +229,9 @@ const KengHisobotPage = {
         return `<td style="text-align:center;color:#475569">${v === null || v === undefined ? '—' : Number(v).toFixed(1)}</td>`;
       }
       const v = KengHisobotPage._n(r[k]);
-      const kul = k === 'nomalum' && v > 0;
+      const ogoh = (k === 'kiritilmagan' || k === 'oraliqli') && v > 0;
       return `<td style="text-align:center;${tur === 'b' ? 'font-weight:700;color:#1d4ed8' : ''}
-        ${kul ? 'color:#a16207' : ''}">${v || ''}</td>`;
+        ${ogoh ? 'color:#a16207' : ''}">${v || ''}</td>`;
     };
 
     return `
@@ -271,6 +271,9 @@ const KengHisobotPage = {
       const s = (d.oIns || []).filter(r => r.viloyat === v);
       const sum = (arr, k) => arr.reduce((a, r) => a + N(r[k]), 0);
       const iA = sum(i, 'aniq'), sA = sum(s, 'aniq');
+      // Bu jadvaldagi foizlar faqat aniq soatli yozuvlardan — asosiy
+      // jadvaldagi foizlardan biroz farq qilishi mumkin (u yerda oraliqli
+      // yozuvlar ham hisobga olinadi).
       return {
         'Viloyat': v,
         'Infarkt — aniq vaqtli': iA,
