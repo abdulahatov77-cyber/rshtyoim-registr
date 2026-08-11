@@ -84,7 +84,8 @@ const KengHisobotPage = {
   drawTabs() {
     const el = document.getElementById('kh-tabs');
     if (!el) return;
-    const tabs = [['jadval', 'Jadval', 'table'], ['marshrut', 'Marshrut', 'route'], ['kaskad', 'Kaskad', 'filter']];
+    const tabs = [['jadval', 'Jadval', 'table'], ['marshrut', 'Marshrut', 'route'],
+                  ['kaskad', 'Kaskad', 'filter'], ['oyna', 'Terapevtik oyna', 'clock']];
     el.innerHTML = tabs.map(([k, nom, ic]) =>
       `<button class="tab-btn ${KengHisobotPage._tab === k ? 'active' : ''}"
                onclick="KengHisobotPage.setTab('${k}')">${icon(ic, 14)} ${nom}</button>`).join('');
@@ -111,7 +112,7 @@ const KengHisobotPage = {
       <p class="text-blue-900 font-semibold text-sm">Hisobot shakllantirilmoqda...</p></div>`;
 
     try {
-      const [inf, ins, mInf, mIns, matInf, matIns, kInf, kIns] = await Promise.all([
+      const [inf, ins, mInf, mIns, matInf, matIns, kInf, kIns, oInf, oIns] = await Promise.all([
         DB.hisobotInfarkt(f.from, f.to, f.viloyat),
         DB.hisobotInsult(f.from, f.to, f.viloyat),
         DB.hisobotMarshrutMuassasa(f.from, f.to, 'infarkt', f.viloyat),
@@ -119,9 +120,11 @@ const KengHisobotPage = {
         DB.hisobotMarshrutMatritsa(f.from, f.to, 'infarkt'),
         DB.hisobotMarshrutMatritsa(f.from, f.to, 'insult'),
         DB.hisobotKaskad(f.from, f.to, 'infarkt', f.viloyat),
-        DB.hisobotKaskad(f.from, f.to, 'insult',  f.viloyat)
+        DB.hisobotKaskad(f.from, f.to, 'insult',  f.viloyat),
+        DB.hisobotOyna(f.from, f.to, 'infarkt', f.viloyat),
+        DB.hisobotOyna(f.from, f.to, 'insult',  f.viloyat)
       ]);
-      KengHisobotPage._d = { inf, ins, mInf, mIns, matInf, matIns, kInf, kIns };
+      KengHisobotPage._d = { inf, ins, mInf, mIns, matInf, matIns, kInf, kIns, oInf, oIns };
       const btn = document.getElementById('kh-export');
       if (btn) { btn.disabled = false; btn.style.opacity = ''; }
       KengHisobotPage.draw();
@@ -155,7 +158,163 @@ const KengHisobotPage = {
     if (KengHisobotPage._tab === 'jadval')   el.innerHTML = KengHisobotPage.htmlJadval();
     if (KengHisobotPage._tab === 'marshrut') el.innerHTML = KengHisobotPage.htmlMarshrut();
     if (KengHisobotPage._tab === 'kaskad')   el.innerHTML = KengHisobotPage.htmlKaskad();
+    if (KengHisobotPage._tab === 'oyna')     el.innerHTML = KengHisobotPage.htmlOyna();
     initIcons();
+  },
+
+  // ================= 4. TERAPEVTIK OYNA TABI =================
+  // Bemor simptom boshlanganidan qancha vaqtda kelgani — viloyat va
+  // muassasa kesimida. Foizlar faqat aniq vaqtli yozuvlar bo'yicha.
+  OYNA_COLS: [
+    ['viloyat','Viloyat','t'],['muassasa','Muassasa','t'],['bosqich','Bosqich','t'],
+    ['jami','Bemor jami','b'],['aniq','Aniq vaqtli'],['nomalum','Vaqti noaniq'],
+    ['s0_3','0–3 soat'],['s3_6','3–6 soat'],['s6_12','6–12 soat'],
+    ['s12_24','12–24 soat'],['s24p','24+ soat'],
+    ['ortacha_soat','O\'rtacha soat','n'],
+    ['f4','≤4 soat %','%'],['f6','≤6 soat %','%'],['f12','≤12 soat %','%']
+  ],
+
+  htmlOyna() {
+    const d = KengHisobotPage._d;
+    return `
+      <div class="card mb-4 !py-3 flex items-start gap-3 bg-blue-50 border-blue-200">
+        ${icon('info', 18)}
+        <span class="text-sm text-blue-900">
+          Simptom boshlanganidan kasalxonaga kelguncha o'tgan vaqt.
+          <b>Foizlar faqat "Aniq vaqtli" ustundagi yozuvlar bo'yicha</b> hisoblanadi —
+          2026-yil 4-iyungacha forma faqat oraliq so'ragan, u yozuvlarda haqiqiy vaqt noma'lum.
+          <div class="mt-1 text-xs text-blue-800">
+            Klinik chegaralar: insultda trombolizis oynasi 4,5 soat (butun soatda ≤4),
+            infarktda birlamchi PCI oynasi 12 soat.
+          </div>
+        </span>
+      </div>
+      ${KengHisobotPage._oynaTbl('🫀 Infarkt — terapevtik oyna', d.oInf, 'f12')}
+      ${KengHisobotPage._oynaTbl('🧠 Insult — terapevtik oyna',  d.oIns, 'f4')}
+      ${KengHisobotPage._oynaXulosa()}`;
+  },
+
+  _oynaTbl(sarlavha, rows, asosiy) {
+    if (!rows || !rows.length) {
+      return `<div class="card mb-4"><h3 class="card-title mb-2">${sarlavha}</h3>
+        <p class="text-slate-400 text-sm py-6 text-center">Tanlangan davrda ma'lumot yo'q</p></div>`;
+    }
+    const cols = KengHisobotPage.OYNA_COLS;
+    const sonlar = cols.filter(c => !c[2] || c[2] === 'b').map(c => c[0]);
+    const t = KengHisobotPage._jami(rows, sonlar);
+    // JAMI qatoridagi foizlar yig'indidan qayta hisoblanadi (foizlar o'rtachasi emas).
+    // ≤4 soat ustuni bu yerda chiqmaydi — 0–3 va 3–6 guruhlari orasida qolib
+    // ketadi va yig'indidan aniq hisoblab bo'lmaydi.
+    const N = KengHisobotPage._n;
+    const sum = k => rows.reduce((s, r) => s + N(r[k]), 0);
+    t.f4  = null;
+    t.f6  = t.aniq ? Math.round(100 * (sum('s0_3') + sum('s3_6')) / t.aniq * 10) / 10 : null;
+    t.f12 = t.aniq ? Math.round(100 * (sum('s0_3') + sum('s3_6') + sum('s6_12')) / t.aniq * 10) / 10 : null;
+    t.ortacha_soat = null;
+
+    const katak = (r, c) => {
+      const [k, , tur] = c;
+      if (tur === 't') return `<td class="${k === 'muassasa' ? 'font-semibold text-slate-800' : 'text-slate-600'}">${esc(r[k] || '—')}</td>`;
+      if (tur === '%') {
+        const v = r[k];
+        if (v === null || v === undefined) return `<td style="text-align:center;color:#cbd5e1">—</td>`;
+        const f = Number(v);
+        const yaxshi = k === asosiy ? (f >= 40) : false;
+        const yomon  = k === asosiy ? (f < 20)  : false;
+        return `<td style="text-align:center;font-weight:${k === asosiy ? 700 : 600};
+          color:${yomon ? '#b91c1c' : yaxshi ? '#15803d' : '#0891b2'}">${f.toFixed(1)}%</td>`;
+      }
+      if (tur === 'n') {
+        const v = r[k];
+        return `<td style="text-align:center;color:#475569">${v === null || v === undefined ? '—' : Number(v).toFixed(1)}</td>`;
+      }
+      const v = KengHisobotPage._n(r[k]);
+      const kul = k === 'nomalum' && v > 0;
+      return `<td style="text-align:center;${tur === 'b' ? 'font-weight:700;color:#1d4ed8' : ''}
+        ${kul ? 'color:#a16207' : ''}">${v || ''}</td>`;
+    };
+
+    return `
+      <div class="card !p-0 overflow-hidden mb-4">
+        <div class="card-header bg-gray-50 !mb-0 !border-b-gray-200">
+          <span class="card-title text-gray-900">${sarlavha}</span>
+          <span class="text-xs text-slate-500">${rows.length} ta muassasa</span>
+        </div>
+        <div class="overflow-x-auto" style="max-height:65vh">
+          <table class="w-full text-xs border-collapse">
+            <thead style="position:sticky;top:0;z-index:1"><tr>
+              ${cols.map(c => `<th style="background:#1e293b;color:#e2e8f0;padding:6px;font-size:10px;
+                text-align:${c[2] === 't' ? 'left' : 'center'}">${esc(c[1])}</th>`).join('')}
+            </tr></thead>
+            <tbody>
+              ${rows.map((r, i) => `<tr style="background:${i % 2 ? '#fff' : '#f8fafc'}" class="hover:bg-blue-50">
+                ${cols.map(c => katak(r, c)).join('')}</tr>`).join('')}
+              <tr style="background:#dbeafe;font-weight:700">
+                <td class="text-blue-900">JAMI</td><td class="text-blue-900">${rows.length}</td><td></td>
+                ${cols.slice(3).map(c => katak(t, c)).join('')}
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>`;
+  },
+
+  // Viloyat kesimida qisqa jamlanma
+  _oynaXulosaRows() {
+    const d = KengHisobotPage._d;
+    const N = KengHisobotPage._n;
+    const vil = [...new Set([...(d.oInf || []).map(r => r.viloyat),
+                             ...(d.oIns || []).map(r => r.viloyat)])].filter(Boolean).sort();
+    const pct = (a, b) => b > 0 ? Math.round(a / b * 1000) / 10 : null;
+    return vil.map(v => {
+      const i = (d.oInf || []).filter(r => r.viloyat === v);
+      const s = (d.oIns || []).filter(r => r.viloyat === v);
+      const sum = (arr, k) => arr.reduce((a, r) => a + N(r[k]), 0);
+      const iA = sum(i, 'aniq'), sA = sum(s, 'aniq');
+      return {
+        'Viloyat': v,
+        'Infarkt — aniq vaqtli': iA,
+        'Infarkt ≤6 soat %':  pct(sum(i, 's0_3') + sum(i, 's3_6'), iA),
+        'Infarkt ≤12 soat %': pct(sum(i, 's0_3') + sum(i, 's3_6') + sum(i, 's6_12'), iA),
+        'Infarkt >24 soat %': pct(sum(i, 's24p'), iA),
+        'Insult — aniq vaqtli': sA,
+        'Insult ≤3 soat %':   pct(sum(s, 's0_3'), sA),
+        'Insult ≤6 soat %':   pct(sum(s, 's0_3') + sum(s, 's3_6'), sA),
+        'Insult ≤12 soat %':  pct(sum(s, 's0_3') + sum(s, 's3_6') + sum(s, 's6_12'), sA),
+        'Insult >24 soat %':  pct(sum(s, 's24p'), sA)
+      };
+    });
+  },
+
+  _oynaXulosa() {
+    const rows = KengHisobotPage._oynaXulosaRows();
+    if (!rows.length) return '';
+    const cols = Object.keys(rows[0]);
+    return `
+      <div class="card !p-0 overflow-hidden">
+        <div class="card-header bg-gray-50 !mb-0 !border-b-gray-200">
+          <span class="card-title text-gray-900">📊 Viloyatlar kesimida jamlanma</span>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-xs border-collapse">
+            <thead><tr>${cols.map(c => `<th style="background:#1e293b;color:#e2e8f0;padding:7px;
+              font-size:10px;text-align:${c === 'Viloyat' ? 'left' : 'center'}">${esc(c)}</th>`).join('')}</tr></thead>
+            <tbody>
+              ${rows.map((r, i) => `<tr style="background:${i % 2 ? '#fff' : '#f8fafc'}">
+                ${cols.map(c => {
+                  const v = r[c];
+                  const isPct = c.includes('%');
+                  const kech = isPct && c.includes('>24');
+                  return `<td style="padding:6px;text-align:${c === 'Viloyat' ? 'left' : 'center'};
+                    ${c === 'Viloyat' ? 'font-weight:600' : ''}
+                    ${isPct ? `font-weight:600;color:${v === null ? '#cbd5e1' : kech ? (v >= 20 ? '#b91c1c' : '#a16207') : (v >= 40 ? '#15803d' : v < 20 ? '#b91c1c' : '#0891b2')}` : ''}">
+                    ${v === null || v === undefined ? '—' : esc(v) + (isPct ? '%' : '')}</td>`;
+                }).join('')}
+              </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>`;
   },
 
   // ================= 1. JADVAL TABI =================
@@ -570,7 +729,10 @@ const KengHisobotPage = {
       { nom: '7-KASKAD-INF',    rows: qator(d.kInf, kaskadCols(KengHisobotPage.KASKAD_INF)) },
       { nom: '8-KASKAD-INS',    rows: qator(d.kIns, kaskadCols(KengHisobotPage.KASKAD_INS)) },
       { nom: '9-KASKAD-XULOSA', rows: KengHisobotPage._kaskadXulosa() },
-      { nom: '10-LUGAT',        rows: KengHisobotPage._lugat() }
+      { nom: '10-LUGAT',        rows: KengHisobotPage._lugat() },
+      { nom: '11-OYNA-INF',     rows: qator(d.oInf || [], KengHisobotPage.OYNA_COLS.map(c => [c[0], c[1]])) },
+      { nom: '12-OYNA-INS',     rows: qator(d.oIns || [], KengHisobotPage.OYNA_COLS.map(c => [c[0], c[1]])) },
+      { nom: '13-OYNA-XULOSA',  rows: KengHisobotPage._oynaXulosaRows() }
     ];
 
     const scope = (f.viloyat || 'Respublika').replace(/[:*?"<>|\\/]/g, '-');
