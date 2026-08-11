@@ -323,17 +323,13 @@ const KengHisobotPage = {
       </td>`;
     };
 
-    // JAMI qatori — har bir tashxis uchun sonlar yig'iladi va foiz qayta hisoblanadi
-    const jamiKatak = (nozKalit, chegaralar) => {
-      const g = rows.filter(r => r.nozologiya === nozKalit);
-      const s = f => g.reduce((a, r) => a + N(r[f]), 0);
-      const jami = s('jami');
+    // JAMI qatori — faqat umumiy bemor soni (chegaralar bo'yicha taqsimot emas)
+    const jamiKatak = (nozKalit) => {
+      const jami = rows.filter(r => r.nozologiya === nozKalit)
+                       .reduce((a, r) => a + N(r.jami), 0);
       if (!jami) return `<td style="text-align:center;color:#93c5fd;padding:8px">—</td>`;
-      return `<td style="padding:8px 10px;vertical-align:top;white-space:nowrap">
-        <div style="font-size:15px;font-weight:800;color:#1e3a8a;margin-bottom:3px">${jami} ta</div>
-        ${chegaralar.map(([k, nom]) => `<div style="font-size:11px;color:#1e40af">${nom}:
-          <span style="font-weight:700">${s(k)} ta (${foiz(s(k), jami)}%)</span></div>`).join('')}
-      </td>`;
+      return `<td style="padding:8px 10px;text-align:center">
+        <div style="font-size:15px;font-weight:800;color:#1e3a8a">${jami} ta</div></td>`;
     };
 
     return `
@@ -360,7 +356,7 @@ const KengHisobotPage = {
               <tr style="background:#dbeafe">
                 <td style="padding:8px;font-weight:800;color:#1e3a8a;vertical-align:top">JAMI</td>
                 <td style="padding:8px;font-weight:700;color:#1e3a8a;vertical-align:top">${list.length} ta muassasa</td>
-                ${ustunlar.map(([k, , ch]) => jamiKatak(k, ch)).join('')}
+                ${ustunlar.map(([k]) => jamiKatak(k)).join('')}
               </tr>
             </tbody>
           </table>
@@ -400,16 +396,11 @@ const KengHisobotPage = {
       return o;
     });
 
-    // JAMI qatori
+    // JAMI qatori — faqat umumiy son
     const jamiQator = { 'Viloyat': 'JAMI', 'Muassasa': `${list.length} ta muassasa` };
-    ustunlar.forEach(([k, nom, ch]) => {
-      const g = rows.filter(r => r.nozologiya === k);
-      const s = f => g.reduce((a, r) => a + N(r[f]), 0);
-      const j = s('jami');
-      if (!j) { jamiQator[nom] = '—'; return; }
-      const satr = [`${j} ta`];
-      ch.forEach(([kk, n2]) => satr.push(`${n2}: ${s(kk)} ta (${foiz(s(kk), j)}%)`));
-      jamiQator[nom] = satr.join('\n');
+    ustunlar.forEach(([k, nom]) => {
+      const j = rows.filter(r => r.nozologiya === k).reduce((a, r) => a + N(r.jami), 0);
+      jamiQator[nom] = j ? `${j} ta` : '—';
     });
     out.push(jamiQator);
     return out;
@@ -831,6 +822,25 @@ const KengHisobotPage = {
     const d = KengHisobotPage.D();
     if (!d.inf) { showToast('Avval hisobotni shakllantiring', 'warning'); return; }
     const f = KengHisobotPage._f;
+    const scopeNom = (f.muassasa || f.viloyat || 'Respublika')
+      .replace(/[:*?"<>|\\/]/g, '-').slice(0, 60);
+
+    // "Terapevtik oyna" tabida — bitta fayl, bitta list, ekrandagi ko'rinish.
+    // Qolgan tablarda — hisobotning to'liq etalon eksporti.
+    if (KengHisobotPage._tab === 'oyna') {
+      const ust = [
+        ...KengHisobotPage.OYNA_INF.filter(x => !f.infTuri || f.infTuri === x[0]),
+        ...KengHisobotPage.OYNA_INS.filter(x => !f.insTuri || f.insTuri === x[0])
+      ];
+      const rows = KengHisobotPage._oynaExcelRows(ust);
+      if (!rows.length) { showToast('Eksport uchun ma\'lumot yo\'q', 'warning'); return; }
+      Utils.exportXLSXMulti(
+        [{ nom: 'Terapevtik oyna', wrap: true, rows }],
+        `terapevtik_oyna_${scopeNom}_${f.from}_${f.to}.xlsx`
+      );
+      showToast('✅ Excel yuklab olindi — 1 list', 'success');
+      return;
+    }
 
     const qator = (rows, cols) => rows.map(r => {
       const o = {};
@@ -901,9 +911,7 @@ const KengHisobotPage = {
         ]) }
     ];
 
-    const scope = (f.muassasa || f.viloyat || 'Respublika')
-      .replace(/[:*?"<>|\\/]/g, '-').slice(0, 60);
-    Utils.exportXLSXMulti(varaqlar, `hisobot_${scope}_${f.from}_${f.to}.xlsx`);
+    Utils.exportXLSXMulti(varaqlar, `hisobot_${scopeNom}_${f.from}_${f.to}.xlsx`);
     showToast(`✅ Excel yuklab olindi — ${varaqlar.length} varaq`, 'success');
   },
 
