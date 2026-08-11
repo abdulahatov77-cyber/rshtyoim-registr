@@ -286,9 +286,10 @@ const DB = {
     return data || [];
   },
 
-  async hisobotOyna(from, to, kasallik, viloyat) {
+  // Nozologiya kesimida — bitta chaqiruvda infarkt va insult birga keladi
+  async hisobotOyna(from, to, viloyat) {
     const { data, error } = await getSupabase().rpc('get_hisobot_oyna', {
-      p_from: from, p_to: to, p_kasallik: kasallik, p_viloyat: viloyat || null
+      p_from: from, p_to: to, p_viloyat: viloyat || null
     });
     if (error) throw error;
     return data || [];
