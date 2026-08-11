@@ -4,6 +4,8 @@ const AdminPage = {
   _totalCount: null,
   _search: '',
   _filterRole: '',
+  _filterViloyat: '',
+  _filterMuassasa: '',      // '__yoq__' = muassasa belgilanmaganlar
   _usersPage: 1,
   _usersPerPage: 50,
   _activeTab: 'users',
@@ -164,7 +166,60 @@ const AdminPage = {
       );
     }
     if (AdminPage._filterRole) list = list.filter(p => p.role === AdminPage._filterRole);
+    if (AdminPage._filterViloyat) list = list.filter(p => p.viloyat === AdminPage._filterViloyat);
+    if (AdminPage._filterMuassasa) {
+      list = AdminPage._filterMuassasa === '__yoq__'
+        ? list.filter(p => !p.muassasa)
+        : list.filter(p => p.muassasa === AdminPage._filterMuassasa);
+    }
     return list;
+  },
+
+  // Filtr ro'yxatlari faqat HAQIQATDA mavjud qiymatlardan quriladi —
+  // bo'sh variantni tanlab qo'yish mumkin bo'lmasligi uchun.
+  // Viloyat tanlanganda muassasa ro'yxati o'sha viloyat bilan cheklanadi.
+  _viloyatOptions() {
+    const cnt = {};
+    AdminPage._profiles.forEach(p => { if (p.viloyat) cnt[p.viloyat] = (cnt[p.viloyat] || 0) + 1; });
+    const list = Object.keys(cnt).sort((a, b) => a.localeCompare(b, 'uz'));
+    const yoq = AdminPage._profiles.filter(p => !p.viloyat).length;
+    return `<option value="">Barcha viloyat (${AdminPage._profiles.length})</option>` +
+      list.map(v => `<option value="${esc(v)}" ${AdminPage._filterViloyat === v ? 'selected' : ''}
+        >${esc(v)} — ${cnt[v]}</option>`).join('') +
+      (yoq ? `<option value="" disabled>viloyatsiz: ${yoq}</option>` : '');
+  },
+
+  _muassasaOptions() {
+    const vil = AdminPage._filterViloyat;
+    const baza = vil ? AdminPage._profiles.filter(p => p.viloyat === vil) : AdminPage._profiles;
+    const cnt = {};
+    baza.forEach(p => { if (p.muassasa) cnt[p.muassasa] = (cnt[p.muassasa] || 0) + 1; });
+    const list = Object.keys(cnt).sort((a, b) => a.localeCompare(b, 'uz'));
+    const yoq = baza.filter(p => !p.muassasa).length;
+    return `<option value="">Barcha muassasa (${baza.length})</option>` +
+      list.map(m => `<option value="${esc(m)}" ${AdminPage._filterMuassasa === m ? 'selected' : ''}
+        >${esc(m)} — ${cnt[m]}</option>`).join('') +
+      (yoq ? `<option value="__yoq__" ${AdminPage._filterMuassasa === '__yoq__' ? 'selected' : ''}
+        >⚠ Muassasa belgilanmagan — ${yoq}</option>` : '');
+  },
+
+  // Viloyat almashganda muassasa ro'yxati qayta quriladi.
+  // Butun sarlavha emas, faqat shu select yangilanadi — qidiruv maydonidagi
+  // kursor joyida qolsin.
+  _onViloyatFilter(v) {
+    AdminPage._filterViloyat = v;
+    AdminPage._filterMuassasa = '';
+    const sel = document.getElementById('admin-mua-filter');
+    if (sel) sel.innerHTML = AdminPage._muassasaOptions();
+    AdminPage._renderTable();
+  },
+
+  _filtrTozala() {
+    AdminPage._search = '';
+    AdminPage._filterRole = '';
+    AdminPage._filterViloyat = '';
+    AdminPage._filterMuassasa = '';
+    AdminPage.renderContent();
   },
 
   _buildUsersTab() {
@@ -239,15 +294,23 @@ const AdminPage = {
             <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
               <input id="admin-search" type="text" placeholder="Qidirish..." value="${AdminPage._search}"
                 oninput="AdminPage._search=this.value;AdminPage._renderTable()"
-                class="form-input" style="width:160px;padding:6px 12px;font-size:12px"/>
+                class="form-input" style="width:150px;padding:6px 12px;font-size:12px"/>
               <select id="admin-role-filter" onchange="AdminPage._filterRole=this.value;AdminPage._renderTable()"
-                class="form-input" style="width:140px;padding:6px 10px;font-size:12px">
+                class="form-input" style="width:130px;padding:6px 10px;font-size:12px">
                 <option value="" ${!AdminPage._filterRole?'selected':''}>Barcha rol</option>
                 <option value="super_admin" ${AdminPage._filterRole==='super_admin'?'selected':''}>👑 Super Admin</option>
                 <option value="admin" ${AdminPage._filterRole==='admin'?'selected':''}>🛡 Viloyat Admin</option>
                 <option value="rahbar" ${AdminPage._filterRole==='rahbar'?'selected':''}>👁 Rahbar</option>
                 <option value="user" ${AdminPage._filterRole==='user'?'selected':''}>👤 Shifokor</option>
               </select>
+              <select id="admin-vil-filter" onchange="AdminPage._onViloyatFilter(this.value)"
+                class="form-input" style="width:170px;padding:6px 10px;font-size:12px"
+                title="Viloyat bo'yicha filtr">${AdminPage._viloyatOptions()}</select>
+              <select id="admin-mua-filter" onchange="AdminPage._filterMuassasa=this.value;AdminPage._renderTable()"
+                class="form-input" style="width:210px;padding:6px 10px;font-size:12px"
+                title="Muassasa bo'yicha filtr">${AdminPage._muassasaOptions()}</select>
+              <button class="btn btn-ghost btn-sm" onclick="AdminPage._filtrTozala()"
+                style="color:#b91c1c">${icon('x',14)} Tozalash</button>
               <button class="btn btn-ghost btn-sm" onclick="AdminPage._loadProfiles()">${icon('refresh-cw',14)} Yangilash</button>
             </div>
           </div>
@@ -314,10 +377,26 @@ const AdminPage = {
         </div>
       </div>` : '';
 
-    return `<table class="data-table">
+    // Filtr qo'llanganda nechta yozuv qolganini ko'rsatish — sahifalash
+    // chizig'i faqat 1 dan ortiq sahifada chiqadi, shuning uchun alohida
+    const faol = [
+      AdminPage._filterViloyat && `viloyat: ${AdminPage._filterViloyat}`,
+      AdminPage._filterMuassasa === '__yoq__' ? 'muassasa belgilanmagan'
+        : AdminPage._filterMuassasa && `muassasa: ${AdminPage._filterMuassasa}`,
+      AdminPage._filterRole && `rol: ${AdminPage._filterRole}`,
+      AdminPage._search && `qidiruv: "${AdminPage._search}"`
+    ].filter(Boolean);
+    const jamiChiziq = `
+      <div style="padding:8px 16px;font-size:12px;color:#64748b;border-bottom:1px solid #e2e8f0;
+                  background:${faol.length ? '#eff6ff' : 'transparent'}">
+        Topildi: <b style="color:#0f172a">${total}</b> ta foydalanuvchi
+        ${faol.length ? `<span style="color:#1d4ed8"> · ${esc(faol.join(' · '))}</span>` : ''}
+      </div>`;
+
+    return `${jamiChiziq}<table class="data-table">
       <thead><tr>
         <th>#</th><th>Email</th><th>F.I.O</th><th>Rol</th>
-        <th>Viloyat</th><th>Ro'yxat sanasi</th><th style="min-width:300px">Amallar</th>
+        <th>Viloyat / Muassasa</th><th>Ro'yxat sanasi</th><th style="min-width:300px">Amallar</th>
       </tr></thead>
       <tbody>
         ${pageList.length
