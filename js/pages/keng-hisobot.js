@@ -242,16 +242,69 @@ const KengHisobotPage = {
   // Har katakda avval bemor soni, keyin qavsda foiz.
   // Foiz interfeysda `son / jami * 100` bo'yicha hisoblanadi, bazadan
   // tayyor foiz olinmaydi.
-  //   [kalit, ustun nomi, [chegaralar]]
-  OYNA_INF: [
-    ['STEMI',  '🫀 STEMI',  [['n6','≤6 soat'], ['n12','≤12 soat'], ['n24p','>24 soat']]],
-    ['NSTEMI', '🫀 NSTEMI', [['n6','≤6 soat'], ['n12','≤12 soat'], ['n24p','>24 soat']]],
-    ['AMI',    '🫀 AMI',    [['n6','≤6 soat'], ['n12','≤12 soat'], ['n24p','>24 soat']]]
+  //
+  // Oraliqlar KUMULYATIV EMAS — har bemor faqat bitta oraliqqa tushadi,
+  // oraliqlar yig'indisi vaqti ma'lum bemorlar soniga teng.
+  // RPC kumulyativ sonlar qaytaradi (n4 = <=4, n6 = <=6, n12 = <=12,
+  // n24p = >24), ular _oynaBolak() da ayirish orqali intervalga aylantiriladi.
+  ORALIQ_INF: [
+    ['i0_6',   '0–6 soat'],
+    ['i6_12',  '6–12 soat'],
+    ['i12_24', '12–24 soat'],
+    ['i24p',   '>24 soat']
   ],
-  OYNA_INS: [
-    ['Ishemik',    '🧠 Ishemik insult',    [['n4','≤4,5 soat'], ['n6','≤6 soat'], ['n24p','>24 soat']]],
-    ['Gemorragik', '🧠 Gemorragik insult', [['n4','≤4,5 soat'], ['n6','≤6 soat'], ['n24p','>24 soat']]]
+  ORALIQ_INS: [
+    ['i0_4',   '0–4,5 soat'],
+    ['i4_6',   '4,5–6 soat'],
+    ['i6_12',  '6–12 soat'],
+    ['i12_24', '12–24 soat'],
+    ['i24p',   '>24 soat']
   ],
+
+  //   [kalit, ustun nomi, [oraliqlar]]
+  get OYNA_INF() {
+    const o = KengHisobotPage.ORALIQ_INF;
+    return [
+      ['STEMI',  '🫀 STEMI',  o],
+      ['NSTEMI', '🫀 NSTEMI', o],
+      ['AMI',    '🫀 AMI',    o]
+    ];
+  },
+  get OYNA_INS() {
+    const o = KengHisobotPage.ORALIQ_INS;
+    return [
+      ['Ishemik',    '🧠 Ishemik insult',    o],
+      ['Gemorragik', '🧠 Gemorragik insult', o]
+    ];
+  },
+
+  // Kumulyativ sonlarni intervalga aylantirish.
+  //   0–4,5  = n4
+  //   4,5–6  = n6  - n4
+  //   0–6    = n6
+  //   6–12   = n12 - n6
+  //   12–24  = aniq - n12 - n24p        (aniq = jami - vaqtsiz)
+  //   >24    = n24p
+  // Foiz maxraji `aniq` — vaqti umuman aniqlanmagan bemor hech bir oraliqqa
+  // tegishli emas, shuning uchun maxrajdan chiqariladi. Shunda:
+  //   oraliqlar yig'indisi + vaqtsiz = jami,  foizlar yig'indisi = 100%.
+  _oynaBolak(r) {
+    const N = KengHisobotPage._n;
+    const jami = N(r && r.jami), vaqtsiz = N(r && r.vaqtsiz);
+    const n4 = N(r && r.n4), n6 = N(r && r.n6);
+    const n12 = N(r && r.n12), n24p = N(r && r.n24p);
+    const aniq = Math.max(0, jami - vaqtsiz);
+    const p = x => Math.max(0, x);          // manfiy chiqmasligi uchun himoya
+    return {
+      jami, vaqtsiz, aniq,
+      i0_4:   p(n4),
+      i4_6:   p(n6 - n4),
+      i0_6:   p(n6),
+      i6_12:  p(n12 - n6),
+      i12_24: p(aniq - n12 - n24p),
+      i24p:   p(n24p)
+    };
+  },
 
   htmlOyna() {
     const rows = KengHisobotPage.D().oyna || [];
@@ -270,14 +323,17 @@ const KengHisobotPage = {
         ${icon('info', 18)}
         <span class="text-sm text-blue-900">
           Simptom boshlanganidan kasalxonaga kelguncha o'tgan vaqt.
-          Har katakda avval <b>bemor soni</b>, qavsda esa <b>foiz</b> —
-          foiz shu tashxisning jami bemorlariga nisbatan hisoblanadi.
+          Oraliqlar <b>kumulyativ emas</b> — har bemor faqat bitta oraliqqa tushadi,
+          shuning uchun oraliqlar yig'indisi bemorlar soniga, foizlar yig'indisi
+          <b>100%</b> ga teng bo'ladi.
           <div class="mt-1 text-xs text-blue-800">
-            <b>≤4,5 soat</b> amalda ≤4 deb o'lchanadi — forma soatni butun son bilan so'raydi.
-            Eski oraliqli yozuvlar ham sanaladi: "0–3 soat ichida" bemori ≤4 va ≤6 ga aniq kiradi.
-            Chegara oraliq ichiga tushib qolsa sanalmaydi — ya'ni sonlar <b>quyi baho</b>.
-            <br>Katak ostidagi sariq <b>"vaqtsiz N"</b> — vaqti umuman aniqlanmagan bemorlar.
-            Ular maxrajda qoladi, shuning uchun soni katta bo'lsa foizlar pasayadi.
+            <b>0–4,5 soat</b> amalda ≤4 deb o'lchanadi — forma soatni butun son bilan so'raydi.
+            Eski oraliqli yozuvlar ham sanaladi: "0–3 soat ichida" bemori 0–4,5 ga kiradi.
+            Chegara oraliq ichiga tushib qolsa bemor keyingi oraliqqa suriladi — ya'ni
+            erta oraliqlar <b>quyi baho</b>.
+            <br>Katak ostidagi sariq <b>"vaqti aniqmas N"</b> — vaqti umuman aniqlanmagan
+            bemorlar. Ular hech bir oraliqqa tegishli emas, shuning uchun foiz maxrajidan
+            chiqarilgan: <b>oraliqlar + vaqti aniqmas = jami</b>.
           </div>
         </span>
       </div>
@@ -306,22 +362,21 @@ const KengHisobotPage = {
 
     const foiz = (n, jami) => jami > 0 ? (n / jami * 100).toFixed(1).replace('.', ',') : '0,0';
 
-    const katak = (r, chegaralar) => {
+    const katak = (r, oraliqlar) => {
       if (!r || !N(r.jami)) return `<td style="text-align:center;color:#cbd5e1;padding:8px">—</td>`;
-      const jami = N(r.jami);
-      const vaqtsiz = N(r.vaqtsiz);
+      const b = KengHisobotPage._oynaBolak(r);
       return `<td style="padding:8px 10px;vertical-align:top;white-space:nowrap">
-        <div style="font-size:15px;font-weight:800;color:#1e293b;margin-bottom:3px">${jami}</div>
-        ${chegaralar.map(([k, nom]) => {
-          const n = N(r[k]);
-          const p = Number(foiz(n, jami).replace(',', '.'));
-          const kech = k === 'n24p';
-          const c = kech ? (p >= 20 ? '#b91c1c' : '#a16207')
-                         : (p >= 40 ? '#15803d' : p < 20 ? '#b91c1c' : '#0891b2');
+        <div style="font-size:15px;font-weight:800;color:#1e293b;margin-bottom:3px">${b.jami}</div>
+        ${oraliqlar.map(([k, nom], idx) => {
+          const n = b[k];
+          const p = b.aniq > 0 ? n / b.aniq * 100 : 0;
+          const c = k === 'i24p'  ? (p >= 20 ? '#b91c1c' : '#a16207')      // kech kelish — yomon
+                  : idx === 0     ? (p >= 40 ? '#15803d' : p < 20 ? '#b91c1c' : '#0891b2')
+                  : '#475569';                                            // oraliq — neytral
           return `<div style="font-size:11px;color:#64748b">${nom}:
-            <span style="color:${c};font-weight:700">${n} (${foiz(n, jami)}%)</span></div>`;
+            <span style="color:${c};font-weight:700">${n} (${foiz(n, b.aniq)}%)</span></div>`;
         }).join('')}
-        ${vaqtsiz ? `<div style="font-size:10px;color:#a16207;margin-top:3px">vaqtsiz ${vaqtsiz}</div>` : ''}
+        ${b.vaqtsiz ? `<div style="font-size:10px;color:#a16207;margin-top:3px">vaqti aniqmas ${b.vaqtsiz}</div>` : ''}
       </td>`;
     };
 
@@ -385,10 +440,10 @@ const KengHisobotPage = {
 
     const matn = (r, ch) => {
       if (!r || !N(r.jami)) return '—';
-      const j = N(r.jami);
-      const satr = [`${j}`];
-      ch.forEach(([k, nom]) => satr.push(`${nom}: ${N(r[k])} (${foiz(N(r[k]), j)}%)`));
-      if (N(r.vaqtsiz)) satr.push(`vaqtsiz: ${N(r.vaqtsiz)}`);
+      const b = KengHisobotPage._oynaBolak(r);
+      const satr = [`${b.jami}`];
+      ch.forEach(([k, nom]) => satr.push(`${nom}: ${b[k]} (${foiz(b[k], b.aniq)}%)`));
+      if (b.vaqtsiz) satr.push(`vaqti aniqmas: ${b.vaqtsiz}`);
       return satr.join('\n');
     };
 
@@ -420,13 +475,21 @@ const KengHisobotPage = {
       barcha.forEach(([k, nom, ch]) => {
         const g = rows.filter(r => r.viloyat === v && r.nozologiya === k);
         const s = f => g.reduce((a, r) => a + N(r[f]), 0);
-        const jami = s('jami');
-        const t = nom.replace(/^[^\s]+\s/, '');
-        o[`${t} — bemor`] = jami;
-        ch.forEach(([kk, nomi]) => {
-          o[`${t} ${nomi}`]   = s(kk);
-          o[`${t} ${nomi} %`] = pct(s(kk), jami);
+        // avval xom sonlar qo'shiladi, keyin oraliqqa aylantiriladi —
+        // qatorlarni alohida bo'lib qo'shishga teng, lekin yaxlitlashsiz
+        const b = KengHisobotPage._oynaBolak({
+          jami: s('jami'), vaqtsiz: s('vaqtsiz'),
+          n4: s('n4'), n6: s('n6'), n12: s('n12'), n24p: s('n24p')
         });
+        const t = nom.replace(/^[^\s]+\s/, '');
+        o[`${t} — bemor`] = b.jami;
+        ch.forEach(([kk, nomi]) => {
+          o[`${t} ${nomi}`]   = b[kk];
+          o[`${t} ${nomi} %`] = pct(b[kk], b.aniq);
+        });
+        // ustunlar barcha qatorlarda bir xil bo'lishi shart — jadval
+        // sarlavhasi birinchi qatordan olinadi, shuning uchun shartsiz
+        o[`${t} vaqti aniqmas`] = b.vaqtsiz;
       });
       return o;
     });
@@ -908,7 +971,9 @@ const KengHisobotPage = {
           ['jami','Bemor jami'],['aniq','Aniq soat'],['oraliqli','Oraliq (eski)'],
           ['uyqu','Uyquda'],['kiritilmagan','Kiritilmagan'],
           ['vaqtsiz','Vaqti aniqlanmagan'],
-          ['n4','≤4,5 soat'],['n6','≤6 soat'],['n12','≤12 soat'],['n24p','>24 soat'],
+          // xom kumulyativ sonlar — ekrandagi oraliqlar shulardan ayirish bilan olinadi
+          ['n4','≤4,5 (kumulyativ)'],['n6','≤6 (kumulyativ)'],
+          ['n12','≤12 (kumulyativ)'],['n24p','>24 soat'],
           ['ortacha_soat','O\'rtacha soat']
         ]) }
     ];
