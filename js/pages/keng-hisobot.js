@@ -6,7 +6,7 @@
 // Uchta tab: Jadval (1/2-varaq) · Marshrut (4/5/6-varaq) · Kaskad (7/8-varaq)
 // Eksport — 10 varaqli xlsx.
 const KengHisobotPage = {
-  _f: { from: '', to: '', viloyat: '', muassasa: '' },
+  _f: { from: '', to: '', viloyat: '', muassasa: '', infTuri: '', insTuri: '' },
   _d: {},          // { inf, ins, mInf, mIns, matInf, matIns, kInf, kIns }
   _tab: 'jadval',
 
@@ -64,6 +64,26 @@ const KengHisobotPage = {
               <button id="kh-export" class="btn btn-success flex items-center gap-2" disabled style="opacity:.5">
                 ${icon('download', 16)} Excel
               </button>
+            </div>
+          </div>
+
+          <!-- Tashxis filtri — faqat "Terapevtik oyna" tabiga ta'sir qiladi -->
+          <div id="kh-noz-filtr" class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4 pt-4 border-t border-dashed border-slate-200" style="display:none">
+            <div>
+              <label class="form-label">${icon('heart', 14)} Infarkt turi</label>
+              <select id="kh-inf-turi" class="form-select" onchange="KengHisobotPage.onNozTuri('infTuri', this.value)">
+                <option value="">— Barchasi —</option>
+                <option value="STEMI">STEMI</option>
+                <option value="NSTEMI">NSTEMI</option>
+              </select>
+            </div>
+            <div>
+              <label class="form-label">${icon('brain', 14)} Insult turi</label>
+              <select id="kh-ins-turi" class="form-select" onchange="KengHisobotPage.onNozTuri('insTuri', this.value)">
+                <option value="">— Barchasi —</option>
+                <option value="Ishemik">Ishemik insult</option>
+                <option value="Gemorragik">Gemorragik insult</option>
+              </select>
             </div>
           </div>
         </div>
@@ -140,7 +160,16 @@ const KengHisobotPage = {
   setTab(k) {
     KengHisobotPage._tab = k;
     KengHisobotPage.drawTabs();
+    // Tashxis filtri faqat "Terapevtik oyna" tabida ma'noga ega
+    const nf = document.getElementById('kh-noz-filtr');
+    if (nf) nf.style.display = (k === 'oyna') ? '' : 'none';
     KengHisobotPage.draw();
+  },
+
+  // Tashxis filtri — qayta so'rov yubormaydi, faqat ustunlarni cheklaydi
+  onNozTuri(kalit, v) {
+    KengHisobotPage._f[kalit] = v;
+    if (KengHisobotPage._d.oyna) KengHisobotPage.draw();
   },
 
   async load() {
@@ -208,23 +237,19 @@ const KengHisobotPage = {
 
 
   // ================= 4. TERAPEVTIK OYNA TABI =================
-  // Nozologiya kesimida: har bir tashxis uchun oyna boshqacha, shuning
-  // uchun bitta o'rtacha raqam chalg'itadi.
-  //   [kalit, ko'rsatiladigan nom, ko'rsatiladigan foizlar]
-  NOZ: [
-    ['STEMI',      '🫀 STEMI',            ['f6','f12','f24p']],
-    ['NSTEMI',     '🫀 NSTEMI',           ['f12','f24p']],
-    ['AMI',        '🫀 AMI',              ['f12','f24p']],
-    ['Ishemik',    '🧠 Ishemik insult',   ['f4','f6','f24p']],
-    ['Gemorragik', '🧠 Gemorragik insult',['f6','f24p']],
-    ['TIA',        '🧠 TIA',              ['f24p']]
+  // Ikkita alohida jadval — infarkt va insult aralashtirilmaydi.
+  // Har katakda avval bemor soni, keyin qavsda foiz.
+  // Foiz interfeysda `son / jami * 100` bo'yicha hisoblanadi, bazadan
+  // tayyor foiz olinmaydi.
+  //   [kalit, ustun nomi, [chegaralar]]
+  OYNA_INF: [
+    ['STEMI',  '🫀 STEMI',  [['n6','≤6 soat'], ['n12','≤12 soat'], ['n24p','>24 soat']]],
+    ['NSTEMI', '🫀 NSTEMI', [['n6','≤6 soat'], ['n12','≤12 soat'], ['n24p','>24 soat']]]
   ],
-  FOIZ_NOM: {
-    f4:   '≤4,5 soat',   // butun soatda ≤4 deb o'lchanadi
-    f6:   '≤6 soat',
-    f12:  '≤12 soat',
-    f24p: '>24 soat'
-  },
+  OYNA_INS: [
+    ['Ishemik',    '🧠 Ishemik insult',    [['n4','≤4,5 soat'], ['n6','≤6 soat'], ['n24p','>24 soat']]],
+    ['Gemorragik', '🧠 Gemorragik insult', [['n4','≤4,5 soat'], ['n6','≤6 soat'], ['n24p','>24 soat']]]
+  ],
 
   htmlOyna() {
     const rows = KengHisobotPage.D().oyna || [];
@@ -234,96 +259,108 @@ const KengHisobotPage = {
         <h3 class="text-lg font-bold text-gray-900 mb-1">Ma'lumot yo'q</h3>
         <p class="text-slate-500 text-sm">Tanlangan davr va filtr bo'yicha yozuv topilmadi</p></div>`;
     }
+    const f = KengHisobotPage._f;
+    const inf = KengHisobotPage.OYNA_INF.filter(x => !f.infTuri || f.infTuri === x[0]);
+    const ins = KengHisobotPage.OYNA_INS.filter(x => !f.insTuri || f.insTuri === x[0]);
+
     return `
       <div class="card mb-4 !py-3 flex items-start gap-3 bg-blue-50 border-blue-200">
         ${icon('info', 18)}
         <span class="text-sm text-blue-900">
-          Simptom boshlanganidan kasalxonaga kelguncha o'tgan vaqt — <b>tashxis kesimida</b>.
+          Simptom boshlanganidan kasalxonaga kelguncha o'tgan vaqt.
+          Har katakda avval <b>bemor soni</b>, qavsda esa <b>foiz</b> —
+          foiz shu tashxisning jami bemorlariga nisbatan hisoblanadi.
           <div class="mt-1 text-xs text-blue-800">
-            Oyna har bir tashxis uchun boshqacha: STEMI da birlamchi PCI 12 soat,
-            ishemik insultda trombolizis 4,5 soat, gemorragikda reperfuziya oynasi yo'q —
-            u yerda vaqt qon bosimi nazorati va jarrohlik qarori uchun muhim.
-            <br>Foizlar oraliqli eski yozuvlarni ham hisobga oladi: "0–3 soat ichida"
-            deb belgilangan bemor ≤4,5 va ≤6 oynasiga aniq kiradi. Chegara oraliq
-            ichiga tushib qolgan holatlar maxrajdan ham chiqariladi.
-            <br><b>≤4,5 soat</b> amalda ≤4 deb o'lchanadi — forma soatni butun son bilan so'raydi.
+            <b>≤4,5 soat</b> amalda ≤4 deb o'lchanadi — forma soatni butun son bilan so'raydi.
+            Eski oraliqli yozuvlar ham sanaladi: "0–3 soat ichida" bemori ≤4 va ≤6 ga aniq kiradi.
+            Chegara oraliq ichiga tushib qolsa sanalmaydi — ya'ni sonlar <b>quyi baho</b>.
+            <br>Katak ostidagi sariq <b>"vaqtsiz N"</b> — vaqti umuman aniqlanmagan bemorlar.
+            Ular maxrajda qoladi, shuning uchun soni katta bo'lsa foizlar pasayadi.
           </div>
         </span>
       </div>
-      ${KengHisobotPage._oynaPivot(rows)}
-      ${KengHisobotPage._oynaXulosa(rows)}`;
+      ${KengHisobotPage._oynaTbl('🫀 INFARKT — TERAPEVTIK OYNA', rows, inf, '#991b1b')}
+      ${KengHisobotPage._oynaTbl('🧠 INSULT — TERAPEVTIK OYNA',  rows, ins, '#6d28d9')}
+      ${KengHisobotPage._oynaXulosa()}`;
   },
 
-  // Qator = muassasa, ustun = nozologiya. Har katakda bemor soni va
-  // shu tashxisga tegishli oyna foizlari.
-  _oynaPivot(rows) {
+  _oynaTbl(sarlavha, rows, ustunlar, rang) {
+    if (!ustunlar.length) return '';
     const N = KengHisobotPage._n;
-    // muassasa bo'yicha guruhlash
+    const kalitlar = ustunlar.map(u => u[0]);
+
+    // muassasa bo'yicha guruhlash — faqat shu jadvalga tegishli tashxislar
     const map = new Map();
-    rows.forEach(r => {
+    rows.filter(r => kalitlar.includes(r.nozologiya)).forEach(r => {
       const k = (r.viloyat || '') + '|' + (r.muassasa || '');
-      if (!map.has(k)) map.set(k, { viloyat: r.viloyat, muassasa: r.muassasa, bosqich: r.bosqich, noz: {} });
+      if (!map.has(k)) map.set(k, { viloyat: r.viloyat, muassasa: r.muassasa, noz: {} });
       map.get(k).noz[r.nozologiya] = r;
     });
     const list = [...map.values()];
+    if (!list.length) {
+      return `<div class="card mb-4"><h3 class="card-title mb-2">${sarlavha}</h3>
+        <p class="text-slate-400 text-sm py-6 text-center">Tanlangan davrda ma'lumot yo'q</p></div>`;
+    }
 
-    const katak = (r, foizlar) => {
-      if (!r || !N(r.jami)) return `<td style="text-align:center;color:#cbd5e1">—</td>`;
-      const satr = foizlar.map(k => {
-        const v = r[k];
-        if (v === null || v === undefined) return '';
-        const f = Number(v);
-        const kech = k === 'f24p';
-        const rang = kech ? (f >= 20 ? '#b91c1c' : '#a16207')
-                          : (f >= 40 ? '#15803d' : f < 20 ? '#b91c1c' : '#0891b2');
-        return `<div style="font-size:10px;color:${rang};font-weight:600;white-space:nowrap">
-          ${esc(KengHisobotPage.FOIZ_NOM[k])} <b>${f.toFixed(1)}%</b></div>`;
-      }).join('');
-      const ogoh = N(r.kiritilmagan) + N(r.uyqu);
-      return `<td style="text-align:center;padding:6px 8px;vertical-align:top">
-        <div style="font-size:14px;font-weight:800;color:#1e293b">${N(r.jami)}</div>
-        ${satr}
-        ${ogoh ? `<div style="font-size:9px;color:#a16207;margin-top:2px">vaqtsiz ${ogoh}</div>` : ''}
+    const foiz = (n, jami) => jami > 0 ? (n / jami * 100).toFixed(1).replace('.', ',') : '0,0';
+
+    const katak = (r, chegaralar) => {
+      if (!r || !N(r.jami)) return `<td style="text-align:center;color:#cbd5e1;padding:8px">—</td>`;
+      const jami = N(r.jami);
+      const vaqtsiz = N(r.vaqtsiz);
+      return `<td style="padding:8px 10px;vertical-align:top;white-space:nowrap">
+        <div style="font-size:15px;font-weight:800;color:#1e293b;margin-bottom:3px">${jami} ta</div>
+        ${chegaralar.map(([k, nom]) => {
+          const n = N(r[k]);
+          const p = Number(foiz(n, jami).replace(',', '.'));
+          const kech = k === 'n24p';
+          const c = kech ? (p >= 20 ? '#b91c1c' : '#a16207')
+                         : (p >= 40 ? '#15803d' : p < 20 ? '#b91c1c' : '#0891b2');
+          return `<div style="font-size:11px;color:#64748b">${nom}:
+            <span style="color:${c};font-weight:700">${n} ta (${foiz(n, jami)}%)</span></div>`;
+        }).join('')}
+        ${vaqtsiz ? `<div style="font-size:10px;color:#a16207;margin-top:3px">vaqtsiz ${vaqtsiz}</div>` : ''}
       </td>`;
     };
 
-    // JAMI qatori — sonlar yig'iladi, foiz ko'rsatilmaydi (maxrajlar har xil)
-    const jamiNoz = {};
-    KengHisobotPage.NOZ.forEach(([k]) => {
-      jamiNoz[k] = rows.filter(r => r.nozologiya === k)
-                       .reduce((s, r) => s + N(r.jami), 0);
-    });
+    // JAMI qatori — har bir tashxis uchun sonlar yig'iladi va foiz qayta hisoblanadi
+    const jamiKatak = (nozKalit, chegaralar) => {
+      const g = rows.filter(r => r.nozologiya === nozKalit);
+      const s = f => g.reduce((a, r) => a + N(r[f]), 0);
+      const jami = s('jami');
+      if (!jami) return `<td style="text-align:center;color:#93c5fd;padding:8px">—</td>`;
+      return `<td style="padding:8px 10px;vertical-align:top;white-space:nowrap">
+        <div style="font-size:15px;font-weight:800;color:#1e3a8a;margin-bottom:3px">${jami} ta</div>
+        ${chegaralar.map(([k, nom]) => `<div style="font-size:11px;color:#1e40af">${nom}:
+          <span style="font-weight:700">${s(k)} ta (${foiz(s(k), jami)}%)</span></div>`).join('')}
+      </td>`;
+    };
 
     return `
-      <div class="card !p-0 overflow-hidden mb-4">
+      <div class="card !p-0 overflow-hidden mb-5" style="border-top:4px solid ${rang}">
         <div class="card-header bg-gray-50 !mb-0 !border-b-gray-200">
-          <span class="card-title text-gray-900">${icon('clock', 18)} Terapevtik oyna — tashxis kesimida</span>
+          <span class="card-title" style="color:${rang}">${sarlavha}</span>
           <span class="text-xs text-slate-500">${list.length} ta muassasa</span>
         </div>
         <div class="overflow-x-auto" style="max-height:70vh">
-          <table class="w-full text-xs border-collapse">
+          <table class="w-full text-xs border-collapse" style="min-width:640px">
             <thead style="position:sticky;top:0;z-index:1"><tr>
-              <th style="background:#1e293b;color:#e2e8f0;padding:7px;text-align:left;font-size:10px">Viloyat</th>
-              <th style="background:#1e293b;color:#e2e8f0;padding:7px;text-align:left;font-size:10px">Muassasa</th>
-              <th style="background:#1e293b;color:#e2e8f0;padding:7px;font-size:10px">Bosqich</th>
-              ${KengHisobotPage.NOZ.map(([, nom]) =>
-                `<th style="background:#1d4ed8;color:#fff;padding:7px;font-size:10px;
-                  border-left:2px solid rgba(255,255,255,.25)">${nom}</th>`).join('')}
+              <th style="background:#1e293b;color:#e2e8f0;padding:8px;text-align:left;font-size:10px">Viloyat</th>
+              <th style="background:#1e293b;color:#e2e8f0;padding:8px;text-align:left;font-size:10px">Muassasa</th>
+              ${ustunlar.map(([, nom]) => `<th style="background:${rang};color:#fff;padding:8px;
+                font-size:11px;border-left:2px solid rgba(255,255,255,.25)">${nom}</th>`).join('')}
             </tr></thead>
             <tbody>
               ${list.map((x, i) => `
                 <tr style="background:${i % 2 ? '#fff' : '#f8fafc'}" class="hover:bg-blue-50">
-                  <td style="padding:6px;color:#475569">${esc(x.viloyat || '—')}</td>
-                  <td style="padding:6px;font-weight:600;color:#1e293b">${esc(x.muassasa || '—')}</td>
-                  <td style="padding:6px;text-align:center;color:#64748b">${esc(x.bosqich || '—')}</td>
-                  ${KengHisobotPage.NOZ.map(([k, , fz]) => katak(x.noz[k], fz)).join('')}
+                  <td style="padding:8px;color:#475569;vertical-align:top">${esc(x.viloyat || '—')}</td>
+                  <td style="padding:8px;font-weight:600;color:#1e293b;vertical-align:top">${esc(x.muassasa || '—')}</td>
+                  ${ustunlar.map(([k, , ch]) => katak(x.noz[k], ch)).join('')}
                 </tr>`).join('')}
-              <tr style="background:#dbeafe;font-weight:700">
-                <td style="padding:6px" class="text-blue-900">JAMI</td>
-                <td style="padding:6px" class="text-blue-900">${list.length} ta muassasa</td>
-                <td></td>
-                ${KengHisobotPage.NOZ.map(([k]) =>
-                  `<td style="text-align:center;padding:6px;color:#1e3a8a;font-size:14px">${jamiNoz[k] || '—'}</td>`).join('')}
+              <tr style="background:#dbeafe">
+                <td style="padding:8px;font-weight:800;color:#1e3a8a;vertical-align:top">JAMI</td>
+                <td style="padding:8px;font-weight:700;color:#1e3a8a;vertical-align:top">${list.length} ta muassasa</td>
+                ${ustunlar.map(([k, , ch]) => jamiKatak(k, ch)).join('')}
               </tr>
             </tbody>
           </table>
@@ -331,24 +368,25 @@ const KengHisobotPage = {
       </div>`;
   },
 
-  // Viloyat kesimida — nozologiya bo'yicha ustunlar
+  // Viloyat kesimida jamlanma — Excel uchun ham shu qatorlar ishlatiladi
   _oynaXulosaRows() {
     const rows = KengHisobotPage.D().oyna || [];
     const N = KengHisobotPage._n;
     const vil = [...new Set(rows.map(r => r.viloyat))].filter(Boolean).sort();
     const pct = (a, b) => b > 0 ? Math.round(a / b * 1000) / 10 : null;
+    const barcha = [...KengHisobotPage.OYNA_INF, ...KengHisobotPage.OYNA_INS];
     return vil.map(v => {
       const o = { 'Viloyat': v };
-      KengHisobotPage.NOZ.forEach(([k, nom, fz]) => {
+      barcha.forEach(([k, nom, ch]) => {
         const g = rows.filter(r => r.viloyat === v && r.nozologiya === k);
-        const sum = f => g.reduce((s, r) => s + N(r[f]), 0);
-        const aniq = sum('aniq');
-        const yalang = nom.replace(/^[^\s]+\s/, '');   // emoji olib tashlanadi
-        o[`${yalang} — bemor`] = sum('jami');
-        if (fz.includes('f4'))  o[`${yalang} ≤4,5 %`]  = pct(sum('s0_3'), aniq);
-        if (fz.includes('f6'))  o[`${yalang} ≤6 %`]    = pct(sum('s0_3') + sum('s3_6'), aniq);
-        if (fz.includes('f12')) o[`${yalang} ≤12 %`]   = pct(sum('s0_3') + sum('s3_6') + sum('s6_12'), aniq);
-        o[`${yalang} >24 %`] = pct(sum('s24p'), aniq);
+        const s = f => g.reduce((a, r) => a + N(r[f]), 0);
+        const jami = s('jami');
+        const t = nom.replace(/^[^\s]+\s/, '');
+        o[`${t} — bemor`] = jami;
+        ch.forEach(([kk, nomi]) => {
+          o[`${t} ${nomi}`]   = s(kk);
+          o[`${t} ${nomi} %`] = pct(s(kk), jami);
+        });
       });
       return o;
     });
@@ -362,7 +400,6 @@ const KengHisobotPage = {
       <div class="card !p-0 overflow-hidden">
         <div class="card-header bg-gray-50 !mb-0 !border-b-gray-200">
           <span class="card-title text-gray-900">📊 Viloyatlar kesimida jamlanma</span>
-          <span class="text-xs text-slate-500">Foizlar faqat aniq soatli yozuvlardan</span>
         </div>
         <div class="overflow-x-auto">
           <table class="w-full text-xs border-collapse">
@@ -372,7 +409,7 @@ const KengHisobotPage = {
               ${rows.map((r, i) => `<tr style="background:${i % 2 ? '#fff' : '#f8fafc'}">
                 ${cols.map(c => {
                   const v = r[c];
-                  const isPct = c.includes('%');
+                  const isPct = c.endsWith('%');
                   const kech = isPct && c.includes('>24');
                   return `<td style="padding:6px;text-align:${c === 'Viloyat' ? 'left' : 'center'};
                     ${c === 'Viloyat' ? 'font-weight:600' : ''}
@@ -804,10 +841,9 @@ const KengHisobotPage = {
           ['nozologiya','Tashxis'],
           ['jami','Bemor jami'],['aniq','Aniq soat'],['oraliqli','Oraliq (eski)'],
           ['uyqu','Uyquda'],['kiritilmagan','Kiritilmagan'],
-          ['s0_3','0–3 soat'],['s3_6','3–6 soat'],['s6_12','6–12 soat'],
-          ['s12_24','12–24 soat'],['s24p','24+ soat'],
-          ['ortacha_soat','O\'rtacha soat'],
-          ['f4','≤4,5 soat %'],['f6','≤6 soat %'],['f12','≤12 soat %'],['f24p','>24 soat %']
+          ['vaqtsiz','Vaqti aniqlanmagan'],
+          ['n4','≤4,5 soat'],['n6','≤6 soat'],['n12','≤12 soat'],['n24p','>24 soat'],
+          ['ortacha_soat','O\'rtacha soat']
         ]) },
       { nom: '12-OYNA-XULOSA',  rows: KengHisobotPage._oynaXulosaRows() }
     ];
