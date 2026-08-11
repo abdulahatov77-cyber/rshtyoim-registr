@@ -75,6 +75,7 @@ const KengHisobotPage = {
                 <option value="">— Barchasi —</option>
                 <option value="STEMI">STEMI</option>
                 <option value="NSTEMI">NSTEMI</option>
+                <option value="AMI">AMI</option>
               </select>
             </div>
             <div>
@@ -244,7 +245,8 @@ const KengHisobotPage = {
   //   [kalit, ustun nomi, [chegaralar]]
   OYNA_INF: [
     ['STEMI',  '🫀 STEMI',  [['n6','≤6 soat'], ['n12','≤12 soat'], ['n24p','>24 soat']]],
-    ['NSTEMI', '🫀 NSTEMI', [['n6','≤6 soat'], ['n12','≤12 soat'], ['n24p','>24 soat']]]
+    ['NSTEMI', '🫀 NSTEMI', [['n6','≤6 soat'], ['n12','≤12 soat'], ['n24p','>24 soat']]],
+    ['AMI',    '🫀 AMI',    [['n6','≤6 soat'], ['n12','≤12 soat'], ['n24p','>24 soat']]]
   ],
   OYNA_INS: [
     ['Ishemik',    '🧠 Ishemik insult',    [['n4','≤4,5 soat'], ['n6','≤6 soat'], ['n24p','>24 soat']]],
