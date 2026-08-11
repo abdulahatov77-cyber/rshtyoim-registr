@@ -206,6 +206,51 @@ const DB = {
     return shubhali ? { row: shubhali, exact: false, turi: shubhali._turi } : null;
   },
 
+  // ===== REPERFUZIYA NOMZODLIGI =====
+  // Bemor reperfuziyaga mos bo'lib, muolaja qilinmagan bo'lsa — saqlashda
+  // sabab so'raladi. Maqsad: "nima uchun qilinmadi" ni raqam bilan bilish.
+  // 2026-08 o'lchovi: oynada kelgan 993 bemordan 23 tasiga TLT qilingan.
+  REPERFUZIYA_SABABLARI: [
+    'Qarshi ko\'rsatma bor',
+    'Preparat yo\'q',
+    'Angiografiya zali / jamoa mavjud emas',
+    'Bemor yoki qarindoshlari rad etdi',
+    'Boshqa markazga yo\'naltirildi',
+    'Transport imkoniyati yo\'q',
+    'Vaqt oynasi o\'tgan (aniqlashtirildi)',
+    'Boshqa sabab'
+  ],
+
+  // simptom_vaqt matnidan soatni ajratadi ("3 soat", "0–3 soat ichida", ...)
+  _simptomSoat(txt) {
+    const s = String(txt || '');
+    if (!s) return null;
+    if (/24\s*soatdan/i.test(s)) return 999;
+    let m = s.match(/[–—-]\s*(\d+)/);   // oraliq — yuqori chegara
+    if (m) return parseInt(m[1]);
+    m = s.match(/^\s*(\d+)\s*soat/i);   // aniq soat
+    return m ? parseInt(m[1]) : null;
+  },
+
+  // Bemor reperfuziyaga nomzod bo'lib, muolaja qilinmaganmi?
+  // Qaytaradi: null | { nomi, oyna }
+  reperfuziyaNomzodi(turi, d) {
+    const soat = this._simptomSoat(d.simptom_vaqt);
+    if (soat === null || soat > 24) return null;
+    const mm = ((d.muolaja_turi || '') + ' ' + (d.dinamika_muolaja_turi || '')).toLowerCase();
+    if (turi === 'insult') {
+      const ishemik = /ishemik/i.test(d.insult_turi || '');
+      if (!ishemik || soat > 4) return null;
+      const qilingan = d.trombolizis_vaqti || d.trombektomiya_vaqti ||
+        /tlt|trombolit|trombektomiya|tromboekstr|tromboaspir/.test(mm);
+      return qilingan ? null : { nomi: 'Trombolizis', oyna: `${soat} soat` };
+    }
+    const stemi = /stemi/i.test(d.infarkt_turi || '') && !/nstemi|elevatsiyasiz/i.test(d.infarkt_turi || '');
+    if (!stemi || soat > 12) return null;
+    const qilingan = d.pci_vaqt || d.tlt_vaqt || /stent|pci|tlt|trombolit/.test(mm);
+    return qilingan ? null : { nomi: 'Reperfuziya (PCI yoki TLT)', oyna: `${soat} soat` };
+  },
+
   // ===== KENGAYTIRILGAN HISOBOT (hisobot_rpc.sql) =====
   // Barcha agregatsiya serverda. Foizlar ham SQL da hisoblanadi —
   // ekranda va Excelda bir xil raqam chiqishi uchun.
@@ -347,7 +392,7 @@ const DB = {
       'ekg_natija','xavf_omil',
       'tez_yordam_kelgan_vaqt','tlt_vaqt','pci_vaqt',
       'muolaja_turi','angio_natija','otkazilgan_muassasa','otkazish_sababi',
-      'dinamika_muolaja_turi','dinamika_izoh',
+      'dinamika_muolaja_turi','dinamika_izoh','reperfuziya_rad_sababi',
       'shifokor_fio','shifokor_tel','status'
     ];
     const clean = {};
@@ -487,7 +532,7 @@ const DB = {
       'aspects_c','aspects_l','aspects_ic','aspects_i',
       'aspects_m1','aspects_m2','aspects_m3','aspects_m4','aspects_m5','aspects_m6',
       'tez_yordam_kelgan_vaqt','kt_vaqti','trombolizis_vaqti','trombektomiya_vaqti',
-      'dinamika_muolaja_turi','dinamika_izoh',
+      'dinamika_muolaja_turi','dinamika_izoh','reperfuziya_rad_sababi',
       'shifokor_fio','shifokor_tel','status'
     ];
     const clean = {};

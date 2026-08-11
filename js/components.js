@@ -53,6 +53,51 @@ function showModal({ title, body, footer, id = 'modal-main', size = 'md' }) {
   initIcons();
 }
 
+// Reperfuziya qilinmaganda sababni so'raydigan oyna.
+// Promise qaytaradi: tanlangan sabab (matn) yoki null (bekor qilindi).
+function reperfuziyaSababSora(nomi, oyna) {
+  return new Promise(resolve => {
+    const id = 'rs-modal';
+    const eski = document.getElementById(id);
+    if (eski) eski.remove();
+    const el = document.createElement('div');
+    el.id = id;
+    el.style.cssText = 'position:fixed;inset:0;z-index:9500;background:rgba(15,23,42,.55);display:flex;align-items:center;justify-content:center;padding:16px';
+    el.innerHTML = `
+      <div style="background:#fff;border-radius:18px;max-width:480px;width:100%;box-shadow:0 24px 60px rgba(0,0,0,.28);overflow:hidden">
+        <div style="padding:16px 20px;background:#fef2f2;border-bottom:1px solid #fecaca">
+          <div style="font-weight:800;color:#b91c1c;font-size:15px">❗ ${esc(nomi)} bajarilmagan</div>
+          <div style="font-size:12px;color:#7f1d1d;margin-top:3px">
+            Bemor simptom boshlanganidan <b>${esc(oyna)}</b> keyin kelgan — muolaja oynasi ichida.
+            Nima uchun bajarilmadi?
+          </div>
+        </div>
+        <div style="padding:16px 20px">
+          <select id="rs-sabab" class="form-select" style="width:100%">
+            <option value="">— sababni tanlang —</option>
+            ${DB.REPERFUZIYA_SABABLARI.map(s => `<option value="${esc(s)}">${esc(s)}</option>`).join('')}
+          </select>
+          <p style="font-size:11px;color:#94a3b8;margin-top:8px">
+            Bu ma'lumot respublika bo'yicha jamlanadi va reperfuziya qamrovini
+            oshirish choralarini belgilashda ishlatiladi.
+          </p>
+        </div>
+        <div style="display:flex;justify-content:flex-end;gap:10px;padding:14px 20px;background:#f8fafc;border-top:1px solid #f1f5f9">
+          <button class="btn btn-secondary" id="rs-bekor">Bekor</button>
+          <button class="btn btn-primary" id="rs-ok">Saqlashni davom ettirish</button>
+        </div>
+      </div>`;
+    document.body.appendChild(el);
+    const yop = v => { el.remove(); resolve(v); };
+    el.querySelector('#rs-bekor').onclick = () => yop(null);
+    el.querySelector('#rs-ok').onclick = () => {
+      const v = el.querySelector('#rs-sabab').value;
+      if (!v) { showToast('Sababni tanlang', 'warning'); return; }
+      yop(v);
+    };
+  });
+}
+
 function closeModal() {
   const container = document.getElementById('modal-container');
   if (container) container.innerHTML = '';

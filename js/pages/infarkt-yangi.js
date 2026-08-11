@@ -1366,6 +1366,14 @@ const InfarktYangiPage = {
         if (!ok) { setLoading(btn, false); InfarktYangiPage._saving = false; return; }
       }
 
+      // Reperfuziyaga nomzod bo'lib, muolaja qilinmagan bo'lsa — sababini so'raymiz.
+      const nomzod = DB.reperfuziyaNomzodi('infarkt', payload);
+      if (nomzod && !payload.reperfuziya_rad_sababi) {
+        const sabab = await reperfuziyaSababSora(nomzod.nomi, nomzod.oyna);
+        if (!sabab) { setLoading(btn, false); InfarktYangiPage._saving = false; return; }
+        payload.reperfuziya_rad_sababi = sabab;
+      }
+
       const saved = await DB.infarktQabul(payload);
       // O'tkazilgan bemor qabul qilindi — marshrutni transfer_log ga yozamiz.
       // Manba: dublikat tekshiruvidan (o'sha kuni) yoki "Qabul kutilmoqda" dan

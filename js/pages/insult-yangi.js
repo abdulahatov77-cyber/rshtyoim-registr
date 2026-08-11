@@ -1554,6 +1554,15 @@ const InsultYangiPage = {
         if (!ok) { setLoading(btn, false); InsultYangiPage._saving = false; return; }
       }
 
+      // Reperfuziyaga nomzod bo'lib, muolaja qilinmagan bo'lsa — sababini so'raymiz.
+      // Maqsad: "oynada kelgan bemorga nima uchun qilinmadi" ni raqam bilan bilish.
+      const nomzod = DB.reperfuziyaNomzodi('insult', payload);
+      if (nomzod && !payload.reperfuziya_rad_sababi) {
+        const sabab = await reperfuziyaSababSora(nomzod.nomi, nomzod.oyna);
+        if (!sabab) { setLoading(btn, false); InsultYangiPage._saving = false; return; }
+        payload.reperfuziya_rad_sababi = sabab;
+      }
+
       const saved = await DB.insultQabul(payload);
       // O'tkazilgan bemor qabul qilindi — marshrutni transfer_log ga yozamiz.
       // Manba: dublikat tekshiruvidan (o'sha kuni) yoki "Qabul kutilmoqda" dan
