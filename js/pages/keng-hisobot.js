@@ -311,7 +311,7 @@ const KengHisobotPage = {
       const jami = N(r.jami);
       const vaqtsiz = N(r.vaqtsiz);
       return `<td style="padding:8px 10px;vertical-align:top;white-space:nowrap">
-        <div style="font-size:15px;font-weight:800;color:#1e293b;margin-bottom:3px">${jami} ta</div>
+        <div style="font-size:15px;font-weight:800;color:#1e293b;margin-bottom:3px">${jami}</div>
         ${chegaralar.map(([k, nom]) => {
           const n = N(r[k]);
           const p = Number(foiz(n, jami).replace(',', '.'));
@@ -319,7 +319,7 @@ const KengHisobotPage = {
           const c = kech ? (p >= 20 ? '#b91c1c' : '#a16207')
                          : (p >= 40 ? '#15803d' : p < 20 ? '#b91c1c' : '#0891b2');
           return `<div style="font-size:11px;color:#64748b">${nom}:
-            <span style="color:${c};font-weight:700">${n} ta (${foiz(n, jami)}%)</span></div>`;
+            <span style="color:${c};font-weight:700">${n} (${foiz(n, jami)}%)</span></div>`;
         }).join('')}
         ${vaqtsiz ? `<div style="font-size:10px;color:#a16207;margin-top:3px">vaqtsiz ${vaqtsiz}</div>` : ''}
       </td>`;
@@ -331,7 +331,7 @@ const KengHisobotPage = {
                        .reduce((a, r) => a + N(r.jami), 0);
       if (!jami) return `<td style="text-align:center;color:#93c5fd;padding:8px">—</td>`;
       return `<td style="padding:8px 10px;text-align:center">
-        <div style="font-size:15px;font-weight:800;color:#1e3a8a">${jami} ta</div></td>`;
+        <div style="font-size:15px;font-weight:800;color:#1e3a8a">${jami}</div></td>`;
     };
 
     return `
@@ -367,7 +367,7 @@ const KengHisobotPage = {
   },
 
   // Excel uchun — ekrandagi ko'rinishning aynan o'zi.
-  // Katak ichida qator uzilishlari (\n) bilan: "285 ta / ≤6 soat: 147 ta (51,6%)"
+  // Katak ichida qator uzilishlari (\n) bilan: "285 / <=6 soat: 147 (51,6%)"
   _oynaExcelRows(ustunlar) {
     const N = KengHisobotPage._n;
     const rows = KengHisobotPage.D().oyna || [];
@@ -386,9 +386,9 @@ const KengHisobotPage = {
     const matn = (r, ch) => {
       if (!r || !N(r.jami)) return '—';
       const j = N(r.jami);
-      const satr = [`${j} ta`];
-      ch.forEach(([k, nom]) => satr.push(`${nom}: ${N(r[k])} ta (${foiz(N(r[k]), j)}%)`));
-      if (N(r.vaqtsiz)) satr.push(`vaqtsiz: ${N(r.vaqtsiz)} ta`);
+      const satr = [`${j}`];
+      ch.forEach(([k, nom]) => satr.push(`${nom}: ${N(r[k])} (${foiz(N(r[k]), j)}%)`));
+      if (N(r.vaqtsiz)) satr.push(`vaqtsiz: ${N(r.vaqtsiz)}`);
       return satr.join('\n');
     };
 
@@ -402,7 +402,7 @@ const KengHisobotPage = {
     const jamiQator = { 'Viloyat': 'JAMI', 'Muassasa': `${list.length} ta muassasa` };
     ustunlar.forEach(([k, nom]) => {
       const j = rows.filter(r => r.nozologiya === k).reduce((a, r) => a + N(r.jami), 0);
-      jamiQator[nom] = j ? `${j} ta` : '—';
+      jamiQator[nom] = j ? `${j}` : '—';
     });
     out.push(jamiQator);
     return out;

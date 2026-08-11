@@ -321,11 +321,18 @@ const Utils = {
       });
       ws['!rows'] = [{ hpt: 34 }];
       if (headers.length) {
-        const lastCol = XLSX.utils.encode_col(headers.length - 1);
-        ws['!autofilter'] = { ref: `A1:${lastCol}1` };
-        // Birinchi ustun va sarlavha qatori qotirib qo'yiladi
+        // wrap rejimida avtofiltr qo'yilmaydi — ko'p qatorli kataklarda
+        // sarlavhadagi tugmalar chalg'itadi va bosib bo'lmaydi
+        if (!sh.wrap) {
+          const lastCol = XLSX.utils.encode_col(headers.length - 1);
+          ws['!autofilter'] = { ref: `A1:${lastCol}1` };
+        }
         ws['!freeze'] = { xSplit: 1, ySplit: 1 };
       }
+
+      // Qora to'r — barcha kataklarda to'rt tomonlama chegara
+      const qora = { style: 'thin', color: { rgb: '000000' } };
+      const chegara = { top: qora, bottom: qora, left: qora, right: qora };
 
       headers.forEach((_, c) => {
         const cell = ws[XLSX.utils.encode_cell({ r: 0, c })];
@@ -333,18 +340,18 @@ const Utils = {
           font: { bold: true, color: { rgb: 'FFFFFF' }, sz: 10 },
           fill: { fgColor: { rgb: '1D4ED8' } },
           alignment: { horizontal: 'center', vertical: 'center', wrapText: true },
-          border: { bottom: { style: 'medium', color: { rgb: '1E3A8A' } } }
+          border: chegara
         };
       });
 
       const dataStyle = {
         alignment: { vertical: 'top', wrapText: !!sh.wrap, horizontal: sh.wrap ? 'center' : undefined },
-        border: { bottom: { style: 'hair', color: { rgb: 'E2E8F0' } } }
+        border: chegara
       };
       // Ko'p qatorli varaqda birinchi ikki ustun matn — ular chapga tekislanadi
       const chapStyle = {
         alignment: { vertical: 'top', wrapText: !!sh.wrap },
-        border: { bottom: { style: 'hair', color: { rgb: 'E2E8F0' } } }
+        border: chegara
       };
       for (let r = 1; r <= body.length; r++) {
         for (let c = 0; c < headers.length; c++) {
