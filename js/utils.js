@@ -296,7 +296,9 @@ const Utils = {
   },
 
   // Ko'p varaqli eksport. sheets = [{ nom: '1-INFARKT', rows: [{...}, ...] }, ...]
-  // Bo'sh varaq ham qo'shiladi (etalon tuzilishi saqlanishi uchun) — faqat sarlavha bilan.
+  // Varaqqa `wrap: true` berilsa — kataklardagi qator uzilishlari (\n) Excelda
+  // ko'rinadi va qator balandligi avtomatik moslashadi. Ko'p qatorli
+  // kataklar (masalan "285 ta / <=6 soat: ...") uchun shu kerak.
   exportXLSXMulti(sheets, filename = 'hisobot.xlsx') {
     if (!sheets || !sheets.length) return;
     const clean = v => {
@@ -336,14 +338,32 @@ const Utils = {
       });
 
       const dataStyle = {
-        alignment: { vertical: 'top' },
+        alignment: { vertical: 'top', wrapText: !!sh.wrap, horizontal: sh.wrap ? 'center' : undefined },
+        border: { bottom: { style: 'hair', color: { rgb: 'E2E8F0' } } }
+      };
+      // Ko'p qatorli varaqda birinchi ikki ustun matn — ular chapga tekislanadi
+      const chapStyle = {
+        alignment: { vertical: 'top', wrapText: !!sh.wrap },
         border: { bottom: { style: 'hair', color: { rgb: 'E2E8F0' } } }
       };
       for (let r = 1; r <= body.length; r++) {
         for (let c = 0; c < headers.length; c++) {
           const cell = ws[XLSX.utils.encode_cell({ r, c })];
-          if (cell) cell.s = dataStyle;
+          if (cell) cell.s = (sh.wrap && c < 2) ? chapStyle : dataStyle;
         }
+      }
+      // Ko'p qatorli kataklarda ustun kengligi matn uzunligidan emas, eng uzun
+      // SATRdan kelib chiqadi — aks holda ustun keraksiz keng bo'lib ketadi
+      if (sh.wrap) {
+        ws['!cols'] = headers.map((h, c) => {
+          let max = String(h).length;
+          for (const row of body) {
+            for (const qator of String(row[c]).split('\n')) {
+              if (qator.length > max) max = qator.length;
+            }
+          }
+          return { wch: Math.min(Math.max(max + 2, 10), 40) };
+        });
       }
       // Varaq nomi Excelda 31 belgidan oshmasligi kerak
       XLSX.utils.book_append_sheet(wb, ws, String(sh.nom).slice(0, 31));

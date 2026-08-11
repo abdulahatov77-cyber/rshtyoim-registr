@@ -368,6 +368,53 @@ const KengHisobotPage = {
       </div>`;
   },
 
+  // Excel uchun — ekrandagi ko'rinishning aynan o'zi.
+  // Katak ichida qator uzilishlari (\n) bilan: "285 ta / ≤6 soat: 147 ta (51,6%)"
+  _oynaExcelRows(ustunlar) {
+    const N = KengHisobotPage._n;
+    const rows = KengHisobotPage.D().oyna || [];
+    const kalitlar = ustunlar.map(u => u[0]);
+    const foiz = (n, j) => j > 0 ? (n / j * 100).toFixed(1).replace('.', ',') : '0,0';
+
+    const map = new Map();
+    rows.filter(r => kalitlar.includes(r.nozologiya)).forEach(r => {
+      const k = (r.viloyat || '') + '|' + (r.muassasa || '');
+      if (!map.has(k)) map.set(k, { viloyat: r.viloyat, muassasa: r.muassasa, noz: {} });
+      map.get(k).noz[r.nozologiya] = r;
+    });
+    const list = [...map.values()];
+    if (!list.length) return [];
+
+    const matn = (r, ch) => {
+      if (!r || !N(r.jami)) return '—';
+      const j = N(r.jami);
+      const satr = [`${j} ta`];
+      ch.forEach(([k, nom]) => satr.push(`${nom}: ${N(r[k])} ta (${foiz(N(r[k]), j)}%)`));
+      if (N(r.vaqtsiz)) satr.push(`vaqtsiz: ${N(r.vaqtsiz)} ta`);
+      return satr.join('\n');
+    };
+
+    const out = list.map(x => {
+      const o = { 'Viloyat': x.viloyat || '—', 'Muassasa': x.muassasa || '—' };
+      ustunlar.forEach(([k, nom, ch]) => { o[nom] = matn(x.noz[k], ch); });
+      return o;
+    });
+
+    // JAMI qatori
+    const jamiQator = { 'Viloyat': 'JAMI', 'Muassasa': `${list.length} ta muassasa` };
+    ustunlar.forEach(([k, nom, ch]) => {
+      const g = rows.filter(r => r.nozologiya === k);
+      const s = f => g.reduce((a, r) => a + N(r[f]), 0);
+      const j = s('jami');
+      if (!j) { jamiQator[nom] = '—'; return; }
+      const satr = [`${j} ta`];
+      ch.forEach(([kk, n2]) => satr.push(`${n2}: ${s(kk)} ta (${foiz(s(kk), j)}%)`));
+      jamiQator[nom] = satr.join('\n');
+    });
+    out.push(jamiQator);
+    return out;
+  },
+
   // Viloyat kesimida jamlanma — Excel uchun ham shu qatorlar ishlatiladi
   _oynaXulosaRows() {
     const rows = KengHisobotPage.D().oyna || [];
@@ -836,7 +883,14 @@ const KengHisobotPage = {
       { nom: '8-KASKAD-INS',    rows: qator(d.kIns, kaskadCols(KengHisobotPage.KASKAD_INS)) },
       { nom: '9-KASKAD-XULOSA', rows: KengHisobotPage._kaskadXulosa() },
       { nom: '10-LUGAT',        rows: KengHisobotPage._lugat() },
-      { nom: '11-OYNA',         rows: qator(d.oyna || [], [
+      // Ekrandagi ko'rinishning aynan o'zi — ko'p qatorli kataklar bilan
+      { nom: '11-OYNA-INFARKT', wrap: true,
+        rows: KengHisobotPage._oynaExcelRows(KengHisobotPage.OYNA_INF) },
+      { nom: '12-OYNA-INSULT',  wrap: true,
+        rows: KengHisobotPage._oynaExcelRows(KengHisobotPage.OYNA_INS) },
+      { nom: '13-OYNA-XULOSA',  rows: KengHisobotPage._oynaXulosaRows() },
+      // Tahlil uchun xom sonlar — saralash va qo'shimcha hisoblash qulay bo'lsin
+      { nom: '14-OYNA-BATAFSIL', rows: qator(d.oyna || [], [
           ['viloyat','Viloyat'],['muassasa','Muassasa'],['bosqich','Bosqich'],
           ['nozologiya','Tashxis'],
           ['jami','Bemor jami'],['aniq','Aniq soat'],['oraliqli','Oraliq (eski)'],
@@ -844,8 +898,7 @@ const KengHisobotPage = {
           ['vaqtsiz','Vaqti aniqlanmagan'],
           ['n4','≤4,5 soat'],['n6','≤6 soat'],['n12','≤12 soat'],['n24p','>24 soat'],
           ['ortacha_soat','O\'rtacha soat']
-        ]) },
-      { nom: '12-OYNA-XULOSA',  rows: KengHisobotPage._oynaXulosaRows() }
+        ]) }
     ];
 
     const scope = (f.muassasa || f.viloyat || 'Respublika')
