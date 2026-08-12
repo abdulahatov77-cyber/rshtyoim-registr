@@ -4,6 +4,9 @@
 const MuassasaImkoniyatPage = {
   rows: [],
   dirty: new Map(),
+  // muassasa_overrides dagi 'remove' yozuvlari — bu muassasalar hisobotda
+  // qoladi, lekin yangi bemor/ro'yxatdan o'tish formalarida chiqmaydi
+  yashiringan: new Set(),
 
   // Marshrut oqimi tahlili uchun daraja. Tartib — yuqoridan pastga.
   // Raqam ierarxiyani bildiradi: manzil raqami manbadan katta bo'lsa — eskalatsiya.
@@ -44,10 +47,20 @@ const MuassasaImkoniyatPage = {
                 <option value="__bosh__">⚠️ Daraja belgilanmagan</option>
                 ${MuassasaImkoniyatPage.DARAJALAR.map(([k, n]) => `<option value="${k}">${n}</option>`).join('')}
               </select>
+              <select id="mi-holat-filter" class="form-select" style="max-width:200px">
+                <option value="">Faol + yashirilgan</option>
+                <option value="faol">Faqat faollari</option>
+                <option value="yashirin">🚫 Faqat yashirilganlar</option>
+              </select>
             </div>
-            <button id="mi-save" class="btn btn-primary flex items-center gap-2" disabled style="opacity:0.5">
-              ${icon('save', 16)} Saqlash
-            </button>
+            <div class="flex items-center gap-2">
+              <button id="mi-add" class="btn btn-secondary flex items-center gap-2">
+                ${icon('plus', 16)} Yangi muassasa
+              </button>
+              <button id="mi-save" class="btn btn-primary flex items-center gap-2" disabled style="opacity:0.5">
+                ${icon('save', 16)} Saqlash
+              </button>
+            </div>
           </div>
           <div id="mi-summary" class="text-sm text-slate-500 mt-3"></div>
         </div>
@@ -60,12 +73,13 @@ const MuassasaImkoniyatPage = {
                   <th style="width:18%">Viloyat</th>
                   <th>Muassasa</th>
                   <th style="width:18%">Daraja</th>
-                  <th style="width:9%;text-align:center">MSKT</th>
-                  <th style="width:11%;text-align:center">Angiografiya</th>
+                  <th style="width:8%;text-align:center">MSKT</th>
+                  <th style="width:10%;text-align:center">Angiografiya</th>
+                  <th style="width:9%;text-align:center">Amallar</th>
                 </tr>
               </thead>
               <tbody id="mi-tbody">
-                <tr><td colspan="6" class="text-center py-10 text-gray-400">Yuklanmoqda...</td></tr>
+                <tr><td colspan="7" class="text-center py-10 text-gray-400">Yuklanmoqda...</td></tr>
               </tbody>
             </table>
           </div>
@@ -78,9 +92,10 @@ const MuassasaImkoniyatPage = {
 
     try {
       this.rows = await DB.getMuassasalarFiltered(null, null);
+      await this.loadYashiringan();
     } catch (e) {
       document.getElementById('mi-tbody').innerHTML =
-        `<tr><td colspan="6" class="text-center py-10 text-red-500">Xatolik: ${esc(e.message)}<br>
+        `<tr><td colspan="7" class="text-center py-10 text-red-500">Xatolik: ${esc(e.message)}<br>
          <span class="text-xs text-gray-400">muassasa_imkoniyat.sql va muassasa_daraja.sql skriptlari Supabase'da ishga tushirilganini tekshiring</span></td></tr>`;
       return;
     }
@@ -89,11 +104,36 @@ const MuassasaImkoniyatPage = {
     this.draw();
   },
 
+  // Yashirilganlar ro'yxati muassasa_overrides dan olinadi — bu jadval
+  // bemor formalaridagi ochiluvchi ro'yxatni ham boshqaradi
+  async loadYashiringan() {
+    try {
+      const ovs = await MuassasaDB.getOverrides();
+      this.yashiringan = new Set(
+        ovs.filter(o => o.action === 'remove').map(o => (o.nomi || '').toLowerCase())
+      );
+    } catch (e) { this.yashiringan = new Set(); }
+  },
+
+  yashirinmi(r) {
+    return this.yashiringan.has((r.nomi || '').toLowerCase());
+  },
+
   bind() {
     document.getElementById('mi-search').oninput  = Utils.debounce(() => this.draw(), 300);
     document.getElementById('mi-filter').onchange = () => this.draw();
     document.getElementById('mi-daraja-filter').onchange = () => this.draw();
+    document.getElementById('mi-holat-filter').onchange  = () => this.draw();
     document.getElementById('mi-save').onclick    = () => this.save();
+    document.getElementById('mi-add').onclick     = () => this.qoshModal();
+
+    document.getElementById('mi-tbody').onclick = (e) => {
+      const btn = e.target.closest('button[data-act]');
+      if (!btn) return;
+      const id = Number(btn.dataset.id);
+      if (btn.dataset.act === 'ochir')  this.ochir(id);
+      if (btn.dataset.act === 'yashir') this.yashir(id, btn.dataset.yashir === '1');
+    };
 
     document.getElementById('mi-tbody').onchange = (e) => {
       const el = e.target;
@@ -126,7 +166,12 @@ const MuassasaImkoniyatPage = {
     const q = (document.getElementById('mi-search')?.value || '').toLowerCase().trim();
     const f = document.getElementById('mi-filter')?.value || '';
     const d = document.getElementById('mi-daraja-filter')?.value || '';
+    const h = document.getElementById('mi-holat-filter')?.value || '';
     return this.rows.filter(r => {
+      const okH = h === ''         ? true
+                : h === 'yashirin' ? this.yashirinmi(r)
+                : !this.yashirinmi(r);
+      if (!okH) return false;
       const okQ = !q
         || (r.nomi || '').toLowerCase().includes(q)
         || (r.viloyat || '').toLowerCase().includes(q);
@@ -144,11 +189,15 @@ const MuassasaImkoniyatPage = {
   draw() {
     const list = this.filtered();
     document.getElementById('mi-tbody').innerHTML = list.length
-      ? list.map((r, i) => `
-          <tr>
+      ? list.map((r, i) => {
+        const y = this.yashirinmi(r);
+        return `
+          <tr style="${y ? 'background:#fafafa;opacity:.7' : ''}">
             <td class="text-xs text-gray-400">${i + 1}</td>
             <td class="text-sm text-gray-600">${esc(r.viloyat || '—')}</td>
-            <td class="text-sm font-semibold text-gray-800">${esc(r.nomi)}</td>
+            <td class="text-sm font-semibold text-gray-800">${esc(r.nomi)}
+              ${y ? `<span class="badge" style="background:#f1f5f9;color:#64748b;margin-left:6px;font-size:10px">🚫 yashirilgan</span>` : ''}
+            </td>
             <td>
               <select data-id="${r.id}" data-field="daraja"
                       class="form-select !py-1 !text-xs"
@@ -168,9 +217,195 @@ const MuassasaImkoniyatPage = {
                      style="width:18px;height:18px;accent-color:#7c3aed;cursor:pointer"
                      ${r.angiografiya_bor ? 'checked' : ''}>
             </td>
-          </tr>`).join('')
-      : `<tr><td colspan="6" class="text-center py-10 text-gray-400">Topilmadi</td></tr>`;
+            <td style="text-align:center;white-space:nowrap">
+              <button data-act="yashir" data-id="${r.id}" data-yashir="${y ? '0' : '1'}"
+                      title="${y ? 'Formalarga qaytarish' : 'Formalardan yashirish — tarix saqlanadi'}"
+                      style="border:none;background:none;cursor:pointer;padding:4px;color:${y ? '#0891b2' : '#94a3b8'}">
+                ${icon(y ? 'eye' : 'eye-off', 16)}
+              </button>
+              <button data-act="ochir" data-id="${r.id}"
+                      title="Butunlay o'chirish — faqat yozuvi yo'q muassasa"
+                      style="border:none;background:none;cursor:pointer;padding:4px;color:#dc2626">
+                ${icon('trash-2', 16)}
+              </button>
+            </td>
+          </tr>`; }).join('')
+      : `<tr><td colspan="7" class="text-center py-10 text-gray-400">Topilmadi</td></tr>`;
+    initIcons();
     this.drawSummary(list.length);
+  },
+
+  // ==================== QO'SHISH ====================
+  qoshModal() {
+    if (!this._dirtyOgoh()) return;
+    const id = 'mi-add-modal';
+    document.getElementById(id)?.remove();
+    const el = document.createElement('div');
+    el.id = id;
+    el.style.cssText = 'position:fixed;inset:0;z-index:9500;background:rgba(15,23,42,.55);display:flex;align-items:center;justify-content:center;padding:16px';
+    el.innerHTML = `
+      <div style="background:#fff;border-radius:18px;max-width:520px;width:100%;box-shadow:0 24px 60px rgba(0,0,0,.28);overflow:hidden">
+        <div style="padding:16px 20px;background:#eff6ff;border-bottom:1px solid #bfdbfe">
+          <div style="font-weight:800;color:#1d4ed8;font-size:15px">➕ Yangi muassasa qo'shish</div>
+          <div style="font-size:12px;color:#1e3a8a;margin-top:3px">
+            Muassasa ham hisobot jadvaliga, ham bemor formalaridagi ochiluvchi
+            ro'yxatga qo'shiladi.
+          </div>
+        </div>
+        <div style="padding:16px 20px;display:flex;flex-direction:column;gap:12px">
+          <div>
+            <label class="form-label">Viloyat <span style="color:#dc2626">*</span></label>
+            <select id="mi-a-vil" class="form-select" style="width:100%">
+              <option value="">— tanlang —</option>
+              ${APP_CONFIG.VILOYATLAR.map(v => `<option value="${esc(v)}">${esc(v)}</option>`).join('')}
+            </select>
+          </div>
+          <div>
+            <label class="form-label">Muassasa nomi <span style="color:#dc2626">*</span></label>
+            <input id="mi-a-nomi" class="form-input" style="width:100%" autocomplete="off"
+                   placeholder="masalan: Chinoz TTB"/>
+            <div id="mi-a-ogoh" style="font-size:11px;color:#b45309;margin-top:4px;display:none"></div>
+          </div>
+          <div>
+            <label class="form-label">Daraja</label>
+            <select id="mi-a-daraja" class="form-select" style="width:100%">
+              <option value="">— belgilanmagan —</option>
+              ${this.DARAJALAR.map(([k, n]) => `<option value="${k}">${n}</option>`).join('')}
+            </select>
+          </div>
+          <div style="display:flex;gap:20px;padding-top:2px">
+            <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:13px">
+              <input type="checkbox" id="mi-a-mskt" style="width:17px;height:17px;accent-color:#2563eb">
+              MSKT bor
+            </label>
+            <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:13px">
+              <input type="checkbox" id="mi-a-angio" style="width:17px;height:17px;accent-color:#7c3aed">
+              Angiografiya bor
+            </label>
+          </div>
+        </div>
+        <div style="display:flex;justify-content:flex-end;gap:10px;padding:14px 20px;background:#f8fafc;border-top:1px solid #f1f5f9">
+          <button class="btn btn-secondary" id="mi-a-bekor">Bekor</button>
+          <button class="btn btn-primary" id="mi-a-ok">Qo'shish</button>
+        </div>
+      </div>`;
+    document.body.appendChild(el);
+
+    const nomiEl = document.getElementById('mi-a-nomi');
+    const ogoh   = document.getElementById('mi-a-ogoh');
+    // Takror nomni yozayotganda darhol ogohlantirish — RPC ham tekshiradi,
+    // lekin foydalanuvchi buni formani yuborishdan oldin bilgani yaxshi
+    nomiEl.oninput = () => {
+      const q = nomiEl.value.trim().toLowerCase();
+      const bor = q && this.rows.find(r => (r.nomi || '').toLowerCase() === q);
+      ogoh.style.display = bor ? '' : 'none';
+      if (bor) ogoh.textContent = `⚠️ Bunday muassasa allaqachon bor: ${bor.viloyat || '—'}`;
+    };
+
+    const yop = () => el.remove();
+    document.getElementById('mi-a-bekor').onclick = yop;
+    el.onclick = (e) => { if (e.target === el) yop(); };
+    nomiEl.focus();
+
+    document.getElementById('mi-a-ok').onclick = async () => {
+      const nomi = nomiEl.value.trim();
+      const vil  = document.getElementById('mi-a-vil').value;
+      if (!vil)  { showToast('Viloyatni tanlang', 'error'); return; }
+      if (!nomi) { showToast('Muassasa nomini kiriting', 'error'); return; }
+      const btn = document.getElementById('mi-a-ok');
+      btn.disabled = true; btn.textContent = 'Qo\'shilmoqda...';
+      try {
+        await DB.muassasaQosh(
+          nomi, vil,
+          document.getElementById('mi-a-daraja').value,
+          document.getElementById('mi-a-mskt').checked,
+          document.getElementById('mi-a-angio').checked
+        );
+        yop();
+        showToast(`✅ "${nomi}" qo'shildi`, 'success');
+        await this.qaytaYukla();
+      } catch (e) {
+        showToast('Xatolik: ' + e.message, 'error', 7000);
+        btn.disabled = false; btn.textContent = 'Qo\'shish';
+      }
+    };
+  },
+
+  // ==================== O'CHIRISH / YASHIRISH ====================
+  async ochir(id) {
+    if (!this._dirtyOgoh()) return;
+    const r = this.rows.find(x => x.id === id);
+    if (!r) return;
+    let u;
+    try {
+      u = await DB.muassasaIshlatilgan(r.nomi);
+    } catch (e) { showToast('Xatolik: ' + e.message, 'error', 6000); return; }
+
+    const jami = (u.infarkt || 0) + (u.insult || 0) + (u.otkazilgan || 0) + (u.profil || 0);
+    if (jami > 0) {
+      // O'chirish hisobotlarni buzadi — bemorlar muassasaga nomi bo'yicha
+      // bog'langan, FK yo'q. Yashirish xavfsiz muqobil.
+      const yashirilsinmi = confirm(
+        `"${r.nomi}" ni o'chirib bo'lmaydi — u ishlatilgan:\n\n` +
+        `  • ${u.infarkt || 0} ta infarkt yozuvi\n` +
+        `  • ${u.insult || 0} ta insult yozuvi\n` +
+        `  • ${u.otkazilgan || 0} ta o'tkazish\n` +
+        `  • ${u.profil || 0} ta foydalanuvchi\n\n` +
+        `O'chirilsa hisobotlar buziladi.\n\n` +
+        `Uning o'rniga YASHIRAYLIKMI? Tarixiy ma'lumot butun qoladi, ` +
+        `faqat yangi formalardagi ro'yxatda chiqmaydi.`
+      );
+      if (yashirilsinmi) this.yashir(id, true, true);   // ogohlantirish qayta chiqmasin
+      return;
+    }
+
+    if (!confirm(`"${r.nomi}" butunlay o'chirilsinmi?\n\nUnga bog'liq bemor yozuvi yo'q.`)) return;
+    try {
+      await DB.muassasaOchir(id);
+      showToast(`🗑 "${r.nomi}" o'chirildi`, 'success');
+      await this.qaytaYukla();
+    } catch (e) {
+      showToast('Xatolik: ' + e.message, 'error', 8000);
+    }
+  },
+
+  async yashir(id, yashir, _tasdiqlangan) {
+    if (!_tasdiqlangan && !this._dirtyOgoh()) return;
+    const r = this.rows.find(x => x.id === id);
+    if (!r) return;
+    if (yashir && !_tasdiqlangan && !confirm(
+      `"${r.nomi}" formalardagi ro'yxatdan olinsinmi?\n\n` +
+      `Hisobotlar va mavjud bemor yozuvlari o'zgarmaydi — faqat yangi ` +
+      `bemor kiritish va ro'yxatdan o'tish formalarida chiqmaydi.`
+    )) return;
+    try {
+      await DB.muassasaYashir(id, yashir);
+      showToast(yashir ? `🚫 "${r.nomi}" yashirildi` : `✅ "${r.nomi}" qaytarildi`, 'success');
+      await this.qaytaYukla();
+    } catch (e) {
+      showToast('Xatolik: ' + e.message, 'error', 8000);
+    }
+  },
+
+  // Qo'shish/o'chirish ro'yxatni serverdan qayta oladi — saqlanmagan
+  // galochkalar shunda yo'qoladi. Shuning uchun avval so'raladi.
+  _dirtyOgoh() {
+    if (!this.dirty.size) return true;
+    return confirm(
+      `Saqlanmagan ${this.dirty.size} ta o'zgarish bor.\n\n` +
+      `Davom etilsa ular yo'qoladi. Avval "Saqlash" tugmasini bosing.\n\nBaribir davom etilsinmi?`
+    );
+  },
+
+  async qaytaYukla() {
+    this.rows = await DB.getMuassasalarFiltered(null, null);
+    await this.loadYashiringan();
+    // Formalardagi ochiluvchi ro'yxat ham darhol yangilansin
+    try { MuassasaDB.applyToConfig(await MuassasaDB.getOverrides()); } catch (e) {}
+    this.dirty.clear();
+    const btn = document.getElementById('mi-save');
+    if (btn) { btn.disabled = true; btn.style.opacity = '0.5'; btn.innerHTML = `${icon('save', 16)} Saqlash`; }
+    this.draw();
   },
 
   drawSummary(shown) {
@@ -180,8 +415,10 @@ const MuassasaImkoniyatPage = {
     const n = shown ?? this.filtered().length;
     const el = document.getElementById('mi-summary');
     if (!el) return;
+    const y = this.rows.filter(r => this.yashirinmi(r)).length;
     el.innerHTML =
       `Jami ${this.rows.length} muassasa · MSKT: ${m} ta · Angiografiya: ${a} ta · Ko'rsatilmoqda: ${n} ta` +
+      (y ? ` · <span style="color:#64748b">Yashirilgan: ${y} ta</span>` : '') +
       (this.dirty.size ? ` · <b>Saqlanmagan o'zgarish: ${this.dirty.size} ta</b>` : '') +
       (d ? ` · <span style="color:#b91c1c;font-weight:600">Daraja belgilanmagan: ${d} ta</span>` : '');
   },

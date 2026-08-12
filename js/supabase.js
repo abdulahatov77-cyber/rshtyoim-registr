@@ -1079,6 +1079,41 @@ const DB = {
     return data || [];
   },
 
+  // ===== MUASSASA QO'SHISH / O'CHIRISH (faqat super_admin) =====
+  // RPC ikkala manbaga ham yozadi: muassasalar jadvali (hisobot join'lari)
+  // va muassasa_overrides (formalardagi ochiluvchi ro'yxat).
+  async muassasaQosh(nomi, viloyat, daraja, mskt, angio) {
+    const { data, error } = await getSupabase().rpc('muassasa_qosh', {
+      p_nomi: nomi, p_viloyat: viloyat,
+      p_daraja: daraja || null, p_mskt: !!mskt, p_angio: !!angio
+    });
+    if (error) throw error;
+    return data;
+  },
+
+  // Yozuvi bor muassasani o'chirmaydi — RPC xato qaytaradi
+  async muassasaOchir(id) {
+    const { data, error } = await getSupabase().rpc('muassasa_ochir', { p_id: id });
+    if (error) throw error;
+    return data;
+  },
+
+  // Yozuvi bor muassasani iste'moldan chiqarish: tarix saqlanadi,
+  // yangi formalarda ko'rinmaydi
+  async muassasaYashir(id, yashir) {
+    const { data, error } = await getSupabase().rpc('muassasa_yashir', {
+      p_id: id, p_yashir: !!yashir
+    });
+    if (error) throw error;
+    return data;
+  },
+
+  async muassasaIshlatilgan(nomi) {
+    const { data, error } = await getSupabase().rpc('get_muassasa_ishlatilgan', { p_nomi: nomi });
+    if (error) throw error;
+    return data || {};
+  },
+
   // Imkoniyat galochkalarini saqlash (faqat super_admin, RPC ichida tekshiriladi)
   async setMuassasaImkoniyat(items) {
     const { data, error } = await getSupabase().rpc('set_muassasa_imkoniyat', {
