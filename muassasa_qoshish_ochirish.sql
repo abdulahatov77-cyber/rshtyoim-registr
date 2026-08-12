@@ -190,7 +190,13 @@ end $$;
 grant execute on function public.muassasa_yashir(bigint, boolean) to authenticated;
 
 
--- ============ 5. TEKSHIRUV ============
+-- ============ 5. POSTGREST KESHINI YANGILASH ============
+-- Yangi funksiya darhol RPC orqali chaqirilishi uchun. Busiz brauzerda
+-- "Could not find the function ... in the schema cache" xatosi chiqishi mumkin.
+notify pgrst, 'reload schema';
+
+
+-- ============ 6. TEKSHIRUV ============
 select p.proname as funksiya,
        p.prosecdef as security_definer,
        pg_get_function_identity_arguments(p.oid) as argumentlar

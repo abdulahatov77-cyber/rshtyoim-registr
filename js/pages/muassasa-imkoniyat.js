@@ -325,7 +325,7 @@ const MuassasaImkoniyatPage = {
         showToast(`✅ "${nomi}" qo'shildi`, 'success');
         await this.qaytaYukla();
       } catch (e) {
-        showToast('Xatolik: ' + e.message, 'error', 7000);
+        showToast('Xatolik: ' + muassasaXatoMatni(e), 'error', 8000);
         btn.disabled = false; btn.textContent = 'Qo\'shish';
       }
     };

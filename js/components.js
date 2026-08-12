@@ -99,6 +99,16 @@ function reperfuziyaSababSora(nomi, oyna) {
 }
 
 // ==================== MUASSASA O'CHIRISH / YASHIRISH OQIMI ====================
+// PostgREST "funksiya topilmadi" xatosini tushunarli matnga aylantiradi —
+// bu deyarli har doim SQL skript bazada bajarilmaganini bildiradi
+function muassasaXatoMatni(e) {
+  const m = (e && e.message) || '';
+  if (/Could not find the function|schema cache|does not exist/i.test(m)) {
+    return "Baza tayyor emas: Supabase SQL Editor'da muassasa_qoshish_ochirish.sql skriptini bajaring";
+  }
+  return m;
+}
+
 // Admin panel va "Muassasa imkoniyati" sahifasi ayni bir ro'yxatni ko'rsatadi,
 // shuning uchun o'chirish mantig'i ham bitta joyda turadi — ikki ekran turlicha
 // ishlab qolmasin.
@@ -113,7 +123,7 @@ async function muassasaOchirishOqimi(row) {
   let u;
   try {
     u = await DB.muassasaIshlatilgan(row.nomi);
-  } catch (e) { showToast('Xatolik: ' + e.message, 'error', 6000); return null; }
+  } catch (e) { showToast('Xatolik: ' + muassasaXatoMatni(e), 'error', 8000); return null; }
 
   const inf = u.infarkt || 0, ins = u.insult || 0;
   const otk = u.otkazilgan || 0, prof = u.profil || 0;
@@ -134,7 +144,7 @@ async function muassasaOchirishOqimi(row) {
       await DB.muassasaYashir(row.id, true);
       showToast(`🚫 "${row.nomi}" yashirildi`, 'success');
       return 'yashirildi';
-    } catch (e) { showToast('Xatolik: ' + e.message, 'error', 8000); return null; }
+    } catch (e) { showToast('Xatolik: ' + muassasaXatoMatni(e), 'error', 8000); return null; }
   }
 
   if (!confirm(`"${row.nomi}" butunlay o'chirilsinmi?\n\nUnga bog'liq bemor yozuvi yo'q.`)) return null;
@@ -142,7 +152,7 @@ async function muassasaOchirishOqimi(row) {
     await DB.muassasaOchir(row.id);
     showToast(`🗑 "${row.nomi}" o'chirildi`, 'success');
     return 'ochirildi';
-  } catch (e) { showToast('Xatolik: ' + e.message, 'error', 8000); return null; }
+  } catch (e) { showToast('Xatolik: ' + muassasaXatoMatni(e), 'error', 8000); return null; }
 }
 
 // Yashirish/qaytarish. tasdiqlangan=true bo'lsa qayta so'ramaydi.
@@ -157,7 +167,7 @@ async function muassasaYashirishOqimi(row, yashir, tasdiqlangan) {
     await DB.muassasaYashir(row.id, yashir);
     showToast(yashir ? `🚫 "${row.nomi}" yashirildi` : `✅ "${row.nomi}" qaytarildi`, 'success');
     return true;
-  } catch (e) { showToast('Xatolik: ' + e.message, 'error', 8000); return false; }
+  } catch (e) { showToast('Xatolik: ' + muassasaXatoMatni(e), 'error', 8000); return false; }
 }
 
 function closeModal() {

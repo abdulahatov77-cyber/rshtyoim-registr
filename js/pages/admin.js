@@ -718,7 +718,7 @@ const AdminPage = {
       showToast(`✅ "${nomi}" qo'shildi`, 'success');
       if (input) input.value = '';
       await AdminPage.muassasaQaytaYukla();
-    } catch(err) { showToast('❌ ' + err.message, 'error', 7000); }
+    } catch(err) { showToast('❌ ' + muassasaXatoMatni(err), 'error', 8000); }
   },
 
   async muassasaOchir(id) {
