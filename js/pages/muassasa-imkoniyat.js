@@ -332,59 +332,18 @@ const MuassasaImkoniyatPage = {
   },
 
   // ==================== O'CHIRISH / YASHIRISH ====================
+  // O'chirish/yashirish mantig'i components.js da — admin panel ham
+  // aynan shu oqimni chaqiradi, ikki ekran turlicha ishlab qolmasin
   async ochir(id) {
     if (!this._dirtyOgoh()) return;
     const r = this.rows.find(x => x.id === id);
-    if (!r) return;
-    let u;
-    try {
-      u = await DB.muassasaIshlatilgan(r.nomi);
-    } catch (e) { showToast('Xatolik: ' + e.message, 'error', 6000); return; }
-
-    const jami = (u.infarkt || 0) + (u.insult || 0) + (u.otkazilgan || 0) + (u.profil || 0);
-    if (jami > 0) {
-      // O'chirish hisobotlarni buzadi — bemorlar muassasaga nomi bo'yicha
-      // bog'langan, FK yo'q. Yashirish xavfsiz muqobil.
-      const yashirilsinmi = confirm(
-        `"${r.nomi}" ni o'chirib bo'lmaydi — u ishlatilgan:\n\n` +
-        `  • ${u.infarkt || 0} ta infarkt yozuvi\n` +
-        `  • ${u.insult || 0} ta insult yozuvi\n` +
-        `  • ${u.otkazilgan || 0} ta o'tkazish\n` +
-        `  • ${u.profil || 0} ta foydalanuvchi\n\n` +
-        `O'chirilsa hisobotlar buziladi.\n\n` +
-        `Uning o'rniga YASHIRAYLIKMI? Tarixiy ma'lumot butun qoladi, ` +
-        `faqat yangi formalardagi ro'yxatda chiqmaydi.`
-      );
-      if (yashirilsinmi) this.yashir(id, true, true);   // ogohlantirish qayta chiqmasin
-      return;
-    }
-
-    if (!confirm(`"${r.nomi}" butunlay o'chirilsinmi?\n\nUnga bog'liq bemor yozuvi yo'q.`)) return;
-    try {
-      await DB.muassasaOchir(id);
-      showToast(`🗑 "${r.nomi}" o'chirildi`, 'success');
-      await this.qaytaYukla();
-    } catch (e) {
-      showToast('Xatolik: ' + e.message, 'error', 8000);
-    }
+    if (await muassasaOchirishOqimi(r)) await this.qaytaYukla();
   },
 
-  async yashir(id, yashir, _tasdiqlangan) {
-    if (!_tasdiqlangan && !this._dirtyOgoh()) return;
+  async yashir(id, yashir) {
+    if (!this._dirtyOgoh()) return;
     const r = this.rows.find(x => x.id === id);
-    if (!r) return;
-    if (yashir && !_tasdiqlangan && !confirm(
-      `"${r.nomi}" formalardagi ro'yxatdan olinsinmi?\n\n` +
-      `Hisobotlar va mavjud bemor yozuvlari o'zgarmaydi — faqat yangi ` +
-      `bemor kiritish va ro'yxatdan o'tish formalarida chiqmaydi.`
-    )) return;
-    try {
-      await DB.muassasaYashir(id, yashir);
-      showToast(yashir ? `🚫 "${r.nomi}" yashirildi` : `✅ "${r.nomi}" qaytarildi`, 'success');
-      await this.qaytaYukla();
-    } catch (e) {
-      showToast('Xatolik: ' + e.message, 'error', 8000);
-    }
+    if (await muassasaYashirishOqimi(r, yashir)) await this.qaytaYukla();
   },
 
   // Qo'shish/o'chirish ro'yxatni serverdan qayta oladi — saqlanmagan

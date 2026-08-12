@@ -11,6 +11,8 @@ const AdminPage = {
   _activeTab: 'users',
   _overrides: [],
   _selViloyat: '',
+  _muassasalar: [],
+  _muassasaXato: '',
   _auditData: null,
   _auditLoading: false,
   _dupData: null,
@@ -48,7 +50,7 @@ const AdminPage = {
       user
     );
     Components.startClock();
-    await Promise.all([AdminPage._loadProfiles(), AdminPage._loadOverrides()]);
+    await Promise.all([AdminPage._loadProfiles(), AdminPage._loadOverrides(), AdminPage._loadMuassasalar()]);
   },
 
   async _loadProfiles() {
@@ -72,6 +74,22 @@ const AdminPage = {
       AdminPage._overrides = await MuassasaDB.getOverrides();
       MuassasaDB.applyToConfig(AdminPage._overrides);
     } catch(e) { /* table not yet created */ }
+  },
+
+  // Muassasalar ro'yxati "Muassasa imkoniyati" sahifasi bilan AYNI manbadan —
+  // public.muassasalar jadvali. Ilgari bu tab faqat muassasa_overrides ustida
+  // ishlardi, shu sababli ikki ekranda ro'yxat bir xil bo'lmasdi.
+  async _loadMuassasalar() {
+    try {
+      AdminPage._muassasalar = await DB.getMuassasalarFiltered(null, null);
+    } catch(e) { AdminPage._muassasalar = []; AdminPage._muassasaXato = e.message; }
+  },
+
+  // Yashirilganlar — muassasa_overrides dagi 'remove' yozuvlari
+  _yashiringanSet() {
+    return new Set(AdminPage._overrides
+      .filter(o => o.action === 'remove')
+      .map(o => (o.nomi || '').toLowerCase()));
   },
 
   renderContent() {
@@ -542,18 +560,46 @@ const AdminPage = {
 
   // ==================== MUASSASALAR TAB ====================
 
+  // Muassasa ro'yxati public.muassasalar jadvalidan — "Muassasa imkoniyati"
+  // sahifasi bilan bir xil manba. Qo'shish/o'chirish ham o'sha RPC'lar orqali.
   _buildMuassasaTab() {
     const viloyatlar = Object.keys(APP_CONFIG._MUASSASALAR_BASE || APP_CONFIG.MUASSASALAR);
     const sel = AdminPage._selViloyat || viloyatlar[0] || '';
-    const effective = (APP_CONFIG.MUASSASALAR)[sel] || [];
 
-    // Overrides for selected viloyat
-    const addOvs = AdminPage._overrides.filter(o => o.viloyat === sel && o.action === 'add');
-    const remOvs = AdminPage._overrides.filter(o => o.viloyat === sel && o.action === 'remove');
-    const removedNames = remOvs.map(o => o.nomi);
-    const addedNames = addOvs.map(o => o.nomi);
+    if (AdminPage._muassasaXato) {
+      return `<div class="card" style="padding:24px;text-align:center;color:#b91c1c">
+        Muassasalar jadvalini o'qib bo'lmadi: ${esc(AdminPage._muassasaXato)}<br>
+        <span style="font-size:12px;color:#64748b">muassasa_imkoniyat.sql va muassasa_qoshish_ochirish.sql
+        skriptlari Supabase'da ishga tushirilganini tekshiring</span></div>`;
+    }
 
-    const totalOvCount = AdminPage._overrides.length;
+    const yashirin = AdminPage._yashiringanSet();
+    const barchasi = AdminPage._muassasalar.filter(m => m.viloyat === sel)
+      .sort((a, b) => (a.nomi || '').localeCompare(b.nomi || '', 'uz'));
+    const faol   = barchasi.filter(m => !yashirin.has((m.nomi || '').toLowerCase()));
+    const berkit = barchasi.filter(m =>  yashirin.has((m.nomi || '').toLowerCase()));
+
+    // Config'da bor, lekin jadvalda yo'q — bemor formasida chiqadi, hisobotda
+    // "bosqichsiz" bo'lib qoladi. Bu farqni ko'rsatib, tuzatish taklif qilinadi.
+    const jadvalNomlari = new Set(AdminPage._muassasalar.map(m => (m.nomi || '').toLowerCase()));
+    const yetishmagan = ((APP_CONFIG.MUASSASALAR)[sel] || [])
+      .filter(n => !jadvalNomlari.has((n || '').toLowerCase()));
+
+    const chip = (m, isYashirin) => `
+      <div style="display:inline-flex;align-items:center;gap:6px;border-radius:20px;padding:5px 8px 5px 12px;
+        background:${isYashirin ? 'rgba(148,163,184,0.12)' : 'rgba(30,41,59,0.8)'};
+        border:1px solid ${isYashirin ? 'rgba(148,163,184,0.3)' : 'rgba(99,118,158,0.15)'}">
+        <span style="font-size:13px;color:${isYashirin ? '#94a3b8' : '#cbd5e1'};
+          ${isYashirin ? 'text-decoration:line-through' : ''}">${esc(m.nomi)}</span>
+        ${m.mskt_bor ? '<span title="MSKT bor" style="font-size:9px;font-weight:700;color:#60a5fa">KT</span>' : ''}
+        ${m.angiografiya_bor ? '<span title="Angiografiya bor" style="font-size:9px;font-weight:700;color:#c4b5fd">AG</span>' : ''}
+        <button onclick="AdminPage.muassasaYashir(${m.id}, ${isYashirin ? 'false' : 'true'})"
+          title="${isYashirin ? 'Formalarga qaytarish' : 'Formalardan yashirish — tarix saqlanadi'}"
+          style="background:none;border:none;cursor:pointer;padding:0 2px;color:${isYashirin ? '#34d399' : '#94a3b8'};font-size:12px">
+          ${isYashirin ? '↩' : '👁'}</button>
+        <button onclick="AdminPage.muassasaOchir(${m.id})" title="Butunlay o'chirish"
+          style="background:none;border:none;cursor:pointer;padding:0 2px;color:#ef4444;line-height:1">✕</button>
+      </div>`;
 
     return `
       <div style="display:grid;grid-template-columns:240px 1fr;gap:16px;align-items:start">
@@ -564,11 +610,13 @@ const AdminPage = {
             Viloyat tanlang
           </div>
           ${viloyatlar.map(v => {
+            const n = AdminPage._muassasalar.filter(m => m.viloyat === v).length;
             const hasChanges = AdminPage._overrides.some(o => o.viloyat === v);
             return `<button onclick="AdminPage.selectViloyat(this.dataset.v)" data-v="${v.replace(/"/g,'&quot;')}"
-              style="display:flex;justify-content:space-between;align-items:center;width:100%;padding:9px 12px;border:none;border-radius:8px;cursor:pointer;text-align:left;font-size:13px;transition:background 0.15s;
+              style="display:flex;justify-content:space-between;align-items:center;gap:6px;width:100%;padding:9px 12px;border:none;border-radius:8px;cursor:pointer;text-align:left;font-size:13px;transition:background 0.15s;
               ${sel === v ? 'background:#1e293b;color:#e2e8f0;font-weight:700' : 'background:transparent;color:#94a3b8'}">
-              <span>${v}</span>
+              <span style="flex:1">${v}</span>
+              <span style="font-size:11px;color:#64748b">${n}</span>
               ${hasChanges ? '<span style="width:7px;height:7px;background:#f59e0b;border-radius:50%;flex-shrink:0"></span>' : ''}
             </button>`;
           }).join('')}
@@ -580,50 +628,44 @@ const AdminPage = {
             <div class="card-header" style="flex-wrap:wrap;gap:8px">
               <span class="card-title">${icon('building-2',16)} ${sel} — muassasalar ro'yxati</span>
               <div style="display:flex;gap:8px;align-items:center">
-                <span style="font-size:12px;color:#64748b">${effective.length} ta aktiv</span>
-                ${removedNames.length ? `<span style="font-size:12px;color:#f87171">${removedNames.length} ta o'chirilgan</span>` : ''}
+                <span style="font-size:12px;color:#64748b">${faol.length} ta faol</span>
+                ${berkit.length ? `<span style="font-size:12px;color:#94a3b8">${berkit.length} ta yashirilgan</span>` : ''}
+                <button onclick="Router.go('muassasa-imkoniyat')"
+                  style="background:none;border:none;cursor:pointer;font-size:12px;color:#2563eb;font-weight:600;padding:0">
+                  MSKT / daraja tahriri →</button>
               </div>
             </div>
             <div style="padding:0 16px 8px">
 
-              <!-- Active entries -->
+              <!-- Faol muassasalar -->
               <div style="display:flex;flex-wrap:wrap;gap:8px;padding:12px 0">
-                ${effective.map(nomi => {
-                  const isCustom = addedNames.includes(nomi);
-                  const ovId = isCustom ? addOvs.find(o => o.nomi === nomi)?.id : null;
-                  return `<div style="display:inline-flex;align-items:center;gap:6px;background:${isCustom?'rgba(16,185,129,0.1)':'rgba(30,41,59,0.8)'};border:1px solid ${isCustom?'rgba(16,185,129,0.3)':'rgba(99,118,158,0.15)'};border-radius:20px;padding:5px 10px 5px 12px">
-                    <span style="font-size:13px;color:${isCustom?'#34d399':'#cbd5e1'}">${nomi}</span>
-                    ${isCustom ? '<span style="font-size:10px;color:#34d399;font-weight:700">YO\'Q</span>' : ''}
-                    <button onclick="AdminPage._removeMuassasaByData(this)"
-                      data-v="${sel.replace(/"/g,'&quot;')}" data-n="${nomi.replace(/"/g,'&quot;')}"
-                      data-custom="${isCustom?'1':'0'}" data-ov="${ovId||''}"
-                      style="background:none;border:none;cursor:pointer;color:#ef4444;padding:0;display:flex;align-items:center;line-height:1"
-                      title="O'chirish">✕</button>
-                  </div>`;
-                }).join('') || '<p style="color:#64748b;font-size:13px;padding:8px 0">Muassasalar yo\'q</p>'}
+                ${faol.map(m => chip(m, false)).join('')
+                  || '<p style="color:#64748b;font-size:13px;padding:8px 0">Muassasalar yo\'q</p>'}
               </div>
 
-              <!-- Removed entries (restorable) -->
-              ${removedNames.length ? `
+              <!-- Yashirilganlar -->
+              ${berkit.length ? `
                 <div style="border-top:1px solid rgba(99,118,158,0.1);padding-top:12px;margin-top:4px">
-                  <div style="font-size:11px;color:#64748b;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px">O'chirilganlar</div>
+                  <div style="font-size:11px;color:#64748b;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px">
+                    Yashirilganlar — formalarda chiqmaydi, hisobotda qoladi
+                  </div>
                   <div style="display:flex;flex-wrap:wrap;gap:8px">
-                    ${remOvs.map(ov => `
-                      <div style="display:inline-flex;align-items:center;gap:6px;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:20px;padding:5px 10px 5px 12px">
-                        <span style="font-size:13px;color:#f87171;text-decoration:line-through">${ov.nomi}</span>
-                        <button onclick="AdminPage.restoreMuassasa('${ov.id}')"
-                          style="background:rgba(16,185,129,0.15);border:1px solid rgba(16,185,129,0.3);border-radius:12px;cursor:pointer;color:#34d399;padding:2px 8px;font-size:11px;font-weight:700">
-                          Tiklash
-                        </button>
-                      </div>`).join('')}
+                    ${berkit.map(m => chip(m, true)).join('')}
                   </div>
                 </div>` : ''}
 
-              <!-- Add new -->
+              <!-- Yangi qo'shish -->
               <div style="display:flex;gap:8px;align-items:center;border-top:1px solid rgba(99,118,158,0.1);padding-top:14px;margin-top:8px">
                 <input id="m-new-nomi" type="text" placeholder="Yangi muassasa nomi..."
                   class="form-input" style="flex:1;padding:8px 14px;font-size:13px"
                   onkeydown="if(event.key==='Enter')AdminPage.addMuassasa()"/>
+                <select id="m-new-daraja" class="form-input" style="width:180px;padding:8px 10px;font-size:12px">
+                  <option value="">— daraja —</option>
+                  <option value="ttb">1 · TTB / ShTB</option>
+                  <option value="politravma">2 · Politravma markazi</option>
+                  <option value="filial">3 · Viloyat filiali</option>
+                  <option value="markaz">4 · Respublika markazi</option>
+                </select>
                 <button onclick="AdminPage.addMuassasa()"
                   style="padding:8px 18px;background:#2563eb;border:none;border-radius:10px;color:#fff;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap">
                   + Qo'shish
@@ -632,12 +674,24 @@ const AdminPage = {
             </div>
           </div>
 
-          ${totalOvCount > 0 ? `
-            <div class="card" style="border:1px solid rgba(245,158,11,0.2)">
-              <div style="padding:12px 16px;display:flex;justify-content:space-between;align-items:center">
-                <span style="font-size:13px;color:#f59e0b;font-weight:600">
-                  ${icon('alert-circle',14)} Jami ${totalOvCount} ta o'zgarish mavjud (sariq nuqta = o'zgargan viloyat)
-                </span>
+          ${yetishmagan.length ? `
+            <div class="card" style="border:1px solid rgba(245,158,11,0.35)">
+              <div style="padding:12px 16px">
+                <div style="font-size:13px;color:#b45309;font-weight:700;margin-bottom:6px">
+                  ${icon('alert-circle',14)} ${yetishmagan.length} ta muassasa formada bor, jadvalda yo'q
+                </div>
+                <div style="font-size:12px;color:#78350f;margin-bottom:10px">
+                  Bu muassasalarga bemor kiritilsa, hisobotda bosqichi aniqlanmaydi
+                  va marshrut tahlilidan tushib qoladi.
+                </div>
+                <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px">
+                  ${yetishmagan.map(n => `<span style="font-size:12px;color:#92400e;background:rgba(245,158,11,0.12);
+                    border-radius:12px;padding:3px 10px">${esc(n)}</span>`).join('')}
+                </div>
+                <button onclick="AdminPage.yetishmaganQosh()"
+                  style="padding:7px 16px;background:#b45309;border:none;border-radius:9px;color:#fff;font-size:12px;font-weight:700;cursor:pointer">
+                  Barchasini jadvalga qo'shish
+                </button>
               </div>
             </div>` : ''}
         </div>
@@ -649,52 +703,58 @@ const AdminPage = {
     AdminPage._renderTabContent();
   },
 
+  // Qo'shish/o'chirish RPC'lar orqali — ikkala manba (muassasalar jadvali va
+  // muassasa_overrides) bir vaqtda yangilanadi, shuning uchun bu ro'yxat
+  // "Muassasa imkoniyati" sahifasidagi ro'yxatdan farq qilmaydi.
   async addMuassasa() {
     const input = document.getElementById('m-new-nomi');
     const nomi = input?.value?.trim();
     if (!nomi) { showToast('Muassasa nomini kiriting', 'warning'); return; }
     const v = AdminPage._selViloyat;
     if (!v) return;
+    const daraja = document.getElementById('m-new-daraja')?.value || '';
     try {
-      await MuassasaDB.addOverride(v, nomi, 'add');
-      AdminPage._overrides = await MuassasaDB.getOverrides();
-      MuassasaDB.applyToConfig(AdminPage._overrides);
+      await DB.muassasaQosh(nomi, v, daraja, false, false);
       showToast(`✅ "${nomi}" qo'shildi`, 'success');
-      AdminPage._renderTabContent();
-    } catch(err) { showToast('❌ ' + err.message, 'error'); }
+      if (input) input.value = '';
+      await AdminPage.muassasaQaytaYukla();
+    } catch(err) { showToast('❌ ' + err.message, 'error', 7000); }
   },
 
-  _removeMuassasaByData(btn) {
-    const v = btn.dataset.v;
-    const n = btn.dataset.n;
-    const isCustom = btn.dataset.custom === '1';
-    const ovId = btn.dataset.ov || null;
-    AdminPage.removeMuassasa(v, n, isCustom, ovId);
+  async muassasaOchir(id) {
+    const m = AdminPage._muassasalar.find(x => x.id === id);
+    if (await muassasaOchirishOqimi(m)) await AdminPage.muassasaQaytaYukla();
   },
 
-  async removeMuassasa(viloyat, nomi, isCustom, ovId) {
-    if (!confirm(`"${nomi}" ni ro'yxatdan o'chirmoqchimisiz?`)) return;
-    try {
-      if (isCustom && ovId) {
-        await MuassasaDB.deleteOverride(ovId);
-      } else {
-        await MuassasaDB.addOverride(viloyat, nomi, 'remove');
-      }
-      AdminPage._overrides = await MuassasaDB.getOverrides();
-      MuassasaDB.applyToConfig(AdminPage._overrides);
-      showToast(`✅ "${nomi}" o'chirildi`, 'success');
-      AdminPage._renderTabContent();
-    } catch(err) { showToast('❌ ' + err.message, 'error'); }
+  async muassasaYashir(id, yashir) {
+    const m = AdminPage._muassasalar.find(x => x.id === id);
+    if (await muassasaYashirishOqimi(m, yashir)) await AdminPage.muassasaQaytaYukla();
   },
 
-  async restoreMuassasa(ovId) {
-    try {
-      await MuassasaDB.deleteOverride(ovId);
-      AdminPage._overrides = await MuassasaDB.getOverrides();
-      MuassasaDB.applyToConfig(AdminPage._overrides);
-      showToast('✅ Tiklandi', 'success');
-      AdminPage._renderTabContent();
-    } catch(err) { showToast('❌ ' + err.message, 'error'); }
+  // Formadagi ro'yxatda bor, jadvalda yo'q muassasalarni jadvalga tushirish
+  async yetishmaganQosh() {
+    const sel = AdminPage._selViloyat;
+    const jadval = new Set(AdminPage._muassasalar.map(m => (m.nomi || '').toLowerCase()));
+    const yoq = ((APP_CONFIG.MUASSASALAR)[sel] || [])
+      .filter(n => !jadval.has((n || '').toLowerCase()));
+    if (!yoq.length) return;
+    if (!confirm(`${yoq.length} ta muassasa jadvalga qo'shilsinmi?\n\n` +
+      `Darajasi va MSKT/angiografiya belgilari bo'sh bo'ladi — ` +
+      `keyin "Muassasa imkoniyati" sahifasida to'ldiring.`)) return;
+    let ok = 0, xato = [];
+    for (const nomi of yoq) {
+      try { await DB.muassasaQosh(nomi, sel, '', false, false); ok++; }
+      catch (e) { xato.push(nomi); }
+    }
+    showToast(xato.length
+      ? `${ok} ta qo'shildi, ${xato.length} tasida xato`
+      : `✅ ${ok} ta muassasa jadvalga qo'shildi`, xato.length ? 'warning' : 'success', 6000);
+    await AdminPage.muassasaQaytaYukla();
+  },
+
+  async muassasaQaytaYukla() {
+    await Promise.all([AdminPage._loadOverrides(), AdminPage._loadMuassasalar()]);
+    AdminPage._renderTabContent();
   },
 
   // ==================== AHOLI TAB ====================

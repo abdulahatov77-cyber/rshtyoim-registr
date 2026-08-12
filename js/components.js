@@ -98,6 +98,68 @@ function reperfuziyaSababSora(nomi, oyna) {
   });
 }
 
+// ==================== MUASSASA O'CHIRISH / YASHIRISH OQIMI ====================
+// Admin panel va "Muassasa imkoniyati" sahifasi ayni bir ro'yxatni ko'rsatadi,
+// shuning uchun o'chirish mantig'i ham bitta joyda turadi — ikki ekran turlicha
+// ishlab qolmasin.
+//
+// Muassasa bemor yozuvlariga NOMI bo'yicha bog'langan (FK yo'q). Yozuvi bor
+// muassasa o'chirilsa bemorlar "bosqichsiz" qolib hisobotlar buziladi —
+// shuning uchun bunday holatda o'chirish o'rniga yashirish taklif qilinadi.
+//
+// Qaytaradi: 'ochirildi' | 'yashirildi' | null (bekor qilindi)
+async function muassasaOchirishOqimi(row) {
+  if (!row || !row.id) return null;
+  let u;
+  try {
+    u = await DB.muassasaIshlatilgan(row.nomi);
+  } catch (e) { showToast('Xatolik: ' + e.message, 'error', 6000); return null; }
+
+  const inf = u.infarkt || 0, ins = u.insult || 0;
+  const otk = u.otkazilgan || 0, prof = u.profil || 0;
+
+  if (inf + ins + otk + prof > 0) {
+    const yashirilsinmi = confirm(
+      `"${row.nomi}" ni o'chirib bo'lmaydi — u ishlatilgan:\n\n` +
+      `  • ${inf} ta infarkt yozuvi\n` +
+      `  • ${ins} ta insult yozuvi\n` +
+      `  • ${otk} ta o'tkazish\n` +
+      `  • ${prof} ta foydalanuvchi\n\n` +
+      `O'chirilsa hisobotlar buziladi.\n\n` +
+      `Uning o'rniga YASHIRAYLIKMI? Tarixiy ma'lumot butun qoladi, ` +
+      `faqat yangi formalardagi ro'yxatda chiqmaydi.`
+    );
+    if (!yashirilsinmi) return null;
+    try {
+      await DB.muassasaYashir(row.id, true);
+      showToast(`🚫 "${row.nomi}" yashirildi`, 'success');
+      return 'yashirildi';
+    } catch (e) { showToast('Xatolik: ' + e.message, 'error', 8000); return null; }
+  }
+
+  if (!confirm(`"${row.nomi}" butunlay o'chirilsinmi?\n\nUnga bog'liq bemor yozuvi yo'q.`)) return null;
+  try {
+    await DB.muassasaOchir(row.id);
+    showToast(`🗑 "${row.nomi}" o'chirildi`, 'success');
+    return 'ochirildi';
+  } catch (e) { showToast('Xatolik: ' + e.message, 'error', 8000); return null; }
+}
+
+// Yashirish/qaytarish. tasdiqlangan=true bo'lsa qayta so'ramaydi.
+async function muassasaYashirishOqimi(row, yashir, tasdiqlangan) {
+  if (!row || !row.id) return false;
+  if (yashir && !tasdiqlangan && !confirm(
+    `"${row.nomi}" formalardagi ro'yxatdan olinsinmi?\n\n` +
+    `Hisobotlar va mavjud bemor yozuvlari o'zgarmaydi — faqat yangi ` +
+    `bemor kiritish va ro'yxatdan o'tish formalarida chiqmaydi.`
+  )) return false;
+  try {
+    await DB.muassasaYashir(row.id, yashir);
+    showToast(yashir ? `🚫 "${row.nomi}" yashirildi` : `✅ "${row.nomi}" qaytarildi`, 'success');
+    return true;
+  } catch (e) { showToast('Xatolik: ' + e.message, 'error', 8000); return false; }
+}
+
 function closeModal() {
   const container = document.getElementById('modal-container');
   if (container) container.innerHTML = '';
