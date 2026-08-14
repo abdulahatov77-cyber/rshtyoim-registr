@@ -41,6 +41,7 @@ const MuassasaImkoniyatPage = {
                 <option value="mskt">Faqat MSKT bor</option>
                 <option value="angio">Faqat Angiografiya bor</option>
                 <option value="none">Hech qaysisi yo'q</option>
+                <option value="registrsiz">📋 Registr yuritmaydi</option>
               </select>
               <select id="mi-daraja-filter" class="form-select" style="max-width:220px">
                 <option value="">Barcha darajalar</option>
@@ -73,13 +74,14 @@ const MuassasaImkoniyatPage = {
                   <th style="width:18%">Viloyat</th>
                   <th>Muassasa</th>
                   <th style="width:18%">Daraja</th>
-                  <th style="width:8%;text-align:center">MSKT</th>
-                  <th style="width:10%;text-align:center">Angiografiya</th>
-                  <th style="width:9%;text-align:center">Amallar</th>
+                  <th style="width:7%;text-align:center">MSKT</th>
+                  <th style="width:9%;text-align:center">Angiografiya</th>
+                  <th style="width:11%;text-align:center" title="Muassasa registrga o'zi bemor kiritadimi. Belgilanmagan bo'lsa — unga yo'naltirilgan bemorlar 'Qabul kutilmoqda' da alohida kuzatuv bo'limida chiqadi.">Registr yuritadi</th>
+                  <th style="width:8%;text-align:center">Amallar</th>
                 </tr>
               </thead>
               <tbody id="mi-tbody">
-                <tr><td colspan="7" class="text-center py-10 text-gray-400">Yuklanmoqda...</td></tr>
+                <tr><td colspan="8" class="text-center py-10 text-gray-400">Yuklanmoqda...</td></tr>
               </tbody>
             </table>
           </div>
@@ -95,7 +97,7 @@ const MuassasaImkoniyatPage = {
       await this.loadYashiringan();
     } catch (e) {
       document.getElementById('mi-tbody').innerHTML =
-        `<tr><td colspan="7" class="text-center py-10 text-red-500">Xatolik: ${esc(e.message)}<br>
+        `<tr><td colspan="8" class="text-center py-10 text-red-500">Xatolik: ${esc(e.message)}<br>
          <span class="text-xs text-gray-400">muassasa_imkoniyat.sql va muassasa_daraja.sql skriptlari Supabase'da ishga tushirilganini tekshiring</span></td></tr>`;
       return;
     }
@@ -145,13 +147,15 @@ const MuassasaImkoniyatPage = {
       if (el.dataset.field === 'daraja')    row.daraja = el.value || null;
       else if (el.dataset.field === 'mskt') row.mskt_bor = el.checked;
       else if (el.dataset.field === 'angio') row.angiografiya_bor = el.checked;
+      else if (el.dataset.field === 'registr') row.registrga_kiritadi = el.checked;
       else return;
 
       this.dirty.set(id, {
         id,
-        mskt:   row.mskt_bor,
-        angio:  row.angiografiya_bor,
-        daraja: row.daraja || ''
+        mskt:    row.mskt_bor,
+        angio:   row.angiografiya_bor,
+        daraja:  row.daraja || '',
+        registr: row.registrga_kiritadi !== false
       });
       const btn = document.getElementById('mi-save');
       btn.disabled = false;
@@ -175,9 +179,10 @@ const MuassasaImkoniyatPage = {
       const okQ = !q
         || (r.nomi || '').toLowerCase().includes(q)
         || (r.viloyat || '').toLowerCase().includes(q);
-      const okF = f === ''      ? true
-                : f === 'mskt'  ? r.mskt_bor
-                : f === 'angio' ? r.angiografiya_bor
+      const okF = f === ''           ? true
+                : f === 'mskt'       ? r.mskt_bor
+                : f === 'angio'      ? r.angiografiya_bor
+                : f === 'registrsiz' ? r.registrga_kiritadi === false
                 : (!r.mskt_bor && !r.angiografiya_bor);
       const okD = d === ''         ? true
                 : d === '__bosh__' ? !r.daraja
@@ -217,6 +222,12 @@ const MuassasaImkoniyatPage = {
                      style="width:18px;height:18px;accent-color:#7c3aed;cursor:pointer"
                      ${r.angiografiya_bor ? 'checked' : ''}>
             </td>
+            <td style="text-align:center;${r.registrga_kiritadi === false ? 'background:#fff7ed' : ''}">
+              <input type="checkbox" data-id="${r.id}" data-field="registr"
+                     title="Muassasa registrga o'zi bemor kiritadimi"
+                     style="width:18px;height:18px;accent-color:#059669;cursor:pointer"
+                     ${r.registrga_kiritadi === false ? '' : 'checked'}>
+            </td>
             <td style="text-align:center;white-space:nowrap">
               <button data-act="yashir" data-id="${r.id}" data-yashir="${y ? '0' : '1'}"
                       title="${y ? 'Formalarga qaytarish' : 'Formalardan yashirish — tarix saqlanadi'}"
@@ -230,7 +241,7 @@ const MuassasaImkoniyatPage = {
               </button>
             </td>
           </tr>`; }).join('')
-      : `<tr><td colspan="7" class="text-center py-10 text-gray-400">Topilmadi</td></tr>`;
+      : `<tr><td colspan="8" class="text-center py-10 text-gray-400">Topilmadi</td></tr>`;
     initIcons();
     this.drawSummary(list.length);
   },
@@ -375,8 +386,10 @@ const MuassasaImkoniyatPage = {
     const el = document.getElementById('mi-summary');
     if (!el) return;
     const y = this.rows.filter(r => this.yashirinmi(r)).length;
+    const rq = this.rows.filter(r => r.registrga_kiritadi === false).length;
     el.innerHTML =
       `Jami ${this.rows.length} muassasa · MSKT: ${m} ta · Angiografiya: ${a} ta · Ko'rsatilmoqda: ${n} ta` +
+      (rq ? ` · <span style="color:#b45309">Registr yuritmaydi: ${rq} ta</span>` : '') +
       (y ? ` · <span style="color:#64748b">Yashirilgan: ${y} ta</span>` : '') +
       (this.dirty.size ? ` · <b>Saqlanmagan o'zgarish: ${this.dirty.size} ta</b>` : '') +
       (d ? ` · <span style="color:#b91c1c;font-weight:600">Daraja belgilanmagan: ${d} ta</span>` : '');

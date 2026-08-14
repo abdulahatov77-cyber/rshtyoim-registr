@@ -74,17 +74,28 @@ const QabulPage = {
       return;
     }
 
+    // Kartochkalar indeksi qabulQil(i) uchun kerak — ajratishdan oldin belgilaymiz
+    rows.forEach((r, i) => { r._i = i; });
+    // Registrni yuritmaydigan muassasaga yuborilganlar alohida bo'limga
+    const asosiy  = rows.filter(r => !r._kuzatuv);
+    const kuzatuv = rows.filter(r =>  r._kuzatuv);
+
+    if (!asosiy.length && kuzatuv.length) {
+      // Asosiy ro'yxat bo'sh — kuzatuv bo'limi darhol ochiq ko'rinsin
+      QabulPage._kuzatuvOchiq = true;
+    }
+
     el.innerHTML = `
       <div class="card mb-4 !py-3 flex items-start gap-3 bg-blue-50 border-blue-200">
         ${icon('info', 18)}
         <span class="text-sm text-blue-900">
           ${QabulPage._kuzatuvchi ? `
-            <b>${rows.length} ta bemor</b> respublika bo'yicha yuborilgan va hali qabul qilinmagan.
+            <b>${asosiy.length} ta bemor</b> respublika bo'yicha yuborilgan va hali qabul qilinmagan.
             <div class="mt-1 text-xs text-blue-800">
               Siz kuzatuvchi rolidasiz — bu ro'yxat nazorat uchun. Bemorni qabul qilishni
               qabul qiluvchi muassasa shifokori bajaradi.
             </div>` : `
-            <b>${rows.length} ta bemor</b>
+            <b>${asosiy.length} ta bemor</b>
             ${QabulPage._aniqMuassasa ? 'muassasangizga' : 'viloyatingizdagi muassasalarga'} yuborilgan.
             "Qabul qilish" bosilganda kelish vaqti so'raladi va forma bemorning
             shaxsiy ma'lumotlari bilan to'ldirilgan holda ochiladi.
@@ -95,10 +106,52 @@ const QabulPage = {
             </div>`}`}
         </span>
       </div>
+      ${asosiy.length ? `
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        ${rows.map((r, i) => QabulPage._card(r, i)).join('')}
-      </div>`;
+        ${asosiy.map(r => QabulPage._card(r, r._i)).join('')}
+      </div>` : `
+      <div class="card text-center py-10">
+        <div class="text-gray-300 mb-3">${icon('inbox', 40, 'mx-auto')}</div>
+        <p class="text-gray-500 text-sm">Registrni yurituvchi muassasaga yuborilgan,
+        hali qabul qilinmagan bemor yo'q.</p>
+      </div>`}
+      ${kuzatuv.length ? `
+      <div class="card mt-6 !p-0 overflow-hidden">
+        <button id="qb-kuzatuv-tugma" class="w-full text-left p-4 flex items-start gap-3 bg-slate-50 hover:bg-slate-100 transition-colors"
+                style="border:none;cursor:pointer">
+          ${icon('archive', 18)}
+          <span class="flex-1">
+            <span class="block text-sm font-bold text-slate-700">
+              ${kuzatuv.length} ta bemor — qabul qiluvchi registrni yuritmaydi
+            </span>
+            <span class="block text-xs text-slate-500 mt-1">
+              Bu bemorlar kardiologiya markazi, xususiy klinika yoki registrga
+              bemor kiritmaydigan boshqa muassasaga yo'naltirilgan. Ularni ro'yxatdan
+              tushiradigan tomon tizimda yo'q, shuning uchun alohida ajratilgan.
+              Ro'yxat "Muassasa imkoniyati" sahifasidagi belgiga qarab shakllanadi.
+            </span>
+          </span>
+          <span id="qb-kuzatuv-strelka" class="text-slate-400 text-sm shrink-0">${QabulPage._kuzatuvOchiq ? '▲ yopish' : '▼ ochish'}</span>
+        </button>
+        <div id="qb-kuzatuv-royxat" style="display:${QabulPage._kuzatuvOchiq ? 'block' : 'none'}" class="p-4 pt-0">
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4">
+            ${kuzatuv.map(r => QabulPage._card(r, r._i)).join('')}
+          </div>
+        </div>
+      </div>` : ''}`;
     initIcons();
+
+    const tugma = document.getElementById('qb-kuzatuv-tugma');
+    if (tugma) {
+      tugma.onclick = () => {
+        const el = document.getElementById('qb-kuzatuv-royxat');
+        const st = document.getElementById('qb-kuzatuv-strelka');
+        const ochiq = el.style.display !== 'none';
+        el.style.display = ochiq ? 'none' : 'block';
+        QabulPage._kuzatuvOchiq = !ochiq;
+        if (st) st.textContent = ochiq ? '▼ ochish' : '▲ yopish';
+      };
+    }
   },
 
   _card(r, i) {

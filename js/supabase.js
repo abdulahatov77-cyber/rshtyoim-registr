@@ -407,6 +407,19 @@ const DB = {
       if (!qabulMap.has(k) || ms > qabulMap.get(k)) qabulMap.set(k, ms);
     });
 
+    // Qabul qiluvchi registrga o'zi bemor kiritadimi? Kiritmasa (yoki nomi
+    // muassasalar jadvalida umuman bo'lmasa) bemorni ro'yxatdan tushiradigan
+    // tomon yo'q — bunday yozuv abadiy turib qoladi. Uni "_kuzatuv" deb
+    // belgilaymiz, qabul.js uni alohida bo'limda ko'rsatadi.
+    let manzilHolat = null;   // nomKalit -> registrga_kiritadi (boolean)
+    try {
+      const mlist = await DB.getMuassasalarFiltered(null, null);
+      if (mlist && mlist.length) {
+        manzilHolat = new Map();
+        mlist.forEach(m => manzilHolat.set(nomKalit(m.nomi), m.registrga_kiritadi !== false));
+      }
+    } catch (e) { /* RPC yoki ustun hali yangilanmagan — hammasi asosiy ro'yxatda qoladi */ }
+
     return rows
       .filter(r => {
         const k = `${shaxsKalit(r.fio, r.tugilgan_yil)}|${nomKalit(r.otkazilgan_muassasa)}`;
@@ -414,6 +427,10 @@ const DB = {
         // Yuborilgandan keyin ochilgan karta bor — demak bemor yetib borib qabul qilingan
         return !(qabulMs && qabulMs >= new Date(r.qabul_vaqt).getTime());
       })
+      .map(r => ({
+        ...r,
+        _kuzatuv: manzilHolat ? manzilHolat.get(nomKalit(r.otkazilgan_muassasa)) !== true : false
+      }))
       .sort((a, b) => new Date(b.qabul_vaqt) - new Date(a.qabul_vaqt));
   },
 
