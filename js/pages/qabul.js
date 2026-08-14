@@ -161,6 +161,10 @@ const QabulPage = {
     const sabab = r.otkazish_sababi
       || (r.muolaja_turi || '').split(/[—–]/).slice(1).join('—').trim()
       || '';
+    // Necha kundan beri kutilmoqda. Ikki kundan oshsa — bemor kelmagan
+    // bo'lishi mumkin, yozuvni yopish tugmasi chiqadi.
+    const kutganKun = Math.floor((Date.now() - new Date(r.qabul_vaqt).getTime()) / 864e5);
+    const kechikkan = kutganKun >= 2;
     return `
       <div class="card !p-0 overflow-hidden border-l-4" style="border-left-color:${isInf ? '#dc2626' : '#7c3aed'}">
         <div class="p-4">
@@ -193,8 +197,20 @@ const QabulPage = {
                              display:flex;align-items:center;gap:5px;white-space:nowrap">
                 ${icon('user-check', 13)} Bu bemor muassasada mavjud
               </button>` : ''}
+              ${kechikkan ? `
+              <button onclick="QabulPage.kelmadiModal(${i})"
+                      title="Bemor yetib kelmagan bo'lsa — yozuvni ro'yxatdan yopish"
+                      style="border:1px solid #e2e8f0;background:#f8fafc;color:#64748b;
+                             border-radius:8px;padding:5px 9px;font-size:11px;font-weight:700;
+                             cursor:pointer;display:flex;align-items:center;gap:5px;white-space:nowrap">
+                ${icon('user-x', 13)} Bemor kelmadi
+              </button>` : ''}
             </div>`}
           </div>
+          ${kechikkan ? `
+          <div class="mb-3 text-[11px] font-semibold ${kutganKun >= 5 ? 'text-red-600' : 'text-amber-600'}">
+            ${icon('clock', 12)} ${kutganKun} kundan beri kutilmoqda
+          </div>` : ''}
           ${r._mavjud ? `
           <div class="mb-3 p-2.5 rounded-lg"
                style="background:${r._mavjud.aniq ? '#f0fdf4' : '#fffbeb'};
@@ -294,6 +310,61 @@ const QabulPage = {
         qabul_muassasa: r.otkazilgan_muassasa,
         yangi_kt_no: r._mavjud?.kt_no || null,
         sabab: 'allaqachon_mavjud'
+      });
+      QabulPage._rows = QabulPage._rows.filter(x => x !== r);
+      QabulPage._draw();
+      showToast("✅ Ro'yxatdan olib tashlandi", 'success');
+    } catch (e) {
+      showToast('Xatolik: ' + (e.message || 'saqlanmadi') +
+        "\nqabul_tasdiq.sql ishga tushirilganini tekshiring", 'error', 7000);
+    }
+  },
+
+  // Bemor yetib kelmagan — yozuvni yopish
+  kelmadiModal(i) {
+    const r = QabulPage._rows[i];
+    if (!r) return;
+    const kun = Math.floor((Date.now() - new Date(r.qabul_vaqt).getTime()) / 864e5);
+    showModal({
+      title: `${icon('user-x', 18)} Bemor kelmadi`,
+      body: `
+        <div class="mb-3 p-3 rounded-xl bg-slate-50 border border-slate-200">
+          <div class="font-bold text-slate-800">${esc(r.fio || '—')}</div>
+          <div class="text-xs text-slate-500 mt-0.5">
+            ${esc(r.muassasa || '—')} dan · ${esc(Utils.formatDateTime(r.qabul_vaqt))}
+            · <b>${kun} kundan beri</b>
+          </div>
+        </div>
+        <label class="form-label">Nima uchun kelmadi?</label>
+        <select id="qb-kelmadi-sabab" class="form-select w-full">
+          <option value="boshqa_joyga">Boshqa muassasaga ketgan</option>
+          <option value="rad_etdi">Bemor yoki qarindoshlari rad etgan</option>
+          <option value="nomalum">Sababi noma'lum</option>
+        </select>
+        <p class="text-xs text-slate-500 mt-3">
+          Yozuv ro'yxatdan olib tashlanadi. Bemor ma'lumotlari va yuboruvchi
+          muassasadagi kartasi o'z holicha qoladi — faqat shu eslatma yopiladi.
+        </p>`,
+      footer: `
+        <button class="btn btn-secondary" onclick="closeModal()">Bekor</button>
+        <button class="btn btn-primary" onclick="QabulPage.kelmadiTasdiq(${i})">
+          ${icon('check', 14)} Tasdiqlash
+        </button>`
+    });
+    initIcons();
+  },
+
+  async kelmadiTasdiq(i) {
+    const r = QabulPage._rows[i];
+    if (!r) return;
+    const sabab = document.getElementById('qb-kelmadi-sabab')?.value || 'nomalum';
+    closeModal();
+    try {
+      await DB.qabulTasdiqla({
+        manba_kt_no: r.kt_no,
+        registr_turi: r._turi,
+        qabul_muassasa: r.otkazilgan_muassasa,
+        sabab: 'kelmadi:' + sabab
       });
       QabulPage._rows = QabulPage._rows.filter(x => x !== r);
       QabulPage._draw();
