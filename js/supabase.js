@@ -312,26 +312,55 @@ const DB = {
   // shifokor qaysi biriga yuborilganini kartochkada ko'radi.
   // hammasi=true — super_admin/rahbar uchun: respublika bo'yicha barcha
   // kutilayotgan bemorlar (ularda ish joyi bo'lmaydi, kuzatuv uchun ko'radi).
-  async kutilayotganBemorlar(muassasa, viloyat, kunlar = 14, hammasi = false) {
+  async kutilayotganBemorlar(muassasa, viloyat, kunlar = 30, hammasi = false) {
     const manzillar = hammasi ? null : (muassasa
       ? [muassasa]
       : (viloyat ? (APP_CONFIG.MUASSASALAR[viloyat] || []) : []));
     if (!hammasi && !manzillar.length) return [];
     const sb = getSupabase();
     const chegara = new Date(Date.now() - kunlar * 864e5).toISOString();
+
+    // Muassasa nomini solishtirish kaliti. Kirill/lotin, apostrof variantlari,
+    // katta-kichik harf, tinish belgisi va bo'sh joy farqini yo'qotadi:
+    // "Ulug'nor TTB" == "Ulugnor TTB" == "УЛУҒНОР ТТБ".
+    // Nomlar qo'lda ham yozilishi mumkin ("Boshqa (ro'yxatda yo'q)"), shuning
+    // uchun bazadagi aniq mos kelishga tayanib bo'lmaydi.
+    const nomKalit = (s) => Utils.cyrToLat(String(s || '')).toLowerCase().replace(/[^a-z0-9]/g, '');
+    const manzilSet = manzillar ? new Set(manzillar.map(nomKalit).filter(Boolean)) : null;
+    // Viloyat rejimi — profilda muassasa ko'rsatilmagan admin/shifokor
+    const viloyatRejim = !hammasi && !muassasa && !!viloyat;
+    // Respublikadagi barcha tanish muassasalar: nomi ro'yxatda umuman yo'q
+    // manzil (qo'lda yozilgan) viloyat adminidan yashirinib qolmasligi uchun
+    const tanishMuassasalar = new Set(
+      Object.values(APP_CONFIG.MUASSASALAR || {}).flat().map(nomKalit)
+    );
+    const manzilMos = (nom) => {
+      if (!manzilSet) return true;                 // super_admin — respublika bo'yicha
+      const k = nomKalit(nom);
+      if (!k) return false;
+      if (manzilSet.has(k)) return true;
+      // Ro'yxatda umuman yo'q nom — viloyat adminiga ko'rsatamiz, aks holda
+      // bemor hech kimning ro'yxatiga tushmay yo'qoladi (RLS baribir viloyat bilan cheklaydi)
+      return viloyatRejim && !tanishMuassasalar.has(k);
+    };
+
     const cols = 'kt_no,fio,tugilgan_sana,tugilgan_yil,jins,vazn,boy,fuqarolik,' +
                  'yashash_viloyat,yashash_tuman,chet_el_davlati,viloyat,muassasa,' +
                  'qabul_vaqt,muolaja_turi,otkazilgan_muassasa,status';
+    // Manzil bo'yicha saralash serverda emas, shu yerda — nomlar aynan mos
+    // kelmasligi mumkin. RLS yozuvlarni viloyat bilan cheklab turadi.
     const olish = async (t, turi) => {
-      let q = sb.from(t)
+      const { data } = await sb.from(t)
         .select(cols + (turi === 'infarkt' ? ',infarkt_turi,otkazish_sababi' : ',insult_turi'))
         .eq('status', 'otkazildi')
         .gte('qabul_vaqt', chegara)
         .not('otkazilgan_muassasa', 'is', null)
-        .neq('otkazilgan_muassasa', '');
-      if (manzillar) q = q.in('otkazilgan_muassasa', manzillar);
-      const { data } = await q.order('qabul_vaqt', { ascending: false }).limit(500);
-      return (data || []).map(r => ({ ...r, _turi: turi }));
+        .neq('otkazilgan_muassasa', '')
+        .order('qabul_vaqt', { ascending: false })
+        .limit(1500);
+      return (data || [])
+        .filter(r => manzilMos(r.otkazilgan_muassasa))
+        .map(r => ({ ...r, _turi: turi }));
     };
     const [inf, ins] = await Promise.all([
       olish('infarkt_qabul', 'infarkt'),
@@ -354,10 +383,15 @@ const DB = {
       const f = (Utils.normalizeFio(fio || '') || '').toLowerCase().replace(/\s+/g, ' ').trim();
       return `${f}|${String(yil || '').slice(0, 4)}`;
     };
+    // So'rovni faqat shu ro'yxatdagi bemorlar bilan cheklaymiz — kutilayotganlar
+    // soni odatda o'nlab, shuning uchun bu qidiruv arzon
+    const fioList = [...new Set(rows.map(r => r.fio).filter(Boolean))];
     const qabulYozuvlari = async (t) => {
-      let q = sb.from(t).select('fio,tugilgan_yil,muassasa,qabul_vaqt').gte('qabul_vaqt', chegara);
-      if (manzillar) q = q.in('muassasa', manzillar);
-      const { data } = await q.limit(5000);
+      const { data } = await sb.from(t)
+        .select('fio,tugilgan_yil,muassasa,qabul_vaqt')
+        .gte('qabul_vaqt', chegara)
+        .in('fio', fioList)
+        .limit(2000);
       return data || [];
     };
     const [qInf, qIns] = await Promise.all([
@@ -368,14 +402,14 @@ const DB = {
     const qabulMap = new Map();
     [...qInf, ...qIns].forEach(r => {
       if (!r.muassasa || !r.qabul_vaqt) return;
-      const k = `${shaxsKalit(r.fio, r.tugilgan_yil)}|${r.muassasa}`;
+      const k = `${shaxsKalit(r.fio, r.tugilgan_yil)}|${nomKalit(r.muassasa)}`;
       const ms = new Date(r.qabul_vaqt).getTime();
       if (!qabulMap.has(k) || ms > qabulMap.get(k)) qabulMap.set(k, ms);
     });
 
     return rows
       .filter(r => {
-        const k = `${shaxsKalit(r.fio, r.tugilgan_yil)}|${r.otkazilgan_muassasa || ''}`;
+        const k = `${shaxsKalit(r.fio, r.tugilgan_yil)}|${nomKalit(r.otkazilgan_muassasa)}`;
         const qabulMs = qabulMap.get(k);
         // Yuborilgandan keyin ochilgan karta bor — demak bemor yetib borib qabul qilingan
         return !(qabulMs && qabulMs >= new Date(r.qabul_vaqt).getTime());

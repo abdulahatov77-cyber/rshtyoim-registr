@@ -44,7 +44,7 @@ const QabulPage = {
       return;
     }
     try {
-      QabulPage._rows = await DB.kutilayotganBemorlar(muassasa, viloyat, 14, kuzatuvchi);
+      QabulPage._rows = await DB.kutilayotganBemorlar(muassasa, viloyat, 30, kuzatuvchi);
       QabulPage._draw();
     } catch (e) {
       QabulPage._xabar('error', 'Ma\'lumot yuklanmadi', e.message);
