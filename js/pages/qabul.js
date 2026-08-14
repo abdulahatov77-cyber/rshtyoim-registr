@@ -27,6 +27,28 @@ const QabulPage = {
     document.getElementById('app').innerHTML = Components.renderLayout(
       'qabul', '🚑 Qabul kutilmoqda', 'Boshqa muassasadan yuborilgan bemorlar',
       `<div id="qb-inner" class="animate-fadein">
+        <div id="qb-filter" class="card mb-4" style="display:none">
+          <div class="flex flex-wrap items-end gap-3">
+            <div class="relative flex-1" style="min-width:240px">
+              <label class="form-label !mb-1">Qidirish</label>
+              <input id="qb-q" class="form-input pl-9 w-full" autocomplete="off"
+                     placeholder="F.I.O yoki K/T raqami..."/>
+              <span class="absolute left-3 text-gray-400" style="top:34px">${icon('search', 16)}</span>
+            </div>
+            <div style="min-width:200px">
+              <label class="form-label !mb-1">Qabul qiluvchi viloyat</label>
+              <select id="qb-viloyat" class="form-select w-full"></select>
+            </div>
+            <div style="min-width:240px">
+              <label class="form-label !mb-1">Qabul qiluvchi muassasa</label>
+              <select id="qb-muassasa" class="form-select w-full"></select>
+            </div>
+            <button id="qb-tozala" class="btn btn-secondary flex items-center gap-2">
+              ${icon('x', 15)} Tozalash
+            </button>
+          </div>
+          <div id="qb-filter-info" class="text-xs text-slate-500 mt-2"></div>
+        </div>
         <div id="qb-list">
           <div class="flex justify-center py-20">
             <div class="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
@@ -45,10 +67,92 @@ const QabulPage = {
     }
     try {
       QabulPage._rows = await DB.kutilayotganBemorlar(muassasa, viloyat, 30, kuzatuvchi);
+      QabulPage._f = { q: '', viloyat: '', muassasa: '' };
+      QabulPage._filtrniQur();
       QabulPage._draw();
     } catch (e) {
       QabulPage._xabar('error', 'Ma\'lumot yuklanmadi', e.message);
     }
+  },
+
+  // Manzil muassasasi qaysi viloyatda — APP_CONFIG dagi ro'yxatdan aniqlanadi
+  _manzilViloyat(nom) {
+    if (!QabulPage._vilMap) {
+      const kalit = (s) => String(s || '').toLowerCase().replace(/[^a-z0-9Ѐ-ӿ]/gi, '');
+      QabulPage._vilMap = new Map();
+      Object.keys(APP_CONFIG.MUASSASALAR || {}).forEach(v => {
+        (APP_CONFIG.MUASSASALAR[v] || []).forEach(m => QabulPage._vilMap.set(kalit(m), v));
+      });
+      QabulPage._vilKalit = kalit;
+    }
+    return QabulPage._vilMap.get(QabulPage._vilKalit(nom)) || '';
+  },
+
+  // Filtr paneli — faqat bir marta quriladi, keyin ro'yxatning o'zi yangilanadi
+  _filtrniQur() {
+    const panel = document.getElementById('qb-filter');
+    if (!panel) return;
+    // Bitta muassasaga biriktirilgan shifokorga filtr kerak emas
+    const manzillar = [...new Set(QabulPage._rows.map(r => r.otkazilgan_muassasa).filter(Boolean))];
+    if (manzillar.length < 2 && QabulPage._rows.length < 15) return;
+    panel.style.display = '';
+
+    const vilSel = document.getElementById('qb-viloyat');
+    const viloyatlar = [...new Set(QabulPage._rows
+      .map(r => QabulPage._manzilViloyat(r.otkazilgan_muassasa)).filter(Boolean))].sort();
+    vilSel.innerHTML = `<option value="">— Barcha viloyatlar —</option>` +
+      viloyatlar.map(v => `<option value="${esc(v)}">${esc(v)}</option>`).join('');
+
+    const yangila = () => {
+      QabulPage._f = {
+        q: document.getElementById('qb-q')?.value || '',
+        viloyat: vilSel.value || '',
+        muassasa: document.getElementById('qb-muassasa')?.value || ''
+      };
+      QabulPage._draw();
+    };
+    const muassasaniQur = () => {
+      const sel = document.getElementById('qb-muassasa');
+      const tanlangan = sel.value;
+      const vil = vilSel.value;
+      const son = {};
+      QabulPage._rows.forEach(r => {
+        const m = r.otkazilgan_muassasa;
+        if (!m) return;
+        if (vil && QabulPage._manzilViloyat(m) !== vil) return;
+        son[m] = (son[m] || 0) + 1;
+      });
+      const nomlar = Object.keys(son).sort();
+      sel.innerHTML = `<option value="">— Barcha muassasalar —</option>` +
+        nomlar.map(m => `<option value="${esc(m)}">${esc(m)} (${son[m]})</option>`).join('');
+      sel.value = nomlar.includes(tanlangan) ? tanlangan : '';
+    };
+    muassasaniQur();
+
+    document.getElementById('qb-q').oninput = Utils.debounce(yangila, 250);
+    vilSel.onchange = () => { muassasaniQur(); yangila(); };
+    document.getElementById('qb-muassasa').onchange = yangila;
+    document.getElementById('qb-tozala').onclick = () => {
+      document.getElementById('qb-q').value = '';
+      vilSel.value = '';
+      muassasaniQur();
+      yangila();
+    };
+    initIcons();
+  },
+
+  _filtrla(rows) {
+    const f = QabulPage._f || {};
+    const q = (f.q || '').toLowerCase().trim();
+    return rows.filter(r => {
+      if (f.viloyat && QabulPage._manzilViloyat(r.otkazilgan_muassasa) !== f.viloyat) return false;
+      if (f.muassasa && r.otkazilgan_muassasa !== f.muassasa) return false;
+      if (q) {
+        const matn = `${r.fio || ''} ${r.kt_no || ''} ${r.muassasa || ''} ${r.otkazilgan_muassasa || ''}`;
+        if (!matn.toLowerCase().includes(q)) return false;
+      }
+      return true;
+    });
   },
 
   _xabar(turi, sarlavha, matn) {
@@ -67,15 +171,27 @@ const QabulPage = {
   _draw() {
     const el = document.getElementById('qb-list');
     if (!el) return;
-    const rows = QabulPage._rows;
-    if (!rows.length) {
+    // Kartochkalar indeksi qabulQil(i) uchun kerak — to'liq ro'yxat bo'yicha,
+    // filtrdan qat'i nazar
+    QabulPage._rows.forEach((r, i) => { r._i = i; });
+    const jami = QabulPage._rows.length;
+    const rows = QabulPage._filtrla(QabulPage._rows);
+
+    const info = document.getElementById('qb-filter-info');
+    if (info) info.innerHTML = rows.length === jami
+      ? `Jami <b>${jami}</b> ta yozuv`
+      : `<b>${rows.length}</b> ta ko'rsatilmoqda · jami ${jami} ta`;
+
+    if (!jami) {
       QabulPage._xabar('info', 'Kutilayotgan bemor yo\'q',
         'Sizning muassasangizga yuborilgan, hali qabul qilinmagan bemor topilmadi.');
       return;
     }
-
-    // Kartochkalar indeksi qabulQil(i) uchun kerak — ajratishdan oldin belgilaymiz
-    rows.forEach((r, i) => { r._i = i; });
+    if (!rows.length) {
+      QabulPage._xabar('info', 'Topilmadi',
+        'Qidiruv yoki filtr shartiga mos bemor yo\'q. "Tozalash" ni bosing.');
+      return;
+    }
     // Registrni yuritmaydigan muassasaga yuborilganlar alohida bo'limga
     const asosiy  = rows.filter(r => !r._kuzatuv);
     const kuzatuv = rows.filter(r =>  r._kuzatuv);
