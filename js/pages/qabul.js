@@ -178,11 +178,34 @@ const QabulPage = {
               </div>
             </div>
             ${QabulPage._kuzatuvchi ? '' : `
-            <button class="btn btn-primary !py-2 !px-3 flex items-center gap-1 shrink-0"
-                    onclick="QabulPage.qabulQil(${i})">
-              ${icon('log-in', 14)} Qabul qilish
-            </button>`}
+            <div class="shrink-0 flex flex-col items-end gap-1.5">
+              <button class="btn btn-primary !py-2 !px-3 flex items-center gap-1"
+                      onclick="QabulPage.qabulQil(${i})">
+                ${icon('log-in', 14)} Qabul qilish
+              </button>
+              ${r._mavjud ? `
+              <button onclick="QabulPage.mavjudKarta(${i})"
+                      title="Muassasangizda shu bemorga o'xshash karta topildi — ochib tekshiring"
+                      style="border:1px solid #86efac;background:#f0fdf4;color:#15803d;border-radius:8px;
+                             padding:5px 9px;font-size:11px;font-weight:700;cursor:pointer;
+                             display:flex;align-items:center;gap:5px;white-space:nowrap">
+                ${icon('user-check', 13)} Bu bemor muassasada mavjud
+              </button>` : ''}
+            </div>`}
           </div>
+          ${r._mavjud ? `
+          <div class="mb-3 p-2.5 rounded-lg" style="background:#f0fdf4;border:1px solid #bbf7d0">
+            <div class="text-[11px] text-green-800">
+              Muassasangizda o'xshash karta bor:
+              <b>${esc(PD.fio(r._mavjud.fio) || '—')}</b> ·
+              <span class="font-mono">${esc(r._mavjud.kt_no || '—')}</span> ·
+              ${esc(Utils.formatDateTime(r._mavjud.vaqt))}
+            </div>
+            <div class="text-[11px] text-green-700 mt-1">
+              Agar shu bemor bo'lsa — qayta kiritmang, kartani oching.
+              Boshqa bemor bo'lsa — "Qabul qilish" ni bosaverning.
+            </div>
+          </div>` : ''}
 
           <div class="border-t border-dashed border-gray-200 pt-3 grid grid-cols-1 sm:grid-cols-2 gap-y-1 text-xs">
             <div class="sm:col-span-2 mb-1 p-2 rounded-lg bg-blue-50 border border-blue-100">
@@ -204,6 +227,13 @@ const QabulPage = {
           </div>
         </div>
       </div>`;
+  },
+
+  // Muassasadagi o'xshash bemorning kartasini ochamiz
+  mavjudKarta(i) {
+    const r = QabulPage._rows[i];
+    if (!r?._mavjud?.kt_no) return;
+    Router.go('bemor-karta', { kt_no: r._mavjud.kt_no, type: r._mavjud.turi });
   },
 
   // Kelish vaqtini so'raymiz, keyin formani to'ldirilgan holda ochamiz

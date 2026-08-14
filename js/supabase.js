@@ -420,16 +420,19 @@ const DB = {
       return qator[b.length];
     };
 
-    const qabulYozuvlari = async (t) => {
+    const familiya = (fio) => Utils.cyrToLat(String(fio || ''))
+      .toLowerCase().split(/[^a-z0-9]+/).filter(Boolean)[0] || '';
+
+    const qabulYozuvlari = async (t, turi) => {
       const { data } = await sb.from(t)
-        .select('fio,tugilgan_yil,tugilgan_sana,muassasa,qabul_vaqt')
+        .select('kt_no,fio,tugilgan_yil,tugilgan_sana,muassasa,qabul_vaqt')
         .gte('qabul_vaqt', chegara)
         .limit(5000);
-      return data || [];
+      return (data || []).map(r => ({ ...r, _turi: turi }));
     };
     const [qInf, qIns] = await Promise.all([
-      qabulYozuvlari('infarkt_qabul'),
-      qabulYozuvlari('insult_qabul')
+      qabulYozuvlari('infarkt_qabul', 'infarkt'),
+      qabulYozuvlari('insult_qabul', 'insult')
     ]);
     // Guruh kaliti: tug'ilgan yil + qabul qilgan muassasa. Guruh ichida
     // F.I.O taxminiy solishtiriladi (guruhlar kichik — bir necha yozuv).
@@ -440,7 +443,11 @@ const DB = {
       if (!yil) return;
       const k = `${yil}|${nomKalit(r.muassasa)}`;
       const guruh = qabulMap.get(k) || [];
-      guruh.push({ f: fioKalit(r.fio), ms: new Date(r.qabul_vaqt).getTime() });
+      guruh.push({
+        f: fioKalit(r.fio), fam: familiya(r.fio),
+        ms: new Date(r.qabul_vaqt).getTime(),
+        kt_no: r.kt_no, fio: r.fio, turi: r._turi, vaqt: r.qabul_vaqt
+      });
       qabulMap.set(k, guruh);
     });
 
@@ -457,20 +464,42 @@ const DB = {
       }
     } catch (e) { /* RPC yoki ustun hali yangilanmagan — hammasi asosiy ro'yxatda qoladi */ }
 
+    // Har bir yozuv uchun qabul qiluvchi muassasada o'xshash karta bor-yo'qligini
+    // qidiramiz. Ikki daraja:
+    //   aniq   (farq <= 2) — bemor qabul qilingan, ro'yxatdan olib tashlanadi
+    //   ehtimol            — o'xshash, lekin ishonch yetarli emas. Yozuv
+    //                        ro'yxatda qoladi, kartochkada ogohlantirish chiqadi
+    //                        va shifokor o'zi hal qiladi.
+    const oxshashKarta = (r) => {
+      const yil = yilKalit(r.tugilgan_yil, r.tugilgan_sana);
+      const f = fioKalit(r.fio);
+      if (!yil || !f) return null;
+      const guruh = qabulMap.get(`${yil}|${nomKalit(r.otkazilgan_muassasa)}`);
+      if (!guruh) return null;
+      // Vaqt kiritishdagi kichik xatolikka 12 soat yon beramiz
+      const chek = new Date(r.qabul_vaqt).getTime() - 12 * 3600000;
+      const fam = familiya(r.fio);
+      let eng = null;
+      for (const c of guruh) {
+        if (c.ms < chek) continue;
+        const d = farq(f, c.f, 6);
+        const mos = d <= 6 || (fam && c.fam === fam);
+        if (!mos) continue;
+        if (!eng || d < eng.d) eng = { d, c };
+      }
+      if (!eng) return null;
+      return {
+        aniq: eng.d <= 2,
+        kt_no: eng.c.kt_no, fio: eng.c.fio, turi: eng.c.turi, vaqt: eng.c.vaqt
+      };
+    };
+
     return rows
-      .filter(r => {
-        const yil = yilKalit(r.tugilgan_yil, r.tugilgan_sana);
-        const f = fioKalit(r.fio);
-        if (!yil || !f) return true;
-        const guruh = qabulMap.get(`${yil}|${nomKalit(r.otkazilgan_muassasa)}`);
-        if (!guruh) return true;
-        // Yuborilgandan keyin ochilgan karta bor — demak bemor yetib borib
-        // qabul qilingan. Vaqt kiritishdagi kichik xatolikka 12 soat yon beramiz.
-        const chek = new Date(r.qabul_vaqt).getTime() - 12 * 3600000;
-        return !guruh.some(c => c.ms >= chek && farq(f, c.f) <= 2);
-      })
+      .map(r => ({ ...r, _oxshash: oxshashKarta(r) }))
+      .filter(r => !(r._oxshash && r._oxshash.aniq))
       .map(r => ({
         ...r,
+        _mavjud: r._oxshash || null,
         _kuzatuv: manzilHolat ? manzilHolat.get(nomKalit(r.otkazilgan_muassasa)) !== true : false
       }))
       .sort((a, b) => new Date(b.qabul_vaqt) - new Date(a.qabul_vaqt));
