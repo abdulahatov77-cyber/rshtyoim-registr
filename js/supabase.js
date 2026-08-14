@@ -305,8 +305,8 @@ const DB = {
 
   // ===== QABUL KUTILMOQDA =====
   // Boshqa muassasadan shu muassasaga yuborilgan, lekin hali qabul qilinmagan
-  // bemorlar. "Qabul qilingan" belgisi — transfer_log da shu muassasaga
-  // yozuv bor yoki shu muassasada bemorning yangi kartasi ochilgan.
+  // bemorlar. "Qabul qilingan" belgisi — shu muassasada bemorning yangi
+  // kartasi ochilgani (transfer_log emas — pastdagi izohga qarang).
   // muassasa berilsa — aniq manzil bo'yicha. Bo'sh bo'lsa (profilda muassasa
   // to'ldirilmagan) viloyatdagi barcha muassasalar bo'yicha ko'rsatamiz —
   // shifokor qaysi biriga yuborilganini kartochkada ko'radi.
