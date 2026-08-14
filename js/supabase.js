@@ -340,18 +340,46 @@ const DB = {
     const rows = [...inf, ...ins];
     if (!rows.length) return [];
 
-    // Allaqachon qabul qilinganlarni chiqarib tashlaymiz
-    const ktList = rows.map(r => r.kt_no);
-    const manzilSet = manzillar ? new Set(manzillar) : null;
-    const { data: logs } = await sb.from('transfer_log')
-      .select('kt_no,muassasa_ga').in('kt_no', ktList);
-    const qabulQilingan = new Set(
-      (logs || [])
-        .filter(l => !manzilSet || manzilSet.has(l.muassasa_ga || ''))
-        .map(l => l.kt_no)
-    );
+    // Allaqachon qabul qilinganlarni chiqarib tashlaymiz.
+    //
+    // DIQQAT: bu yerda transfer_log ishlatilmaydi. Unga yozuvni YUBORUVCHI tomon
+    // o'tkazish paytining o'zida yozadi (infarkt-yangi.js va bemor-karta.js),
+    // ya'ni transfer_log "yuborildi" degani — "qabul qilindi" degani emas.
+    // Oldin shu jurnal bo'yicha filtrlangani uchun yuborilgan bemor darhol
+    // ro'yxatdan tushib qolar va qabul qiluvchi muassasa uni umuman ko'rmasdi.
+    //
+    // Haqiqiy qabul belgisi — qabul qiluvchi muassasada shu bemorga yangi karta
+    // ochilgani (qabul qiluvchi yangi kt_no bilan alohida yozuv yaratadi).
+    const shaxsKalit = (fio, yil) => {
+      const f = (Utils.normalizeFio(fio || '') || '').toLowerCase().replace(/\s+/g, ' ').trim();
+      return `${f}|${String(yil || '').slice(0, 4)}`;
+    };
+    const qabulYozuvlari = async (t) => {
+      let q = sb.from(t).select('fio,tugilgan_yil,muassasa,qabul_vaqt').gte('qabul_vaqt', chegara);
+      if (manzillar) q = q.in('muassasa', manzillar);
+      const { data } = await q.limit(5000);
+      return data || [];
+    };
+    const [qInf, qIns] = await Promise.all([
+      qabulYozuvlari('infarkt_qabul'),
+      qabulYozuvlari('insult_qabul')
+    ]);
+    // kalit: shaxs + qabul qilgan muassasa -> eng kech qabul vaqti
+    const qabulMap = new Map();
+    [...qInf, ...qIns].forEach(r => {
+      if (!r.muassasa || !r.qabul_vaqt) return;
+      const k = `${shaxsKalit(r.fio, r.tugilgan_yil)}|${r.muassasa}`;
+      const ms = new Date(r.qabul_vaqt).getTime();
+      if (!qabulMap.has(k) || ms > qabulMap.get(k)) qabulMap.set(k, ms);
+    });
+
     return rows
-      .filter(r => !qabulQilingan.has(r.kt_no))
+      .filter(r => {
+        const k = `${shaxsKalit(r.fio, r.tugilgan_yil)}|${r.otkazilgan_muassasa || ''}`;
+        const qabulMs = qabulMap.get(k);
+        // Yuborilgandan keyin ochilgan karta bor — demak bemor yetib borib qabul qilingan
+        return !(qabulMs && qabulMs >= new Date(r.qabul_vaqt).getTime());
+      })
       .sort((a, b) => new Date(b.qabul_vaqt) - new Date(a.qabul_vaqt));
   },
 
