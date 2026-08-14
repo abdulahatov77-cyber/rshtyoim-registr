@@ -172,7 +172,7 @@ const QabulPage = {
                 </span>
                 <span class="text-xs text-gray-400 font-mono">${esc(r.kt_no)}</span>
               </div>
-              <div class="text-base font-bold text-gray-900 truncate">${esc(PD.fio(r.fio) || '—')}</div>
+              <div class="text-base font-bold text-gray-900 truncate">${esc(r.fio || "—")}</div>
               <div class="text-xs text-gray-500">
                 ${esc(yosh || '—')} yosh · ${esc(r.jins || '—')}
               </div>
@@ -201,7 +201,7 @@ const QabulPage = {
                       border:1px solid ${r._mavjud.aniq ? '#bbf7d0' : '#fde68a'}">
             <div class="text-[11px] ${r._mavjud.aniq ? 'text-green-800' : 'text-amber-800'}">
               Muassasangizda o'xshash karta bor:
-              <b>${esc(PD.fio(r._mavjud.fio) || '—')}</b> ·
+              <b>${esc(r._mavjud.fio || '—')}</b> ·
               <span class="font-mono">${esc(r._mavjud.kt_no || '—')}</span> ·
               ${esc(Utils.formatDateTime(r._mavjud.vaqt))}
             </div>
@@ -252,8 +252,8 @@ const QabulPage = {
             </tr>
           </thead>
           <tbody>
-            ${qator('F.I.O', esc(PD.fio(r.fio) || '—'), esc(PD.fio(m.fio) || '—'))}
-            ${qator("Tug'ilgan", esc(r.tugilgan_sana || r.tugilgan_yil || '—'), '—')}
+            ${qator('F.I.O', esc(r.fio || "—"), esc(m.fio || '—'))}
+            ${qator("Tug'ilgan", esc(r.tugilgan_sana || r.tugilgan_yil || '—'), esc(m.tug || '—'))}
             ${qator('K/T', `<span style="font-family:monospace">${esc(r.kt_no)}</span>`,
                             `<span style="font-family:monospace">${esc(m.kt_no || '—')}</span>`)}
             ${qator('Vaqti', esc(Utils.formatDateTime(r.qabul_vaqt)), esc(Utils.formatDateTime(m.vaqt)))}

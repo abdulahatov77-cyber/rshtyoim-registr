@@ -446,7 +446,8 @@ const DB = {
       guruh.push({
         f: fioKalit(r.fio), fam: familiya(r.fio),
         ms: new Date(r.qabul_vaqt).getTime(),
-        kt_no: r.kt_no, fio: r.fio, turi: r._turi, vaqt: r.qabul_vaqt
+        kt_no: r.kt_no, fio: r.fio, turi: r._turi, vaqt: r.qabul_vaqt,
+        tug: r.tugilgan_sana || r.tugilgan_yil || ''
       });
       qabulMap.set(k, guruh);
     });
@@ -490,7 +491,8 @@ const DB = {
       if (!eng) return null;
       return {
         aniq: eng.d <= 2,
-        kt_no: eng.c.kt_no, fio: eng.c.fio, turi: eng.c.turi, vaqt: eng.c.vaqt
+        kt_no: eng.c.kt_no, fio: eng.c.fio, turi: eng.c.turi,
+        vaqt: eng.c.vaqt, tug: eng.c.tug
       };
     };
 
