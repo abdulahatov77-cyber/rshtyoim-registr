@@ -1381,6 +1381,15 @@ const InfarktYangiPage = {
       const marshrutManba = _qabulQilindi || InfarktYangiPage._manba;
       if (marshrutManba) {
         await DB.marshrutQabulYoz(marshrutManba, payload.muassasa, payload.qabul_vaqt);
+        // "Qabul kutilmoqda" ro'yxatidan shu yozuvni yopamiz — ro'yxat faqat
+        // shifokorning aniq amali bilan tozalanadi
+        await DB.qabulTasdiqla({
+          manba_kt_no: marshrutManba.kt_no,
+          registr_turi: 'infarkt',
+          qabul_muassasa: payload.muassasa,
+          yangi_kt_no: payload.kt_no,
+          sabab: 'qabul_qilindi'
+        }).catch(() => {});
       }
       // Telegram xabar endi server tomondan yuboriladi (infarkt_qabul INSERT trigger —
       // telegram_server_notify.sql). Brauzerdan yuborsak dublikat bo'ladi.

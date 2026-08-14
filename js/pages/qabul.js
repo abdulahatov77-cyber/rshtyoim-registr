@@ -184,9 +184,11 @@ const QabulPage = {
                 ${icon('log-in', 14)} Qabul qilish
               </button>
               ${r._mavjud ? `
-              <button onclick="QabulPage.mavjudKarta(${i})"
-                      title="Muassasangizda shu bemorga o'xshash karta topildi — ochib tekshiring"
-                      style="border:1px solid #86efac;background:#f0fdf4;color:#15803d;border-radius:8px;
+              <button onclick="QabulPage.mavjudModal(${i})"
+                      title="Muassasangizda shu bemorga o'xshash karta topildi — tekshiring"
+                      style="border:1px solid ${r._mavjud.aniq ? '#86efac' : '#fcd34d'};
+                             background:${r._mavjud.aniq ? '#f0fdf4' : '#fffbeb'};
+                             color:${r._mavjud.aniq ? '#15803d' : '#b45309'};border-radius:8px;
                              padding:5px 9px;font-size:11px;font-weight:700;cursor:pointer;
                              display:flex;align-items:center;gap:5px;white-space:nowrap">
                 ${icon('user-check', 13)} Bu bemor muassasada mavjud
@@ -194,16 +196,14 @@ const QabulPage = {
             </div>`}
           </div>
           ${r._mavjud ? `
-          <div class="mb-3 p-2.5 rounded-lg" style="background:#f0fdf4;border:1px solid #bbf7d0">
-            <div class="text-[11px] text-green-800">
+          <div class="mb-3 p-2.5 rounded-lg"
+               style="background:${r._mavjud.aniq ? '#f0fdf4' : '#fffbeb'};
+                      border:1px solid ${r._mavjud.aniq ? '#bbf7d0' : '#fde68a'}">
+            <div class="text-[11px] ${r._mavjud.aniq ? 'text-green-800' : 'text-amber-800'}">
               Muassasangizda o'xshash karta bor:
               <b>${esc(PD.fio(r._mavjud.fio) || '—')}</b> ·
               <span class="font-mono">${esc(r._mavjud.kt_no || '—')}</span> ·
               ${esc(Utils.formatDateTime(r._mavjud.vaqt))}
-            </div>
-            <div class="text-[11px] text-green-700 mt-1">
-              Agar shu bemor bo'lsa — qayta kiritmang, kartani oching.
-              Boshqa bemor bo'lsa — "Qabul qilish" ni bosaverning.
             </div>
           </div>` : ''}
 
@@ -229,11 +229,79 @@ const QabulPage = {
       </div>`;
   },
 
-  // Muassasadagi o'xshash bemorning kartasini ochamiz
+  // Muassasadagi o'xshash karta — solishtirish va qaror qabul qilish
+  mavjudModal(i) {
+    const r = QabulPage._rows[i];
+    const m = r?._mavjud;
+    if (!m) return;
+    const qator = (nom, chap, ong) => `
+      <tr>
+        <td style="padding:6px 8px;color:#64748b;font-size:12px;white-space:nowrap">${nom}</td>
+        <td style="padding:6px 8px;font-size:13px;font-weight:600">${chap}</td>
+        <td style="padding:6px 8px;font-size:13px;font-weight:600">${ong}</td>
+      </tr>`;
+    showModal({
+      title: `${icon('user-check', 18)} Bu o'sha bemormi?`,
+      body: `
+        <table style="width:100%;border-collapse:collapse">
+          <thead>
+            <tr style="background:#f1f5f9">
+              <th></th>
+              <th style="padding:6px 8px;font-size:11px;color:#475569;text-align:left">Yuborilgan</th>
+              <th style="padding:6px 8px;font-size:11px;color:#475569;text-align:left">Muassasangizda</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${qator('F.I.O', esc(PD.fio(r.fio) || '—'), esc(PD.fio(m.fio) || '—'))}
+            ${qator("Tug'ilgan", esc(r.tugilgan_sana || r.tugilgan_yil || '—'), '—')}
+            ${qator('K/T', `<span style="font-family:monospace">${esc(r.kt_no)}</span>`,
+                            `<span style="font-family:monospace">${esc(m.kt_no || '—')}</span>`)}
+            ${qator('Vaqti', esc(Utils.formatDateTime(r.qabul_vaqt)), esc(Utils.formatDateTime(m.vaqt)))}
+          </tbody>
+        </table>
+        <p class="text-xs text-slate-500 mt-3">
+          Ishonchingiz komil bo'lmasa — avval kartani oching va solishtiring.
+          "Ha, shu bemor" bosilsa, yozuv ro'yxatdan olib tashlanadi.
+        </p>`,
+      footer: `
+        <button class="btn btn-secondary" onclick="closeModal()">Bekor</button>
+        <button class="btn btn-secondary" onclick="QabulPage.mavjudKarta(${i})">
+          ${icon('external-link', 14)} Kartani ochish
+        </button>
+        <button class="btn btn-primary" onclick="QabulPage.mavjudTasdiq(${i})">
+          ${icon('check', 14)} Ha, shu bemor
+        </button>`
+    });
+    initIcons();
+  },
+
   mavjudKarta(i) {
     const r = QabulPage._rows[i];
     if (!r?._mavjud?.kt_no) return;
+    closeModal();
     Router.go('bemor-karta', { kt_no: r._mavjud.kt_no, type: r._mavjud.turi });
+  },
+
+  // Shifokor tasdiqladi — yozuv ro'yxatdan chiqadi
+  async mavjudTasdiq(i) {
+    const r = QabulPage._rows[i];
+    if (!r) return;
+    closeModal();
+    try {
+      await DB.qabulTasdiqla({
+        manba_kt_no: r.kt_no,
+        registr_turi: r._turi,
+        qabul_muassasa: r.otkazilgan_muassasa,
+        yangi_kt_no: r._mavjud?.kt_no || null,
+        sabab: 'allaqachon_mavjud'
+      });
+      QabulPage._rows = QabulPage._rows.filter(x => x !== r);
+      QabulPage._draw();
+      showToast("✅ Ro'yxatdan olib tashlandi", 'success');
+    } catch (e) {
+      showToast('Xatolik: ' + (e.message || 'saqlanmadi') +
+        "\nqabul_tasdiq.sql ishga tushirilganini tekshiring", 'error', 7000);
+    }
   },
 
   // Kelish vaqtini so'raymiz, keyin formani to'ldirilgan holda ochamiz

@@ -465,11 +465,11 @@ const DB = {
     } catch (e) { /* RPC yoki ustun hali yangilanmagan — hammasi asosiy ro'yxatda qoladi */ }
 
     // Har bir yozuv uchun qabul qiluvchi muassasada o'xshash karta bor-yo'qligini
-    // qidiramiz. Ikki daraja:
-    //   aniq   (farq <= 2) — bemor qabul qilingan, ro'yxatdan olib tashlanadi
-    //   ehtimol            — o'xshash, lekin ishonch yetarli emas. Yozuv
-    //                        ro'yxatda qoladi, kartochkada ogohlantirish chiqadi
-    //                        va shifokor o'zi hal qiladi.
+    // qidiramiz. Bu FAQAT ogohlantirish uchun — yozuv o'z-o'zidan ro'yxatdan
+    // tushmaydi. Ro'yxatni shifokorning o'zi yopadi: "Qabul qilish" bosib yoki
+    // "Bu bemor muassasada mavjud" ni tasdiqlab (qabul_tasdiq jadvali).
+    //   aniq (farq <= 2) — deyarli shubhasiz o'sha bemor, kuchli belgi ko'rsatiladi
+    //   ehtimol          — familiya yoki yaqin imlo mos, shifokor tekshirsin
     const oxshashKarta = (r) => {
       const yil = yilKalit(r.tugilgan_yil, r.tugilgan_sana);
       const f = fioKalit(r.fio);
@@ -494,15 +494,38 @@ const DB = {
       };
     };
 
+    // Shifokor yopgan yozuvlar — faqat shular ro'yxatdan chiqadi
+    let yopilgan = new Set();
+    try {
+      const { data } = await sb.from('qabul_tasdiq')
+        .select('manba_kt_no,registr_turi')
+        .in('manba_kt_no', rows.map(r => r.kt_no).filter(Boolean));
+      (data || []).forEach(t => yopilgan.add(`${t.manba_kt_no}|${t.registr_turi}`));
+    } catch (e) { /* jadval hali yaratilmagan — qabul_tasdiq.sql ishga tushirilsin */ }
+
     return rows
-      .map(r => ({ ...r, _oxshash: oxshashKarta(r) }))
-      .filter(r => !(r._oxshash && r._oxshash.aniq))
+      .filter(r => !yopilgan.has(`${r.kt_no}|${r._turi}`))
       .map(r => ({
         ...r,
-        _mavjud: r._oxshash || null,
+        _mavjud: oxshashKarta(r),
         _kuzatuv: manzilHolat ? manzilHolat.get(nomKalit(r.otkazilgan_muassasa)) !== true : false
       }))
       .sort((a, b) => new Date(b.qabul_vaqt) - new Date(a.qabul_vaqt));
+  },
+
+  // "Qabul kutilmoqda" dagi yozuvni yopish. Faqat shifokorning amali bilan
+  // chaqiriladi: bemor qabul qilinganda yoki muassasada allaqachon borligi
+  // tasdiqlanganda.
+  async qabulTasdiqla({ manba_kt_no, registr_turi, qabul_muassasa, yangi_kt_no, sabab }) {
+    if (!manba_kt_no || !registr_turi) return;
+    const { error } = await getSupabase().from('qabul_tasdiq').insert({
+      manba_kt_no, registr_turi,
+      qabul_muassasa: qabul_muassasa || null,
+      yangi_kt_no: yangi_kt_no || null,
+      sabab: sabab || 'qabul_qilindi'
+    });
+    // Takror tasdiq (unique) — xato emas
+    if (error && !/duplicate|unique/i.test(error.message || '')) throw error;
   },
 
   // Bitta yuborilgan bemorni kt_no bo'yicha olish (formani to'ldirish uchun)
