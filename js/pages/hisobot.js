@@ -612,12 +612,17 @@ const HisobotPage = {
     // Ustun turlari: son | jami | vafot | foiz
     const KIND = [null, 'son', 'son', 'son', 'jami', 'vafot', 'foiz',
                         'son', 'son', 'son', 'jami', 'vafot', 'foiz'];
-    const HEAD2 = ['', 'STEMI', 'NSTEMI', 'AMI', 'Jami infarkt', 'Vafot', "O'lim %",
-                       'Ishemik', 'Gemorragik', 'TIA', 'Jami insult', 'Vafot', "O'lim %"];
+    // Sarlavhalar noyob bo'lishi shart: "Vafot"/"O'lim %" ikki marta takrorlansa
+    // Excel ikkinchi nusxani bo'sh katak sifatida chizadi (bir xil shared-string).
+    const HEAD2 = ['', 'STEMI', 'NSTEMI', 'AMI', 'Jami infarkt', 'Vafot (infarkt)', "O'lim % (infarkt)",
+                       'Ishemik', 'Gemorragik', 'TIA', 'Jami insult', 'Vafot (insult)', "O'lim % (insult)"];
     const NCOL = HEAD2.length;                       // 13 — A..M
     const R_TITLE = 1, R_DAVR = 2, R_QAMROV = 3, R_H1 = 5, R_H2 = 6, R_FIRST = 7;
     const R_LAST = R_FIRST + rows.length - 1;        // oxirgi ma'lumot qatori
-    const R_JAMI = R_LAST + 1;
+    // Bo'sh ajratuvchi qator: usiz Excel avtofiltr diapazonini JAMI qatorigacha
+    // cho'zadi va saralashda JAMI o'rtaga tushib qoladi
+    const R_SPACER = R_LAST + 1;
+    const R_JAMI = R_SPACER + 1;
     const col = n => String.fromCharCode(64 + n);    // 1 -> 'A'
 
     const wb = new window.ExcelJS.Workbook();
@@ -642,8 +647,10 @@ const HisobotPage = {
     let nameLen = cn.length;
     rows.forEach(r => { if (String(r.viloyat || '').length > nameLen) nameLen = String(r.viloyat).length; });
     ws.getColumn(1).width = Math.min(Math.max(nameLen + 3, 20), 44);
+    // Ikki qatorli sarlavha o'raladi, shuning uchun kenglik ustun turiga qarab
     for (let c = 2; c <= NCOL; c++) {
-      ws.getColumn(c).width = HEAD2[c - 1].length > 8 ? 13 : 10.5;
+      const k = KIND[c - 1];
+      ws.getColumn(c).width = k === 'jami' ? 12.5 : k === 'foiz' ? 12 : 11.5;
     }
 
     // ── Hisobot sarlavhasi ────────────────────────────────────────────────────
@@ -684,7 +691,7 @@ const HisobotPage = {
     grpStyle(R_H1, 2, R_H1, 7, 'INFARKT', C.infarktHdr);
     grpStyle(R_H1, 8, R_H1, 13, 'INSULT', C.insultHdr);
     ws.getRow(R_H1).height = 22;
-    ws.getRow(R_H2).height = 30;
+    ws.getRow(R_H2).height = 34;
 
     // ── 2-daraja sarlavha ─────────────────────────────────────────────────────
     for (let c = 2; c <= NCOL; c++) {
@@ -732,6 +739,8 @@ const HisobotPage = {
               color: { argb: kind === 'jami' ? C.matnKok : (kind === 'vafot' || kind === 'foiz') ? C.matnQizil : C.matnQora } };
       }
     });
+
+    ws.getRow(R_SPACER).height = 6;
 
     // ── JAMI qatori — barcha hududlar yig'indisi (Excel formulasi) ────────────
     const jamiVals = [null, t.stemi, t.nstemi, t.ami, t.jamiInfarkt, t.vafotInf, null,
