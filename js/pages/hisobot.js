@@ -526,44 +526,286 @@ const HisobotPage = {
     }
   },
 
-  exportViloyatReport() {
+  // ── Viloyatlar kesimi — rasmiy statistik hisobot ko'rinishidagi Excel ────────
+  // Ikki darajali sarlavha, muzlatilgan panel va A4 landscape chop sozlamalari
+  // SheetJS (xlsx-js-style) yozuvchisida yo'q — shuning uchun shu bitta eksport
+  // uchun ExcelJS talab bo'yicha (lazy) yuklanadi. Yuklanmasa — oddiy eksportga
+  // qaytadi, ya'ni tugma hech qachon ishlamay qolmaydi.
+  _EXCELJS_URLS: [
+    'https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js',
+    'https://unpkg.com/exceljs@4.4.0/dist/exceljs.min.js'
+  ],
+
+  _ensureExcelJS() {
+    if (window.ExcelJS) return Promise.resolve();
+    if (HisobotPage._excelJsPromise) return HisobotPage._excelJsPromise;
+    HisobotPage._excelJsPromise = new Promise((resolve, reject) => {
+      let i = 0;
+      const next = () => {
+        if (i >= HisobotPage._EXCELJS_URLS.length) {
+          HisobotPage._excelJsPromise = null;
+          reject(new Error('ExcelJS yuklanmadi'));
+          return;
+        }
+        const s = document.createElement('script');
+        s.src = HisobotPage._EXCELJS_URLS[i++];
+        s.async = true;
+        s.onload = () => window.ExcelJS ? resolve() : next();
+        s.onerror = () => next();
+        document.head.appendChild(s);
+      };
+      next();
+    });
+    return HisobotPage._excelJsPromise;
+  },
+
+  // 'YYYY-MM-DD' -> 'DD.MM.YYYY'
+  _dmy(iso) {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(iso || ''));
+    return m ? `${m[3]}.${m[2]}.${m[1]}` : String(iso || '');
+  },
+
+  async exportViloyatReport() {
     const d = HisobotPage._lastViloyatData;
     if (!d) { showToast('Avval hisobotni shakllantiring', 'warning'); return; }
+    const btn = document.getElementById('vh-export-btn');
+    if (btn) { btn.disabled = true; btn.style.opacity = '0.5'; }
+    try {
+      await HisobotPage._ensureExcelJS();
+      await HisobotPage._buildViloyatWorkbook(d);
+      showToast('✅ Excel fayl yuklab olindi', 'success');
+    } catch (err) {
+      console.warn('Formatlangan eksport ishlamadi, oddiy eksportga qaytildi:', err);
+      HisobotPage._exportViloyatPlain(d);
+      showToast('⚠️ Formatlangan shakl yuklanmadi — oddiy Excel eksport qilindi', 'warning');
+    } finally {
+      if (btn) { btn.disabled = false; btn.style.opacity = ''; }
+    }
+  },
+
+  async _buildViloyatWorkbook(d) {
+    const cn = d.colName || 'Viloyat';
+    const rows = d.rows || [];
+    const t = d.totals || {};
+
+    // ── Ranglar (ARGB) ────────────────────────────────────────────────────────
+    const C = {
+      viloyatHdr: 'FF1E293B',  // slate-800
+      infarktHdr: 'FF1E3A8A',  // blue-900
+      insultHdr:  'FF1D4ED8',  // blue-700
+      subHdr:     'FFDBEAFE',  // blue-100
+      subJami:    'FFBFDBFE',  // blue-200
+      subVafot:   'FFFEE2E2',  // red-100
+      subFoiz:    'FFFECACA',  // red-200
+      zebra:      'FFF8FAFC',  // slate-50
+      jamiCell:   'FFEFF6FF',  // blue-50
+      vafotCell:  'FFFEF2F2',  // red-50
+      jamiRow:    'FFDBEAFE',
+      grid:       'FFCBD5E1',  // slate-300
+      matnKok:    'FF1E3A8A',
+      matnQizil:  'FFB91C1C',
+      matnQora:   'FF334155'
+    };
+    const thin = { style: 'thin', color: { argb: C.grid } };
+    const allBorders = { top: thin, left: thin, bottom: thin, right: thin };
+
+    // Ustun turlari: son | jami | vafot | foiz
+    const KIND = [null, 'son', 'son', 'son', 'jami', 'vafot', 'foiz',
+                        'son', 'son', 'son', 'jami', 'vafot', 'foiz'];
+    const HEAD2 = ['', 'STEMI', 'NSTEMI', 'AMI', 'Jami infarkt', 'Vafot', "O'lim %",
+                       'Ishemik', 'Gemorragik', 'TIA', 'Jami insult', 'Vafot', "O'lim %"];
+    const NCOL = HEAD2.length;                       // 13 — A..M
+    const R_TITLE = 1, R_DAVR = 2, R_QAMROV = 3, R_H1 = 5, R_H2 = 6, R_FIRST = 7;
+    const R_LAST = R_FIRST + rows.length - 1;        // oxirgi ma'lumot qatori
+    const R_JAMI = R_LAST + 1;
+    const col = n => String.fromCharCode(64 + n);    // 1 -> 'A'
+
+    const wb = new window.ExcelJS.Workbook();
+    wb.creator = 'REGESY';
+    // Formulalar fayl ochilganda qayta hisoblansin (keshlangan qiymatga tayanmaslik uchun)
+    wb.calcProperties.fullCalcOnLoad = true;
+    const ws = wb.addWorksheet(cn === 'Muassasa' ? 'Muassasalar kesimi' : 'Hududiy hisobot', {
+      views: [{ state: 'frozen', xSplit: 1, ySplit: R_H2 }],
+      pageSetup: {
+        paperSize: 9,                 // A4
+        orientation: 'landscape',
+        fitToPage: true,
+        fitToWidth: 1,
+        fitToHeight: 0,
+        horizontalCentered: true,
+        printTitlesRow: `${R_H1}:${R_H2}`,
+        margins: { left: 0.4, right: 0.4, top: 0.5, bottom: 0.5, header: 0.3, footer: 0.3 }
+      }
+    });
+
+    // ── Ustun kengligi ────────────────────────────────────────────────────────
+    let nameLen = cn.length;
+    rows.forEach(r => { if (String(r.viloyat || '').length > nameLen) nameLen = String(r.viloyat).length; });
+    ws.getColumn(1).width = Math.min(Math.max(nameLen + 3, 20), 44);
+    for (let c = 2; c <= NCOL; c++) {
+      ws.getColumn(c).width = HEAD2[c - 1].length > 8 ? 13 : 10.5;
+    }
+
+    // ── Hisobot sarlavhasi ────────────────────────────────────────────────────
+    const kunlar = Math.round((new Date(d.to) - new Date(d.from)) / 864e5) + 1;
+    const davrSoz = (kunlar >= 6 && kunlar <= 8) ? 'HAFTALIK ' : '';
+    const kesimSoz = cn === 'Muassasa' ? 'MUASSASALAR KESIMIDA' : 'HUDUDIY';
+    ws.mergeCells(R_TITLE, 1, R_TITLE, NCOL);
+    ws.getCell(R_TITLE, 1).value = `INFARKT VA INSULT BO'YICHA ${davrSoz}${kesimSoz} HISOBOT`;
+    ws.getCell(R_TITLE, 1).font = { bold: true, size: 14, color: { argb: C.matnKok } };
+    ws.getCell(R_TITLE, 1).alignment = { horizontal: 'center', vertical: 'middle' };
+    ws.getRow(R_TITLE).height = 26;
+
+    ws.mergeCells(R_DAVR, 1, R_DAVR, NCOL);
+    ws.getCell(R_DAVR, 1).value = `Hisobot davri: ${HisobotPage._dmy(d.from)} – ${HisobotPage._dmy(d.to)}`;
+    ws.getCell(R_DAVR, 1).font = { bold: true, size: 11, color: { argb: C.matnQora } };
+    ws.getCell(R_DAVR, 1).alignment = { horizontal: 'center', vertical: 'middle' };
+    ws.getRow(R_DAVR).height = 18;
+
+    ws.mergeCells(R_QAMROV, 1, R_QAMROV, NCOL);
+    ws.getCell(R_QAMROV, 1).value = `Qamrov: ${d.scopeName || "Respublika bo'yicha barcha viloyatlar"}`;
+    ws.getCell(R_QAMROV, 1).font = { size: 10, italic: true, color: { argb: 'FF64748B' } };
+    ws.getCell(R_QAMROV, 1).alignment = { horizontal: 'center', vertical: 'middle' };
+
+    // ── 1-daraja sarlavha: VILOYAT | INFARKT | INSULT ─────────────────────────
+    const grpStyle = (r1, c1, r2, c2, text, bg) => {
+      for (let r = r1; r <= r2; r++) for (let c = c1; c <= c2; c++) {
+        const cell = ws.getCell(r, c);
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: bg } };
+        cell.border = allBorders;
+      }
+      ws.mergeCells(r1, c1, r2, c2);
+      const m = ws.getCell(r1, c1);
+      m.value = text;
+      m.font = { bold: true, size: 12, color: { argb: 'FFFFFFFF' } };
+      m.alignment = { horizontal: 'center', vertical: 'middle' };
+    };
+    grpStyle(R_H1, 1, R_H2, 1, cn.toUpperCase(), C.viloyatHdr);
+    grpStyle(R_H1, 2, R_H1, 7, 'INFARKT', C.infarktHdr);
+    grpStyle(R_H1, 8, R_H1, 13, 'INSULT', C.insultHdr);
+    ws.getRow(R_H1).height = 22;
+    ws.getRow(R_H2).height = 30;
+
+    // ── 2-daraja sarlavha ─────────────────────────────────────────────────────
+    for (let c = 2; c <= NCOL; c++) {
+      const kind = KIND[c - 1];
+      const cell = ws.getCell(R_H2, c);
+      cell.value = HEAD2[c - 1];
+      cell.fill = { type: 'pattern', pattern: 'solid',
+        fgColor: { argb: kind === 'jami' ? C.subJami : kind === 'vafot' ? C.subVafot : kind === 'foiz' ? C.subFoiz : C.subHdr } };
+      cell.font = { bold: true, size: 10.5,
+        color: { argb: (kind === 'vafot' || kind === 'foiz') ? C.matnQizil : C.matnKok } };
+      cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+      cell.border = allBorders;
+    }
+
+    // ── Ma'lumot qatorlari — ekrandagi jadval bilan bir xil qiymatlar ─────────
+    const val = r => [r.viloyat, r.stemi, r.nstemi, r.ami, r.jamiInfarkt, r.vafotInf, null,
+                                r.ishemik, r.gemorragik, r.tia, r.jamiInsult, r.vafotIns, null];
+    rows.forEach((r, i) => {
+      const rn = R_FIRST + i;
+      const v = val(r);
+      const zebra = i % 2 === 1;
+      for (let c = 1; c <= NCOL; c++) {
+        const kind = KIND[c - 1];
+        const cell = ws.getCell(rn, c);
+        if (kind === 'foiz') {
+          // O'lim % — Excelning o'zi hisoblaydi: vafot / jami
+          const jami = v[c - 3], olgan = v[c - 2];
+          if (jami > 0) {
+            cell.value = { formula: `IFERROR(${col(c - 1)}${rn}/${col(c - 2)}${rn},"")`, result: olgan / jami };
+          }
+          cell.numFmt = '0.0%';
+        } else {
+          cell.value = v[c - 1];
+          if (c > 1) cell.numFmt = '0';
+        }
+        cell.border = allBorders;
+        cell.alignment = c === 1
+          ? { horizontal: 'left', vertical: 'middle', indent: 1 }
+          : { horizontal: 'center', vertical: 'middle' };
+        const bg = kind === 'jami' ? C.jamiCell : kind === 'vafot' ? C.vafotCell : (zebra ? C.zebra : null);
+        if (bg) cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: bg } };
+        cell.font = c === 1
+          ? { bold: true, size: 10.5, color: { argb: C.matnQora } }
+          : { bold: kind === 'jami', size: 10.5,
+              color: { argb: kind === 'jami' ? C.matnKok : (kind === 'vafot' || kind === 'foiz') ? C.matnQizil : C.matnQora } };
+      }
+    });
+
+    // ── JAMI qatori — barcha hududlar yig'indisi (Excel formulasi) ────────────
+    const jamiVals = [null, t.stemi, t.nstemi, t.ami, t.jamiInfarkt, t.vafotInf, null,
+                            t.ishemik, t.gemorragik, t.tia, t.jamiInsult, t.vafotIns, null];
+    for (let c = 1; c <= NCOL; c++) {
+      const kind = KIND[c - 1];
+      const cell = ws.getCell(R_JAMI, c);
+      if (c === 1) {
+        cell.value = 'JAMI';
+      } else if (kind === 'foiz') {
+        const jami = jamiVals[c - 3], olgan = jamiVals[c - 2];
+        if (jami > 0) {
+          cell.value = { formula: `IFERROR(${col(c - 1)}${R_JAMI}/${col(c - 2)}${R_JAMI},"")`, result: olgan / jami };
+        }
+        cell.numFmt = '0.0%';
+      } else {
+        cell.value = rows.length
+          ? { formula: `SUM(${col(c)}${R_FIRST}:${col(c)}${R_LAST})`, result: jamiVals[c - 1] || 0 }
+          : 0;
+        cell.numFmt = '0';
+      }
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: C.jamiRow } };
+      cell.font = { bold: true, size: 11,
+        color: { argb: (kind === 'vafot' || kind === 'foiz') ? C.matnQizil : C.matnKok } };
+      cell.alignment = c === 1
+        ? { horizontal: 'left', vertical: 'middle', indent: 1 }
+        : { horizontal: 'center', vertical: 'middle' };
+      cell.border = { top: { style: 'medium', color: { argb: C.matnKok } },
+                      left: thin, right: thin,
+                      bottom: { style: 'medium', color: { argb: C.matnKok } } };
+    }
+    ws.getRow(R_JAMI).height = 20;
+
+    // Filtr faqat ma'lumot qatorlarida — saralashda JAMI aralashib ketmasin
+    if (rows.length) {
+      ws.autoFilter = { from: { row: R_H2, column: 1 }, to: { row: R_LAST, column: NCOL } };
+    }
+
+    const buf = await wb.xlsx.writeBuffer();
+    const blob = new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const scope = d.scopeName ? '_' + d.scopeName.replace(/[\\/:*?"<>|]/g, '-') : '';
+    a.href = url;
+    a.download = `REGESY_Infarkt_Insult_Hisobot${scope}_${HisobotPage._dmy(d.from)}-${HisobotPage._dmy(d.to)}.xlsx`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  },
+
+  // ExcelJS yuklanmagan holat uchun zaxira: formatsiz, lekin ustunlar bir xil
+  _exportViloyatPlain(d) {
     const cn = d.colName || 'Viloyat';
     const foiz = (olgan, jami) => jami > 0 ? Math.round(olgan / jami * 1000) / 10 : '';
-    const data = d.rows.map(r => ({
-      [cn]: r.viloyat,
+    const qator = (nom, r) => ({
+      [cn]: nom,
       'STEMI': r.stemi,
       'NSTEMI': r.nstemi,
       'AMI': r.ami,
       'Jami infarkt': r.jamiInfarkt,
-      'Infarkt — vafot': r.vafotInf,
-      'Infarkt — letallik %': foiz(r.vafotInf, r.jamiInfarkt),
-      'Ishemik insult': r.ishemik,
-      'Gemorragik insult': r.gemorragik,
+      'Vafot (infarkt)': r.vafotInf,
+      "O'lim % (infarkt)": foiz(r.vafotInf, r.jamiInfarkt),
+      'Ishemik': r.ishemik,
+      'Gemorragik': r.gemorragik,
       'TIA': r.tia,
       'Jami insult': r.jamiInsult,
-      'Insult — vafot': r.vafotIns,
-      'Insult — letallik %': foiz(r.vafotIns, r.jamiInsult)
-    }));
-    data.push({
-      [cn]: 'JAMI',
-      'STEMI': d.totals.stemi,
-      'NSTEMI': d.totals.nstemi,
-      'AMI': d.totals.ami,
-      'Jami infarkt': d.totals.jamiInfarkt,
-      'Infarkt — vafot': d.totals.vafotInf,
-      'Infarkt — letallik %': foiz(d.totals.vafotInf, d.totals.jamiInfarkt),
-      'Ishemik insult': d.totals.ishemik,
-      'Gemorragik insult': d.totals.gemorragik,
-      'TIA': d.totals.tia,
-      'Jami insult': d.totals.jamiInsult,
-      'Insult — vafot': d.totals.vafotIns,
-      'Insult — letallik %': foiz(d.totals.vafotIns, d.totals.jamiInsult)
+      'Vafot (insult)': r.vafotIns,
+      "O'lim % (insult)": foiz(r.vafotIns, r.jamiInsult)
     });
+    const data = d.rows.map(r => qator(r.viloyat, r));
+    data.push(qator('JAMI', d.totals));
     const scope = d.scopeName ? d.scopeName.replace(/[\\/:*?"<>|]/g, '-') + '_' : '';
-    Utils.exportXLSX(data, `viloyatlar_hisobot_${scope}${d.from}_${d.to}.xlsx`, 'Kesim hisoboti');
-    showToast('✅ Excel fayl yuklab olindi', 'success');
+    Utils.exportXLSX(data, `REGESY_Infarkt_Insult_Hisobot_${scope}${HisobotPage._dmy(d.from)}-${HisobotPage._dmy(d.to)}.xlsx`, 'Kesim hisoboti');
   },
 
   onPeriodChange() {
