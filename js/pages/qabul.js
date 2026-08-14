@@ -177,10 +177,21 @@ const QabulPage = {
     const jami = QabulPage._rows.length;
     const rows = QabulPage._filtrla(QabulPage._rows);
 
+    // Registrni yuritmaydigan muassasaga yuborilganlar alohida bo'limga
+    const asosiy  = rows.filter(r => !r._kuzatuv);
+    const kuzatuv = rows.filter(r =>  r._kuzatuv);
+
+    // Sonlar ochiq yozilsin — "jami" va asosiy ro'yxatdagi son har xil bo'ladi
     const info = document.getElementById('qb-filter-info');
-    if (info) info.innerHTML = rows.length === jami
-      ? `Jami <b>${jami}</b> ta yozuv`
-      : `<b>${rows.length}</b> ta ko'rsatilmoqda · jami ${jami} ta`;
+    if (info) {
+      const boshi = rows.length === jami
+        ? `Jami <b>${jami}</b> ta yozuv`
+        : `<b>${rows.length}</b> ta ko'rsatilmoqda · jami ${jami} ta`;
+      info.innerHTML = boshi + (kuzatuv.length
+        ? ` · <b>${asosiy.length}</b> asosiy ro'yxatda ·
+           <span style="color:#b45309">${kuzatuv.length}</span> pastdagi kuzatuv bo'limida`
+        : '');
+    }
 
     if (!jami) {
       QabulPage._xabar('info', 'Kutilayotgan bemor yo\'q',
@@ -192,9 +203,6 @@ const QabulPage = {
         'Qidiruv yoki filtr shartiga mos bemor yo\'q. "Tozalash" ni bosing.');
       return;
     }
-    // Registrni yuritmaydigan muassasaga yuborilganlar alohida bo'limga
-    const asosiy  = rows.filter(r => !r._kuzatuv);
-    const kuzatuv = rows.filter(r =>  r._kuzatuv);
 
     if (!asosiy.length && kuzatuv.length) {
       // Asosiy ro'yxat bo'sh — kuzatuv bo'limi darhol ochiq ko'rinsin
@@ -206,7 +214,8 @@ const QabulPage = {
         ${icon('info', 18)}
         <span class="text-sm text-blue-900">
           ${QabulPage._kuzatuvchi ? `
-            <b>${asosiy.length} ta bemor</b> respublika bo'yicha yuborilgan va hali qabul qilinmagan.
+            <b>${asosiy.length} ta bemor</b> respublika bo'yicha yuborilgan va hali qabul qilinmagan.${kuzatuv.length ? `
+            Yana <b>${kuzatuv.length}</b> ta yozuv pastdagi kuzatuv bo'limida.` : ''}
             <div class="mt-1 text-xs text-blue-800">
               Siz kuzatuvchi rolidasiz — bu ro'yxat nazorat uchun. Bemorni qabul qilishni
               qabul qiluvchi muassasa shifokori bajaradi.
