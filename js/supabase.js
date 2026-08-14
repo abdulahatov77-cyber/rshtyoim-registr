@@ -379,32 +379,69 @@ const DB = {
     //
     // Haqiqiy qabul belgisi — qabul qiluvchi muassasada shu bemorga yangi karta
     // ochilgani (qabul qiluvchi yangi kt_no bilan alohida yozuv yaratadi).
-    const shaxsKalit = (fio, yil) => {
-      const f = (Utils.normalizeFio(fio || '') || '').toLowerCase().replace(/\s+/g, ' ').trim();
-      return `${f}|${String(yil || '').slice(0, 4)}`;
+    // F.I.O ni aynan solishtirib bo'lmaydi — amalda ikki tomon bir odamni
+    // turlicha yozadi: "Alimova Mavludaxon Xxx" / "Alimova Mavludaxon",
+    // "Ismailov ... Xusanbayevich" / "... Xusanboyevich",
+    // "Norquziyeva Dilbar" / "Norquziyeba Dilbar", "Safar" / "Sapar".
+    // Shuning uchun: otasining ismi tashlanadi (u ko'pincha "Xxx" yoki
+    // umuman yo'q), faqat familiya + ism olinadi, kirill/lotin va tinish
+    // belgilari farqi yo'qoladi.
+    const fioKalit = (fio) => Utils.cyrToLat(String(fio || ''))
+      .toLowerCase()
+      .split(/[^a-z0-9]+/)
+      .filter(w => w && w !== 'xxx' && w !== 'xx' && w !== 'x')
+      .slice(0, 2)
+      .join('');
+    // Tug'ilgan yil ba'zi yozuvlarda to'liq sana ('1981-11-10') sifatida saqlangan
+    const yilKalit = (yil, sana) => {
+      const y = String(yil || '').slice(0, 4);
+      return /^\d{4}$/.test(y) ? y : String(sana || '').slice(0, 4);
     };
-    // So'rovni faqat shu ro'yxatdagi bemorlar bilan cheklaymiz — kutilayotganlar
-    // soni odatda o'nlab, shuning uchun bu qidiruv arzon
-    const fioList = [...new Set(rows.map(r => r.fio).filter(Boolean))];
+    // Bir-ikki harflik imlo farqiga yo'l qo'yamiz (Levenshtein).
+    // Tug'ilgan yil va muassasa allaqachon mos kelgani uchun bu xavfsiz.
+    const farq = (a, b, max = 2) => {
+      if (a === b) return 0;
+      if (Math.abs(a.length - b.length) > max) return max + 1;
+      const qator = new Array(b.length + 1);
+      for (let j = 0; j <= b.length; j++) qator[j] = j;
+      for (let i = 1; i <= a.length; i++) {
+        let oldi = qator[0];
+        qator[0] = i;
+        let engKichik = i;
+        for (let j = 1; j <= b.length; j++) {
+          const vaqt = qator[j];
+          qator[j] = Math.min(qator[j] + 1, qator[j - 1] + 1,
+                              oldi + (a[i - 1] === b[j - 1] ? 0 : 1));
+          if (qator[j] < engKichik) engKichik = qator[j];
+          oldi = vaqt;
+        }
+        if (engKichik > max) return max + 1;
+      }
+      return qator[b.length];
+    };
+
     const qabulYozuvlari = async (t) => {
       const { data } = await sb.from(t)
-        .select('fio,tugilgan_yil,muassasa,qabul_vaqt')
+        .select('fio,tugilgan_yil,tugilgan_sana,muassasa,qabul_vaqt')
         .gte('qabul_vaqt', chegara)
-        .in('fio', fioList)
-        .limit(2000);
+        .limit(5000);
       return data || [];
     };
     const [qInf, qIns] = await Promise.all([
       qabulYozuvlari('infarkt_qabul'),
       qabulYozuvlari('insult_qabul')
     ]);
-    // kalit: shaxs + qabul qilgan muassasa -> eng kech qabul vaqti
+    // Guruh kaliti: tug'ilgan yil + qabul qilgan muassasa. Guruh ichida
+    // F.I.O taxminiy solishtiriladi (guruhlar kichik — bir necha yozuv).
     const qabulMap = new Map();
     [...qInf, ...qIns].forEach(r => {
       if (!r.muassasa || !r.qabul_vaqt) return;
-      const k = `${shaxsKalit(r.fio, r.tugilgan_yil)}|${nomKalit(r.muassasa)}`;
-      const ms = new Date(r.qabul_vaqt).getTime();
-      if (!qabulMap.has(k) || ms > qabulMap.get(k)) qabulMap.set(k, ms);
+      const yil = yilKalit(r.tugilgan_yil, r.tugilgan_sana);
+      if (!yil) return;
+      const k = `${yil}|${nomKalit(r.muassasa)}`;
+      const guruh = qabulMap.get(k) || [];
+      guruh.push({ f: fioKalit(r.fio), ms: new Date(r.qabul_vaqt).getTime() });
+      qabulMap.set(k, guruh);
     });
 
     // Qabul qiluvchi registrga o'zi bemor kiritadimi? Kiritmasa (yoki nomi
@@ -422,10 +459,15 @@ const DB = {
 
     return rows
       .filter(r => {
-        const k = `${shaxsKalit(r.fio, r.tugilgan_yil)}|${nomKalit(r.otkazilgan_muassasa)}`;
-        const qabulMs = qabulMap.get(k);
-        // Yuborilgandan keyin ochilgan karta bor — demak bemor yetib borib qabul qilingan
-        return !(qabulMs && qabulMs >= new Date(r.qabul_vaqt).getTime());
+        const yil = yilKalit(r.tugilgan_yil, r.tugilgan_sana);
+        const f = fioKalit(r.fio);
+        if (!yil || !f) return true;
+        const guruh = qabulMap.get(`${yil}|${nomKalit(r.otkazilgan_muassasa)}`);
+        if (!guruh) return true;
+        // Yuborilgandan keyin ochilgan karta bor — demak bemor yetib borib
+        // qabul qilingan. Vaqt kiritishdagi kichik xatolikka 12 soat yon beramiz.
+        const chek = new Date(r.qabul_vaqt).getTime() - 12 * 3600000;
+        return !guruh.some(c => c.ms >= chek && farq(f, c.f) <= 2);
       })
       .map(r => ({
         ...r,
