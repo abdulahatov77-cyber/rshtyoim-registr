@@ -1114,9 +1114,11 @@ const DB = {
     const p = await Profile.getCurrent();
     const viloyat = overrideMuassasa ? null : (overrideViloyat !== undefined ? overrideViloyat : (p?.role === 'super_admin' ? null : p?.viloyat));
     const eqViloyat = (q) => overrideMuassasa ? q.eq('muassasa', overrideMuassasa) : (viloyat ? q.eq('viloyat', viloyat) : q);
+    const infCols = 'kt_no,fio,tugilgan_yil,jins,muassasa,viloyat,qabul_vaqt,created_at,status,infarkt_turi,muolaja_turi';
+    const insCols = 'kt_no,fio,tugilgan_yil,jins,muassasa,viloyat,qabul_vaqt,created_at,status,insult_turi,muolaja_turi';
     const [{ data: inf }, { data: ins }] = await Promise.all([
-      eqViloyat(getSupabase().from('infarkt_qabul').select('*').order('created_at', { ascending: false }).limit(limit)),
-      eqViloyat(getSupabase().from('insult_qabul').select('*').order('created_at', { ascending: false }).limit(limit))
+      eqViloyat(getSupabase().from('infarkt_qabul').select(infCols).order('created_at', { ascending: false }).limit(limit)),
+      eqViloyat(getSupabase().from('insult_qabul').select(insCols).order('created_at', { ascending: false }).limit(limit))
     ]);
     const combined = [
       ...(inf || []).map(r => ({ ...r, _type: 'infarkt' })),

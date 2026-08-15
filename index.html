@@ -12,46 +12,9 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
 
-  <!-- Tailwind CSS -->
-  <script src="https://cdn.tailwindcss.com"></script>
-
-  <!-- Lucide Icons -->
-  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
-
-  <!-- Chart.js -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-  <!-- Chart.js Datalabels -->
-  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
-
-  <!-- SheetJS (Excel export) — xlsx-js-style: 0.18.5 ning uslub qo'llab-quvvatlashi qo'shilgan forki.
-       API bir xil (global XLSX). Oddiy xlsx da cell.s (rang/qalin shrift) jimgina e'tiborsiz qoldiriladi. -->
-  <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
-
-  <!-- Supabase JS -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-  <script>
-    // Fallback: agar CDN yuklanmasa, unpkg dan yukla
-    if (typeof supabase === 'undefined') {
-      document.write('<script src="https://unpkg.com/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"><\/script>');
-    }
-  </script>
-
-  <!-- App CSS -->
+  <!-- Tailwind is generated at build time; no runtime compiler is shipped. -->
+  <link rel="stylesheet" href="css/tailwind.generated.css?v=1" />
   <link rel="stylesheet" href="css/style.css?v=8" />
-
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          fontFamily: { sans: ['Plus Jakarta Sans', 'Inter', 'sans-serif'] },
-          colors: {
-            primary: { 50:'#eff6ff', 100:'#dbeafe', 500:'#3b82f6', 600:'#2563eb', 700:'#1d4ed8', 900:'#1e3a8a' },
-            dark: { 800:'#1e293b', 850:'#172032', 900:'#0f172a', 950:'#080d17' }
-          }
-        }
-      }
-    }
-  </script>
 </head>
 <body class="font-sans min-h-screen" style="background:#F8FAFC;color:#334155">
 
@@ -71,37 +34,9 @@
   <!-- Modal container -->
   <div id="modal-container"></div>
 
-  <!-- Core modules -->
-  <script src="js/pd-mask.js?v=1"></script>
-  <script src="js/cdss.js?v=2"></script>
-  <script src="js/config.js?v=80"></script>
-  <script src="js/supabase.js?v=164"></script>
-  <script src="js/utils.js?v=81"></script>
-  <script src="js/components.js?v=78"></script>
-  <script src="js/calculators.js?v=76"></script>
-  <script src="js/router.js?v=72"></script>
-  <script src="js/agePyramid.js?v=5"></script>
-
-  <!-- Pages -->
-  <script src="js/pages/login.js?v=66"></script>
-  <script src="js/pages/dashboard.js?v=115"></script>
-  <script src="js/pages/infarkt-yangi.js?v=131"></script>
-  <script src="js/pages/insult-yangi.js?v=142"></script>
-  <script src="js/pages/infarkt-reyestri.js?v=63"></script>
-  <script src="js/pages/insult-reyestri.js?v=63"></script>
-  <script src="js/pages/bemor-karta.js?v=127"></script>
-  <script src="js/pages/bemorlar.js?v=85"></script>
-  <script src="js/pages/hisobot.js?v=139"></script>
-  <script src="js/pages/admin.js?v=93"></script>
-  <script src="js/pages/muassasa-imkoniyat.js?v=7"></script>
-  <script src="js/pages/settings.js?v=62"></script>
-  <script src="js/pages/harakat.js?v=14"></script>
-  <script src="js/pages/marshrut.js?v=2"></script>
-  <script src="js/pages/qabul.js?v=12"></script>
-  <script src="js/pages/keng-hisobot.js?v=11"></script>
-
-  <!-- App init -->
-  <script src="js/app.js?v=68"></script>
+  <!-- Deferred bootstrap keeps execution order; route modules load on demand. -->
+  <script defer src="js/loader.js?v=1"></script>
+  <script defer src="js/bootstrap.js?v=1"></script>
 
   <!-- Versiya tekshiruvi: 30 daqiqada bir marta, barcha tablar uchun umumiy -->
   <script>

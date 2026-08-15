@@ -1,3 +1,49 @@
+// ==================== ROUTE-LEVEL SCRIPT LOADING ====================
+const PageLoader = {
+  _loaded: new Set(['login']),
+  _pending: new Map(),
+  _pages: {
+    dashboard:            { src: 'js/pages/dashboard.js?v=115', deps: ['pd', 'agePyramid', 'charts'] },
+    'infarkt-yangi':      { src: 'js/pages/infarkt-yangi.js?v=131', deps: ['calculators'] },
+    'insult-yangi':       { src: 'js/pages/insult-yangi.js?v=142', deps: ['calculators', 'cdss'] },
+    'infarkt-reyestri':   { src: 'js/pages/infarkt-reyestri.js?v=63' },
+    'insult-reyestri':    { src: 'js/pages/insult-reyestri.js?v=63' },
+    'bemor-karta':        { src: 'js/pages/bemor-karta.js?v=127', deps: ['calculators'] },
+    bemorlar:             { src: 'js/pages/bemorlar.js?v=85', deps: ['pd'] },
+    hisobot:              { src: 'js/pages/hisobot.js?v=139' },
+    admin:                { src: 'js/pages/admin.js?v=93' },
+    'muassasa-imkoniyat': { src: 'js/pages/muassasa-imkoniyat.js?v=7' },
+    settings:             { src: 'js/pages/settings.js?v=62' },
+    harakat:              { src: 'js/pages/harakat.js?v=14' },
+    marshrut:             { src: 'js/pages/marshrut.js?v=2' },
+    qabul:                { src: 'js/pages/qabul.js?v=12' },
+    'keng-hisobot':       { src: 'js/pages/keng-hisobot.js?v=11' }
+  },
+  _deps: {
+    pd: () => AssetLoader.script('js/pd-mask.js?v=1'),
+    cdss: () => AssetLoader.script('js/cdss.js?v=2'),
+    calculators: () => AssetLoader.script('js/calculators.js?v=76'),
+    agePyramid: () => AssetLoader.script('js/agePyramid.js?v=5'),
+    charts: () => AssetLoader.charts()
+  },
+
+  load(route) {
+    if (this._loaded.has(route)) return Promise.resolve();
+    if (this._pending.has(route)) return this._pending.get(route);
+    const page = this._pages[route];
+    if (!page) return Promise.reject(new Error(`Noma'lum sahifa: ${route}`));
+    const promise = Promise.all((page.deps || []).map(dep => this._deps[dep]()))
+      .then(() => AssetLoader.script(page.src))
+      .then(() => { this._loaded.add(route); })
+      .catch(err => {
+        this._pending.delete(route);
+        throw err;
+      });
+    this._pending.set(route, promise);
+    return promise;
+  }
+};
+
 // ==================== ROUTER ====================
 const Router = {
   _current: null,
@@ -7,21 +53,21 @@ const Router = {
 
   routes: {
     'login':            () => LoginPage.render(),
-    'dashboard':        () => DashboardPage.render(),
-    'infarkt-yangi':    () => InfarktYangiPage.render(),
-    'insult-yangi':     () => InsultYangiPage.render(),
-    'infarkt-reyestri': () => InfarktReyestriPage.render(),
-    'insult-reyestri':  () => InsultReyestriPage.render(),
-    'bemor-karta':      () => BemorKartaPage.render(Router._params),
-    'bemorlar':         () => BemorlarPage.render(),
-    'hisobot':          () => HisobotPage.render(),
-    'admin':            () => AdminPage.render(),
-    'muassasa-imkoniyat': () => MuassasaImkoniyatPage.render(),
-    'settings':         () => SettingsPage.render(),
-    'harakat':          () => HarakatPage.render(),
-    'marshrut':         () => MarshrutPage.render(),
-    'qabul':            () => QabulPage.render(),
-    'keng-hisobot':     () => KengHisobotPage.render(),
+    'dashboard':        async () => { await PageLoader.load('dashboard'); return DashboardPage.render(); },
+    'infarkt-yangi':    async () => { await PageLoader.load('infarkt-yangi'); return InfarktYangiPage.render(); },
+    'insult-yangi':     async () => { await PageLoader.load('insult-yangi'); return InsultYangiPage.render(); },
+    'infarkt-reyestri': async () => { await PageLoader.load('infarkt-reyestri'); return InfarktReyestriPage.render(); },
+    'insult-reyestri':  async () => { await PageLoader.load('insult-reyestri'); return InsultReyestriPage.render(); },
+    'bemor-karta':      async () => { await PageLoader.load('bemor-karta'); return BemorKartaPage.render(Router._params); },
+    'bemorlar':         async () => { await PageLoader.load('bemorlar'); return BemorlarPage.render(); },
+    'hisobot':          async () => { await PageLoader.load('hisobot'); return HisobotPage.render(); },
+    'admin':            async () => { await PageLoader.load('admin'); return AdminPage.render(); },
+    'muassasa-imkoniyat': async () => { await PageLoader.load('muassasa-imkoniyat'); return MuassasaImkoniyatPage.render(); },
+    'settings':         async () => { await PageLoader.load('settings'); return SettingsPage.render(); },
+    'harakat':          async () => { await PageLoader.load('harakat'); return HarakatPage.render(); },
+    'marshrut':         async () => { await PageLoader.load('marshrut'); return MarshrutPage.render(); },
+    'qabul':            async () => { await PageLoader.load('qabul'); return QabulPage.render(); },
+    'keng-hisobot':     async () => { await PageLoader.load('keng-hisobot'); return KengHisobotPage.render(); },
   },
 
   back() {
@@ -33,6 +79,7 @@ const Router = {
   },
 
   async go(route, params = {}) {
+    if (window.performance?.mark) performance.mark(`route:${route}:start`);
     // Cleanup previous page
     if (Router._current && Router._current !== route) {
       Realtime.unsubscribeAll();
@@ -67,6 +114,7 @@ const Router = {
       const handler = Router.routes[route];
       if (handler) {
         await handler();
+        if (window.performance?.mark) performance.mark(`route:${route}:complete`);
       } else {
         Router.go('dashboard');
       }

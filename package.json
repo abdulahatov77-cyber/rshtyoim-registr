@@ -4,8 +4,10 @@
   "description": "",
   "main": "replace.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "vite --host 127.0.0.1"
+    "test": "node --test tests/*.test.js",
+    "build:css": "tailwindcss -c tailwind.config.cjs -i css/tailwind.input.css -o css/tailwind.generated.css --minify",
+    "build": "npm run build:css",
+    "dev": "npm run build:css && vite --host 127.0.0.1"
   },
   "repository": {
     "type": "git",
@@ -20,6 +22,7 @@
   },
   "homepage": "https://github.com/abdulahatov77-cyber/rshtyoim-registr#readme",
   "devDependencies": {
+    "tailwindcss": "3.4.17",
     "vite": "^8.0.10"
   }
 }

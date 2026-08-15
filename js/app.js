@@ -4,11 +4,13 @@ const App = {
   _profile: null,
 
   async init() {
-    // Load muassasa overrides before routing so all dropdowns have correct data
-    try {
-      const overrides = await MuassasaDB.getOverrides();
-      if (overrides.length) MuassasaDB.applyToConfig(overrides);
-    } catch(e) { /* muassasa_overrides table may not exist yet */ }
+    // Start overrides immediately, but do not serialize auth/profile behind it.
+    // Authenticated routes still wait for the same data before rendering.
+    const overridesReady = MuassasaDB.getOverrides()
+      .then(overrides => {
+        if (overrides.length) MuassasaDB.applyToConfig(overrides);
+      })
+      .catch(() => { /* muassasa_overrides table may not exist yet */ });
 
     // LocalStorage dan aholi sonini yuklash (admin panelida o'zgartirilgan bo'lsa)
     try {
@@ -22,6 +24,8 @@ const App = {
       const session = await Auth.getSession();
       if (session) {
         App._user = session.user;
+        // Dashboard code/charts download while profile and overrides are resolving.
+        const dashboardReady = PageLoader.load('dashboard').then(() => null).catch(err => err);
         const profile = await Profile.getCurrent();
         if (!profile || profile.role === 'pending') {
           await Auth.signOut();
@@ -31,6 +35,8 @@ const App = {
           showToast('Akkaunt administrator tasdig\'ini kutmoqda', 'warning', 7000);
         } else {
           App._profile = profile;
+          const [, dashboardError] = await Promise.all([overridesReady, dashboardReady]);
+          if (dashboardError) throw dashboardError;
           Router.go('dashboard');
         }
       } else {
@@ -45,6 +51,7 @@ const App = {
     Auth.onAuthStateChange(async (event, session) => {
       if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && session) {
         App._user = session.user;
+        const dashboardReady = PageLoader.load('dashboard').then(() => null).catch(err => err);
         const profile = await Profile.getCurrent().catch(() => null);
         if (!profile || profile.role === 'pending') {
           await Auth.signOut().catch(() => {});
@@ -55,7 +62,11 @@ const App = {
           return;
         }
         App._profile = profile;
-        if (Router._current === 'login') Router.go('dashboard');
+        if (Router._current === 'login') {
+          const dashboardError = await dashboardReady;
+          if (dashboardError) throw dashboardError;
+          Router.go('dashboard');
+        }
       } else if (event === 'SIGNED_OUT') {
         App._user = null;
         if (Router._current !== 'login') {
@@ -81,8 +92,10 @@ const App = {
 
 };
 
-// Start app
-document.addEventListener('DOMContentLoaded', () => {
+// Start app. Bootstrap may finish before or after DOMContentLoaded.
+const startApp = () => {
   Router.init();
   App.init();
-});
+};
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', startApp, { once: true });
+else startApp();

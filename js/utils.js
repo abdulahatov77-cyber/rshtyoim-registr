@@ -236,11 +236,21 @@ const Utils = {
   exportCSV(data, filename = 'bemorlar.csv') {
     // XLSX formatida eksport (encoding va ustun kengligi muammosi yo'q)
     const xlsxName = filename.replace(/\.csv$/i, '.xlsx');
-    Utils.exportXLSX(data, xlsxName);
+    return Utils.exportXLSX(data, xlsxName);
   },
 
-  exportXLSX(data, filename = 'bemorlar.xlsx', sheetName = 'Hisobot') {
+  async loadXLSX() {
+    try {
+      return await AssetLoader.xlsx();
+    } catch (err) {
+      showToast('Excel kutubxonasini yuklab bo\'lmadi. Internet aloqasini tekshiring.', 'error', 6000);
+      throw err;
+    }
+  },
+
+  async exportXLSX(data, filename = 'bemorlar.xlsx', sheetName = 'Hisobot') {
     if (!data || !data.length) return;
+    await Utils.loadXLSX();
     const clean = v => {
       if (v === null || v === undefined) return '';
       if (Array.isArray(v)) return v.join(', ');
@@ -299,8 +309,9 @@ const Utils = {
   // Varaqqa `wrap: true` berilsa — kataklardagi qator uzilishlari (\n) Excelda
   // ko'rinadi va qator balandligi avtomatik moslashadi. Ko'p qatorli
   // kataklar (masalan "285 ta / <=6 soat: ...") uchun shu kerak.
-  exportXLSXMulti(sheets, filename = 'hisobot.xlsx') {
+  async exportXLSXMulti(sheets, filename = 'hisobot.xlsx') {
     if (!sheets || !sheets.length) return;
+    await Utils.loadXLSX();
     const clean = v => {
       if (v === null || v === undefined) return '';
       if (Array.isArray(v)) return v.join(', ');

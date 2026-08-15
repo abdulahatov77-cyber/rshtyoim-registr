@@ -999,9 +999,10 @@ const HisobotPage = {
       </div>`;
   },
 
-  exportPQ20Report() {
+  async exportPQ20Report() {
     const d = HisobotPage._lastPQ20;
     if (!d) { showToast('Avval hisobotni shakllantiring', 'warning'); return; }
+    await Utils.loadXLSX();
     const n = v => +(v || 0);
     const letl = v => Number(v || 0).toFixed(1);
 

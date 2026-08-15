@@ -138,7 +138,6 @@ const DashboardPage = {
         DB.getDashboardStats(ov, om, df, dt),
         DB.getTrend30(ov, om),
         DB.getTrend12Month(ov, om),
-        DB.getRecentPatients(10, ov, om),
         om ? Promise.resolve([]) : (
           ov ? DB.getMuassasaStats(ov, df, dt) :
           (profile?.role !== 'super_admin' && profile?.viloyat) ? DB.getMuassasaStats(profile.viloyat, df, dt) :
@@ -151,9 +150,9 @@ const DashboardPage = {
       const stats     = val1(0, {});
       const trend     = val1(1, { labels:[], infData:[], insData:[] });
       const trend12   = val1(2, { labels:[], infData:[], insData:[] });
-      const recent    = val1(3, []);
-      const viloyat   = val1(4, []);
-      const statsNow  = val1(5, null); // sana filtrisiz aktiv bemorlar
+      const recent    = [];
+      const viloyat   = val1(3, []);
+      const statsNow  = val1(4, null); // sana filtrisiz aktiv bemorlar
       // Aktiv bemorlarni doim joriy holatdan olamiz
       if (statsNow) {
         stats.infarktAktiv = statsNow.infarktAktiv;
@@ -165,9 +164,11 @@ const DashboardPage = {
       if (seq !== DashboardPage._loadSeq) return;
       // Sahifani darhol ko'rsatamiz
       DashboardPage.renderContent(stats, trend, trend12, recent, viloyat, profile, emptyDemo, [], [], null);
+      if (window.performance?.mark) performance.mark('dashboard:usable');
 
       // BOSQICH 2: Og'ir ma'lumotlar fonda yuklanadi
       const phase2 = await Promise.allSettled([
+        DB.getRecentPatients(10, ov, om),
         DB.getDemographics(ov, om),
         DB.getRiskFactors(ov, om, df, dt),
         DB.getLongStayPatients(ov, om),
@@ -175,11 +176,16 @@ const DashboardPage = {
       ]);
       if (seq !== DashboardPage._loadSeq) return;
       const val2 = (i, def) => phase2[i].status === 'fulfilled' ? phase2[i].value : def;
-      const demo      = val2(0, emptyDemo);
-      const riskFactors = val2(1, []);
-      const longStay  = val2(2, []);
-      const ageSex    = val2(3, { infarkt: emptyPyramid(), insult: emptyPyramid() });
+      const recentLoaded = val2(0, []);
+      const demo      = val2(1, emptyDemo);
+      const riskFactors = val2(2, []);
+      const longStay  = val2(3, []);
+      const ageSex    = val2(4, { infarkt: emptyPyramid(), insult: emptyPyramid() });
+      DashboardPage._recentPatients = recentLoaded;
       DashboardPage._ageSex = ageSex;
+
+      const recentBody = document.getElementById('recent-patients-body');
+      if (recentBody) recentBody.innerHTML = DashboardPage._renderRecentRows(recentLoaded);
 
       // Faqat grafiklar va pastki qismlarni yangilaymiz
       DashboardPage._updateSecondaryContent(stats, demo, riskFactors, longStay, ageSex);
