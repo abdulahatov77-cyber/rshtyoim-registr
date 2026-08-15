@@ -22,8 +22,17 @@ const App = {
       const session = await Auth.getSession();
       if (session) {
         App._user = session.user;
-        Profile.getCurrent().then(p => { App._profile = p; }).catch(()=>{});
-        Router.go('dashboard');
+        const profile = await Profile.getCurrent();
+        if (!profile || profile.role === 'pending') {
+          await Auth.signOut();
+          App._user = null;
+          App._profile = null;
+          Router.go('login');
+          showToast('Akkaunt administrator tasdig\'ini kutmoqda', 'warning', 7000);
+        } else {
+          App._profile = profile;
+          Router.go('dashboard');
+        }
       } else {
         Router.go('login');
       }
@@ -33,10 +42,19 @@ const App = {
     }
 
     // Auth state listener
-    Auth.onAuthStateChange((event, session) => {
+    Auth.onAuthStateChange(async (event, session) => {
       if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && session) {
         App._user = session.user;
-        Profile.getCurrent().then(p => { App._profile = p; }).catch(()=>{});
+        const profile = await Profile.getCurrent().catch(() => null);
+        if (!profile || profile.role === 'pending') {
+          await Auth.signOut().catch(() => {});
+          App._user = null;
+          App._profile = null;
+          if (Router._current !== 'login') Router.go('login');
+          showToast('Akkaunt administrator tasdig\'ini kutmoqda', 'warning', 7000);
+          return;
+        }
+        App._profile = profile;
         if (Router._current === 'login') Router.go('dashboard');
       } else if (event === 'SIGNED_OUT') {
         App._user = null;

@@ -27,6 +27,18 @@ const Auth = {
     const { data, error } = await sb.auth.signInWithPassword({ email, password });
     if (error) throw error;
     Auth._userCache = data?.user || null;
+
+    const profile = data?.user ? await Profile.get(data.user.id) : null;
+    if (!profile || profile.role === 'pending') {
+      await sb.auth.signOut();
+      Auth._userCache = null;
+      Profile._cache = {};
+      const approvalError = new Error(
+        profile?.role === 'pending' ? 'ACCOUNT_PENDING_APPROVAL' : 'PROFILE_NOT_READY'
+      );
+      approvalError.code = approvalError.message;
+      throw approvalError;
+    }
     return data;
   },
 

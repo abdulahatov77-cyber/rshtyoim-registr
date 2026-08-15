@@ -172,6 +172,8 @@ const LoginPage = {
       // Ma'lum xatolarni tushunarli qilib, qolganini umumiy xabar bilan ko'rsatamiz (schema sizishining oldini olish)
       let msg;
       if (err.message === 'Invalid login credentials') msg = 'Email yoki parol noto\'g\'ri';
+      else if (err.code === 'ACCOUNT_PENDING_APPROVAL') msg = 'Akkauntingiz administrator tasdig\'ini kutmoqda';
+      else if (err.code === 'PROFILE_NOT_READY') msg = 'Profil hali tayyor emas. Birozdan so\'ng qayta urinib ko\'ring';
       else if (/email/i.test(err.message) && /confirm/i.test(err.message)) msg = 'Email tasdiqlanmagan';
       else if (/network|fetch/i.test(err.message)) msg = 'Tarmoq xatosi — internetni tekshiring';
       else msg = 'Kirishда xato yuz berdi. Qayta urinib ko\'ring.';
@@ -218,7 +220,7 @@ const LoginPage = {
       await Auth.signUp(email, password, {
         full_name: name, viloyat: viloyat, muassasa: muassasa, role: 'user'
       });
-      succEl.innerHTML = '<b>Muvaffaqiyatli!</b> Emailingizni tasdiqlang va tizimga kiring.';
+      succEl.innerHTML = '<b>Muvaffaqiyatli!</b> Emailingizni tasdiqlang. Tizimga kirish administrator tasdig\'idan keyin ochiladi.';
       succEl.classList.remove('hidden');
       setLoading(btn, false);
       setTimeout(() => LoginPage.switchMode('login'), 3000);

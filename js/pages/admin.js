@@ -438,9 +438,12 @@ const AdminPage = {
 
   renderRow(p, num) {
     const isSA = p.role === 'super_admin';
+    const isPending = p.role === 'pending';
     const isMain = (p.email||'').toLowerCase() === 'abdulahatov77@gmail.com';
     const roleBadge = isSA
       ? `<span class="badge" style="background:rgba(139,92,246,0.2);color:#c4b5fd;border:1px solid rgba(139,92,246,0.3)">${icon('crown',12)} Super Admin</span>`
+      : isPending
+      ? `<span class="badge" style="background:rgba(245,158,11,0.15);color:#b45309;border:1px solid rgba(245,158,11,0.3)">${icon('clock',12)} Tasdiq kutilmoqda</span>`
       : p.role === 'admin'
       ? `<span class="badge" style="background:rgba(14,165,233,0.15);color:#38bdf8;border:1px solid rgba(14,165,233,0.3)">${icon('shield',12)} Viloyat Admin</span>`
       : p.role === 'rahbar'
@@ -469,6 +472,7 @@ const AdminPage = {
           <select id="role-${p.id}" onchange="AdminPage.changeRole('${p.id}',this.value)"
             style="background:#0f172a;border:1px solid rgba(99,118,158,0.2);border-radius:8px;padding:5px 8px;color:#e2e8f0;font-size:12px;cursor:pointer"
             ${isMain?'disabled':''}>
+            <option value="pending" ${p.role==='pending'?'selected':''} disabled>⏳ Tasdiq kutilmoqda</option>
             <option value="user" ${p.role==='user'?'selected':''}>👤 Shifokor</option>
             <option value="admin" ${p.role==='admin'?'selected':''}>🛡 Viloyat Admin</option>
             <option value="rahbar" ${p.role==='rahbar'?'selected':''}>👁 Rahbar (faqat ko'rish)</option>
@@ -485,6 +489,9 @@ const AdminPage = {
             ${(isSA || !p.viloyat) ? 'disabled' : ''}>
             ${muaOpts}
           </select>
+          ${isPending ? `<button onclick="AdminPage.approveUser('${p.id}')"
+            title="Akkauntni shifokor sifatida tasdiqlash"
+            style="background:rgba(34,197,94,0.12);border:1px solid rgba(34,197,94,0.3);border-radius:8px;padding:5px 9px;color:#16a34a;font-size:11px;font-weight:700;cursor:pointer">${icon('check',13)} Tasdiqlash</button>` : ''}
           <button onclick="AdminPage.sendPasswordReset('${(p.email||'').replace(/'/g,"\\'")}')"
             title="Parol tiklash emaili yuborish"
             style="background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.2);border-radius:8px;padding:5px 8px;color:#60a5fa;font-size:11px;cursor:pointer">${icon('key',13)}</button>
@@ -502,6 +509,16 @@ const AdminPage = {
       showToast(`✅ Rol o'zgartirildi`, 'success');
       const idx = AdminPage._profiles.findIndex(p => p.id === userId);
       if (idx !== -1) AdminPage._profiles[idx].role = role;
+      AdminPage._renderTable();
+    } catch (err) { showToast('❌ ' + err.message, 'error'); }
+  },
+
+  async approveUser(userId) {
+    try {
+      await Profile.setRole(userId, 'user');
+      const idx = AdminPage._profiles.findIndex(p => p.id === userId);
+      if (idx !== -1) AdminPage._profiles[idx].role = 'user';
+      showToast('✅ Akkaunt tasdiqlandi', 'success');
       AdminPage._renderTable();
     } catch (err) { showToast('❌ ' + err.message, 'error'); }
   },

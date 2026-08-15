@@ -1,0 +1,13 @@
+# Database migrations and files that may contain operational secrets
+*.sql
+
+# Internal audit/development artifacts
+*.md
+tests/
+.git/
+.agents/
+.codex/
+
+# Local environment and Vercel link metadata
+.env*
+.vercel/

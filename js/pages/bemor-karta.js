@@ -1462,28 +1462,36 @@ const BemorKartaPage = {
   },
 
   async loadMultimedia() {
-    // Kelajakda Supabase Storage dan o'qiladi
     const el = document.getElementById('mm-list');
     if (!el) return;
     try {
-      const { data, error } = await getSupabase().from('bemor_fayllari').select('*').eq('kt_no', BemorKartaPage._patient.kt_no);
+      const sb = getSupabase();
+      const { data, error } = await sb.from('bemor_fayllari').select('*').eq('kt_no', BemorKartaPage._patient.kt_no);
       if (error || !data || data.length === 0) {
         return; // Default bo'sh holat qoladi
       }
-      
+
+      // Private bucket: URL faqat vakolatli foydalanuvchi uchun 1 soatga beriladi.
+      const paths = data.map(f => f.path).filter(Boolean);
+      const { data: signedRows, error: signedError } = await sb.storage
+        .from('multimedia')
+        .createSignedUrls(paths, 60 * 60);
+      if (signedError) throw signedError;
+      const signedByPath = new Map((signedRows || []).map(row => [row.path, row.signedUrl]));
+
       el.innerHTML = '<div class="grid grid-cols-2 md:grid-cols-3 gap-4">' + data.map(f => `
         <div class="border border-gray-200 rounded-xl overflow-hidden hover:shadow-md transition-all group">
           <div class="h-32 bg-gray-100 relative">
-            <img src="${f.url}" class="w-full h-full object-cover" onerror="this.src=''; this.parentElement.innerHTML='<div class=\\'flex items-center justify-center h-full text-gray-400\\'>${icon('file-text', 32)}</div>'">
+            <img src="${esc(signedByPath.get(f.path) || '')}" alt="${esc(f.nomi || 'Bemor fayli')}" class="w-full h-full object-cover" onerror="this.src=''; this.parentElement.innerHTML='<div class=\\'flex items-center justify-center h-full text-gray-400\\'>${icon('file-text', 32)}</div>'">
             <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none flex items-center justify-center gap-3">
-              <a href="${f.url}" target="_blank" class="w-8 h-8 bg-white rounded-full flex items-center justify-center text-blue-600 hover:scale-110 transition-transform pointer-events-auto">${icon('eye', 16)}</a>
-              <button onclick="BemorKartaPage.deleteMultimedia('${f.id}', '${f.path}')" class="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center text-white hover:scale-110 transition-transform pointer-events-auto">${icon('trash-2', 16)}</button>
+              <a href="${esc(signedByPath.get(f.path) || '')}" target="_blank" rel="noopener noreferrer" aria-label="Faylni ko'rish" class="w-8 h-8 bg-white rounded-full flex items-center justify-center text-blue-600 hover:scale-110 transition-transform pointer-events-auto">${icon('eye', 16)}</a>
+              <button onclick="BemorKartaPage.deleteMultimedia('${f.id}', decodeURIComponent('${encodeURIComponent(f.path)}'))" aria-label="Faylni o'chirish" class="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center text-white hover:scale-110 transition-transform pointer-events-auto">${icon('trash-2', 16)}</button>
             </div>
           </div>
           <div class="p-3">
-            <span class="text-[10px] font-bold text-blue-600 uppercase block mb-1">${f.tur}</span>
-            <p class="text-xs font-medium text-gray-800 line-clamp-2" title="${f.nomi}">${f.nomi}</p>
-            ${f.izoh ? `<p class="text-[10px] text-gray-500 mt-1 line-clamp-1">${f.izoh}</p>` : ''}
+            <span class="text-[10px] font-bold text-blue-600 uppercase block mb-1">${esc(f.tur)}</span>
+            <p class="text-xs font-medium text-gray-800 line-clamp-2" title="${esc(f.nomi)}">${esc(f.nomi)}</p>
+            ${f.izoh ? `<p class="text-[10px] text-gray-500 mt-1 line-clamp-1">${esc(f.izoh)}</p>` : ''}
           </div>
         </div>
       `).join('') + '</div>';
@@ -1505,7 +1513,8 @@ const BemorKartaPage = {
     }
     
     const kt_no = BemorKartaPage._patient.kt_no;
-    const ext = file.name.split('.').pop();
+    const ext = (file.name.split('.').pop() || 'bin')
+      .toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 10) || 'bin';
     const filePath = kt_no + '/' + Date.now() + '.' + ext;
     
     showToast('Fayl yuklanmoqda...', 'info', 2000);
@@ -1519,12 +1528,7 @@ const BemorKartaPage = {
         
       if (uploadErr) throw uploadErr;
       
-      // 2. Get Public URL
-      const { data: { publicUrl } } = sb.storage
-        .from('multimedia')
-        .getPublicUrl(filePath);
-        
-      // 3. Save to database
+      // 2. Metadata bazaga yoziladi; ko'rishda signed URL yaratiladi.
       const { error: dbErr } = await sb.from('bemor_fayllari').insert({
         kt_no: kt_no,
         registr_turi: BemorKartaPage._type,
@@ -1532,10 +1536,14 @@ const BemorKartaPage = {
         nomi: file.name,
         izoh: izoh,
         path: filePath,
-        url: publicUrl
+        url: ''
       });
-      
-      if (dbErr) throw dbErr;
+
+      // Metadata yozilmasa private bucketda yetim fayl qoldirmaymiz.
+      if (dbErr) {
+        await sb.storage.from('multimedia').remove([filePath]);
+        throw dbErr;
+      }
       
       showToast('Fayl muvaffaqiyatli yuklandi!', 'success');
       fileInput.value = '';
