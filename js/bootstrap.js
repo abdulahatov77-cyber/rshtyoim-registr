@@ -14,13 +14,13 @@
 
     // Preserve the proven core execution order. Page modules are loaded by Router.
     for (const src of [
-      'js/config.js?v=80',
-      'js/supabase.js?v=164',
-      'js/utils.js?v=82',
-      'js/components.js?v=78',
-      'js/router.js?v=73',
-      'js/pages/login.js?v=66',
-      'js/app.js?v=69'
+      'js/config.js?v=81',
+      'js/supabase.js?v=165',
+      'js/utils.js?v=83',
+      'js/components.js?v=79',
+      'js/router.js?v=74',
+      'js/pages/login.js?v=67',
+      'js/app.js?v=70'
     ]) await AssetLoader.script(src);
   } catch (err) {
     console.error('Bootstrap error:', err);
