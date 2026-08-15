@@ -440,6 +440,7 @@ const AdminPage = {
     const isSA = p.role === 'super_admin';
     const isPending = p.role === 'pending';
     const isMain = (p.email||'').toLowerCase() === 'abdulahatov77@gmail.com';
+    const canManageRole = AdminPage._isSuperAdmin && !isMain;
     const roleBadge = isSA
       ? `<span class="badge" style="background:rgba(139,92,246,0.2);color:#c4b5fd;border:1px solid rgba(139,92,246,0.3)">${icon('crown',12)} Super Admin</span>`
       : isPending
@@ -471,7 +472,7 @@ const AdminPage = {
         <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
           <select id="role-${p.id}" onchange="AdminPage.changeRole('${p.id}',this.value)"
             style="background:#0f172a;border:1px solid rgba(99,118,158,0.2);border-radius:8px;padding:5px 8px;color:#e2e8f0;font-size:12px;cursor:pointer"
-            ${isMain?'disabled':''}>
+            ${canManageRole ? '' : 'disabled title="Rolni faqat Super Administrator o\'zgartira oladi"'}>
             <option value="pending" ${p.role==='pending'?'selected':''} disabled>⏳ Tasdiq kutilmoqda</option>
             <option value="user" ${p.role==='user'?'selected':''}>👤 Shifokor</option>
             <option value="admin" ${p.role==='admin'?'selected':''}>🛡 Viloyat Admin</option>
@@ -504,9 +505,21 @@ const AdminPage = {
   },
 
   async changeRole(userId, role) {
+    if (!AdminPage._isSuperAdmin) {
+      showToast("❌ Rolni faqat Super Administrator o'zgartira oladi", 'error');
+      AdminPage._renderTable();
+      return;
+    }
+    const allowedRoles = ['pending', 'user', 'admin', 'rahbar', 'super_admin'];
+    if (!allowedRoles.includes(role)) {
+      showToast("❌ Noto'g'ri rol tanlandi", 'error');
+      AdminPage._renderTable();
+      return;
+    }
     try {
       await Profile.setRole(userId, role);
-      showToast(`✅ Rol o'zgartirildi`, 'success');
+      const roleLabel = role === 'rahbar' ? "Rahbar (faqat ko'rish)" : role;
+      showToast(`✅ Rol o'zgartirildi: ${roleLabel}`, 'success');
       const idx = AdminPage._profiles.findIndex(p => p.id === userId);
       if (idx !== -1) AdminPage._profiles[idx].role = role;
       AdminPage._renderTable();

@@ -18,7 +18,7 @@
       'js/supabase.js?v=165',
       'js/utils.js?v=83',
       'js/components.js?v=80',
-      'js/router.js?v=76',
+      'js/router.js?v=77',
       'js/pages/login.js?v=67',
       'js/app.js?v=70'
     ]) await AssetLoader.script(src);

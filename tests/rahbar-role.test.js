@@ -40,3 +40,11 @@ test('rahbar feedback and settings use the real role, not the read-scope alias',
   assert.match(settings, /const isRahbar = profile\?\.real_role === 'rahbar'/);
   assert.match(settings, /Rahbar \(faqat ko'rish\)/);
 });
+
+test('only super admin can assign the rahbar role in the users UI', () => {
+  const admin = read('js/pages/admin.js');
+  assert.match(admin, /const canManageRole = AdminPage\._isSuperAdmin && !isMain/);
+  assert.match(admin, /if \(!AdminPage\._isSuperAdmin\)/);
+  assert.match(admin, /\['pending', 'user', 'admin', 'rahbar', 'super_admin'\]/);
+  assert.match(admin, /Rahbar \(faqat ko'rish\)/);
+});
