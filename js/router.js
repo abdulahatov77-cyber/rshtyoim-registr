@@ -16,7 +16,7 @@ const PageLoader = {
     settings:             { src: 'js/pages/settings.js?v=62' },
     harakat:              { src: 'js/pages/harakat.js?v=14' },
     marshrut:             { src: 'js/pages/marshrut.js?v=2' },
-    qabul:                { src: 'js/pages/qabul.js?v=12' },
+    qabul:                { src: 'js/pages/qabul.js?v=13' },
     'keng-hisobot':       { src: 'js/pages/keng-hisobot.js?v=11' }
   },
   _deps: {

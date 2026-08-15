@@ -28,18 +28,18 @@ const QabulPage = {
       'qabul', '🚑 Qabul kutilmoqda', 'Boshqa muassasadan yuborilgan bemorlar',
       `<div id="qb-inner" class="animate-fadein">
         <div id="qb-filter" class="card mb-4" style="display:none">
-          <div class="flex flex-wrap items-end gap-3">
-            <div class="relative flex-1" style="min-width:240px">
+          <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-[minmax(240px,1fr)_220px_minmax(260px,1fr)_auto] items-end gap-3">
+            <div class="relative min-w-0">
               <label class="form-label !mb-1">Qidirish</label>
               <input id="qb-q" class="form-input pl-9 w-full" autocomplete="off"
                      placeholder="F.I.O yoki K/T raqami..."/>
               <span class="absolute left-3 text-gray-400" style="top:34px">${icon('search', 16)}</span>
             </div>
-            <div style="min-width:200px">
+            <div class="min-w-0">
               <label class="form-label !mb-1">Qabul qiluvchi viloyat</label>
               <select id="qb-viloyat" class="form-select w-full"></select>
             </div>
-            <div style="min-width:240px">
+            <div class="min-w-0">
               <label class="form-label !mb-1">Qabul qiluvchi muassasa</label>
               <select id="qb-muassasa" class="form-select w-full"></select>
             </div>
