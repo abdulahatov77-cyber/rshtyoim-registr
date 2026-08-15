@@ -7,6 +7,11 @@ const InsultYangiPage = {
   async render() {
     const user = await Auth.getUser();
     const profile = await Profile.getCurrent();
+    if (profile?.real_role === 'rahbar') {
+      showToast("Rahbar roli faqat ko'rish huquqiga ega", 'warning');
+      Router.go('dashboard');
+      return;
+    }
     InsultYangiPage._profile = profile;
     InsultYangiPage._saving = false;
     InsultYangiPage._step = 0;

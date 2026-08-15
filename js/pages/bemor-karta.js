@@ -182,8 +182,9 @@ const BemorKartaPage = {
 
     const bgGradient = type === 'infarkt' ? 'from-red-600 to-red-800' : 'from-purple-600 to-purple-800';
     const initial = p.fio ? p.fio.charAt(0).toUpperCase() : '?';
-    const canEdit = BemorKartaPage._profile?.role === 'admin' || BemorKartaPage._profile?.role === 'super_admin';
-    const isSuperAdmin = BemorKartaPage._profile?.role === 'super_admin';
+    const isRahbar = BemorKartaPage._profile?.real_role === 'rahbar';
+    const canEdit = !isRahbar && (BemorKartaPage._profile?.role === 'admin' || BemorKartaPage._profile?.role === 'super_admin');
+    const isSuperAdmin = !isRahbar && BemorKartaPage._profile?.role === 'super_admin';
 
     const navList = BemorKartaPage._navList;
     const navIdx  = BemorKartaPage._navIndex;
@@ -244,7 +245,7 @@ const BemorKartaPage = {
               <button class="px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg text-sm font-medium transition-colors flex items-center gap-2" onclick="BemorKartaPage.editPatient()">
                 ${icon('edit-3', 16)} Tahrirlash
               </button>` : ''}
-            ${p.status==='active'?`
+            ${p.status==='active' && canEdit ?`
               <button class="px-5 py-2 bg-white text-gray-900 hover:bg-gray-50 rounded-lg text-sm font-bold shadow-md transition-colors flex items-center gap-2" onclick="BemorKartaPage.chiqarishModal()">
                 ${icon('log-out', 16)} Chiqarish
               </button>
@@ -850,7 +851,7 @@ const BemorKartaPage = {
           </div>
         </div>` : '';
       // Tahrirlash huquqi — admin va super_admin
-      const canEdit = ['admin','super_admin'].includes(BemorKartaPage._profile?.role);
+      const canEdit = BemorKartaPage._profile?.real_role !== 'rahbar' && ['admin','super_admin'].includes(BemorKartaPage._profile?.role);
       histEl.innerHTML = initial + records.map((r, i) => `
         <div class="flex gap-4 ${i < records.length - 1 ? 'mb-4' : ''}">
           <div class="flex flex-col items-center">
@@ -1733,6 +1734,10 @@ const BemorKartaPage = {
   },
 
   editPatient() {
+    if (BemorKartaPage._profile?.real_role === 'rahbar') {
+      showToast("Rahbar roli faqat ko'rish huquqiga ega", 'warning');
+      return;
+    }
     const p = BemorKartaPage._patient;
     const type = BemorKartaPage._type;
     const isInf = type === 'infarkt';
@@ -1976,6 +1981,10 @@ const BemorKartaPage = {
   },
 
   async saveEdit() {
+    if (BemorKartaPage._profile?.real_role === 'rahbar') {
+      showToast("Rahbar roli faqat ko'rish huquqiga ega", 'warning');
+      return;
+    }
     const p = BemorKartaPage._patient;
     const type = BemorKartaPage._type;
     const isInf = type === 'infarkt';
@@ -2134,7 +2143,7 @@ const BemorKartaPage = {
   },
 
   async deletePatient() {
-    if (BemorKartaPage._profile?.role !== 'super_admin') {
+    if (BemorKartaPage._profile?.role !== 'super_admin' || BemorKartaPage._profile?.real_role === 'rahbar') {
       showToast("Faqat Super Administrator o'chirish huquqiga ega", 'error');
       return;
     }
@@ -2286,7 +2295,7 @@ const BemorKartaPage = {
   _buildHarakatUI(el, p, type, logs) {
     const fmtDate = dt => dt ? new Date(dt).toLocaleDateString('uz-UZ', { day:'2-digit', month:'2-digit', year:'numeric', timeZone:'Asia/Tashkent' }) : '—';
     const profile = BemorKartaPage._profile;
-    const canEdit = profile?.role === 'admin' || profile?.role === 'super_admin';
+    const canEdit = profile?.real_role !== 'rahbar' && (profile?.role === 'admin' || profile?.role === 'super_admin');
 
     // Birinchi nuqta — qabul qilingan muassasa
     const firstEntry = {

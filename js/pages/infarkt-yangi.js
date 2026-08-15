@@ -7,6 +7,11 @@ const InfarktYangiPage = {
   async render() {
     const user = await Auth.getUser();
     const profile = await Profile.getCurrent();
+    if (profile?.real_role === 'rahbar') {
+      showToast("Rahbar roli faqat ko'rish huquqiga ega", 'warning');
+      Router.go('dashboard');
+      return;
+    }
     InfarktYangiPage._profile = profile;
     InfarktYangiPage._saving = false;
     InfarktYangiPage._step = 0;

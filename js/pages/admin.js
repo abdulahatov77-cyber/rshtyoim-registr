@@ -21,7 +21,7 @@ const AdminPage = {
 
   async render() {
     const profile = await Profile.getCurrent();
-    const isSuperAdmin = profile?.role === 'super_admin';
+    const isSuperAdmin = profile?.role === 'super_admin' && profile?.real_role !== 'rahbar';
     const isViloyatAdmin = profile?.role === 'admin';
     if (!isSuperAdmin && !isViloyatAdmin) {
       document.getElementById('app').innerHTML = `

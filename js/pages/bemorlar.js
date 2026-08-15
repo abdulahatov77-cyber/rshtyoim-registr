@@ -160,16 +160,16 @@ const BemorlarPage = {
           <div class="flex gap-3 items-center">
             <!-- Shaxsiy ma'lumot maskasi — ko'z tugmasi shu yerga qo'yiladi -->
             <span id="pdToggleBox"></span>
-            ${BemorlarPage._profile?.role === 'super_admin' ? `
+            ${BemorlarPage._profile?.role === 'super_admin' && BemorlarPage._profile?.real_role !== 'rahbar' ? `
             <button id="bl-delete-btn" class="btn flex items-center gap-2 bg-red-600 text-white hover:bg-red-700 transition-colors" style="display:none" onclick="BemorlarPage.deleteSelected()">
               ${icon('trash-2', 16)} <span id="bl-delete-count">O'chirish</span>
             </button>` : ''}
-            <button class="btn btn-infarkt flex items-center gap-2" onclick="Router.go('infarkt-yangi')">
+            ${BemorlarPage._profile?.real_role !== 'rahbar' ? `<button class="btn btn-infarkt flex items-center gap-2" onclick="Router.go('infarkt-yangi')">
               ${icon('heart', 16)} Yangi Infarkt
             </button>
             <button class="btn btn-insult flex items-center gap-2" onclick="Router.go('insult-yangi')">
               ${icon('brain', 16)} Yangi Insult
-            </button>
+            </button>` : ''}
           </div>
         </div>
         <div class="overflow-x-auto" id="bl-table-wrap">
@@ -353,7 +353,7 @@ const BemorlarPage = {
       return;
     }
 
-    const isSuperAdmin = BemorlarPage._profile?.role === 'super_admin';
+    const isSuperAdmin = BemorlarPage._profile?.role === 'super_admin' && BemorlarPage._profile?.real_role !== 'rahbar';
     BemorlarPage._selected.clear();
     wrap.innerHTML = `
       <table class="data-table">

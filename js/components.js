@@ -197,11 +197,13 @@ const Components = {
     // Check admin role from Profile cache (populated before renderLayout is called)
     const currentUserId = App._user?.id || user?.id;
     const cachedProfile = currentUserId ? Profile._cache[currentUserId] : null;
-    const isAdmin = cachedProfile?.role === 'admin' || cachedProfile?.role === 'super_admin';
-    const isSuperAdmin = cachedProfile?.role === 'super_admin';
+    const isRahbar = cachedProfile?.real_role === 'rahbar';
+    const isAdmin = !isRahbar && (cachedProfile?.role === 'admin' || cachedProfile?.role === 'super_admin');
+    const isSuperAdmin = !isRahbar && cachedProfile?.role === 'super_admin';
     const displayName = cachedProfile?.fio || cachedProfile?.full_name || email;
     const initials = displayName ? displayName.charAt(0).toUpperCase() : 'U';
-    const roleLabel = isSuperAdmin ? 'Super Administrator'
+    const roleLabel = isRahbar     ? 'Rahbar (faqat ko\'rish)'
+                    : isSuperAdmin ? 'Super Administrator'
                     : isAdmin     ? 'Viloyat Admin'
                     :               'Shifokor';
 
@@ -209,8 +211,8 @@ const Components = {
       { id: 'dashboard', label: 'Dashboard', icon: 'layout-dashboard', section: 'Asosiy' },
       { id: 'bemorlar', label: 'Bemorlar', icon: 'users' },
       { id: 'qabul', label: 'Qabul kutilmoqda', icon: 'ambulance' },
-      { id: 'infarkt-yangi', label: 'Yangi Infarkt', icon: 'heart-pulse' },
-      { id: 'insult-yangi', label: 'Yangi Insult', icon: 'brain-circuit' },
+      { id: 'infarkt-yangi', label: 'Yangi Infarkt', icon: 'heart-pulse', writeOnly: true },
+      { id: 'insult-yangi', label: 'Yangi Insult', icon: 'brain-circuit', writeOnly: true },
 
       { id: 'infarkt-reyestri', label: 'Infarkt reyestri', icon: 'heart', section: 'Reyestrlar' },
       { id: 'insult-reyestri', label: 'Insult reyestri', icon: 'brain' },
@@ -233,6 +235,8 @@ const Components = {
       if (item.superOnly && !isSuperAdmin) return;
       // adminOnly: admin va super_admin ko'ra oladi (hozir ishlatilmayapti, kelajak uchun)
       if (item.adminOnly && !isAdmin) return;
+      // rahbar respublika ma'lumotlarini ko'radi, lekin yangi klinik yozuv kirita olmaydi
+      if (item.writeOnly && isRahbar) return;
 
       if (item.section && item.section !== currentSection) {
         menuHtml += `<p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-6 mt-6 mb-2">${item.section}</p>`;
@@ -352,8 +356,8 @@ const Components = {
     const profile = App._profile || {};
     const sender = profile.fio || profile.full_name || profile.email || 'Noma\'lum';
     const viloyat = profile.viloyat || '—';
-    const role = profile.role || '—';
-    const isSA = profile.role === 'super_admin';
+    const role = profile.real_role || profile.role || '—';
+    const isSA = profile.role === 'super_admin' && profile.real_role !== 'rahbar';
 
     // Foydalanuvchi o'z xabarlarini yuklash
     let historyHtml = '';
@@ -507,7 +511,7 @@ const Components = {
 
   async _loadUnreadFeedbackBadge() {
     const profile = App._profile || {};
-    const isSA = profile.role === 'super_admin';
+    const isSA = profile.role === 'super_admin' && profile.real_role !== 'rahbar';
     try {
       if (isSA) {
         // Super admin: o'qilmagan xabarlar soni

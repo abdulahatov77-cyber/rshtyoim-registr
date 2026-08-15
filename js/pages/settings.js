@@ -19,6 +19,7 @@ const SettingsPage = {
   renderContent(profile, user) {
     const inner = document.getElementById('settings-inner');
     if (!inner) return;
+    const isRahbar = profile?.real_role === 'rahbar';
 
     const viloyatOptions = APP_CONFIG.VILOYATLAR.map(v =>
       `<option value="${v}" ${profile?.viloyat === v ? 'selected' : ''}>${v}</option>`
@@ -39,8 +40,8 @@ const SettingsPage = {
             <div>
               <p class="font-bold text-gray-900">${profile?.fio || profile?.full_name || '—'}</p>
               <p class="text-sm text-gray-500">${user?.email || '—'}</p>
-              <span class="inline-block mt-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase ${profile?.role === 'super_admin' ? 'bg-red-100 text-red-700' : profile?.role === 'admin' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}">
-                ${profile?.role === 'super_admin' ? 'Super Administrator' : profile?.role === 'admin' ? 'Administrator' : 'Shifokor'}
+              <span class="inline-block mt-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase ${isRahbar ? 'bg-amber-100 text-amber-700' : profile?.role === 'super_admin' ? 'bg-red-100 text-red-700' : profile?.role === 'admin' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}">
+                ${isRahbar ? "Rahbar (faqat ko'rish)" : profile?.role === 'super_admin' ? 'Super Administrator' : profile?.role === 'admin' ? 'Administrator' : 'Shifokor'}
               </span>
             </div>
           </div>
