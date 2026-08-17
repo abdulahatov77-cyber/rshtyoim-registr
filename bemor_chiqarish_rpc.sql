@@ -42,7 +42,7 @@ DECLARE
   v_rahbar   boolean;
   v_qabul    text;    -- infarkt_qabul | insult_qabul
   v_chiq     text;    -- infarkt_chiqarish | insult_chiqarish
-  v_id       bigint;
+  v_id       uuid;    -- infarkt_qabul.id / insult_qabul.id — UUID, bigint EMAS
   v_row_vil  text;
   v_payload  jsonb;
   v_cols     text;
