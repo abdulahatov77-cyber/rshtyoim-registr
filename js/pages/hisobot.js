@@ -257,6 +257,38 @@ const HisobotPage = {
         <div id="pq-results"></div>
       </div>
 
+      <!-- Uzoq davolanayotganlar — chiqarish unutilganini ko'rsatadi -->
+      <div class="h-card">
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-2">
+          <div>
+            <h3 class="h-title !mb-1">${icon('clock', 18)} Uzoq davolanayotgan bemorlar</h3>
+            <p class="text-sm text-slate-500">Tizimda hali "davolanmoqda" bo'lib turgan bemorlar.
+            Ko'pincha ular chiqarilgan, lekin chiqarish tizimda belgilanmagan.</p>
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+            <select id="ls-kun" class="form-select bg-slate-50 text-blue-900 border-blue-200 font-medium" style="max-width:170px">
+              <option value="10">10 kundan ortiq</option>
+              <option value="15" selected>15 kundan ortiq</option>
+              <option value="30">30 kundan ortiq</option>
+              <option value="60">60 kundan ortiq</option>
+              <option value="120">120 kundan ortiq</option>
+            </select>
+            ${isSuperAdmin ? `
+            <select id="ls-viloyat" class="form-select bg-slate-50 text-blue-900 border-blue-200 font-medium" style="max-width:190px">
+              <option value="">— Barcha viloyatlar —</option>
+              ${Object.keys(APP_CONFIG.MUASSASALAR).map(v => `<option value="${v}">${v}</option>`).join('')}
+            </select>` : ''}
+            <button class="btn btn-primary shadow-md hover:shadow-lg flex items-center gap-2 px-4 rounded-xl" onclick="HisobotPage.loadLongStay()">
+              ${icon('search', 16)} Ko'rish
+            </button>
+            <button id="ls-export-btn" class="btn btn-success shadow-md hover:shadow-lg flex items-center gap-2 px-4 rounded-xl" onclick="HisobotPage.exportLongStay()" disabled style="opacity:0.5">
+              ${icon('download', 16)} Excel
+            </button>
+          </div>
+        </div>
+        <div id="ls-results"></div>
+      </div>
+
       <div id="h-results">
         <div class="h-card text-center py-20 flex flex-col items-center justify-center">
           <div class="text-blue-200 mb-4 animate-pulse">${icon('pie-chart', 64)}</div>
@@ -266,6 +298,102 @@ const HisobotPage = {
       </div>
     `;
     initIcons();
+  },
+
+  // ===== UZOQ DAVOLANAYOTGAN BEMORLAR =====
+  async loadLongStay() {
+    const el = document.getElementById('ls-results');
+    if (!el) return;
+    const kun = Number(document.getElementById('ls-kun')?.value || 15);
+    const vil = document.getElementById('ls-viloyat')?.value || undefined;
+    el.innerHTML = `<div class="flex justify-center py-10">
+      <div class="w-9 h-9 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div></div>`;
+    const btn = document.getElementById('ls-export-btn');
+    if (btn) { btn.disabled = true; btn.style.opacity = '0.5'; }
+    try {
+      const guruhlar = await DB.getLongStayPatients(vil, undefined, kun);
+      HisobotPage._lastLongStay = { guruhlar, kun };
+      const jami = guruhlar.reduce((a, g) => a + g.bemorlar.length, 0);
+      if (!jami) {
+        el.innerHTML = `<div class="text-center py-10 text-slate-500 text-sm">
+          ${kun} kundan ortiq davolanayotgan bemor yo'q — hammasi tartibda.</div>`;
+        return;
+      }
+      const rang = (k) => k >= 90 ? '#b91c1c' : k >= 30 ? '#c2410c' : '#b45309';
+      el.innerHTML = `
+        <div class="mb-3 p-3 rounded-xl bg-amber-50 border border-amber-200 text-sm text-amber-900">
+          <b>${jami} ta bemor</b> ${kun} kundan ortiq "davolanmoqda" holatida —
+          ${guruhlar.length} ta muassasada.
+          Har birini kartadan ochib, haqiqiy chiqish sanasi bilan chiqarish kerak.
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm border-collapse">
+            <thead>
+              <tr style="background:#1e3a8a">
+                <th class="p-2.5 text-left text-white font-bold rounded-tl-lg">Muassasa</th>
+                <th class="p-2.5 text-center text-white font-bold">Bemorlar</th>
+                <th class="p-2.5 text-center text-white font-bold">Eng uzoq</th>
+                <th class="p-2.5 text-left text-white font-bold rounded-tr-lg">Bemorlar (kartani ochish uchun bosing)</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${guruhlar.map((g, i) => {
+                const eng = Math.max(...g.bemorlar.map(b => b.kunlar));
+                const royxat = [...g.bemorlar].sort((a, b) => b.kunlar - a.kunlar);
+                return `
+                <tr style="background:${i % 2 === 0 ? '#f8fafc' : '#fff'}">
+                  <td class="p-2.5 font-semibold text-slate-800 border-b border-slate-200 align-top">
+                    ${esc(g.muassasa)}
+                    <div class="text-[11px] text-slate-400 font-normal">${esc(royxat[0]?.viloyat || '')}</div>
+                  </td>
+                  <td class="p-2.5 text-center font-bold text-blue-700 border-b border-slate-200 align-top">${g.bemorlar.length}</td>
+                  <td class="p-2.5 text-center font-bold border-b border-slate-200 align-top" style="color:${rang(eng)}">${eng} kun</td>
+                  <td class="p-2.5 border-b border-slate-200">
+                    <div class="flex flex-wrap gap-1.5">
+                      ${royxat.map(b => `
+                        <button onclick="Router.go('bemor-karta',{kt_no:'${esc(b.kt_no)}',type:'${b._type}'})"
+                          title="${esc(b.kt_no)} · ${b._type}"
+                          style="border:1px solid #e2e8f0;background:#fff;border-radius:8px;padding:3px 8px;
+                                 font-size:11px;cursor:pointer;white-space:nowrap">
+                          ${esc(b.fio || '—')}
+                          <span style="color:${rang(b.kunlar)};font-weight:700">${b.kunlar}k</span>
+                        </button>`).join('')}
+                    </div>
+                  </td>
+                </tr>`;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>`;
+      if (btn) { btn.disabled = false; btn.style.opacity = ''; }
+    } catch (err) {
+      el.innerHTML = `<div class="text-center text-red-600 py-8">${esc(err.message || 'Xatolik')}</div>`;
+    }
+  },
+
+  exportLongStay() {
+    const d = HisobotPage._lastLongStay;
+    if (!d) { showToast('Avval ro\'yxatni shakllantiring', 'warning'); return; }
+    const rows = [];
+    d.guruhlar.forEach(g => {
+      [...g.bemorlar].sort((a, b) => b.kunlar - a.kunlar).forEach(b => {
+        rows.push({
+          'Viloyat': b.viloyat || '',
+          'Muassasa': g.muassasa,
+          'K/T raqami': b.kt_no || '',
+          'F.I.O': b.fio || '',
+          "Tug'ilgan yil": b.tugilgan_yil || '',
+          'Registr': b._type === 'infarkt' ? 'Infarkt' : 'Insult',
+          'Tashxis': b.infarkt_turi || b.insult_turi || '',
+          'Qabul vaqti': Utils.formatDateTime(b.qabul_vaqt),
+          'Necha kun': b.kunlar
+        });
+      });
+    });
+    if (!rows.length) return;
+    const bugun = new Date(Date.now() + 5 * 3600000).toISOString().slice(0, 10);
+    Utils.exportXLSX(rows, `Uzoq_davolanayotganlar_${d.kun}kun_${bugun}.xlsx`, 'Uzoq davolanayotganlar');
+    showToast('✅ Excel fayl yuklab olindi', 'success');
   },
 
   async loadViloyatReport() {

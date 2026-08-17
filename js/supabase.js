@@ -1186,13 +1186,14 @@ const DB = {
     return combined.slice(0, limit);
   },
 
-  // 15+ kun davolanayotgan bemorlar muassasa bo'yicha
-  async getLongStayPatients(overrideViloyat, overrideMuassasa) {
+  // Uzoq vaqt "davolanmoqda" bo'lib turgan bemorlar, muassasa bo'yicha.
+  // Amalda bular ko'pincha chiqarilgan, lekin tizimda belgilanmagan bemorlar.
+  async getLongStayPatients(overrideViloyat, overrideMuassasa, kunlar = 15) {
     const p = await Profile.getCurrent();
     const viloyat = overrideMuassasa ? null : (overrideViloyat !== undefined ? overrideViloyat : (p?.role === 'super_admin' ? null : p?.viloyat));
     const eqViloyat = (q) => overrideMuassasa ? q.eq('muassasa', overrideMuassasa) : (viloyat ? q.eq('viloyat', viloyat) : q);
     const cutoff = new Date();
-    cutoff.setDate(cutoff.getDate() - 15);
+    cutoff.setDate(cutoff.getDate() - (Number(kunlar) || 15));
     const cutoffISO = cutoff.toISOString();
     const [{ data: inf }, { data: ins }] = await Promise.all([
       eqViloyat(getSupabase().from('infarkt_qabul').select('kt_no,fio,tugilgan_yil,muassasa,viloyat,qabul_vaqt,status,infarkt_turi').eq('status', 'active').lte('qabul_vaqt', cutoffISO)),
