@@ -15,10 +15,10 @@
     // Preserve the proven core execution order. Page modules are loaded by Router.
     for (const src of [
       'js/config.js?v=81',
-      'js/supabase.js?v=168',
+      'js/supabase.js?v=169',
       'js/utils.js?v=83',
       'js/components.js?v=80',
-      'js/router.js?v=80',
+      'js/router.js?v=81',
       'js/pages/login.js?v=67',
       'js/app.js?v=70'
     ]) await AssetLoader.script(src);

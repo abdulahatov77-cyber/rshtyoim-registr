@@ -845,6 +845,45 @@ const DB = {
     return result;
   },
 
+  // ===== ПҚ-20 OYLIK SHAKL =====
+  // ЎМИ  = infarkt registri, FAQAT STEMI va NSTEMI (AMI kirmaydi)
+  // ЎЦВК = insult registri (ishemik, gemorragik, TIA)
+  async pq20Oylik(fromISO, toISO, muassasa) {
+    const sb = getSupabase();
+    const olish = async (t, cols) => {
+      let q = sb.from(t).select(cols).gte('qabul_vaqt', fromISO).lt('qabul_vaqt', toISO);
+      if (muassasa) q = q.eq('muassasa', muassasa);
+      const { data, error } = await q.limit(5000);
+      if (error) throw error;
+      return data || [];
+    };
+    const infCols = 'kt_no,fio,tugilgan_sana,tugilgan_yil,jins,yashash_viloyat,yashash_tuman,' +
+      'viloyat,muassasa,qabul_vaqt,simptom_vaqt,tez_yordam_kelgan_vaqt,ekg_vaqti_ts,' +
+      'tlt_vaqt,pci_vaqt,infarkt_turi,muolaja_turi,otkazilgan_muassasa,status';
+    const insCols = 'kt_no,fio,tugilgan_sana,tugilgan_yil,jins,yashash_viloyat,yashash_tuman,' +
+      'viloyat,muassasa,qabul_vaqt,simptom_vaqt,tez_yordam_kelgan_vaqt,kt_vaqti,' +
+      'trombolizis_vaqti,trombektomiya_vaqti,insult_turi,mskt,mskt_angiografiya,' +
+      'muolaja_turi,otkazilgan_muassasa,status';
+    const [infHammasi, ins] = await Promise.all([
+      olish('infarkt_qabul', infCols),
+      olish('insult_qabul', insCols)
+    ]);
+    // AMI chiqarib tashlanadi — ЎМИ faqat STEMI va NSTEMI
+    const inf = infHammasi.filter(r => /stemi/i.test(r.infarkt_turi || ''));
+
+    // O'lim vaqtini hisoblash uchun chiqarish sanalari
+    const ktList = [...inf, ...ins].filter(r => r.status === 'vafot').map(r => r.kt_no);
+    const chiqMap = new Map();
+    if (ktList.length) {
+      const [ci, cs] = await Promise.all([
+        sb.from('infarkt_chiqarish').select('kt_no,chiqish_sana').in('kt_no', ktList),
+        sb.from('insult_chiqarish').select('kt_no,chiqish_sana').in('kt_no', ktList)
+      ]);
+      [...(ci.data || []), ...(cs.data || [])].forEach(c => chiqMap.set(c.kt_no, c.chiqish_sana));
+    }
+    return { inf, ins, chiqMap, tashlangan: infHammasi.length - inf.length };
+  },
+
   // ===== ROL RUXSATLARI (galochkalar) =====
   // Jadval hali yaratilmagan bo'lsa bo'sh ro'yxat qaytadi — panel yashiriladi.
   async rolRuxsatlari() {

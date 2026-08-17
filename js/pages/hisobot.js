@@ -257,6 +257,33 @@ const HisobotPage = {
         <div id="pq-results"></div>
       </div>
 
+      <!-- ПҚ-20 oylik rasmiy shakl -->
+      <div class="h-card">
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-2">
+          <div>
+            <h3 class="h-title !mb-1">${icon('file-spreadsheet', 18)} ПҚ-20 oylik shakl</h3>
+            <p class="text-sm text-slate-500">Rasmiy ikki jadvalli hisobot: muassasa jamlanmasi va bemorlar ro'yxati.
+            ЎМИ — STEMI va NSTEMI, ЎЦВК — insultlar.</p>
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+            <input id="pq-oy" type="month" class="form-input bg-slate-50 text-blue-900 border-blue-200 font-medium" style="max-width:160px"/>
+            ${isSuperAdmin ? `
+            <select id="pq-oy-viloyat" class="form-select bg-slate-50 text-blue-900 border-blue-200 font-medium" style="max-width:180px" onchange="HisobotPage.onPQOyViloyat(this.value)">
+              <option value="">— Barcha viloyatlar —</option>
+              ${Object.keys(APP_CONFIG.MUASSASALAR).map(v => `<option value="${v}">${v}</option>`).join('')}
+            </select>` : ''}
+            <select id="pq-oy-muassasa" class="form-select bg-slate-50 text-blue-900 border-blue-200 font-medium" style="max-width:250px">
+              <option value="">— Barcha muassasalar —</option>
+              ${(!isSuperAdmin && myViloyat) ? (APP_CONFIG.MUASSASALAR[myViloyat]||[]).map(m=>`<option value="${m}">${m}</option>`).join('') : ''}
+            </select>
+            <button class="btn btn-success shadow-md hover:shadow-lg flex items-center gap-2 px-4 rounded-xl" onclick="HisobotPage.exportPQ20Oylik()">
+              ${icon('download', 16)} Shaklni yuklab olish
+            </button>
+          </div>
+        </div>
+        <div id="pq-oy-info" class="text-xs text-slate-500"></div>
+      </div>
+
       <!-- Uzoq davolanayotganlar — chiqarish unutilganini ko'rsatadi -->
       <div class="h-card">
         <div class="flex flex-wrap items-center justify-between gap-3 mb-2">
@@ -298,6 +325,256 @@ const HisobotPage = {
       </div>
     `;
     initIcons();
+  },
+
+  // ===== ПҚ-20 OYLIK RASMIY SHAKL =====
+  onPQOyViloyat(viloyat) {
+    const sel = document.getElementById('pq-oy-muassasa');
+    if (!sel) return;
+    sel.innerHTML = `<option value="">— Barcha muassasalar —</option>` +
+      (APP_CONFIG.MUASSASALAR[viloyat] || []).map(m => `<option value="${m}">${m}</option>`).join('');
+  },
+
+  async exportPQ20Oylik() {
+    const oy = document.getElementById('pq-oy')?.value;   // 'YYYY-MM'
+    if (!oy) { showToast('Oyni tanlang', 'warning'); return; }
+    const muassasa = document.getElementById('pq-oy-muassasa')?.value || '';
+    const info = document.getElementById('pq-oy-info');
+    const [yil, oyRaqam] = oy.split('-').map(Number);
+    const boshi = new Date(Date.UTC(yil, oyRaqam - 1, 1, -5, 0, 0)).toISOString();
+    const oxiri = new Date(Date.UTC(yil, oyRaqam, 1, -5, 0, 0)).toISOString();
+    if (info) info.textContent = 'Yuklanmoqda...';
+    try {
+      await HisobotPage._ensureExcelJS();
+      const d = await DB.pq20Oylik(boshi, oxiri, muassasa || undefined);
+      if (!d.inf.length && !d.ins.length) {
+        if (info) info.textContent = 'Tanlangan oy va muassasa bo\'yicha bemor topilmadi.';
+        showToast('Ma\'lumot topilmadi', 'warning');
+        return;
+      }
+      await HisobotPage._pq20Workbook(d, yil, oyRaqam, muassasa);
+      if (info) info.innerHTML = `ЎМИ: <b>${d.inf.length}</b> · ЎЦВК: <b>${d.ins.length}</b>` +
+        (d.tashlangan ? ` · AMI sifatida qayd etilgan <b>${d.tashlangan}</b> yozuv shaklga kiritilmadi` : '');
+      showToast('✅ Shakl yuklab olindi', 'success');
+    } catch (e) {
+      if (info) info.textContent = '';
+      showToast('Xatolik: ' + (e.message || 'shakl yasalmadi'), 'error', 7000);
+    }
+  },
+
+  _pq20Workbook(d, yil, oyRaqam, muassasa) {
+    const OYLAR = ['январь','февраль','март','апрель','май','июнь','июль',
+                   'август','сентябрь','октябрь','ноябрь','декабрь'];
+    const sarlavha = (nom) =>
+      `Жадвал №${nom} Ўзбекистон Республикаси Президентининг 2026 йил 20 январдаги ` +
+      `“Ўткир юрак-қон томир ва цереброваскуляр касалликларнинг олдини олиш чора-тадбирларини ` +
+      `такомиллаштириш тўғрисида”ги ПҚ-20-сонли қарори бўйича беморларга ўткир юрак қон-томир ` +
+      `касалликлари ва бош мияда қон айланишининг ўткир бузилиши ҳолатларида кўрсатилган ` +
+      `шошилинч тиббий хизматлар ҳисоботи${nom === 2 ? ' ( беморлар рўйхати )' : ''} ${yil} йил ${OYLAR[oyRaqam-1]}`;
+
+    const daq = (a, b) => (a && b) ? (new Date(b) - new Date(a)) / 60000 : null;
+    const soat = (a, b) => (a && b) ? (new Date(b) - new Date(a)) / 3600000 : null;
+    const oraliqda = (v, min, max) => v !== null && v >= min && v <= max;
+    const vaqt = (v, fmt) => {
+      if (!v) return '';
+      const t = new Date(new Date(v).getTime() + 5 * 3600000).toISOString();
+      return fmt === 'soat' ? t.slice(11, 16)
+        : `${t.slice(8,10)}.${t.slice(5,7)}.${t.slice(0,4)} ${t.slice(11,16)}`;
+    };
+
+    const wb = new window.ExcelJS.Workbook();
+    wb.creator = 'REGESY';
+
+    // ============ ЖАДВАЛ №1 ============
+    const ws1 = wb.addWorksheet('жадвал 1', {
+      pageSetup: { paperSize: 9, orientation: 'landscape', fitToPage: true, fitToWidth: 1, fitToHeight: 0 }
+    });
+    ws1.mergeCells('A1:S1');
+    ws1.getCell('A1').value = sarlavha(1);
+    ws1.getCell('A1').alignment = { wrapText: true, vertical: 'middle', horizontal: 'center' };
+    ws1.getCell('A1').font = { bold: true, size: 11 };
+    ws1.getRow(1).height = 64;
+
+    const h2 = {
+      A: '№', B: 'Муассаса номи', C: 'шошилинч мурожаат қилган беморлар сони',
+      D: 'Шундан', F: 'ЎМИ вақт меёрлари оралиғида қабул қилинган тиббий хизмат кўрсатилган беморлар сони',
+      H: 'ЎЦВК вақт меёрлари оралиғида қабул қилинган тиббий хизмат кўрсатилган беморлар сони',
+      J: 'қўлланилган тромб эритувчи дори воситалари',
+      L: 'Ўтказилган инструментал текширувлар',
+      N: 'қўлланилган наркотик воситалари',
+      P: 'худудий шифохонага ўтказилган беморлар сони',
+      R: 'Ўлим холатлари'
+    };
+    Object.entries(h2).forEach(([c, v]) => { ws1.getCell(c + '2').value = v; });
+    ['A2:A4','B2:B4','C2:C4','D2:E3','F2:G3','H2:I3','J2:K3','L2:M3','N2:O3','P2:Q3','R2:S2']
+      .forEach(r => ws1.mergeCells(r));
+    ws1.getCell('R3').value = 'ЎМИ';
+    ws1.getCell('S3').value = 'ЎЦВК';
+    const h4 = ['ЎМИ','ЎЦВК','30-35дақиқа','35-90дақиқа','20-60дақиқа','60-105дақиқа',
+                'абсолют сони','суммаси','ангиография','МСКТ(МРТ)','абсолют сони','суммаси',
+                'ЎМИ','ЎЦВК','6-12 соат','12-24соат'];
+    h4.forEach((v, i) => { ws1.getCell(4, 4 + i).value = v; });
+    [2,3,4].forEach(r => {
+      ws1.getRow(r).height = r === 2 ? 46 : 20;
+      for (let c = 1; c <= 19; c++) {
+        const cell = ws1.getCell(r, c);
+        cell.alignment = { wrapText: true, vertical: 'middle', horizontal: 'center' };
+        cell.font = { bold: true, size: 9 };
+        cell.border = { top:{style:'thin'}, left:{style:'thin'}, bottom:{style:'thin'}, right:{style:'thin'} };
+      }
+    });
+    ws1.getColumn(1).width = 5;
+    ws1.getColumn(2).width = 34;
+    for (let c = 3; c <= 19; c++) ws1.getColumn(c).width = 11;
+
+    // Muassasalar bo'yicha guruhlash
+    const guruh = new Map();
+    const qosh = (r, turi) => {
+      const k = r.muassasa || '—';
+      if (!guruh.has(k)) guruh.set(k, { inf: [], ins: [] });
+      guruh.get(k)[turi].push(r);
+    };
+    d.inf.forEach(r => qosh(r, 'inf'));
+    d.ins.forEach(r => qosh(r, 'ins'));
+
+    let qator = 5, n = 1;
+    const jami = new Array(17).fill(0);
+    [...guruh.keys()].sort().forEach(nom => {
+      const g = guruh.get(nom);
+      const olim = (arr) => arr.filter(r => r.status === 'vafot')
+        .map(r => soat(r.qabul_vaqt, d.chiqMap.get(r.kt_no))).filter(v => v !== null);
+      const olimI = olim(g.inf), olimS = olim(g.ins);
+      const q = [
+        g.inf.length + g.ins.length,
+        g.inf.length,
+        g.ins.length,
+        g.inf.filter(r => oraliqda(daq(r.qabul_vaqt, r.ekg_vaqti_ts), 30, 35)).length,
+        g.inf.filter(r => oraliqda(daq(r.qabul_vaqt, r.pci_vaqt || r.tlt_vaqt), 35, 90)).length,
+        g.ins.filter(r => oraliqda(daq(r.qabul_vaqt, r.kt_vaqti), 20, 60)).length,
+        g.ins.filter(r => oraliqda(daq(r.qabul_vaqt, r.trombolizis_vaqti || r.trombektomiya_vaqti), 60, 105)).length,
+        g.inf.filter(r => r.tlt_vaqt).length + g.ins.filter(r => r.trombolizis_vaqti).length,
+        null,   // тромб эритувчи суммаси — registrda yo'q
+        g.inf.filter(r => r.pci_vaqt || /kag|ангиограф|angiograf/i.test(r.muolaja_turi || '')).length
+          + g.ins.filter(r => (r.mskt_angiografiya || '') !== '' || /angiograf/i.test(r.muolaja_turi || '')).length,
+        g.ins.filter(r => /ha|ҳа/i.test(r.mskt || '') || /mskt/i.test(r.muolaja_turi || '')).length
+          + g.inf.filter(r => /mskt/i.test(r.muolaja_turi || '')).length,
+        null, null,   // наркотик — registrda yo'q
+        g.inf.filter(r => (r.otkazilgan_muassasa || '') !== '').length,
+        g.ins.filter(r => (r.otkazilgan_muassasa || '') !== '').length,
+        olimI.length,
+        olimS.length
+      ];
+      ws1.getCell(qator, 1).value = n++;
+      ws1.getCell(qator, 2).value = nom;
+      q.forEach((v, i) => { ws1.getCell(qator, 3 + i).value = v; if (typeof v === 'number') jami[i] += v; });
+      for (let c = 1; c <= 19; c++) {
+        const cell = ws1.getCell(qator, c);
+        cell.border = { top:{style:'thin'}, left:{style:'thin'}, bottom:{style:'thin'}, right:{style:'thin'} };
+        cell.alignment = { horizontal: c === 2 ? 'left' : 'center', vertical: 'middle' };
+        cell.font = { size: 10 };
+      }
+      qator++;
+    });
+    // JAMI qatori
+    ws1.getCell(qator, 2).value = 'ЖАМИ';
+    jami.forEach((v, i) => { if (typeof v === 'number') ws1.getCell(qator, 3 + i).value = v; });
+    for (let c = 1; c <= 19; c++) {
+      const cell = ws1.getCell(qator, c);
+      cell.font = { bold: true, size: 10 };
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFDBEAFE' } };
+      cell.border = { top:{style:'medium'}, left:{style:'thin'}, bottom:{style:'medium'}, right:{style:'thin'} };
+      cell.alignment = { horizontal: c === 2 ? 'left' : 'center', vertical: 'middle' };
+    }
+    ws1.getCell(qator + 2, 1).value =
+      'Изоҳ: "суммаси" ва "наркотик воситалари" устунлари регистрда йиғилмайди — қўлда тўлдирилади. ' +
+      'Вақт меёрлари: ЎМИ 30-35 дақ = қабулдан ЭКГ гача, 35-90 дақ = қабулдан ТЛТ/ПЧИ гача; ' +
+      'ЎЦВК 20-60 дақ = қабулдан КТ гача, 60-105 дақ = қабулдан тромболизис/тромбэктомиягача. ' +
+      'ЎМИ = STEMI ва NSTEMI (AMI киритилмаган).';
+    ws1.getCell(qator + 2, 1).font = { italic: true, size: 9, color: { argb: 'FF64748B' } };
+
+    // ============ ЖАДВАЛ №2 ============
+    const ws2 = wb.addWorksheet('жадвал 2', {
+      pageSetup: { paperSize: 9, orientation: 'landscape', fitToPage: true, fitToWidth: 1, fitToHeight: 0 }
+    });
+    ws2.mergeCells('A1:AG1');
+    ws2.getCell('A1').value = sarlavha(2);
+    ws2.getCell('A1').alignment = { wrapText: true, vertical: 'middle', horizontal: 'center' };
+    ws2.getCell('A1').font = { bold: true, size: 11 };
+    ws2.getRow(1).height = 64;
+
+    const g2 = ['№','ФИО','ПИНФЛ','туғилган сана','жинси','яшаш манзили','066-х /шакл','066-х /шакл',
+      'Асосий ташхис (МКБ)','тиббий хизмат тури','клиник протокол номи','клиник маршрут рақами',
+      '"Олтин соат" тамойилини баҳолаш учун вақт кўрсаткичлари','','','','','','',
+      'Йўналтирилган муассаса','Якуний тиббий муассаса',
+      'Дори воситалар ва сарфлов материаллари','','','',
+      'Дори воситалари манбаи','','','Кўрсатилган тиббий хизматлар ва молиялаштириш','','','','ИЗОҲ'];
+    const g3 = ['№','ФИО','ПИНФЛ','туғилган сана','жинси','яшаш манзили','рақами','сана',
+      'Асосий ташхис (МКБ)','тиббий хизмат тури','клиник протокол номи','клиник маршрут рақами',
+      'симптом бошланган вақт','103 чақирилган вақт','103 келган вақт','тиббий муассасага қабул қилинган вақт',
+      'диагностика тури ва бошланган вақт','тромболизис/интервенция бошланган вақт','шифохонага ётқизилган вақт',
+      'Йўналтирилган муассаса','Якуний тиббий муассаса','номи','миқдори','харид нархи','жами',
+      'Марказлашган тўлов- МТ','бюджет (муассаса томонидан харид қилинган','бошқа манба',
+      'хизмат номи','ҳажми','базавий нарх','сумма','ИЗОҲ'];
+    g2.forEach((v, i) => { if (v) ws2.getCell(2, i + 1).value = v; });
+    g3.forEach((v, i) => { ws2.getCell(3, i + 1).value = v; });
+    ['A2:A3','B2:B3','C2:C3','D2:D3','E2:E3','F2:F3','G2:H2','I2:I3','J2:J3','K2:K3','L2:L3',
+     'M2:S2','T2:T3','U2:U3','V2:Y2','Z2:AB2','AC2:AF2','AG2:AG3'].forEach(r => ws2.mergeCells(r));
+    [2,3].forEach(r => {
+      ws2.getRow(r).height = 44;
+      for (let c = 1; c <= 33; c++) {
+        const cell = ws2.getCell(r, c);
+        cell.alignment = { wrapText: true, vertical: 'middle', horizontal: 'center' };
+        cell.font = { bold: true, size: 8 };
+        cell.border = { top:{style:'thin'}, left:{style:'thin'}, bottom:{style:'thin'}, right:{style:'thin'} };
+      }
+    });
+    ws2.getColumn(1).width = 5;
+    ws2.getColumn(2).width = 26;
+    for (let c = 3; c <= 33; c++) ws2.getColumn(c).width = 13;
+
+    const bemorlar = [
+      ...d.inf.map(r => ({ ...r, _reg: 'ЎМИ', _tashxis: r.infarkt_turi,
+        _diagT: 'ЭКГ', _diagV: r.ekg_vaqti_ts, _reperf: r.pci_vaqt || r.tlt_vaqt })),
+      ...d.ins.map(r => ({ ...r, _reg: 'ЎЦВК', _tashxis: r.insult_turi,
+        _diagT: 'КТ/МСКТ', _diagV: r.kt_vaqti, _reperf: r.trombolizis_vaqti || r.trombektomiya_vaqti }))
+    ].sort((a, b) => new Date(a.qabul_vaqt) - new Date(b.qabul_vaqt));
+
+    bemorlar.forEach((r, i) => {
+      const rn = 4 + i;
+      const manzil = [r.yashash_viloyat, r.yashash_tuman].filter(Boolean).join(', ');
+      const tugilgan = r.tugilgan_sana
+        ? String(r.tugilgan_sana).slice(0, 10).split('-').reverse().join('.')
+        : (r.tugilgan_yil || '');
+      const q = [
+        i + 1, r.fio || '', '', tugilgan, r.jins || '', manzil, '', '',
+        r._tashxis || '', 'шошилинч', '', '',
+        r.simptom_vaqt || '', '', vaqt(r.tez_yordam_kelgan_vaqt), vaqt(r.qabul_vaqt),
+        (r._diagV ? `${r._diagT} ${vaqt(r._diagV, 'soat')}` : r._diagT),
+        vaqt(r._reperf), vaqt(r.qabul_vaqt),
+        r.otkazilgan_muassasa || '', r.muassasa || '',
+        '', '', '', '', '', '', '', '', '', '', '',
+        r.muolaja_turi || ''
+      ];
+      q.forEach((v, c) => {
+        const cell = ws2.getCell(rn, c + 1);
+        cell.value = v;
+        cell.font = { size: 9 };
+        cell.alignment = { vertical: 'middle', horizontal: c === 1 || c === 5 ? 'left' : 'center', wrapText: true };
+        cell.border = { top:{style:'thin'}, left:{style:'thin'}, bottom:{style:'thin'}, right:{style:'thin'} };
+      });
+    });
+    ws2.views = [{ state: 'frozen', xSplit: 2, ySplit: 3 }];
+
+    const nomQismi = muassasa ? '_' + muassasa.replace(/[\\/:*?"<>|]/g, '-') : '';
+    return wb.xlsx.writeBuffer().then(buf => {
+      const blob = new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `PQ20_${yil}-${String(oyRaqam).padStart(2, '0')}${nomQismi}.xlsx`;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    });
   },
 
   // ===== UZOQ DAVOLANAYOTGAN BEMORLAR =====
