@@ -845,6 +845,23 @@ const DB = {
     return result;
   },
 
+  // ===== ROL RUXSATLARI (galochkalar) =====
+  // Jadval hali yaratilmagan bo'lsa bo'sh ro'yxat qaytadi — panel yashiriladi.
+  async rolRuxsatlari() {
+    const { data, error } = await getSupabase()
+      .from('rol_ruxsatlari').select('rol,amal,ruxsat');
+    if (error) return [];
+    return data || [];
+  },
+
+  async rolRuxsatSaqla(rol, amal, ruxsat) {
+    const { error } = await getSupabase().rpc('rol_ruxsat_saqla', {
+      p_rol: rol, p_amal: amal, p_ruxsat: !!ruxsat
+    });
+    if (error) throw error;
+    return true;
+  },
+
   // Bemorni chiqarish. Shifokorda jadvalni to'g'ridan-to'g'ri o'zgartirish
   // ruxsati yo'q (tahrirlash yopiq) — chiqarish shu SECURITY DEFINER
   // funksiya orqali bajariladi. U faqat status va otkazilgan_muassasa ni

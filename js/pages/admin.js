@@ -19,6 +19,65 @@ const AdminPage = {
   _dupLoading: false,
   _dupMode: 'day',  // 'day' = bir kun ichida, 'all' = barcha vaqt (Kirill/Lotin)
 
+  // ===== GALOCHKA BILAN BOSHQARILADIGAN RUXSATLAR =====
+  // Viloyat qamrovi bu yerda emas: shifokor/admin baribir faqat o'z
+  // viloyatida ishlaydi. Galochka faqat "amalni bajara oladimi" ni belgilaydi.
+  _AMALLAR: [
+    ['kiritish',   "Yangi bemor qo'shish"],
+    ['tahrirlash', "Bemor ma'lumotini tahrirlash"],
+    ['chiqarish',  'Bemorni kasalxonadan chiqarish'],
+    ['otkazish',   "Boshqa muassasaga o'tkazish"],
+    ['ochirish',   "Bemorni o'chirish"]
+  ],
+
+  _ruxsatBor(rol, amal) {
+    const r = (AdminPage._ruxsatlar || []).find(x => x.rol === rol && x.amal === amal);
+    return r ? !!r.ruxsat : false;
+  },
+
+  _ruxsatQatorlari() {
+    if (!(AdminPage._ruxsatlar || []).length) return '';   // jadval hali yaratilmagan
+    const katak = (rol, amal) => {
+      const bor = AdminPage._ruxsatBor(rol, amal);
+      if (!AdminPage._isSuperAdmin) {
+        return bor ? '<span style="color:#34d399;font-size:16px">✓</span>'
+                   : '<span style="color:#475569">—</span>';
+      }
+      return `<input type="checkbox" ${bor ? 'checked' : ''}
+                onchange="AdminPage.ruxsatSaqla('${rol}','${amal}',this.checked,this)"
+                style="width:17px;height:17px;accent-color:#3b82f6;cursor:pointer">`;
+    };
+    return AdminPage._AMALLAR.map(([amal, nom]) => `
+      <tr>
+        <td style="color:#e2e8f0">${nom}</td>
+        <td style="text-align:center">${katak('user', amal)}</td>
+        <td style="text-align:center">${katak('admin', amal)}</td>
+        <td style="text-align:center"><span style="color:#c4b5fd;font-size:16px">✓</span></td>
+      </tr>`).join('');
+  },
+
+  async ruxsatSaqla(rol, amal, ruxsat, el) {
+    const nom = (AdminPage._AMALLAR.find(a => a[0] === amal) || [, amal])[1];
+    const rolNomi = rol === 'user' ? 'Shifokor' : 'Viloyat admin';
+    if (!confirm(`${rolNomi} roli uchun "${nom}" ${ruxsat ? 'YOQILSINMI' : "O'CHIRILSINMI"}?\n\n` +
+                 `O'zgarish barcha foydalanuvchilarga darhol ta'sir qiladi.`)) {
+      if (el) el.checked = !ruxsat;
+      return;
+    }
+    if (el) el.disabled = true;
+    try {
+      await DB.rolRuxsatSaqla(rol, amal, ruxsat);
+      const r = AdminPage._ruxsatlar.find(x => x.rol === rol && x.amal === amal);
+      if (r) r.ruxsat = ruxsat; else AdminPage._ruxsatlar.push({ rol, amal, ruxsat });
+      showToast(`✅ ${rolNomi}: "${nom}" ${ruxsat ? 'yoqildi' : "o'chirildi"}`, 'success');
+    } catch (e) {
+      if (el) el.checked = !ruxsat;
+      showToast('Xatolik: ' + (e.message || 'saqlanmadi'), 'error', 6000);
+    } finally {
+      if (el) el.disabled = false;
+    }
+  },
+
   async render() {
     const profile = await Profile.getCurrent();
     const isSuperAdmin = profile?.role === 'super_admin' && profile?.real_role !== 'rahbar';
@@ -38,6 +97,9 @@ const AdminPage = {
     AdminPage._isSuperAdmin = isSuperAdmin;
     AdminPage._isViloyatAdmin = isViloyatAdmin;
     AdminPage._myViloyat = profile?.viloyat || '';
+    // Galochka bilan boshqariladigan rol ruxsatlari (rol_ruxsatlari.sql).
+    // Jadval hali yaratilmagan bo'lsa bo'sh qoladi va statik ko'rinish ishlaydi.
+    AdminPage._ruxsatlar = await DB.rolRuxsatlari().catch(() => []);
 
     if (!AdminPage._selViloyat) {
       AdminPage._selViloyat = Object.keys(APP_CONFIG.MUASSASALAR)[0] || '';
@@ -286,11 +348,9 @@ const AdminPage = {
               <th style="text-align:center">👑 Super Admin</th>
             </tr></thead>
             <tbody>
+              ${AdminPage._ruxsatQatorlari()}
               ${[
                 ["Ma'lumot ko'rish (o'z viloyati)", true, true, true],
-                ["Yangi bemor qo'shish", true, true, true],
-                ["Bemor ma'lumotini tahrirlash", false, true, true],
-                ["Bemorni o'chirish", false, false, true],
                 ["Barcha viloyatlar ma'lumoti", false, false, true],
                 ["Foydalanuvchilarni boshqarish", false, false, true],
                 ["Muassasalar ro'yxatini boshqarish", false, false, true],

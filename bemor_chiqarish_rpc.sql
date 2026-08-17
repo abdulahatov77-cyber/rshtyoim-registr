@@ -70,6 +70,15 @@ BEGIN
     RAISE EXCEPTION 'Rahbar rolida ma''lumot o''zgartirilmaydi';
   END IF;
 
+  -- Galochka bilan boshqariladigan ruxsat (rol_ruxsatlari.sql).
+  -- Funksiya hali yaratilmagan bo'lsa — tekshiruv o'tkazib yuboriladi.
+  IF to_regprocedure('public.bemor_chiqarish_ruxsat(text)') IS NOT NULL THEN
+    IF NOT public.bemor_chiqarish_ruxsat(p_status) THEN
+      RAISE EXCEPTION 'Sizning rolingizda % amali o''chirib qo''yilgan',
+        CASE WHEN p_status = 'otkazildi' THEN 'boshqa muassasaga o''tkazish' ELSE 'chiqarish' END;
+    END IF;
+  END IF;
+
   v_qabul := p_turi || '_qabul';
   v_chiq  := p_turi || '_chiqarish';
 
