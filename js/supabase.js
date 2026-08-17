@@ -845,6 +845,33 @@ const DB = {
     return result;
   },
 
+  // Bemorni chiqarish. Shifokorda jadvalni to'g'ridan-to'g'ri o'zgartirish
+  // ruxsati yo'q (tahrirlash yopiq) — chiqarish shu SECURITY DEFINER
+  // funksiya orqali bajariladi. U faqat status va otkazilgan_muassasa ni
+  // yangilaydi hamda chiqarish varaqasini yozadi.
+  // RPC hali o'rnatilmagan bo'lsa — eski yo'l bilan ishlaydi (admin/super_admin uchun).
+  async bemorChiqarish(turi, kt_no, status, otkazilganMuassasa, chiqarish) {
+    const { data, error } = await getSupabase().rpc('bemor_chiqarish', {
+      p_turi: turi,
+      p_kt_no: kt_no,
+      p_status: status,
+      p_otkazilgan_muassasa: otkazilganMuassasa || null,
+      p_chiqarish: chiqarish || null
+    });
+    if (!error) return data;
+    // Funksiya bazada yo'q — eski yo'lga qaytamiz
+    const yoq = error.code === 'PGRST202' || /does not exist|not find the function/i.test(error.message || '');
+    if (!yoq) throw error;
+    if (turi === 'infarkt') {
+      await DB.infarktUpdate(kt_no, { status, otkazilgan_muassasa: otkazilganMuassasa || null });
+      if (chiqarish) await DB.infarktChiqarish({ ...chiqarish, kt_no });
+    } else {
+      await DB.insultUpdate(kt_no, { status, otkazilgan_muassasa: otkazilganMuassasa || null });
+      if (chiqarish) await DB.insultChiqarish({ ...chiqarish, kt_no });
+    }
+    return null;
+  },
+
   async infarktChiqarish(data) {
     const sb = getSupabase();
     // Bitta bemorda bitta varaqa — qayta to'ldirilsa eskisi almashtiriladi (takroriy bo'lmasin)

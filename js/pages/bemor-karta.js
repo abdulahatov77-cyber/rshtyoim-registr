@@ -1073,11 +1073,13 @@ const BemorKartaPage = {
           const { vaqt, ...noVaqt } = tRec;
           return TransferLog.add(noVaqt).catch(() => {});
         });
-        const upd = { status: 'otkazildi' };
-        // Agar hali otkazilgan_muassasa bo'sh bo'lsa — birinchi o'tkazishni ham yozamiz
-        if (!p.otkazilgan_muassasa) upd.otkazilgan_muassasa = otkazilganMuassasa;
-        if (BemorKartaPage._type === 'infarkt') await DB.infarktUpdate(p.kt_no, upd);
-        else await DB.insultUpdate(p.kt_no, upd);
+        // Boshqa muassasaga o'tkazish ham chiqarish oqimiga kiradi — shifokorda
+        // jadvalni to'g'ridan-to'g'ri tahrirlash ruxsati yo'q, RPC orqali bajariladi.
+        // Birinchi o'tkazish manzili saqlanadi (keyingilari uni almashtirmaydi).
+        await DB.bemorChiqarish(
+          BemorKartaPage._type, p.kt_no, 'otkazildi',
+          p.otkazilgan_muassasa || otkazilganMuassasa, null
+        );
         BemorKartaPage._patient.status = 'otkazildi';
         // Telegram xabar — o'tkazish
         // O'CHIRILDI: dinamika_muolajalar jadvaliga yozuv tushganda server-bot ("DINAMIKA YANGILANDI")
@@ -2250,10 +2252,10 @@ const BemorKartaPage = {
 
       const otkazilganMuassasa = natija === "Boshqa shifoxonaga o'tkazildi" ? boshqaShifoxona : null;
 
+      // Chiqarish RPC orqali — shifokorda jadvalni tahrirlash ruxsati yo'q
       if (type === 'infarkt') {
-        await DB.infarktUpdate(kt_no, { status, otkazilgan_muassasa: otkazilganMuassasa });
-        await DB.infarktChiqarish({
-          kt_no, chiqish_sana,
+        await DB.bemorChiqarish('infarkt', kt_no, status, otkazilganMuassasa, {
+          chiqish_sana,
           chiqish_holat: natija,
           asoratlar: asoratlar,
           boshqa_shifoxona: boshqaShifoxona,
@@ -2261,9 +2263,8 @@ const BemorKartaPage = {
           olim_sababi: natija === 'Vafot etdi' ? 'Vafot etdi' : null
         });
       } else {
-        await DB.insultUpdate(kt_no, { status, otkazilgan_muassasa: otkazilganMuassasa });
-        await DB.insultChiqarish({
-          kt_no, chiqish_sana,
+        await DB.bemorChiqarish('insult', kt_no, status, otkazilganMuassasa, {
+          chiqish_sana,
           natija,
           nihss_chiqarish: nihssChiqarish,
           mrs_daraja: mrsDaraja,
