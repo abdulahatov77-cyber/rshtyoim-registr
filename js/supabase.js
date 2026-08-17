@@ -709,9 +709,22 @@ const DB = {
     const { data: rows, error: idErr } = await idq;
     if (idErr) throw idErr;
     if (!rows || rows.length === 0) throw new Error('Bemor topilmadi');
-    const { data, error } = await sb.from('infarkt_qabul').update(updates).eq('id', rows[0].id).select().single();
+    const { data, error } = await sb.from('infarkt_qabul').update(updates).eq('id', rows[0].id).select();
     if (error) throw error;
-    return data;
+    // RLS o'zgartirishni rad etsa — yangilangan qator qaytmaydi. Oldin bu
+    // "Cannot coerce the result to a single JSON object" degan tushunarsiz
+    // PostgREST xatosiga aylanardi.
+    if (!data || !data.length) throw new Error(DB._ruxsatXatosi(rows[0]));
+    return data[0];
+  },
+
+  // O'zgartirishga ruxsat bo'lmaganda tushunarli xabar
+  _ruxsatXatosi(row) {
+    return "Bu yozuvni o'zgartirishga ruxsat yo'q.\n\n" +
+      "Bemor boshqa viloyat yozuvi bo'lishi mumkin — ko'rish mumkin, lekin " +
+      "tahrirlashni faqat o'sha viloyat shifokori yoki administrator bajaradi.\n\n" +
+      "Agar bemor sizniki bo'lsa — profilingizdagi viloyat to'g'ri ko'rsatilganini " +
+      "tekshiring (Sozlamalar) yoki administratorga murojaat qiling.";
   },
 
   // Insult CRUD
@@ -816,9 +829,10 @@ const DB = {
     const { data: rows, error: idErr } = await idq;
     if (idErr) throw idErr;
     if (!rows || rows.length === 0) throw new Error('Bemor topilmadi');
-    const { data, error } = await sb.from('insult_qabul').update(updates).eq('id', rows[0].id).select().single();
+    const { data, error } = await sb.from('insult_qabul').update(updates).eq('id', rows[0].id).select();
     if (error) throw error;
-    return data;
+    if (!data || !data.length) throw new Error(DB._ruxsatXatosi(rows[0]));
+    return data[0];
   },
 
   // Chiqarish
