@@ -17,16 +17,22 @@ const Utils = {
     if (!dt) return '—';
     const d = new Date(dt);
     if (isNaN(d)) return '—';
-    const defaults = { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'Asia/Tashkent' };
-    return d.toLocaleDateString('uz-Cyrl-UZ', { ...defaults, ...opts });
+    const language = window.I18n?.language || 'uz';
+    const defaults = language === 'en'
+      ? { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'Asia/Tashkent' }
+      : { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'Asia/Tashkent' };
+    const locale = window.I18n?.localeTags?.[language] || 'uz-Latn-UZ';
+    return d.toLocaleDateString(locale, { ...defaults, ...opts });
   },
 
   formatDateTime(dt) {
     if (!dt) return '—';
     const d = new Date(dt);
     if (isNaN(d)) return '—';
-    return d.toLocaleString('uz-Cyrl-UZ', {
-      day: '2-digit', month: '2-digit', year: 'numeric',
+    const language = window.I18n?.language || 'uz';
+    const locale = window.I18n?.localeTags?.[language] || 'uz-Latn-UZ';
+    return d.toLocaleString(locale, {
+      day: '2-digit', month: language === 'en' ? 'short' : '2-digit', year: 'numeric',
       hour: '2-digit', minute: '2-digit',
       timeZone: 'Asia/Tashkent'
     });
@@ -243,7 +249,7 @@ const Utils = {
     try {
       return await AssetLoader.xlsx();
     } catch (err) {
-      showToast('Excel kutubxonasini yuklab bo\'lmadi. Internet aloqasini tekshiring.', 'error', 6000);
+      showToast(t('export.libraryFailed'), 'error', 6000);
       throw err;
     }
   },

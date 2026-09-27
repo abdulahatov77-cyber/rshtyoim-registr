@@ -34,14 +34,14 @@ const KengHisobotPage = {
             <div>
               <label class="form-label">${icon('map-pin', 14)} Viloyat</label>
               <select id="kh-viloyat" class="form-select" onchange="KengHisobotPage.onViloyat(this.value)">
-                <option value="">— Respublika —</option>
+            <option value="">${t('filter.national')}</option>
                 ${APP_CONFIG.VILOYATLAR.map(v =>
-                  `<option value="${esc(v)}" ${f.viloyat === v ? 'selected' : ''}>${esc(v)}</option>`).join('')}
+                  `<option value="${esc(v)}" ${f.viloyat === v ? 'selected' : ''}>${esc(I18n.translateText(v))}</option>`).join('')}
               </select>
             </div>` : `
             <div>
               <label class="form-label">${icon('map-pin', 14)} Viloyat</label>
-              <div class="form-input bg-slate-50 text-slate-500">${esc(f.viloyat || '—')}</div>
+              <div class="form-input bg-slate-50 text-slate-500">${esc(f.viloyat ? I18n.translateText(f.viloyat) : '—')}</div>
             </div>`}
             <div>
               <label class="form-label">${icon('building-2', 14)} Muassasa</label>
@@ -72,18 +72,18 @@ const KengHisobotPage = {
             <div>
               <label class="form-label">${icon('heart', 14)} Infarkt turi</label>
               <select id="kh-inf-turi" class="form-select" onchange="KengHisobotPage.onNozTuri('infTuri', this.value)">
-                <option value="">— Barchasi —</option>
-                <option value="STEMI">STEMI</option>
-                <option value="NSTEMI">NSTEMI</option>
-                <option value="AMI">AMI</option>
+                <option value="">— ${t('common.all')} —</option>
+                <option value="STEMI">${t('infarct.stemi')}</option>
+                <option value="NSTEMI">${t('infarct.nstemi')}</option>
+                <option value="AMI">${t('infarct.ami')}</option>
               </select>
             </div>
             <div>
               <label class="form-label">${icon('brain', 14)} Insult turi</label>
               <select id="kh-ins-turi" class="form-select" onchange="KengHisobotPage.onNozTuri('insTuri', this.value)">
-                <option value="">— Barchasi —</option>
-                <option value="Ishemik">Ishemik insult</option>
-                <option value="Gemorragik">Gemorragik insult</option>
+                <option value="">— ${t('common.all')} —</option>
+                <option value="Ishemik">${t('stroke.ischemic')}</option>
+                <option value="Gemorragik">${t('stroke.hemorrhagic')}</option>
               </select>
             </div>
           </div>
@@ -113,10 +113,10 @@ const KengHisobotPage = {
   // ro'yxatga sig'dirish foydasiz, avval viloyat tanlansin.
   _muassasaOptions() {
     const f = KengHisobotPage._f;
-    if (!f.viloyat) return `<option value="">— avval viloyatni tanlang —</option>`;
+    if (!f.viloyat) return `<option value="">— ${t('auth.chooseRegionFirst')} —</option>`;
     const list = APP_CONFIG.MUASSASALAR[f.viloyat] || [];
-    return `<option value="">— barcha muassasalar —</option>` +
-      list.map(m => `<option value="${esc(m)}" ${f.muassasa === m ? 'selected' : ''}>${esc(m)}</option>`).join('');
+    return `<option value="">${t('filter.allInstitutions')}</option>` +
+      list.map(m => `<option value="${esc(m)}" ${f.muassasa === m ? 'selected' : ''}>${esc(I18n.facilityName(m))}</option>`).join('');
   },
 
   onViloyat(v) {
@@ -179,7 +179,7 @@ const KengHisobotPage = {
     f.to   = document.getElementById('kh-to')?.value   || f.to;
     const vEl = document.getElementById('kh-viloyat');
     if (vEl) f.viloyat = vEl.value;
-    if (!f.from || !f.to) { showToast('Sana oralig\'ini tanlang', 'warning'); return; }
+    if (!f.from || !f.to) { showToast(t('reports.selectDateRange'), 'warning'); return; }
 
     const body = document.getElementById('kh-body');
     if (body) body.innerHTML = `<div class="card flex flex-col items-center py-16">
@@ -393,7 +393,7 @@ const KengHisobotPage = {
       <div class="card !p-0 overflow-hidden mb-5" style="border-top:4px solid ${rang}">
         <div class="card-header bg-gray-50 !mb-0 !border-b-gray-200">
           <span class="card-title" style="color:${rang}">${sarlavha}</span>
-          <span class="text-xs text-slate-500">${list.length} ta muassasa</span>
+          <span class="text-xs text-slate-500">${t('report.facilityCount', {count: list.length})}</span>
         </div>
         <div class="overflow-x-auto" style="max-height:70vh">
           <table class="w-full text-xs border-collapse" style="min-width:640px">
@@ -406,13 +406,13 @@ const KengHisobotPage = {
             <tbody>
               ${list.map((x, i) => `
                 <tr style="background:${i % 2 ? '#fff' : '#f8fafc'}" class="hover:bg-blue-50">
-                  <td style="padding:8px;color:#475569;vertical-align:top">${esc(x.viloyat || '—')}</td>
-                  <td style="padding:8px;font-weight:600;color:#1e293b;vertical-align:top">${esc(x.muassasa || '—')}</td>
+                  <td style="padding:8px;color:#475569;vertical-align:top">${esc(x.viloyat ? I18n.translateText(x.viloyat) : '—')}</td>
+                  <td style="padding:8px;font-weight:600;color:#1e293b;vertical-align:top">${esc(I18n.facilityName(x.muassasa || '—'))}</td>
                   ${ustunlar.map(([k, , ch]) => katak(x.noz[k], ch)).join('')}
                 </tr>`).join('')}
               <tr style="background:#dbeafe">
                 <td style="padding:8px;font-weight:800;color:#1e3a8a;vertical-align:top">JAMI</td>
-                <td style="padding:8px;font-weight:700;color:#1e3a8a;vertical-align:top">${list.length} ta muassasa</td>
+                <td style="padding:8px;font-weight:700;color:#1e3a8a;vertical-align:top">${t('report.facilityCount', {count: list.length})}</td>
                 ${ustunlar.map(([k]) => jamiKatak(k)).join('')}
               </tr>
             </tbody>
@@ -454,7 +454,7 @@ const KengHisobotPage = {
     });
 
     // JAMI qatori — faqat umumiy son
-    const jamiQator = { 'Viloyat': 'JAMI', 'Muassasa': `${list.length} ta muassasa` };
+    const jamiQator = { 'Viloyat': 'JAMI', 'Muassasa': t('report.facilityCount', {count: list.length}) };
     ustunlar.forEach(([k, nom]) => {
       const j = rows.filter(r => r.nozologiya === k).reduce((a, r) => a + N(r.jami), 0);
       jamiQator[nom] = j ? `${j}` : '—';
@@ -574,7 +574,7 @@ const KengHisobotPage = {
           const ok = r[k] === 'OK';
           return `<td style="text-align:center;font-weight:700;color:${ok ? '#15803d' : '#b91c1c'}">${esc(r[k] || '')}</td>`;
         }
-        return `<td class="${k === 'muassasa' ? 'font-semibold text-slate-800' : 'text-slate-600'}">${esc(r[k] || '—')}</td>`;
+        return `<td class="${k === 'muassasa' ? 'font-semibold text-slate-800' : 'text-slate-600'}">${esc(k === 'muassasa' ? I18n.facilityName(r[k] || '—') : r[k] || '—')}</td>`;
       }
       if (tur === '%') {
         // Foiz JAMI qatorida qayta hisoblanmaydi — u SQL dagi qiymat emas, shuning uchun bo'sh
@@ -588,7 +588,7 @@ const KengHisobotPage = {
       <div class="card !p-0 overflow-hidden mb-4">
         <div class="card-header bg-gray-50 !mb-0 !border-b-gray-200">
           <span class="card-title text-gray-900">${sarlavha}</span>
-          <span class="text-xs text-slate-500">${rows.length} ta muassasa</span>
+          <span class="text-xs text-slate-500">${t('report.facilityCount', {count: rows.length})}</span>
         </div>
         <div class="overflow-x-auto" style="max-height:70vh">
           <table class="w-full text-xs border-collapse">
@@ -611,7 +611,7 @@ const KengHisobotPage = {
                 </tr>`).join('')}
               <tr style="background:#dbeafe;font-weight:700">
                 <td class="text-blue-900">JAMI</td>
-                <td class="text-blue-900">${rows.length} muassasa</td>
+                <td class="text-blue-900">${t('report.facilityCount', {count: rows.length})}</td>
                 <td></td>
                 ${ustunlar.slice(3).map(u => katak(t, u, true)).join('')}
               </tr>
@@ -763,7 +763,7 @@ const KengHisobotPage = {
           const ok = r[k] === 'OK';
           return `<td style="text-align:center;font-weight:700;color:${ok ? '#15803d' : '#b91c1c'}">${esc(r[k] || '')}</td>`;
         }
-        return `<td class="${k === 'muassasa' ? 'font-semibold text-slate-800' : 'text-slate-600'}">${esc(r[k] || '—')}</td>`;
+        return `<td class="${k === 'muassasa' ? 'font-semibold text-slate-800' : 'text-slate-600'}">${esc(k === 'muassasa' ? I18n.facilityName(r[k] || '—') : r[k] || '—')}</td>`;
       }
       if (tur === '%') return `<td style="text-align:center;color:#0891b2;font-weight:600">${jamiQator ? '' : KengHisobotPage._foiz(r[k])}</td>`;
       const v = KengHisobotPage._n(r[k]);
@@ -822,7 +822,7 @@ const KengHisobotPage = {
       <div class="card mb-4">
         <div class="card-header !mb-3">
           <span class="card-title text-gray-900">${sarlavha}</span>
-          <span class="text-xs text-slate-500">${rows.length} ta muassasa · jamlanma voronka</span>
+          <span class="text-xs text-slate-500">${t('report.facilityFunnelCount', {count: rows.length})}</span>
         </div>
 
         ${b.map((v, i) => {
@@ -869,7 +869,7 @@ const KengHisobotPage = {
               <tbody>
                 ${rows.map((r, i) => `<tr style="background:${r.nazorat !== 'OK' ? '#fef2f2' : (i % 2 ? '#fff' : '#f8fafc')}">
                   <td style="padding:5px">${esc(r.viloyat || '—')}</td>
-                  <td style="padding:5px;font-weight:600">${esc(r.muassasa || '—')}</td>
+                  <td style="padding:5px;font-weight:600">${esc(I18n.facilityName(r.muassasa || '—'))}</td>
                   ${['b1','b2','b3','b4','b5','b6'].map(k => `<td style="padding:5px;text-align:center">${N(r[k])}</td>`).join('')}
                   <td style="padding:5px;text-align:center;color:#0891b2;font-weight:600">${KengHisobotPage._foiz(r.yakuniy_foiz)}</td>
                   <td style="padding:5px;text-align:center;color:#b91c1c">${esc(r.eng_katta_yoqotish || '—')}</td>
@@ -885,7 +885,7 @@ const KengHisobotPage = {
   // ================= EKSPORT — 10 varaq =================
   eksport() {
     const d = KengHisobotPage.D();
-    if (!d.inf) { showToast('Avval hisobotni shakllantiring', 'warning'); return; }
+    if (!d.inf) { showToast(t('reports.generateFirst'), 'warning'); return; }
     const f = KengHisobotPage._f;
     const scopeNom = (f.muassasa || f.viloyat || 'Respublika')
       .replace(/[:*?"<>|\\/]/g, '-').slice(0, 60);
@@ -898,12 +898,12 @@ const KengHisobotPage = {
         ...KengHisobotPage.OYNA_INS.filter(x => !f.insTuri || f.insTuri === x[0])
       ];
       const rows = KengHisobotPage._oynaExcelRows(ust);
-      if (!rows.length) { showToast('Eksport uchun ma\'lumot yo\'q', 'warning'); return; }
+    if (!rows.length) { showToast(t('export.noData'), 'warning'); return; }
       Utils.exportXLSXMulti(
         [{ nom: 'Terapevtik oyna', wrap: true, rows }],
         `terapevtik_oyna_${scopeNom}_${f.from}_${f.to}.xlsx`
       );
-      showToast('✅ Excel yuklab olindi — 1 list', 'success');
+    showToast(t('export.excelSheets', { count: 1 }), 'success');
       return;
     }
 
@@ -979,7 +979,7 @@ const KengHisobotPage = {
     ];
 
     Utils.exportXLSXMulti(varaqlar, `hisobot_${scopeNom}_${f.from}_${f.to}.xlsx`);
-    showToast(`✅ Excel yuklab olindi — ${varaqlar.length} varaq`, 'success');
+    showToast(t('export.excelSheets', { count: varaqlar.length }), 'success');
   },
 
   _kaskadXulosa() {

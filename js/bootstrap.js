@@ -1,27 +1,42 @@
 (async function bootstrap() {
+  const LOCALE_SCRIPTS = [
+    'js/medical-glossary.js?v=1',
+    'js/locales.js?v=20260926-i18n-r72',
+    'js/calculator-locales.js?v=2',
+    'js/form-locales.js?v=20260926-i18n-r57',
+    'js/cdss-locales.js?v=20260924-i18n-r15',
+    'js/i18n.js?v=20260927-perf-r1'
+  ];
+  // Preserve the proven core execution order. Page modules are loaded by Router.
+  const CORE_SCRIPTS = [
+    'js/config.js?v=81',
+    'js/supabase.js?v=169',
+    'js/utils.js?v=84',
+    'js/components.js?v=81',
+    'js/router.js?v=20260926-i18n-r72',
+    'js/pages/login.js?v=20260926-i18n-r72',
+    'js/app.js?v=71'
+  ];
   try {
-    // Independent vendor libraries download in parallel.
+    // Core files start downloading now; they execute only after I18n.init().
+    CORE_SCRIPTS.forEach(AssetLoader.preload);
+
+    // Vendor libraries and localization download in parallel.
     await Promise.all([
       AssetLoader.scriptFallback([
-        'https://unpkg.com/lucide@latest/dist/umd/lucide.min.js',
-        'https://cdn.jsdelivr.net/npm/lucide@latest/dist/umd/lucide.min.js'
+        'https://cdn.jsdelivr.net/npm/lucide@1.48.0/dist/umd/lucide.min.js',
+        'https://unpkg.com/lucide@1.48.0/dist/umd/lucide.min.js'
       ], 'lucide'),
       AssetLoader.scriptFallback([
         'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js',
         'https://unpkg.com/@supabase/supabase-js@2.45.4/dist/umd/supabase.js'
-      ], 'supabase')
+      ], 'supabase'),
+      AssetLoader.scriptsInOrder(LOCALE_SCRIPTS)
     ]);
+    // Load presentation-only localization before any UI module is evaluated.
+    I18n.init();
 
-    // Preserve the proven core execution order. Page modules are loaded by Router.
-    for (const src of [
-      'js/config.js?v=81',
-      'js/supabase.js?v=169',
-      'js/utils.js?v=83',
-      'js/components.js?v=80',
-      'js/router.js?v=81',
-      'js/pages/login.js?v=67',
-      'js/app.js?v=70'
-    ]) await AssetLoader.script(src);
+    await AssetLoader.scriptsInOrder(CORE_SCRIPTS);
   } catch (err) {
     console.error('Bootstrap error:', err);
     const app = document.getElementById('app');

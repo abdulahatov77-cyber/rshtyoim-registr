@@ -5,6 +5,7 @@ const LoginPage = {
   render() {
     document.getElementById('app').innerHTML = `
       <div class="min-h-screen bg-slate-50 flex items-center justify-center p-6 relative overflow-hidden">
+        <div class="absolute top-4 right-4 z-30">${window.I18n ? I18n.renderSwitcher() : ''}</div>
         <!-- Dekorativ fon elementlari -->
         <div class="absolute top-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-100/50 rounded-full blur-[120px]"></div>
         <div class="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-50/50 rounded-full blur-[120px]"></div>
@@ -19,7 +20,7 @@ const LoginPage = {
                 </div>
                 <div>
                   <h1 class="text-xl font-black text-slate-800 leading-none">INFARKT & INSULT</h1>
-                  <p class="text-[10px] font-bold text-blue-600 uppercase tracking-tighter mt-1">Reyestri platformasi</p>
+                  <p class="text-[10px] font-bold text-blue-600 uppercase tracking-tighter mt-1">${t('nav.registryPlatform')}</p>
                 </div>
               </div>
 
@@ -35,7 +36,7 @@ const LoginPage = {
                   <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Email manzil</label>
                   <div class="relative group">
                     <i data-lucide="mail" class="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors"></i>
-                    <input type="email" id="login-email" placeholder="shifokor@klinika.uz" autocomplete="email" required
+              <input type="email" id="login-email" placeholder="${t('auth.emailExample')}" autocomplete="email" required
                       class="w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-medium focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all">
                   </div>
                 </div>
@@ -65,14 +66,14 @@ const LoginPage = {
               <form id="register-form" onsubmit="LoginPage.handleRegister(event)" class="hidden space-y-4">
                 <div>
                   <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">To'liq ism</label>
-                  <input type="text" id="reg-name" placeholder="F.I.Sh" required
+              <input type="text" id="reg-name" placeholder="${t('auth.namePlaceholder')}" required
                     class="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-medium focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all">
                 </div>
                 <div>
                   <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Viloyat</label>
                   <select id="reg-viloyat" required onchange="LoginPage.onRegViloyat(this.value)"
                     class="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-medium focus:bg-white outline-none cursor-pointer">
-                    <option value="">Tanlang...</option>
+                  <option value="">${t('select.placeholder')}</option>
                     ${APP_CONFIG.VILOYATLAR.map(v=>`<option value="${v}">${v}</option>`).join('')}
                   </select>
                 </div>
@@ -80,7 +81,7 @@ const LoginPage = {
                   <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Muassasa (ish joyingiz)</label>
                   <select id="reg-muassasa" required disabled
                     class="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-medium focus:bg-white outline-none cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed">
-                    <option value="">Avval viloyatni tanlang</option>
+                  <option value="">${t('auth.chooseRegionFirst')}</option>
                   </select>
                   <p class="text-[11px] text-slate-400 mt-1.5">
                     Ish joyingiz bir marta belgilanadi — keyin uni faqat administrator o'zgartira oladi.
@@ -88,12 +89,12 @@ const LoginPage = {
                 </div>
                 <div>
                   <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Email</label>
-                  <input type="email" id="reg-email" placeholder="email@klinika.uz" required
+              <input type="email" id="reg-email" placeholder="${t('auth.emailExample')}" required
                     class="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-medium focus:bg-white outline-none transition-all">
                 </div>
                 <div>
                   <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Parol</label>
-                  <input type="password" id="reg-password" placeholder="Parol kiriting" required minlength="6"
+              <input type="password" id="reg-password" placeholder="${t('auth.passwordPlaceholder')}" required minlength="6"
                     class="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-medium focus:bg-white outline-none transition-all">
                 </div>
                 <div id="reg-error" class="hidden p-4 bg-red-50 border border-red-100 rounded-2xl text-red-600 text-xs font-bold"></div>
@@ -107,7 +108,7 @@ const LoginPage = {
               <!-- Footer link -->
               <div class="mt-8 pt-8 border-t border-slate-50 text-center">
                 <p id="login-footer-text" class="text-sm font-bold text-slate-400">
-                  Hisobingiz yo'qmi? <a href="#" onclick="LoginPage.switchMode('register');return false" class="text-blue-600 hover:text-blue-700 ml-1">Ro'yxatdan o'tish</a>
+                  ${t('auth.noAccount')} <a href="#" onclick="LoginPage.switchMode('register');return false" class="text-blue-600 hover:text-blue-700 ml-1">${t('auth.register')}</a>
                 </p>
               </div>
             </div>
@@ -132,14 +133,14 @@ const LoginPage = {
 
     if (mode === 'login') {
       lf.classList.remove('hidden'); rf.classList.add('hidden');
-      if (title) title.textContent = 'Xush kelibsiz';
-      if (sub) sub.textContent = "Tizimga kirish uchun ma'lumotlaringizni kiriting";
-      if (footer) footer.innerHTML = 'Hisobingiz yo\'qmi? <a href="#" onclick="LoginPage.switchMode(\'register\');return false" class="text-blue-600 hover:text-blue-700 ml-1">Ro\'yxatdan o\'tish</a>';
+      if (title) title.textContent = t('auth.welcome');
+      if (sub) sub.textContent = t('auth.instructions');
+      if (footer) footer.innerHTML = `${t('auth.noAccount')} <a href="#" onclick="LoginPage.switchMode('register');return false" class="text-blue-600 hover:text-blue-700 ml-1">${t('auth.register')}</a>`;
     } else {
       lf.classList.add('hidden'); rf.classList.remove('hidden');
-      if (title) title.textContent = "Ro'yxatdan o'tish";
-      if (sub) sub.textContent = "Yangi hisob yaratish uchun ma'lumotlarni to'ldiring";
-      if (footer) footer.innerHTML = 'Hisobingiz bormi? <a href="#" onclick="LoginPage.switchMode(\'login\');return false" class="text-blue-600 hover:text-blue-700 ml-1">Tizimga kirish</a>';
+      if (title) title.textContent = t('auth.register');
+      if (sub) sub.textContent = t('auth.registerInstructions');
+      if (footer) footer.innerHTML = `${t('auth.haveAccount')} <a href="#" onclick="LoginPage.switchMode('login');return false" class="text-blue-600 hover:text-blue-700 ml-1">${t('auth.signIn')}</a>`;
     }
     initIcons();
   },
@@ -166,7 +167,7 @@ const LoginPage = {
     try {
       await Auth.signIn(email, password);
       await UserLog.write('login');
-      showToast('Muvaffaqiyatli kirdingiz!', 'success');
+      showToast(t('auth.success'), 'success');
       Router.go('dashboard');
     } catch (err) {
       // Ma'lum xatolarni tushunarli qilib, qolganini umumiy xabar bilan ko'rsatamiz (schema sizishining oldini olish)
@@ -190,9 +191,9 @@ const LoginPage = {
     const list = APP_CONFIG.MUASSASALAR[viloyat] || [];
     sel.disabled = !list.length;
     sel.innerHTML = list.length
-      ? `<option value="">Muassasangizni tanlang...</option>` +
-        list.map(m => `<option value="${esc(m)}">${esc(m)}</option>`).join('')
-      : `<option value="">Avval viloyatni tanlang</option>`;
+      ? `<option value="">${t('auth.chooseInstitution')}</option>` +
+        list.map(m => `<option value="${esc(m)}">${esc(I18n.facilityName(m))}</option>`).join('')
+      : `<option value="">${t('auth.chooseRegionFirst')}</option>`;
   },
 
   async handleRegister(e) {
@@ -208,10 +209,10 @@ const LoginPage = {
 
     errEl.classList.add('hidden'); succEl.classList.add('hidden');
 
-    if (!viloyat)  { errEl.textContent = 'Viloyatni tanlang';  errEl.classList.remove('hidden'); return; }
-    if (!muassasa) { errEl.textContent = 'Ish joyingizni (muassasa) tanlang'; errEl.classList.remove('hidden'); return; }
+    if (!viloyat)  { errEl.textContent = t('auth.selectRegion');  errEl.classList.remove('hidden'); return; }
+    if (!muassasa) { errEl.textContent = t('auth.selectWorkplace'); errEl.classList.remove('hidden'); return; }
     if (password.length < 6) {
-      errEl.textContent = 'Parol kamida 6 belgi bo\'lishi kerak';
+      errEl.textContent = t('auth.passwordMinimum');
       errEl.classList.remove('hidden'); return;
     }
 

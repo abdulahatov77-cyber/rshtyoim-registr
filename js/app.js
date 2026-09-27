@@ -32,7 +32,7 @@ const App = {
           App._user = null;
           App._profile = null;
           Router.go('login');
-          showToast('Akkaunt administrator tasdig\'ini kutmoqda', 'warning', 7000);
+          showToast(t('auth.pending'), 'warning', 7000);
         } else {
           App._profile = profile;
           const [, dashboardError] = await Promise.all([overridesReady, dashboardReady]);
@@ -58,7 +58,7 @@ const App = {
           App._user = null;
           App._profile = null;
           if (Router._current !== 'login') Router.go('login');
-          showToast('Akkaunt administrator tasdig\'ini kutmoqda', 'warning', 7000);
+          showToast(t('auth.pending'), 'warning', 7000);
           return;
         }
         App._profile = profile;
@@ -70,7 +70,7 @@ const App = {
       } else if (event === 'SIGNED_OUT') {
         App._user = null;
         if (Router._current !== 'login') {
-          showToast('Sessiya tugadi — qayta kiring', 'warning', 5000);
+          showToast(t('auth.sessionExpired'), 'warning', 5000);
           Router.go('login');
         }
       }
@@ -78,11 +78,11 @@ const App = {
   },
 
   async logout() {
-    if (!confirm('Tizimdan chiqmoqchimisiz?')) return;
+    if (!confirm(t('auth.signOutConfirm'))) return;
     try {
       await UserLog.write('logout');
       await Auth.signOut();
-      showToast('Tizimdan chiqdingiz', 'info');
+      showToast(t('auth.signedOut'), 'info');
       Router.go('login');
     } catch (err) {
       showToast('❌ ' + err.message, 'error');

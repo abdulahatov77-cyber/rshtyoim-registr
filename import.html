@@ -5,6 +5,9 @@
   <title>Google Sheets → Supabase Import</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/config.js"></script>
+  <script src="js/medical-glossary.js"></script>
+  <script src="js/locales.js"></script>
+  <script src="js/i18n.js"></script>
   <style>
     body { font-family: sans-serif; max-width: 800px; margin: 40px auto; padding: 0 20px; background: #f8fafc; color: #1e293b; }
     h2 { color: #2563eb; }
@@ -28,6 +31,7 @@
 </head>
 <body>
 
+<div style="position:fixed;top:12px;right:12px;z-index:10"><select aria-label="Til" onchange="I18n.setLanguage(this.value,{rerender:false})"><option value="uz">UZ</option><option value="ru">RU</option><option value="en">EN</option><option value="kk">KK</option></select></div>
 <h2>📥 Google Sheets → Supabase Import</h2>
 
 <div class="card">
@@ -56,6 +60,7 @@
 </div>
 
 <script>
+I18n.init();
 const { createClient } = supabase;
 const sb = createClient(APP_CONFIG.SUPABASE_URL, APP_CONFIG.SUPABASE_ANON_KEY);
 

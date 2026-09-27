@@ -48,28 +48,28 @@ const BemorlarPage = {
       <div class="card mb-6 border-t-4 border-t-blue-500">
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
           <div>
-            <label class="form-label">${icon('filter', 14)} Registr turi</label>
+            <label class="form-label">${icon('filter', 14)} ${t('patients.registryType')}</label>
             <select id="f-type" class="form-select" onchange="BemorlarPage.applyFilter()">
-              <option value="all">Barchasi</option>
-              <option value="infarkt" ${f.type==='infarkt'?'selected':''}>Infarkt</option>
-              <option value="insult" ${f.type==='insult'?'selected':''}>Insult</option>
+              <option value="all">${t('common.all')}</option>
+              <option value="infarkt" ${f.type==='infarkt'?'selected':''}>${t('dashboard.infarct')}</option>
+              <option value="insult" ${f.type==='insult'?'selected':''}>${t('dashboard.stroke')}</option>
             </select>
           </div>
           <div>
             <label class="form-label">${icon('activity', 14)} Holat</label>
             <select id="f-status" class="form-select" onchange="BemorlarPage.applyFilter()">
-              <option value="">Barchasi</option>
-              <option value="active">Aktiv</option>
-              <option value="chiqarildi">Chiqarildi</option>
-              <option value="vafot">Vafot</option>
-              <option value="otkazildi">O'tkazildi</option>
+              <option value="">${t('common.all')}</option>
+              <option value="active">${t('status.active')}</option>
+              <option value="chiqarildi">${t('status.discharged')}</option>
+              <option value="vafot">${t('status.dead')}</option>
+              <option value="otkazildi">${t('status.transferred')}</option>
             </select>
           </div>
           ${BemorlarPage._profile?.role === 'super_admin' ? `
           <div>
             <label class="form-label">${icon('map-pin', 14)} Viloyat</label>
             <select id="f-viloyat" class="form-select" onchange="BemorlarPage.onViloyatChange()">
-              <option value="">Barchasi</option>
+              <option value="">${t('common.all')}</option>
               ${APP_CONFIG.VILOYATLAR.map(v=>`<option value="${v}" ${f.viloyat===v?'selected':''}>${v}</option>`).join('')}
             </select>
           </div>
@@ -77,18 +77,18 @@ const BemorlarPage = {
           <div>
             <label class="form-label">${icon('building-2', 14)} Muassasa</label>
             <select id="f-muassasa" class="form-select" onchange="BemorlarPage.applyFilter()">
-              <option value="">Barchasi</option>
+              <option value="">${t('common.all')}</option>
               ${BemorlarPage._getMuassasaOptions(f.viloyat, f.muassasa)}
             </select>
           </div>
           <div>
             <label class="form-label">${icon('stethoscope', 14)} Tashxis</label>
             <select id="f-tashxis" class="form-select" onchange="BemorlarPage.applyFilter()">
-              <option value="">Barchasi</option>
+              <option value="">${t('common.all')}</option>
               <optgroup label="🫀 Infarkt">
-                <option value="STEMI" ${f.tashxis==='STEMI'?'selected':''}>O'KS ST elevatsiya bilan (STEMI)</option>
-                <option value="NSTEMI" ${f.tashxis==='NSTEMI'?'selected':''}>O'KS ST elevatsiyasiz (NSTEMI)</option>
-                <option value="AMI" ${f.tashxis==='AMI'?'selected':''}>O'tkir miokard infarkti (AMI)</option>
+              <option value="STEMI" ${f.tashxis==='STEMI'?'selected':''}>${t('infarct.stemiDescription')} (STEMI)</option>
+              <option value="NSTEMI" ${f.tashxis==='NSTEMI'?'selected':''}>${t('infarct.nstemi')}</option>
+              <option value="AMI" ${f.tashxis==='AMI'?'selected':''}>${t('infarct.acute')} (AMI)</option>
               </optgroup>
               <optgroup label="🧠 Insult">
                 ${(APP_CONFIG.INSULT_TURLARI||[]).map(t=>`<option value="${esc(t)}" ${f.tashxis===t?'selected':''}>${esc(t)}</option>`).join('')}
@@ -98,7 +98,7 @@ const BemorlarPage = {
           <div>
             <label class="form-label">${icon('syringe', 14)} Muolaja turi</label>
             <select id="f-muolaja" class="form-select" onchange="BemorlarPage.applyFilter()">
-              <option value="">Barchasi</option>
+              <option value="">${t('common.all')}</option>
               <optgroup label="🫀 Infarkt">
                 ${(APP_CONFIG.INFARKT_MUOLAJALARI||[]).map(m=>`<option value="${esc(m)}" ${f.muolaja===m?'selected':''}>${esc(m)}</option>`).join('')}
               </optgroup>
@@ -116,9 +116,9 @@ const BemorlarPage = {
             <input type="date" id="f-date-to" class="form-input" onchange="BemorlarPage.applyFilter()" value="${f.dateTo}"/>
           </div>
           <div>
-            <label class="form-label">${icon('search', 14)} Qidiruv</label>
+            <label class="form-label">${icon('search', 14)} ${t('patients.searchLabel')}</label>
             <div class="relative">
-              <input id="f-search" class="form-input pl-9" placeholder="F.I.O yoki K/T No..."
+          <input id="f-search" class="form-input pl-9" placeholder="${t('patients.search')}"
                 oninput="BemorlarPage.searchDebounced()" value="${f.search}"/>
               <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">${icon('search', 16)}</span>
             </div>
@@ -144,7 +144,7 @@ const BemorlarPage = {
               ${icon('refresh-cw', 16)} Tozalash
             </button>
             <button class="btn flex items-center gap-2" style="background:#f59e0b;color:#fff;border:none" onclick="BemorlarPage.openBulkTimeModal()">
-              ${icon('clock', 16)} Vaqt to'ldirish
+              ${icon('clock', 16)} ${t('patients.fillTime')}
             </button>
             <button class="btn btn-primary flex items-center gap-2" onclick="BemorlarPage.exportData()">
               ${icon('download', 16)} Export CSV
@@ -165,10 +165,10 @@ const BemorlarPage = {
               ${icon('trash-2', 16)} <span id="bl-delete-count">O'chirish</span>
             </button>` : ''}
             ${BemorlarPage._profile?.real_role !== 'rahbar' ? `<button class="btn btn-infarkt flex items-center gap-2" onclick="Router.go('infarkt-yangi')">
-              ${icon('heart', 16)} Yangi Infarkt
+              ${icon('heart', 16)} ${t('nav.newInfarct')}
             </button>
             <button class="btn btn-insult flex items-center gap-2" onclick="Router.go('insult-yangi')">
-              ${icon('brain', 16)} Yangi Insult
+              ${icon('brain', 16)} ${t('nav.newStroke')}
             </button>` : ''}
           </div>
         </div>
@@ -197,7 +197,7 @@ const BemorlarPage = {
     const list = viloyat
       ? (APP_CONFIG.MUASSASALAR[viloyat] || [])
       : Object.values(APP_CONFIG.MUASSASALAR || {}).flat().sort();
-    return list.map(m => `<option value="${m}" ${selected===m?'selected':''}>${m}</option>`).join('');
+    return list.map(m => `<option value="${m}" ${selected===m?'selected':''}>${I18n.facilityName(m)}</option>`).join('');
   },
 
   onViloyatChange() {
@@ -205,7 +205,7 @@ const BemorlarPage = {
     BemorlarPage._filters.muassasa = '';
     const sel = document.getElementById('f-muassasa');
     if (sel) {
-      sel.innerHTML = '<option value="">Barchasi</option>' + BemorlarPage._getMuassasaOptions(BemorlarPage._filters.viloyat, '');
+    sel.innerHTML = `<option value="">${t('common.all')}</option>` + BemorlarPage._getMuassasaOptions(BemorlarPage._filters.viloyat, '');
     }
     BemorlarPage._currentPage = 1;
     BemorlarPage.loadData();
@@ -336,7 +336,7 @@ const BemorlarPage = {
     const data = BemorlarPage._allData || [];
     const total = BemorlarPage._totalCount || data.length;
     const countEl = document.getElementById('bl-count');
-    if (countEl) countEl.innerHTML = `${icon('users', 18)} Jami: ~${total} ta bemor`;
+    if (countEl) countEl.innerHTML = `${icon('users', 18)} ${t('patients.totalApprox', { count: total })}`;
 
     const wrap = document.getElementById('bl-table-wrap');
     if (!wrap) return;
@@ -390,12 +390,12 @@ const BemorlarPage = {
                 </td>
                 <td class="font-mono text-xs text-gray-500">${esc(PD.ktno(p.kt_no))}</td>
                 <td><div class="font-semibold text-gray-900">${esc(PD.fio(p.fio)) || '—'}</div></td>
-                <td>${esc(age)} yosh · ${esc(p.jins || p.jinsi) || '—'}</td>
+                <td>${esc(t('dashboard.ageYears', { age }))} · ${esc(I18n.translateText(p.jins || p.jinsi || '—'))}</td>
                 <td><div class="flex items-center gap-1.5 text-gray-600">${icon('map-pin', 14)} ${esc(p.viloyat) || '—'}</div></td>
                 <td>
                   <div class="flex flex-col max-w-[220px]">
-                    <span class="text-xs font-semibold ${isInf?'text-red-700':'text-purple-700'} truncate" title="${esc((isInf ? p.infarkt_turi : p.insult_turi) || '')}">${esc((isInf ? p.infarkt_turi : p.insult_turi) || '—')}</span>
-                    <span class="text-xs text-gray-500 truncate" title="${esc(p.muolaja_turi || '')}">${esc(p.muolaja_turi || '—')}</span>
+                    <span class="text-xs font-semibold ${isInf?'text-red-700':'text-purple-700'} truncate" title="${esc((isInf ? p.infarkt_turi : p.insult_turi) || '')}">${esc((isInf ? p.infarkt_turi : p.insult_turi) || '—')}</span> <!-- i18n-audit-allow: escaped database diagnosis -->
+                    <span class="text-xs text-gray-500 truncate" title="${esc(p.muolaja_turi || '')}">${esc(p.muolaja_turi || '—')}</span> <!-- i18n-audit-allow: escaped database treatment -->
                   </div>
                 </td>
                 <td>
@@ -407,9 +407,9 @@ const BemorlarPage = {
                 <td>
                   <div class="flex flex-col gap-1">
                     ${Utils.statusBadge(p.status)}
-                    ${p.status === 'otkazildi' && p.otkazilgan_muassasa ? `<span class="text-xs text-orange-600 font-medium truncate max-w-[140px]" title="${esc(p.otkazilgan_muassasa)}">→ ${esc(p.otkazilgan_muassasa)}</span>` : ''}
-                    ${p._chiqarish?.chiqish_sana ? `<span class="text-xs text-gray-400">${Utils.formatDateTime(p._chiqarish.chiqish_sana)}</span>` : (p.status === 'chiqarildi' || p.status === 'vafot') ? `<span class="text-xs text-orange-600 font-semibold" title="Chiqarish varaqasi to'ldirilmagan">⚠️ varaqa yo'q</span>` : ''}
-                    ${p._chiqarish?.natija ? `<span class="text-xs text-green-700 truncate max-w-[140px]" title="${esc(p._chiqarish.natija)}">✓ ${esc(p._chiqarish.natija)}</span>` : ''}
+                    ${p.status === 'otkazildi' && p.otkazilgan_muassasa ? `<span class="text-xs text-orange-600 font-medium truncate max-w-[140px]" title="${esc(I18n.facilityName(p.otkazilgan_muassasa))}">→ ${esc(I18n.facilityName(p.otkazilgan_muassasa))}</span>` : ''} <!-- i18n-audit-allow: escaped display-only institution label preserves stored value -->
+                    ${p._chiqarish?.chiqish_sana ? `<span class="text-xs text-gray-400">${Utils.formatDateTime(p._chiqarish.chiqish_sana)}</span>` : (p.status === 'chiqarildi' || p.status === 'vafot') ? `<span class="text-xs text-orange-600 font-semibold" title="${t('patients.dischargeSheetMissing')}">${t('patients.noSheet')}</span>` : ''}
+                    ${p._chiqarish?.natija ? `<span class="text-xs text-green-700 truncate max-w-[140px]" title="${esc(p._chiqarish.natija)}">✓ ${esc(p._chiqarish.natija)}</span>` : ''} <!-- i18n-audit-allow: escaped database outcome -->
                   </div>
                 </td>
                 <td class="text-right text-gray-400">${icon('chevron-right', 20)}</td>
@@ -463,9 +463,9 @@ const BemorlarPage = {
   },
 
   exportData() {
-    if (!BemorlarPage._allData?.length) { showToast('Eksport uchun ma\'lumot yo\'q', 'warning'); return; }
+    if (!BemorlarPage._allData?.length) { showToast(t('export.noData'), 'warning'); return; }
     if (BemorlarPage._totalCount > BemorlarPage._allData.length) {
-      showToast(`⚠️ Faqat ko\'rinayotgan ${BemorlarPage._allData.length} ta bemor eksport qilinadi (jami: ${BemorlarPage._totalCount}). To\'liq eksport uchun barcha sahifalarni ko\'ring yoki sana filtri bilan cheklang.`, 'warning', 8000);
+      showToast(t('export.visibleOnly', { visible: BemorlarPage._allData.length, total: BemorlarPage._totalCount }), 'warning', 8000);
     }
     // Eksport joriy holatga ergashadi: tugma yopiq bo'lsa F.I.O. maskalangan chiqadi
     Utils.exportCSV(BemorlarPage._allData.map(p=>({
@@ -480,7 +480,7 @@ const BemorlarPage = {
       'Davolash natijasi': p._chiqarish?.natija || '',
       Jins: p.jins, 'Tug\'ilgan yili': p.tugilgan_yil
     })), 'bemorlar_royxati.csv');
-    showToast('Eksport boshlandi', 'success');
+    showToast(t('export.started'), 'success');
   },
 
   _updateDeleteBtn() {
@@ -489,7 +489,7 @@ const BemorlarPage = {
     if (!btn) return;
     const n = BemorlarPage._selected.size;
     btn.style.display = n > 0 ? '' : 'none';
-    if (lbl) lbl.textContent = `${n} ta o'chirish`;
+    if (lbl) lbl.textContent = t('bulk.deleteCount', { count: n });
   },
 
   toggleRow(cb) {
@@ -648,9 +648,9 @@ const BemorlarPage = {
               <span class="text-xs text-gray-400 font-mono">${esc(p.kt_no)}</span>
             </div>
             <div class="flex items-center gap-2">
-              <span class="text-xs text-gray-500">Qabul: ${Utils.formatDateTime(p.qabul_vaqt)}</span>
+              <span class="text-xs text-gray-500">${t('card.admittedLabel')}: ${Utils.formatDateTime(p.qabul_vaqt)}</span>
               <button class="btn btn-primary !py-1 !px-3 !text-xs" onclick="BemorlarPage.saveBulkRow(${i},this)">
-                ${icon('save',13)} Saqlash
+                ${icon('save',13)} ${t('common.save')}
               </button>
             </div>
           </div>
@@ -662,7 +662,7 @@ const BemorlarPage = {
     if (bodyEl) bodyEl.innerHTML = `
       <div class="mb-3 flex items-center justify-between">
         <span class="text-sm text-amber-700 font-semibold bg-amber-50 border border-amber-200 rounded px-3 py-1">
-          ${icon('alert-triangle',14)} ${missing.length} ta bemorda vaqt kiritilmagan
+          ${icon('alert-triangle',14)} ${t('patients.missingTimeCount', { count: missing.length })}
         </span>
         <button class="btn btn-primary flex items-center gap-2 !text-sm" onclick="BemorlarPage.saveAllBulk(this)">
           ${icon('save',15)} Hammasini saqlash
@@ -725,7 +725,7 @@ const BemorlarPage = {
     const result = BemorlarPage._readBulkFields(i);
     if (!result) return;
     if (result.error) { showToast(result.error, 'warning'); return; }
-    if (!Object.keys(result.updates).length) { showToast('Vaqt kiritilmagan', 'warning'); return; }
+    if (!Object.keys(result.updates).length) { showToast(t('validation.timeRequired'), 'warning'); return; }
     const btn = btnEl || null;
     if (btn) { btn.disabled = true; btn.innerHTML = '...'; }
     try {
@@ -746,7 +746,7 @@ const BemorlarPage = {
     const list = BemorlarPage._bulkList;
     if (!list?.length) return;
     const btn = btnEl || null;
-    if (btn) { btn.disabled = true; btn.textContent = 'Saqlanmoqda...'; }
+    if (btn) { btn.disabled = true; btn.textContent = t('common.saving'); }
     let saved = 0, skipped = 0;
     for (let i = 0; i < list.length; i++) {
       const p = list[i];
@@ -764,16 +764,16 @@ const BemorlarPage = {
       } catch(e) { skipped++; }
     }
     initIcons();
-    if (btn) { btn.disabled = false; btn.textContent = 'Hammasini saqlash'; }
-    showToast(`${saved} ta saqlandi${skipped ? `, ${skipped} ta o'tkazildi` : ''}`, saved > 0 ? 'success' : 'warning');
+    if (btn) { btn.disabled = false; btn.textContent = t('bulk.saveAll'); }
+    showToast(t('bulk.savedSkipped', { saved, skipped: skipped ? t('bulk.skippedSuffix', { count: skipped }) : '' }), saved > 0 ? 'success' : 'warning');
   },
 
   async deleteSelected() {
     const n = BemorlarPage._selected.size;
     if (!n) return;
-    if (!confirm(`Tanlangan ${n} ta bemorni o'chirishni tasdiqlaysizmi?\nBu amalni qaytarib bo'lmaydi!`)) return;
+    if (!confirm(t('bulk.deleteConfirm', { count: n }))) return;
     const btn = document.getElementById('bl-delete-btn');
-    if (btn) { btn.disabled = true; btn.textContent = 'O\'chirilmoqda...'; }
+    if (btn) { btn.disabled = true; btn.textContent = t('bulk.deleting'); }
     const sb = getSupabase();
     const errors = [];
     for (const key of BemorlarPage._selected) {
@@ -784,8 +784,8 @@ const BemorlarPage = {
         await DB.deletePatientCascade(kt_no, type); // child yozuvlar ham o'chiriladi
       } catch (error) { errors.push(kt_no); }
     }
-    if (errors.length) showToast(`${errors.length} ta o'chirishda xatolik`, 'error');
-    else showToast(`${n} ta bemor o'chirildi`, 'success');
+    if (errors.length) showToast(t('bulk.deleteErrors', { count: errors.length }), 'error');
+    else showToast(t('bulk.patientsDeleted', { count: n }), 'success');
     BemorlarPage._selected.clear();
     await BemorlarPage.loadData();
   }

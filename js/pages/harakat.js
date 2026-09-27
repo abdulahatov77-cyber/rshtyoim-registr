@@ -10,7 +10,7 @@ const HarakatPage = {
   async render() {
     const user = await Auth.getUser();
     document.getElementById('app').innerHTML = Components.renderLayout(
-      'harakat', '🚑 Bemor harakati', 'Ko\'p muassasaga o\'tgan bemorlar',
+      'harakat', `🚑 ${t('nav.patientMovement')}`, 'Ko\'p muassasaga o\'tgan bemorlar',
       `<div id="harakat-content"><div class="flex justify-center py-20"><div class="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div></div></div>`,
       user
     );
@@ -345,12 +345,12 @@ const HarakatPage = {
     const auditHtml = auditSummaryHtml + (auditIssues.length === 0
       ? `<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:14px;padding:16px 18px;margin-bottom:20px;display:flex;align-items:center;gap:12px">
            <div style="width:32px;height:32px;border-radius:8px;background:#16a34a;color:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0">${icon('check',18)}</div>
-           <div><div style="font-size:13px;font-weight:700;color:#16a34a">Barcha marshrутизация to'g'ri</div>
-           <div style="font-size:12px;color:#64748b">Muhtoj bemorlar angiografiya markazига yetган</div></div>
+           <div><div style="font-size:13px;font-weight:700;color:#16a34a">${t('movement.routingAllCorrect')}</div>
+           <div style="font-size:12px;color:#64748b">${t('movement.routingReachedCentre')}</div></div>
          </div>`
       : `<div style="background:#fffbeb;border:1px solid #fde68a;border-radius:14px;padding:16px 18px;margin-bottom:20px">
            <div style="font-size:13px;font-weight:800;color:#d97706;margin-bottom:12px;display:flex;align-items:center;gap:8px">
-             ${icon('alert-triangle',16)} Noto'g'ri marshrut — ${auditIssues.length} ta bemor angiografiya markazига yetmagan
+             ${icon('alert-triangle',16)} ${t('movement.routingIssueCount', { count: auditIssues.length })}
            </div>
            ${auditIssues.slice(0, 20).map(iss => `
              <div onclick="Router.go('bemor-karta',{kt_no:'${esc(String(iss.kt_no||'')).replace(/'/g,'&#39;')}',type:'${esc(String(iss.bemor_turi||''))}'})"
@@ -358,12 +358,12 @@ const HarakatPage = {
                <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap">
                  <div style="min-width:0;flex:1">
                    <div style="font-size:13px;font-weight:700;color:#334155">${esc(iss.patient?.fio || '—')} <span style="font-size:11px;color:#94a3b8;font-family:monospace">${esc(iss.kt_no)}</span></div>
-                   <div style="font-size:12px;color:#64748b;margin-top:2px">${esc(iss.chainStr)}</div>
+                   <div style="font-size:12px;color:#64748b;margin-top:2px">${esc(iss.chainStr.split(' → ').map(name => I18n.facilityName(name)).join(' → '))}</div>
                  </div>
-                 <div style="font-size:11px;font-weight:700;color:#d97706;background:#fffbeb;border:1px solid #fde68a;border-radius:6px;padding:3px 8px;align-self:flex-start;max-width:280px">⚠️ ${esc(iss.issue)}</div>
+                 <div style="font-size:11px;font-weight:700;color:#d97706;background:#fffbeb;border:1px solid #fde68a;border-radius:6px;padding:3px 8px;align-self:flex-start;max-width:280px">⚠️ ${esc(I18n.translateText(iss.issue))}</div>
                </div>
              </div>`).join('')}
-           ${auditIssues.length > 20 ? `<div style="font-size:12px;color:#94a3b8;text-align:center;padding-top:6px">va yana ${auditIssues.length - 20} ta...</div>` : ''}
+           ${auditIssues.length > 20 ? `<div style="font-size:12px;color:#94a3b8;text-align:center;padding-top:6px">${t('movement.routingMoreCount', { count: auditIssues.length - 20 })}</div>` : ''}
          </div>`);
 
     const rows = list.length === 0
@@ -375,7 +375,7 @@ const HarakatPage = {
           const p = d.patient;
           const isInf = d.bemor_turi === 'infarkt';
           const chainHtml = d.fullChain.map((m, i) => `
-            <span style="font-size:11px;color:#334155;font-weight:${i===d.fullChain.length-1?'700':'500'}">${esc(m||'—')}</span>
+            <span style="font-size:11px;color:#334155;font-weight:${i===d.fullChain.length-1?'700':'500'}">${esc(I18n.facilityName(m||'—'))}</span>
             ${i < d.fullChain.length-1 ? '<span style="color:#94a3b8;margin:0 4px">→</span>' : ''}
           `).join('');
 
@@ -441,7 +441,7 @@ const HarakatPage = {
             style="border:1px solid #e2e8f0;border-radius:8px;padding:6px 10px;font-size:12px;outline:none">
           <span style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;margin-left:8px">Viloyat:</span>
           <select onchange="HarakatPage._setViloyat(this.value)" style="border:1px solid #e2e8f0;border-radius:8px;padding:6px 10px;font-size:12px;outline:none;min-width:160px">
-            <option value="">— Barcha viloyat —</option>
+              <option value="">${t('filter.allRegions')}</option>
             ${(APP_CONFIG.VILOYATLAR||[]).map(v => `<option value="${esc(v)}" ${HarakatPage._viloyat===v?'selected':''}>${esc(v)}</option>`).join('')}
           </select>
           ${(HarakatPage._from||HarakatPage._to||HarakatPage._viloyat) ? `<button onclick="HarakatPage._clearFilters()" style="margin-left:auto;padding:6px 12px;background:#fef2f2;color:#dc2626;border:1px solid #fecaca;border-radius:8px;cursor:pointer;font-size:12px;font-weight:700">Tozalash</button>` : ''}
@@ -457,7 +457,7 @@ const HarakatPage = {
                 ${f==='barchasi'?'Barchasi':f==='infarkt'?'❤️ Infarkt':'🧠 Insult'}
               </button>`).join('')}
           </div>
-          <input type="text" placeholder="K/T No yoki F.I.O qidirish..."
+          <input type="text" placeholder="${t('search.recordOrName')}"
             value="${HarakatPage._search}"
             oninput="HarakatPage._setSearch(this.value)"
             style="flex:1;min-width:200px;border:1px solid #e2e8f0;border-radius:10px;padding:8px 14px;font-size:13px;outline:none">

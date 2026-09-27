@@ -51,6 +51,9 @@ DECLARE
   gi       text;
   gt       text;
   gcs_v    text;
+  asp      int;
+  seg      text;
+  rean_aytildi bool := false;-- "reanimatsiya" GCS qatorida aytilganmi (takrorlanmasin)
   after_muolaja text := '';
   detail   text;
   shifokor text;
@@ -124,31 +127,54 @@ BEGIN
     IF gcs_v ~ '^\d+$' THEN
       g := gcs_v::int;
       IF g BETWEEN 3 AND 8 THEN
-        detail := detail || nl || '🔴 <b>GCS ' || g::text || ' — og''ir:</b> intubatsiya va sun''iy nafas olish apparatiga ulash tavsiya etiladi, reanimatsiyaga o''tkazing';
+        detail := detail || nl || '🔴 <b>GCS ' || g::text || ':</b> intubatsiya va sun''iy nafas olish apparatiga ulash tavsiya etiladi, reanimatsiyaga o''tkazing';
+        rean_aytildi := true;
       ELSIF g BETWEEN 9 AND 12 THEN
-        detail := detail || nl || '🟡 <b>GCS ' || g::text || ' — o''rtacha:</b> nafas va ong holatini uzluksiz kuzating, intubatsiyaga tayyor turing';
+        detail := detail || nl || '🟡 <b>GCS ' || g::text || ':</b> nafas va ong holatini uzluksiz kuzating, intubatsiyaga tayyor turing';
       END IF;
     END IF;
 
     -- Klinik tavsiya: NIHSS bo'yicha.
-    -- MUHIM: gemorragik insultda TLT va endovaskulyar muolaja QARSHI KO'RSATMA.
+    -- MUHIM: gemorragik insultda TLT/endovaskulyar muolaja umuman tilga olinmaydi.
     IF (j->>'nihss_qabul') ~ '^\d+$' THEN
       g := (j->>'nihss_qabul')::int;
       IF coalesce(j->>'insult_turi', '') ILIKE '%gemorragik%' THEN
         IF g >= 21 THEN
-          detail := detail || nl || '🔴 <b>NIHSS ' || g::text || ' — og''ir:</b> reanimatsiya va shoshilinch neyroxirurgik baholash. TLT/endovaskulyar muolaja ko''rsatilmagan';
+          detail := detail || nl || '🔴 <b>NIHSS ' || g::text || ':</b> '
+                 || CASE WHEN rean_aytildi THEN 'shoshilinch neyroxirurgik baholash'
+                         ELSE 'reanimatsiya va shoshilinch neyroxirurgik baholash' END;
         ELSIF g >= 16 THEN
-          detail := detail || nl || '🟠 <b>NIHSS ' || g::text || ' — o''rtacha-og''ir:</b> neyroxirurgni shoshilinch chaqiring — dekompressiv trepanatsiya/gematoma evakuatsiyasi ko''rsatmasini baholang';
+          detail := detail || nl || '🟠 <b>NIHSS ' || g::text || ':</b> neyroxirurgni shoshilinch chaqiring — dekompressiv trepanatsiya/gematoma evakuatsiyasi ko''rsatmasini baholang';
         ELSIF g >= 6 THEN
-          detail := detail || nl || '🟡 <b>NIHSS ' || g::text || ':</b> neyroxirurg konsultatsiyasi va qon bosimi nazorati. TLT/tromboekstraksiya qarshi ko''rsatma';
+          detail := detail || nl || '🟡 <b>NIHSS ' || g::text || ':</b> neyroxirurg konsultatsiyasi va qon bosimi nazorati, gematoma dinamikasini KT bilan kuzating';
         END IF;
       ELSE
-        IF g >= 21 THEN
-          detail := detail || nl || '🔴 <b>NIHSS ' || g::text || ' — og''ir insult:</b> reanimatsiyada intensiv kuzatuv, endovaskulyar muolaja ko''rsatmasini shoshilinch baholang';
+        -- QOIDA: ishemik insultda NIHSS >= 20 bo'lsa MSKT angiografiya tavsiyasi
+        -- umuman berilmaydi — GCS qanday bo'lishidan qat'i nazar.
+        IF g >= 20 THEN
+          detail := detail || nl || '🔴 <b>NIHSS ' || g::text || ':</b> '
+                 || CASE WHEN rean_aytildi THEN 'intensiv kuzatuv, nafas yo''llarini himoyalang'
+                         ELSE 'reanimatsiyada intensiv kuzatuv, nafas yo''llarini himoyalang' END;
         ELSIF g >= 16 THEN
-          detail := detail || nl || '🟠 <b>NIHSS ' || g::text || ' — o''rtacha-og''ir:</b> yirik tomir okklyuziyasi ehtimoli yuqori, angiografiya/tromboekstraksiyani shoshilinch baholang';
+          detail := detail || nl || '🟠 <b>NIHSS ' || g::text || ':</b> yirik tomir okklyuziyasi ehtimoli yuqori — shoshilinch MSKT angiografiya ko''rsatmasini baholang';
         ELSIF g >= 6 THEN
-          detail := detail || nl || '🟡 <b>NIHSS ' || g::text || ':</b> yirik tomir okklyuziyasi ehtimoli bor — TLT va angiografiya ko''rsatmasini baholang';
+          detail := detail || nl || '🟡 <b>NIHSS ' || g::text || ':</b> yirik tomir okklyuziyasi ehtimoli bor — MSKT angiografiya ko''rsatmasini baholang';
+        END IF;
+
+        -- DAVOLASH TAKTIKASI — faqat MSKT angiografiya o'tkazilgan bo'lsa.
+        -- ASPECTS ≥ 6 + M1/M2 → tromboekstraksiya; ASPECTS ≥ 6 + M3/M4 → TLT; ASPECTS < 6 → konservativ
+        IF coalesce(j->>'mskt_angiografiya', '') = 'Ha' AND (j->>'aspects_ball') ~ '^\d+$' THEN
+          asp := (j->>'aspects_ball')::int;
+          seg := upper(btrim(coalesce(j->>'okklyuziya_segmenti', '')));
+          IF asp < 6 THEN
+            detail := detail || nl || '🟡 <b>ASPECTS ' || asp::text || ' — konservativ davolash:</b> keng infarkt, reperfuzion muolaja tavsiya etilmaydi';
+          ELSIF seg IN ('M1', 'M2') THEN
+            detail := detail || nl || '🔴 <b>ASPECTS ' || asp::text || ' · ' || seg || ' segment:</b> tromboekstraksiya ko''rsatmasini ko''rib chiqing — endovaskulyar markazga zudlik bilan yo''naltiring';
+          ELSIF seg IN ('M3', 'M4') THEN
+            detail := detail || nl || '🟠 <b>ASPECTS ' || asp::text || ' · ' || seg || ' segment:</b> TLT (trombolitik terapiya) ko''rsatmasini ko''rib chiqing';
+          ELSE
+            detail := detail || nl || '🔵 <b>ASPECTS ' || asp::text || ':</b> reperfuzion muolaja nomzodi — okklyuziya segmentini aniqlang (M1/M2 — tromboekstraksiya, M3/M4 — TLT)';
+          END IF;
         END IF;
       END IF;
     END IF;

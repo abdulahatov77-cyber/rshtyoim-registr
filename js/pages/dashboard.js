@@ -35,7 +35,7 @@ const DashboardPage = {
         <div class="flex items-center justify-center py-32">
           <div class="text-center">
             <div class="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-            <p class="text-gray-500 font-medium">Ma'lumotlar yuklanmoqda...</p>
+            <p class="text-gray-500 font-medium">${t('dashboard.loading')}</p>
           </div>
         </div>
       </div>`,
@@ -104,10 +104,10 @@ const DashboardPage = {
           <div class="text-orange-600 shrink-0 mt-0.5">${icon('ambulance', 22)}</div>
           <div class="min-w-0">
             <div class="font-bold text-orange-900">
-              ${rows.length} ta bemor ${mua ? 'sizga' : 'viloyatingizga'} yuborilgan — hali qabul qilinmagan
+              ${t(mua ? 'dashboard.pendingForYou' : 'dashboard.pendingForRegion', { count: rows.length })}
             </div>
             <div class="text-sm text-orange-800 truncate">
-              ${esc(nomlar)}${rows.length > 3 ? ` va yana ${rows.length - 3} ta` : ''}
+              ${esc(nomlar)}${rows.length > 3 ? t('dashboard.andMore', { count: rows.length - 3 }) : ''}
             </div>
           </div>
         </div>
@@ -196,7 +196,7 @@ const DashboardPage = {
         inner.innerHTML = `
           <div class="card p-12 text-center max-w-lg mx-auto mt-10">
             <div class="w-20 h-20 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">${icon('alert-triangle', 40)}</div>
-            <h3 class="text-xl font-bold text-gray-900 mb-2">Yuklashda xatolik</h3>
+            <h3 class="text-xl font-bold text-gray-900 mb-2">${t('dashboard.loadError')}</h3>
             <p class="text-gray-500 text-sm mb-6">${err.message}</p>
             <button class="btn btn-primary" onclick="DashboardPage.loadData()">Qayta urinish</button>
           </div>`;
@@ -221,22 +221,22 @@ const DashboardPage = {
     const longStayEl = document.getElementById('longstay-body');
     if (longStayEl) {
       longStayEl.innerHTML = longStay.length === 0
-        ? `<tr><td colspan="5" class="p-10 text-center text-slate-400 font-medium">15 kun va undan ko'p davolanayotgan bemorlar yo'q</td></tr>`
+        ? `<tr><td colspan="5" class="p-10 text-center text-slate-400 font-medium">${t('dashboard.longStayEmpty')}</td></tr>`
         : longStay.map((g, idx) => {
             const inf = g.bemorlar.filter(b=>b._type==='infarkt').length;
             const ins = g.bemorlar.filter(b=>b._type==='insult').length;
             const maxDays = Math.max(...g.bemorlar.map(b=>b.kunlar));
             return `<tr class="hover:bg-orange-50/30 transition-colors">
-              <td class="p-4"><div class="flex items-center gap-2"><div class="w-7 h-7 bg-orange-100 text-orange-500 rounded-lg flex items-center justify-center">${icon('building-2',14)}</div><span class="font-bold text-slate-700">${esc(g.muassasa)}</span></div></td>
-              <td class="p-4"><span class="px-2.5 py-1 bg-orange-50 text-orange-700 border border-orange-100 rounded-lg text-xs font-black">${g.bemorlar.length} ta</span></td>
-              <td class="p-4"><span class="px-2.5 py-1 bg-red-50 text-red-700 border border-red-100 rounded-lg text-xs font-black">${maxDays} kun</span></td>
-              <td class="p-4"><div class="flex gap-2">${inf>0?`<span class="px-2 py-0.5 bg-red-50 text-red-600 border border-red-100 rounded text-[10px] font-bold">${inf} infarkt</span>`:''}${ins>0?`<span class="px-2 py-0.5 bg-blue-50 text-blue-600 border border-blue-100 rounded text-[10px] font-bold">${ins} insult</span>`:''}</div></td>
+              <td class="p-4"><div class="flex items-center gap-2"><div class="w-7 h-7 bg-orange-100 text-orange-500 rounded-lg flex items-center justify-center">${icon('building-2',14)}</div><span class="font-bold text-slate-700">${esc(I18n.facilityName(g.muassasa))}</span></div></td>
+              <td class="p-4"><span class="px-2.5 py-1 bg-orange-50 text-orange-700 border border-orange-100 rounded-lg text-xs font-black">${I18n.plural(g.bemorlar.length)}</span></td>
+              <td class="p-4"><span class="px-2.5 py-1 bg-red-50 text-red-700 border border-red-100 rounded-lg text-xs font-black">${t('dashboard.daysCount', { count: maxDays })}</span></td>
+              <td class="p-4"><div class="flex gap-2">${inf>0?`<span class="px-2 py-0.5 bg-red-50 text-red-600 border border-red-100 rounded text-[10px] font-bold">${t('dashboard.infarctCount', { count: inf })}</span>`:''}${ins>0?`<span class="px-2 py-0.5 bg-blue-50 text-blue-600 border border-blue-100 rounded text-[10px] font-bold">${t('dashboard.strokeCount', { count: ins })}</span>`:''}</div></td>
               <td class="p-4 text-right"><button class="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-[10px] font-bold text-slate-600 hover:bg-slate-100 transition-all" onclick="DashboardPage.showLongStayDetail(${idx})">Ko'rish</button></td>
             </tr>`;
           }).join('');
       // Jami sonini ham yangilaymiz
       const longStayCount = document.getElementById('longstay-count');
-      if (longStayCount) longStayCount.textContent = longStay.reduce((s,g)=>s+g.bemorlar.length,0) + ' ta bemor';
+      if (longStayCount) longStayCount.textContent = I18n.plural(longStay.reduce((s,g)=>s+g.bemorlar.length,0));
     }
   },
 
@@ -247,7 +247,7 @@ const DashboardPage = {
     const isFiltered = profile?.role !== 'super_admin' && !!profile?.viloyat;
     const isRshtyoim = !!DashboardPage._viewMuassasa;
     const activeViloyat = DashboardPage._viewViloyat || (isFiltered ? profile?.viloyat : null);
-    const distTitle = activeViloyat ? `${activeViloyat} muassasalari bo'yicha` : "Viloyatlar bo'yicha grafik";
+    const distTitle = activeViloyat ? t('dashboard.facilityDistribution', { region: I18n.translateText(activeViloyat) }) : t('dashboard.regionalChart');
 
     // Gender Calculation
     const infM = demo.infarkt.male, infF = demo.infarkt.female, infT = (infM + infF) || 1;
@@ -312,21 +312,21 @@ const DashboardPage = {
         <div class="flex flex-wrap items-center gap-3 mb-3">
           <div class="flex items-center gap-2 mr-2">
             <div class="w-7 h-7 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center">${icon('map-pin', 14)}</div>
-            <span class="text-xs font-bold text-slate-600 uppercase tracking-wider">Ko'rish rejimi:</span>
+            <span class="text-xs font-bold text-slate-600 uppercase tracking-wider">${t('dashboard.viewMode')}</span>
           </div>
           <button onclick="DashboardPage.setViewViloyat(undefined)"
-            class="px-3 py-1.5 rounded-xl text-[11px] font-bold border transition-all ${!viewViloyat ? 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-200' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'}">
-            Barcha viloyatlar
+            class="px-3 py-1.5 min-h-[44px] sm:min-h-0 rounded-xl text-[11px] font-bold border transition-all ${!viewViloyat ? 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-200' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'}">
+            ${t('dashboard.allRegions')}
           </button>
           ${viloyatlarList.map(v => {
             const safeV = v.replace(/'/g, "\\'");
             const isActive = viewViloyat === v;
             const cls = isActive ? 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-200' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100';
-            const label = v.replace(' viloyati','').replace(' Respublikasi','');
-            return `<button onclick="DashboardPage.setViewViloyat('${safeV}')" class="px-3 py-1.5 rounded-xl text-[11px] font-bold border transition-all ${cls}">${label}</button>`;
+            const label = I18n.translateText(v);
+            return `<button onclick="DashboardPage.setViewViloyat('${safeV}')" class="px-3 py-1.5 min-h-[44px] sm:min-h-0 rounded-xl text-[11px] font-bold border transition-all ${cls}">${esc(label)}</button>`;
           }).join('')}
           <button onclick="DashboardPage.setViewMuassasa('Respublika Shoshilinch Tibbiy Yordam Ilmiy Markazi')"
-            class="px-3 py-1.5 rounded-xl text-[11px] font-bold border transition-all ${DashboardPage._viewMuassasa ? 'bg-red-600 text-white border-red-600 shadow-md shadow-red-200' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'}">
+            class="px-3 py-1.5 min-h-[44px] sm:min-h-0 rounded-xl text-[11px] font-bold border transition-all ${DashboardPage._viewMuassasa ? 'bg-red-600 text-white border-red-600 shadow-md shadow-red-200' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'}">
             RSHTYoIM
           </button>
         </div>
@@ -368,7 +368,7 @@ const DashboardPage = {
             }
             monthRow = `
               <div class="flex flex-wrap items-center gap-2 pt-2">
-                <span class="text-[10px] font-bold text-slate-500 uppercase mr-1">Oy:</span>
+                <span class="text-[10px] font-bold text-slate-500 uppercase mr-1">${t('dashboard.month')}</span>
                 ${mos.join('')}
               </div>`;
           }
@@ -378,7 +378,7 @@ const DashboardPage = {
             <div class="flex flex-wrap items-center gap-2">
               <div class="flex items-center gap-2 mr-1">
                 <div class="w-6 h-6 bg-amber-50 text-amber-600 rounded-lg flex items-center justify-center">${icon('calendar', 12)}</div>
-                <span class="text-[10px] font-bold text-slate-500 uppercase">Yil:</span>
+                <span class="text-[10px] font-bold text-slate-500 uppercase">${t('dashboard.year')}</span>
               </div>
               ${yearBtns}
               <button onclick="DashboardPage.setDateFilter(null,null,null)"
@@ -400,7 +400,7 @@ const DashboardPage = {
       <!-- ROW 2: DYNAMICS CHART (FULL WIDTH) -->
       <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm mb-8">
         <div class="flex items-center justify-between mb-8">
-          <h3 class="text-sm font-bold text-slate-800 uppercase tracking-wider">Kunlik qabul dinamikasi</h3>
+          <h3 class="text-sm font-bold text-slate-800 uppercase tracking-wider">${t('dashboard.dailyAdmissions')}</h3>
           <div class="flex gap-4">
             <div class="flex items-center gap-1.5"><span class="w-3 h-1 bg-red-500 rounded-full"></span> <span class="text-[10px] font-bold text-slate-500 uppercase">Infarkt</span></div>
             <div class="flex items-center gap-1.5"><span class="w-3 h-1 bg-blue-500 rounded-full"></span> <span class="text-[10px] font-bold text-slate-500 uppercase">Insult</span></div>
@@ -412,7 +412,7 @@ const DashboardPage = {
       <!-- ROW 2b: MONTHLY TREND CHART -->
       <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm mb-8">
         <div class="flex items-center justify-between mb-8">
-          <h3 class="text-sm font-bold text-slate-800 uppercase tracking-wider">Oylik qabul dinamikasi (so'nggi 12 oy)</h3>
+          <h3 class="text-sm font-bold text-slate-800 uppercase tracking-wider">${t('dashboard.monthlyAdmissions')}</h3>
           <div class="flex gap-4">
             <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-sm bg-red-500"></span> <span class="text-[10px] font-bold text-slate-500 uppercase">Infarkt</span></div>
             <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-sm bg-blue-500"></span> <span class="text-[10px] font-bold text-slate-500 uppercase">Insult</span></div>
@@ -427,7 +427,7 @@ const DashboardPage = {
            <h3 class="text-sm font-bold text-slate-800 uppercase tracking-wider">${distTitle}</h3>
            <div class="flex items-center gap-3">
              <div class="flex rounded-xl overflow-hidden border border-slate-200 text-xs font-bold">
-               <button id="toggleAbs" onclick="DashboardPage.setChartMode('abs')" class="px-3 py-1.5 bg-blue-600 text-white transition-all">Mutlaq son</button>
+               <button id="toggleAbs" onclick="DashboardPage.setChartMode('abs')" class="px-3 py-1.5 bg-blue-600 text-white transition-all">${t('dashboard.absolute')}</button>
                <button id="toggle100k18" onclick="DashboardPage.setChartMode('100k18')" class="px-3 py-1.5 bg-white text-slate-500 hover:bg-slate-50 transition-all">/ 100 000 <span class="text-indigo-400">18+</span></button>
                <button id="toggle100k30" onclick="DashboardPage.setChartMode('100k30')" class="px-3 py-1.5 bg-white text-slate-500 hover:bg-slate-50 transition-all">/ 100 000 <span class="text-amber-400">30+</span></button>
              </div>
@@ -476,7 +476,7 @@ const DashboardPage = {
         <div class="bg-white rounded-2xl border-t-4 border-t-red-500 shadow-sm overflow-hidden">
           <div class="p-6 border-b border-slate-100 flex items-center justify-between">
             <h3 class="font-bold text-slate-800 flex items-center gap-2">${icon('heart-pulse', 20, 'text-red-500')} Infarkt turlari va muolajalar</h3>
-            <span class="text-[10px] font-bold text-slate-400">DAVOLANISH / O'LIM</span>
+            <span class="text-[10px] font-bold text-slate-400">${t('dashboard.treatmentMortality')}</span>
           </div>
           <div class="p-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
             ${this.renderDetailCard('STEMI', stats.stemi ?? 0, stats.stemiDavol ?? 0, stats.stemiVafot ?? 0)}
@@ -492,7 +492,7 @@ const DashboardPage = {
         <div class="bg-white rounded-2xl border-t-4 border-t-blue-500 shadow-sm overflow-hidden">
           <div class="p-6 border-b border-slate-100 flex items-center justify-between">
             <h3 class="font-bold text-slate-800 flex items-center gap-2">${icon('brain-circuit', 20, 'text-blue-500')} Insult turlari va muolajalar</h3>
-            <span class="text-[10px] font-bold text-slate-400">DAVOLANISH / O'LIM</span>
+            <span class="text-[10px] font-bold text-slate-400">${t('dashboard.treatmentMortality')}</span>
           </div>
           <div class="p-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
             ${this.renderDetailCard('Ishemik insult', stats.ishemik ?? 0, stats.ishemikDavol ?? 0, stats.ishemikVafot ?? 0)}
@@ -513,8 +513,8 @@ const DashboardPage = {
           <div class="flex items-center gap-3">
             <div class="w-9 h-9 bg-orange-100 text-orange-600 rounded-xl flex items-center justify-center">${icon('clock', 18)}</div>
             <div>
-              <h3 class="font-bold text-slate-800">15 kun va undan ko'p davolanayotganlar</h3>
-              <p class="text-[11px] text-slate-400 font-medium">Statsionarda 15+ kun qolgan aktiv bemorlar — muassasa bo'yicha</p>
+              <h3 class="font-bold text-slate-800">${t('dashboard.longStay')}</h3>
+              <p class="text-[11px] text-slate-400 font-medium">${t('dashboard.longStaySubtitle')}</p>
             </div>
           </div>
           <span id="longstay-count" class="px-3 py-1.5 bg-orange-100 text-orange-700 text-xs font-black rounded-xl border border-orange-200">yuklanmoqda...</span>
@@ -524,8 +524,8 @@ const DashboardPage = {
             <thead>
               <tr class="bg-slate-50/50">
                 <th class="p-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100">Muassasa</th>
-                <th class="p-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100">Bemorlar soni</th>
-                <th class="p-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100">Eng uzoq (kun)</th>
+                <th class="p-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100">${t('dashboard.patientCount')}</th>
+                <th class="p-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100">${t('dashboard.longestStay')}</th>
                 <th class="p-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100">Infarkt / Insult</th>
                 <th class="p-4 border-b border-slate-100"></th>
               </tr>
@@ -540,19 +540,19 @@ const DashboardPage = {
                   <td class="p-4">
                     <div class="flex items-center gap-2">
                       <div class="w-7 h-7 bg-orange-100 text-orange-500 rounded-lg flex items-center justify-center">${icon('building-2', 14)}</div>
-                      <span class="font-bold text-slate-700">${esc(g.muassasa)}</span>
+                      <span class="font-bold text-slate-700">${esc(I18n.facilityName(g.muassasa))}</span>
                     </div>
                   </td>
                   <td class="p-4">
-                    <span class="px-2.5 py-1 bg-orange-50 text-orange-700 border border-orange-100 rounded-lg text-xs font-black">${g.bemorlar.length} ta</span>
+                    <span class="px-2.5 py-1 bg-orange-50 text-orange-700 border border-orange-100 rounded-lg text-xs font-black">${I18n.plural(g.bemorlar.length)}</span>
                   </td>
                   <td class="p-4">
-                    <span class="px-2.5 py-1 bg-red-50 text-red-700 border border-red-100 rounded-lg text-xs font-black">${maxDays} kun</span>
+                    <span class="px-2.5 py-1 bg-red-50 text-red-700 border border-red-100 rounded-lg text-xs font-black">${t('dashboard.daysCount', { count: maxDays })}</span>
                   </td>
                   <td class="p-4">
                     <div class="flex gap-2">
-                      ${inf > 0 ? `<span class="px-2 py-0.5 bg-red-50 text-red-600 border border-red-100 rounded text-[10px] font-bold">${inf} infarkt</span>` : ''}
-                      ${ins > 0 ? `<span class="px-2 py-0.5 bg-blue-50 text-blue-600 border border-blue-100 rounded text-[10px] font-bold">${ins} insult</span>` : ''}
+                      ${inf > 0 ? `<span class="px-2 py-0.5 bg-red-50 text-red-600 border border-red-100 rounded text-[10px] font-bold">${t('dashboard.infarctCount', { count: inf })}</span>` : ''}
+                      ${ins > 0 ? `<span class="px-2 py-0.5 bg-blue-50 text-blue-600 border border-blue-100 rounded text-[10px] font-bold">${t('dashboard.strokeCount', { count: ins })}</span>` : ''}
                     </div>
                   </td>
                   <td class="p-4 text-right">
@@ -570,7 +570,7 @@ const DashboardPage = {
       <!-- ROW 7: PATIENT LIST TABLE -->
       <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
         <div class="p-6 border-b border-slate-100 flex items-center justify-between">
-          <h3 class="font-bold text-slate-800">So'nggi qabul qilingan bemorlar</h3>
+          <h3 class="font-bold text-slate-800">${t('dashboard.recentAdmissions')}</h3>
           <div class="flex gap-2">
             <button class="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-[11px] font-bold text-slate-600 flex items-center gap-1.5 hover:bg-slate-100 transition-all" onclick="Router.go('bemorlar')">
               ${icon('clipboard-list', 14)} Barchasi
@@ -665,18 +665,18 @@ const DashboardPage = {
       <tr class="border-b border-slate-50 hover:bg-slate-50/50 cursor-pointer" onclick="closeModal(); Router.go('bemor-karta',{kt_no:'${b.kt_no}', type:'${b._type}'})">
         <td class="p-3 font-mono text-[11px] text-slate-500">${esc(b.kt_no)}</td>
         <td class="p-3 font-bold text-slate-700">${esc(b.fio || '—')}</td>
-        <td class="p-3 text-slate-500 text-xs">${Utils.calculateAge(b.tugilgan_yil) || '—'} yosh</td>
+        <td class="p-3 text-slate-500 text-xs">${t('dashboard.ageYears', { age: Utils.calculateAge(b.tugilgan_yil) || '—' })}</td>
         <td class="p-3">
           <span class="px-2 py-0.5 ${b._type==='infarkt'?'bg-red-50 text-red-600 border-red-100':'bg-blue-50 text-blue-600 border-blue-100'} text-[10px] font-bold rounded border uppercase">${b._type}</span>
         </td>
         <td class="p-3 text-xs text-slate-500">${Utils.formatDate(b.qabul_vaqt)}</td>
         <td class="p-3">
-          <span class="px-2.5 py-1 bg-orange-50 text-orange-700 border border-orange-100 rounded-lg text-xs font-black">${b.kunlar} kun</span>
+          <span class="px-2.5 py-1 bg-orange-50 text-orange-700 border border-orange-100 rounded-lg text-xs font-black">${t('dashboard.daysCount', { count: b.kunlar })}</span>
         </td>
       </tr>
     `).join('');
     showModal({
-      title: `${esc(group.muassasa)} — 15+ kun bemorlar`,
+      title: t('dashboard.longStayTitle', { facility: esc(I18n.facilityName(group.muassasa)) }),
       size: 'lg',
       body: `
         <div class="overflow-x-auto">
@@ -702,17 +702,17 @@ const DashboardPage = {
     const hasSub = davol !== null && vafot !== null;
     return `
       <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 hover:shadow-md hover:-translate-y-1 transition-all duration-300 cursor-pointer group">
-        <p class="text-[11px] font-bold text-slate-600 uppercase mb-2 group-hover:text-blue-600 transition-colors leading-tight">${label}</p>
+        <p class="text-[11px] font-bold text-slate-600 uppercase mb-2 group-hover:text-blue-600 transition-colors leading-tight">${esc(I18n.translateText(label))}</p>
         <p class="text-2xl font-black text-slate-900 mb-2">${val.toLocaleString()}</p>
         ${hasSub ? `
         <div class="flex gap-2 mt-1">
           <span class="flex items-center gap-1 text-[10px] font-bold text-green-600 bg-green-50 border border-green-200 rounded-md px-2 py-0.5">
             <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-            ${davol.toLocaleString()} davolandi
+            ${t('dashboard.treatedCount', { count: I18n.formatNumber(davol) })}
           </span>
           <span class="flex items-center gap-1 text-[10px] font-bold text-red-600 bg-red-50 border border-red-200 rounded-md px-2 py-0.5">
             <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-            ${vafot.toLocaleString()} vafot
+            ${t('dashboard.deathCount', { count: I18n.formatNumber(vafot) })}
           </span>
         </div>` : ''}
       </div>
@@ -734,8 +734,8 @@ const DashboardPage = {
         data: {
           labels: trend.labels,
           datasets: [
-            { label: 'Infarkt', data: trend.infData, borderColor: '#ef4444', backgroundColor: 'rgba(239,68,68,0.05)', fill: true, tension: 0.4, pointRadius: 3, borderWidth: 3 },
-            { label: 'Insult',  data: trend.insData, borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.05)', fill: true, tension: 0.4, pointRadius: 3, borderWidth: 3 }
+            { label: t('glossary.infarction'), data: trend.infData, borderColor: '#ef4444', backgroundColor: 'rgba(239,68,68,0.05)', fill: true, tension: 0.4, pointRadius: 3, borderWidth: 3 },
+            { label: t('glossary.stroke'),  data: trend.insData, borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.05)', fill: true, tension: 0.4, pointRadius: 3, borderWidth: 3 }
           ]
         },
         plugins: window.ChartDataLabels ? [window.ChartDataLabels] : [],
@@ -825,10 +825,10 @@ const DashboardPage = {
         DashboardPage._charts.region = new Chart(ctxR, {
           type: 'bar',
           data: {
-            labels: regionData.map(v => v.name),
+            labels: regionData.map(v => isSuperAdminView ? I18n.translateText(v.name) : I18n.facilityName(v.name)),
             datasets: [
-              { label: 'Infarkt', data: d.map(v => v.inf), backgroundColor: '#dc2626', borderRadius: 4, borderSkipped: false },
-              { label: 'Insult',  data: d.map(v => v.ins), backgroundColor: '#2563eb', borderRadius: 4, borderSkipped: false }
+              { label: t('glossary.infarction'), data: d.map(v => v.inf), backgroundColor: '#dc2626', borderRadius: 4, borderSkipped: false },
+              { label: t('glossary.stroke'),  data: d.map(v => v.ins), backgroundColor: '#2563eb', borderRadius: 4, borderSkipped: false }
             ]
           },
           plugins: window.ChartDataLabels ? [window.ChartDataLabels] : [],
@@ -886,10 +886,10 @@ const DashboardPage = {
       DashboardPage._charts.monthly = new Chart(ctxM, {
         type: 'bar',
         data: {
-          labels: trend12.labels,
+          labels: trend12.labels.map(label => I18n.monthLabel(label)),
           datasets: [
-            { label: 'Infarkt', data: trend12.infData, backgroundColor: 'rgba(239,68,68,0.85)', borderRadius: 5, borderSkipped: false },
-            { label: 'Insult',  data: trend12.insData, backgroundColor: 'rgba(59,130,246,0.85)', borderRadius: 5, borderSkipped: false }
+            { label: t('glossary.infarction'), data: trend12.infData, backgroundColor: 'rgba(239,68,68,0.85)', borderRadius: 5, borderSkipped: false },
+            { label: t('glossary.stroke'),  data: trend12.insData, backgroundColor: 'rgba(59,130,246,0.85)', borderRadius: 5, borderSkipped: false }
           ]
         },
         plugins: window.ChartDataLabels ? [window.ChartDataLabels] : [],
@@ -935,9 +935,9 @@ const DashboardPage = {
     if (data.length > TOP) {
       const top8 = data.slice(0, TOP);
       const othersSum = data.slice(TOP).reduce((s, [, v]) => s + v, 0);
-      displayData = othersSum > 0 ? [...top8, ['Boshqalar', othersSum]] : top8;
+      displayData = othersSum > 0 ? [...top8, [t('risk.other'), othersSum]] : top8;
     }
-    data = displayData;
+    data = displayData.map(([label, count]) => [I18n.translateText(label), count]);
 
     const total = data.reduce((s, [, v]) => s + v, 0);
 
@@ -1031,7 +1031,7 @@ const DashboardPage = {
         c.textBaseline = 'middle';
         c.fillStyle = '#94a3b8';
         c.font = '500 11px Inter, system-ui, sans-serif';
-        c.fillText('Jami bemor', cx, cy - 11);
+        c.fillText(t('dashboard.totalPatients'), cx, cy - 11);
         c.fillStyle = '#0f172a';
         c.font = '700 22px Inter, system-ui, sans-serif';
         c.fillText(displayCount.toLocaleString(), cx, cy + 10);
@@ -1062,7 +1062,7 @@ const DashboardPage = {
           datalabels: { display: false },
           tooltip: {
             callbacks: {
-              label: item => ` ${item.label}: ${item.parsed} ta (${((item.parsed/total)*100).toFixed(1)}%)`
+              label: item => ` ${item.label}: ${I18n.formatNumber(item.parsed)} (${((item.parsed/total)*100).toFixed(1)}%)`
             }
           }
         }
@@ -1092,7 +1092,7 @@ const DashboardPage = {
       const vilRows = Object.entries(vilMap).sort((a,b)=>b[1]-a[1])
         .map(([v,c])=>`<div class="flex justify-between items-center py-1.5 border-b border-slate-100 last:border-0">
           <span class="text-sm text-slate-700 font-medium">${esc(v)}</span>
-          <span class="text-sm font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded-lg">${c} ta</span>
+          <span class="text-sm font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded-lg">${I18n.formatNumber(c)}</span>
         </div>`).join('');
 
       const tableRows = all.map(p=>`
@@ -1101,13 +1101,13 @@ const DashboardPage = {
           <td class="p-2 text-sm font-semibold text-slate-800">${esc(p.fio||'—')}</td>
           <td class="p-2 text-xs">${p._type==='infarkt'?'<span class="text-red-600 font-bold">Infarkt</span>':'<span class="text-blue-600 font-bold">Insult</span>'}</td>
           <td class="p-2 text-xs text-slate-600">${esc(p.viloyat||'—')}</td>
-          <td class="p-2 text-xs text-slate-600">${esc(p.muassasa||'—')}</td>
+          <td class="p-2 text-xs text-slate-600">${esc(I18n.facilityName(p.muassasa||'—'))}</td>
           <td class="p-2 text-xs text-slate-500">${Utils.formatDateTime(p.qabul_vaqt)}</td>
           <td class="p-2 text-xs text-slate-600">${esc(p.kasallik)}</td>
         </tr>`).join('');
 
       showModal({
-        title: `Vafot etgan bemorlar — ${all.length} ta`,
+        title: t('dashboard.deceasedTitle', { count: all.length }),
         body: `
           <div class="flex gap-4" style="min-width:min(860px,88vw)">
             <div style="width:210px;flex-shrink:0">
@@ -1139,7 +1139,7 @@ const DashboardPage = {
 
   exportExcel() {
     const data = DashboardPage._recentPatients;
-    if (!data?.length) { showToast("Ma'lumot yuklanmagan, biroz kuting", 'warning'); return; }
+    if (!data?.length) { showToast(t('dashboard.dataNotLoaded'), 'warning'); return; }
     Utils.exportCSV(data.map(p => ({
       Turi: p._type === 'infarkt' ? 'Infarkt' : 'Insult',
       'K/T No': p.kt_no,
@@ -1151,7 +1151,7 @@ const DashboardPage = {
       'Kasallik turi': p.infarkt_turi || p.insult_turi || '—',
       Muolaja: p.muolaja_turi || '—'
     })), `dashboard_bemorlar_${new Date(Date.now()+5*3600000).toISOString().slice(0,10)}.csv`);
-    showToast('Excel eksport boshlandi', 'success');
+    showToast(t('dashboard.exportStarted'), 'success');
   },
 
   subscribeRealtime() {
@@ -1162,20 +1162,20 @@ const DashboardPage = {
   _renderRecentRows(patients) {
     return patients.map(p => {
       const rawDiag = p._type==='infarkt' ? (p.infarkt_turi || 'Miokard Infarkti') : (p.insult_turi || 'Ishemik Insult');
-      const t = rawDiag.toUpperCase();
-      let fDiag = t;
-      if (t.includes('STEMI')) fDiag = "O'KS ST ELEVATSIYA BILAN (STEMI)";
-      else if (t.includes('NSTEMI')) fDiag = "O'KS ST ELEVATSIYASIZ (NSTEMI)";
-      else if (t.includes("MIOKARD INFARKTI") || t.includes("AMI")) fDiag = "O'TKIR MIOKARD INFARKTI (AMI)";
-      else if (t.includes('TIA') || t.includes('TRANZITOR')) fDiag = "TIA (TRANZITOR ISHEMIK ATAKA)";
-      else if (t.includes('GEMORRAGIK')) fDiag = "GEMORRAGIK INSULT";
-      else if (t.includes('ISHEMIK')) fDiag = "ISHEMIK INSULT";
+      const diagnosis = rawDiag.toUpperCase();
+      let fDiag = I18n.translateText(rawDiag);
+      if (diagnosis.includes('NSTEMI')) fDiag = t('infarct.nstemi');
+      else if (diagnosis.includes('STEMI')) fDiag = t('infarct.stemi');
+      else if (diagnosis.includes('MIOKARD INFARKTI') || diagnosis.includes('AMI')) fDiag = t('clinical.amiLabel');
+      else if (diagnosis.includes('TIA') || diagnosis.includes('TRANZITOR')) fDiag = t('clinical.tiaLabel');
+      else if (diagnosis.includes('GEMORRAGIK')) fDiag = t('stroke.hemorrhagic');
+      else if (diagnosis.includes('ISHEMIK')) fDiag = t('stroke.ischemic');
       return `
       <tr class="border-b border-slate-50 hover:bg-slate-50/50 cursor-pointer transition-colors" onclick="Router.go('bemor-karta',{kt_no:'${esc(p.kt_no)}', type:'${esc(p._type)}'})">
         <td class="p-4 text-slate-500 font-mono text-[11px]">${p.kt_no}</td>
         <td class="p-4">
           <div class="font-bold text-slate-800">${p.fio || '—'}</div>
-          <div class="text-[10px] text-slate-400 font-medium uppercase mt-0.5">${Utils.calculateAge(p.tugilgan_yil)||'—'} yosh · ${(p.jins||p.jinsi)==='Erkak'?'E':'A'}</div>
+          <div class="text-[10px] text-slate-400 font-medium uppercase mt-0.5">${t('dashboard.ageYears', { age: Utils.calculateAge(p.tugilgan_yil) || '—' })} · ${(p.jins||p.jinsi)==='Erkak'?'E':'A'}</div>
         </td>
         <td class="p-4">
           <span class="px-2 py-0.5 ${p._type==='infarkt' ? 'bg-red-50 text-red-600 border-red-100' : 'bg-blue-50 text-blue-600 border-blue-100'} text-[10px] font-bold rounded border uppercase">
@@ -1243,21 +1243,21 @@ const DashboardPage = {
           <div class="absolute -right-10 -top-10 w-32 h-32 bg-slate-500/10 rounded-full blur-3xl group-hover:bg-slate-500/20 transition-all"></div>
           <div class="flex items-center justify-between mb-4 relative z-10">
             <div class="w-12 h-12 bg-slate-500/20 text-slate-300 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-all duration-500">${icon('database', 26)}</div>
-            <span class="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">JAMI BAZA</span>
+            <span class="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">${t('dashboard.totalBadge')}</span>
           </div>
-          <p class="text-slate-400 text-[11px] font-bold uppercase tracking-wider mb-1 relative z-10">Jami Qabul Qilingan</p>
+          <p class="text-slate-400 text-[11px] font-bold uppercase tracking-wider mb-1 relative z-10">${t('dashboard.admittedTotal')}</p>
           <h3 class="text-5xl font-black text-white relative z-10 tracking-tight">${jami.toLocaleString()}</h3>
-          ${weekDiff !== null ? `<div class="mt-1 relative z-10"><span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold ${weekDiff > 0 ? 'bg-red-500/20 text-red-300' : weekDiff < 0 ? 'bg-emerald-500/20 text-emerald-300' : 'bg-slate-500/20 text-slate-400'}">${weekDiff > 0 ? '▲' : weekDiff < 0 ? '▼' : '→'} ${Math.abs(weekDiff)}% hafta</span></div>` : '<div class="mt-1"></div>'}
+          ${weekDiff !== null ? `<div class="mt-1 relative z-10"><span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold ${weekDiff > 0 ? 'bg-red-500/20 text-red-300' : weekDiff < 0 ? 'bg-emerald-500/20 text-emerald-300' : 'bg-slate-500/20 text-slate-400'}">${weekDiff > 0 ? '▲' : weekDiff < 0 ? '▼' : '→'} ${t('dashboard.weekChange', { value: Math.abs(weekDiff) })}</span></div>` : '<div class="mt-1"></div>'}
           ${jamiAholi18 > 0 ? `
           <div class="mt-2 relative z-10 flex flex-col gap-1">
             <div class="flex items-center gap-2">
               <span class="text-base font-black text-indigo-200">${per100k18}</span>
-              <span class="text-xs text-slate-400 font-semibold">/100 000 aholi</span>
+              <span class="text-xs text-slate-400 font-semibold">${t('dashboard.populationRate')}</span>
               <span class="text-[10px] text-slate-500 ml-auto">${(jamiAholi18/1000000).toFixed(2)} mln <span class="text-indigo-400">18+</span></span>
             </div>
             ${jamiAholi30 > 0 ? `<div class="flex items-center gap-2">
               <span class="text-base font-black text-amber-300">${per100k30}</span>
-              <span class="text-xs text-slate-400 font-semibold">/100 000 aholi</span>
+              <span class="text-xs text-slate-400 font-semibold">${t('dashboard.populationRate')}</span>
               <span class="text-[10px] text-slate-500 ml-auto">${(jamiAholi30/1000000).toFixed(2)} mln <span class="text-amber-400">30+</span></span>
             </div>` : ''}
           </div>` : '<div class="mt-2"></div>'}
@@ -1280,13 +1280,13 @@ const DashboardPage = {
           <div class="absolute -right-16 -bottom-16 w-56 h-56 bg-white/10 rounded-full blur-3xl group-hover:bg-white/20 transition-all duration-700"></div>
           <div class="flex items-center justify-between mb-4 relative z-10">
             <div class="w-12 h-12 bg-white/20 text-white rounded-2xl flex items-center justify-center group-hover:rotate-12 transition-all duration-500">${icon('activity', 26)}</div>
-            <span class="text-[11px] font-black text-blue-100 uppercase tracking-[0.2em]">BUGUN</span>
+            <span class="text-[11px] font-black text-blue-100 uppercase tracking-[0.2em]">${t('dashboard.todayBadge')}</span>
           </div>
-          <p class="text-blue-100/80 text-[11px] font-bold uppercase tracking-wider mb-1 relative z-10">Yangi Qabullar</p>
+          <p class="text-blue-100/80 text-[11px] font-bold uppercase tracking-wider mb-1 relative z-10">${t('dashboard.newAdmissions')}</p>
           <h3 class="text-6xl font-black text-white tracking-tighter relative z-10">${bugunJami}</h3>
           <div class="mt-2 relative z-10 flex items-center gap-2">
             ${renderSparkline(spark7, 'rgba(255,255,255,0.8)')}
-            <span class="text-[10px] text-blue-200 font-semibold">7 kun</span>
+            <span class="text-[10px] text-blue-200 font-semibold">${t('dashboard.sevenDays')}</span>
           </div>
           <div class="mt-auto pt-3 flex flex-col gap-2 relative z-10">
             <div class="flex items-center justify-between h-9 px-3 bg-white/10 rounded-xl border border-white/10">
@@ -1305,9 +1305,9 @@ const DashboardPage = {
           <div class="absolute -left-10 -bottom-10 w-32 h-32 bg-emerald-500/10 rounded-full blur-3xl"></div>
           <div class="flex items-center justify-between mb-4 relative z-10">
             <div class="w-12 h-12 bg-emerald-500/10 text-emerald-400 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-all duration-500">${icon('log-out', 26)}</div>
-            <span class="text-[11px] font-black text-emerald-500 uppercase tracking-[0.2em]">CHIQARILGAN</span>
+            <span class="text-[11px] font-black text-emerald-500 uppercase tracking-[0.2em]">${t('dashboard.dischargeBadge')}</span>
           </div>
-          <p class="text-emerald-500/60 text-[11px] font-bold uppercase tracking-wider mb-1 relative z-10">Uyga javob berilgan</p>
+          <p class="text-emerald-500/60 text-[11px] font-bold uppercase tracking-wider mb-1 relative z-10">${t('dashboard.homeDischarge')}</p>
           <h3 class="text-5xl font-black text-white relative z-10 tracking-tight">${(chiqarilganInfarkt + chiqarilganInsult).toLocaleString()}</h3>
           <div class="mt-auto pt-3 flex flex-col gap-2 relative z-10">
             <div class="flex items-center justify-between h-9 px-3 bg-emerald-800/50 rounded-xl border border-emerald-700/50">
@@ -1326,9 +1326,9 @@ const DashboardPage = {
           <div class="absolute right-0 bottom-0 w-40 h-40 bg-sky-400/10 rounded-full blur-3xl"></div>
           <div class="flex items-center justify-between mb-4 relative z-10">
             <div class="w-12 h-12 bg-sky-500/20 text-sky-300 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-all duration-500">${icon('bed-double', 26)}</div>
-            <span class="text-[11px] font-black text-sky-300 uppercase tracking-[0.2em]">AKTIV</span>
+            <span class="text-[11px] font-black text-sky-300 uppercase tracking-[0.2em]">${t('dashboard.activeBadge')}</span>
           </div>
-          <p class="text-sky-300/70 text-[11px] font-bold uppercase tracking-wider mb-1 relative z-10">Hozir Statsionarda</p>
+          <p class="text-sky-300/70 text-[11px] font-bold uppercase tracking-wider mb-1 relative z-10">${t('dashboard.inHospital')}</p>
           <h3 class="text-5xl font-black text-white relative z-10 tracking-tight">${(aktivInfarkt + aktivInsult).toLocaleString()}</h3>
           <div class="mt-auto pt-3 flex flex-col gap-2 relative z-10">
             <div class="flex items-center justify-between h-9 px-3 bg-sky-700/50 rounded-xl border border-sky-600/50">
@@ -1351,7 +1351,7 @@ const DashboardPage = {
               <span class="text-sm font-black text-rose-500">${jami > 0 ? ((vafotInfarkt + vafotInsult) / jami * 100).toFixed(1) : 0}%</span>
             </div>
           </div>
-          <p class="text-slate-400 text-[11px] font-bold uppercase tracking-wider mb-1 relative z-10">Vafot etganlar</p>
+          <p class="text-slate-400 text-[11px] font-bold uppercase tracking-wider mb-1 relative z-10">${t('dashboard.deaths')}</p>
           <h3 class="text-5xl font-black text-white relative z-10 tracking-tight">${(vafotInfarkt + vafotInsult).toLocaleString()}</h3>
           <div class="mt-auto pt-3 flex flex-col gap-2 relative z-10">
             <div class="flex items-center justify-between h-9 px-3 bg-slate-800/50 rounded-xl border border-slate-700/50">
@@ -1380,7 +1380,7 @@ const DashboardPage = {
               <span class="text-sm font-black text-amber-500">${jami > 0 ? ((otkazilganInfarkt + otkazilganInsult) / jami * 100).toFixed(1) : 0}%</span>
             </div>
           </div>
-          <p class="text-slate-400 text-[11px] font-bold uppercase tracking-wider mb-1 relative z-10">Boshqa muassasaga</p>
+          <p class="text-slate-400 text-[11px] font-bold uppercase tracking-wider mb-1 relative z-10">${t('dashboard.otherFacility')}</p>
           <h3 class="text-5xl font-black text-white relative z-10 tracking-tight">${(otkazilganInfarkt + otkazilganInsult).toLocaleString()}</h3>
           <div class="mt-auto pt-3 flex flex-col gap-2 relative z-10">
             <div class="flex items-center justify-between h-9 px-3 bg-slate-800/50 rounded-xl border border-slate-700/50">

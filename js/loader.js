@@ -3,13 +3,14 @@
 const AssetLoader = (() => {
   const pending = new Map();
 
-  function script(src, globalName) {
+  // ordered: download in parallel with siblings but execute in insertion order.
+  function script(src, globalName, { ordered = false } = {}) {
     if (globalName && window[globalName]) return Promise.resolve(window[globalName]);
     if (pending.has(src)) return pending.get(src);
     const promise = new Promise((resolve, reject) => {
       const el = document.createElement('script');
       el.src = src;
-      el.async = true;
+      el.async = !ordered;
       el.onload = () => {
         if (globalName && !window[globalName]) {
           reject(new Error(`${src} yuklandi, ammo ${globalName} topilmadi`));
@@ -34,8 +35,23 @@ const AssetLoader = (() => {
     throw lastError || new Error(`${globalName || 'Kutubxona'} yuklanmadi`);
   }
 
+  function preload(src) {
+    const el = document.createElement('link');
+    el.rel = 'preload';
+    el.as = 'script';
+    el.href = src;
+    document.head.appendChild(el);
+  }
+
+  // Parallel download, sequential execution, resolves after the last one ran.
+  function scriptsInOrder(srcs) {
+    return Promise.all(srcs.map(src => script(src, null, { ordered: true })));
+  }
+
   return {
     script,
+    preload,
+    scriptsInOrder,
     scriptFallback,
     xlsx() {
       return scriptFallback([
@@ -50,7 +66,10 @@ const AssetLoader = (() => {
       ], 'Chart').then(() => scriptFallback([
         'https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js',
         'https://unpkg.com/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js'
-      ], 'ChartDataLabels'));
+      ], 'ChartDataLabels')).then(result => {
+        if (window.I18n) I18n.installChartAdapter();
+        return result;
+      });
     }
   };
 })();

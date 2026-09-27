@@ -3,27 +3,27 @@ const PageLoader = {
   _loaded: new Set(['login']),
   _pending: new Map(),
   _pages: {
-    dashboard:            { src: 'js/pages/dashboard.js?v=115', deps: ['pd', 'agePyramid', 'charts'] },
-    'infarkt-yangi':      { src: 'js/pages/infarkt-yangi.js?v=132', deps: ['calculators'] },
-    'insult-yangi':       { src: 'js/pages/insult-yangi.js?v=143', deps: ['calculators', 'cdss'] },
-    'infarkt-reyestri':   { src: 'js/pages/infarkt-reyestri.js?v=63' },
-    'insult-reyestri':    { src: 'js/pages/insult-reyestri.js?v=63' },
-    'bemor-karta':        { src: 'js/pages/bemor-karta.js?v=129', deps: ['calculators'] },
-    bemorlar:             { src: 'js/pages/bemorlar.js?v=86', deps: ['pd'] },
-    hisobot:              { src: 'js/pages/hisobot.js?v=141' },
-    admin:                { src: 'js/pages/admin.js?v=96' },
-    'muassasa-imkoniyat': { src: 'js/pages/muassasa-imkoniyat.js?v=7' },
-    settings:             { src: 'js/pages/settings.js?v=63' },
-    harakat:              { src: 'js/pages/harakat.js?v=14' },
-    marshrut:             { src: 'js/pages/marshrut.js?v=2' },
-    qabul:                { src: 'js/pages/qabul.js?v=13' },
-    'keng-hisobot':       { src: 'js/pages/keng-hisobot.js?v=11' }
+    dashboard:            { src: 'js/pages/dashboard.js?v=20260926-i18n-r72', deps: ['pd', 'agePyramid', 'charts'] },
+    'infarkt-yangi':      { src: 'js/pages/infarkt-yangi.js?v=20260926-i18n-r72', deps: ['calculators'] },
+    'insult-yangi':       { src: 'js/pages/insult-yangi.js?v=20260926-i18n-r72', deps: ['calculators', 'cdss'] },
+    'infarkt-reyestri':   { src: 'js/pages/infarkt-reyestri.js?v=20260926-i18n-r69' },
+    'insult-reyestri':    { src: 'js/pages/insult-reyestri.js?v=20260926-i18n-r72' },
+    'bemor-karta':        { src: 'js/pages/bemor-karta.js?v=20260926-i18n-r72', deps: ['calculators'] },
+    bemorlar:             { src: 'js/pages/bemorlar.js?v=20260926-i18n-r72', deps: ['pd'] },
+    hisobot:              { src: 'js/pages/hisobot.js?v=20260926-i18n-r72' },
+    admin:                { src: 'js/pages/admin.js?v=20260926-i18n-r72' },
+    'muassasa-imkoniyat': { src: 'js/pages/muassasa-imkoniyat.js?v=20260926-i18n-r72' },
+    settings:             { src: 'js/pages/settings.js?v=20260926-i18n-r72' },
+    harakat:              { src: 'js/pages/harakat.js?v=20260926-i18n-r69' },
+    marshrut:             { src: 'js/pages/marshrut.js?v=20260926-i18n-r70' },
+    qabul:                { src: 'js/pages/qabul.js?v=20260926-i18n-r72' },
+    'keng-hisobot':       { src: 'js/pages/keng-hisobot.js?v=20260926-i18n-r72' }
   },
   _deps: {
-    pd: () => AssetLoader.script('js/pd-mask.js?v=1'),
-    cdss: () => AssetLoader.script('js/cdss.js?v=2'),
-    calculators: () => AssetLoader.script('js/calculators.js?v=76'),
-    agePyramid: () => AssetLoader.script('js/agePyramid.js?v=5'),
+    pd: () => AssetLoader.script('js/pd-mask.js?v=20260924-i18n-r1'),
+    cdss: () => AssetLoader.script('js/cdss.js?v=20260924-i18n-r12'),
+    calculators: () => AssetLoader.script('js/calculators.js?v=20260924-i18n-r12'),
+    agePyramid: () => AssetLoader.script('js/agePyramid.js?v=20260924-i18n-r3'),
     charts: () => AssetLoader.charts()
   },
 
@@ -127,22 +127,17 @@ const Router = {
       const m = (err.message || '') + ' ' + (err.code || '');
       if (/jwt|token|401|not authenticated|session|expired|refresh/i.test(m)) {
         try { await Auth.signOut(); } catch(e){}
-        showToast('Sessiya muddati tugadi — qayta kiring', 'warning', 5000);
+        showToast(t('auth.sessionExpired'), 'warning', 5000);
         Router.go('login');
         return;
       }
-      // Xato izini ham ko'rsatamiz — qaysi fayl/qatorda sinayotgani darhol ko'rinadi
-      const stack = esc(String(err.stack || '').split('\n').slice(0, 6).join('\n'));
+      const safeMessage = window.I18n ? I18n.friendlyError(err) : 'Xatolik yuz berdi. Qayta urinib ko\'ring.';
       app.innerHTML = `<div class="flex items-center justify-center min-h-screen">
         <div class="text-center p-8 max-w-2xl">
           <div class="text-5xl mb-4">⚠️</div>
-          <h2 class="text-lg font-bold text-slate-700 mb-2">Sahifani yuklashda xato</h2>
-          <p class="text-slate-400 text-sm mb-4">${esc(err.message)}</p>
-          ${stack ? `<details class="text-left mb-4">
-            <summary class="text-xs text-slate-400 cursor-pointer select-none">Texnik tafsilot (dasturchi uchun)</summary>
-            <pre style="white-space:pre-wrap;font-size:11px;color:#64748b;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:10px;margin-top:6px;text-align:left">${stack}</pre>
-          </details>` : ''}
-          <button class="btn btn-primary" onclick="Router.go('dashboard')">Dashboard ga qaytish</button>
+          <h2 class="text-lg font-bold text-slate-700 mb-2">${t('validation.loadFailed')}</h2>
+          <p class="text-slate-400 text-sm mb-4">${esc(safeMessage)}</p>
+          <button class="btn btn-primary" onclick="Router.go('dashboard')">${t('validation.retry')}</button>
         </div>
       </div>`;
     }

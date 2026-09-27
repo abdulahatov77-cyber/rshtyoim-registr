@@ -34,7 +34,7 @@ const MarshrutPage = {
             <div>
               <label class="form-label">${icon('map-pin', 14)} Viloyat</label>
               <select id="mr-viloyat" class="form-select">
-                <option value="">Barchasi</option>
+          <option value="">${t('common.all')}</option>
                 ${APP_CONFIG.VILOYATLAR.map(v => `<option value="${esc(v)}">${esc(v)}</option>`).join('')}
               </select>
             </div>` : ''}
@@ -144,7 +144,7 @@ const MarshrutPage = {
         ${MarshrutPage.kpiCard('git-fork', "O'tkir yo'naltirish", jamiOtkir,
             'Diagnostika yoki muolaja uchun ko\'chirilgan', '#b91c1c')}
         ${MarshrutPage.kpiCard('trending-up', "To'g'ri yo'nalish", `${foiz(eskal, jamiOtkir)}%`,
-            `${eskal} ta — imkoniyati yuqori muassasaga`, '#15803d')}
+            t('routing.escalatedCount', {count: eskal}), '#15803d')}
         ${MarshrutPage.kpiCard('alert-triangle', 'Imkoniyat pasaygan', pasaydi,
             `${foiz(pasaydi, jamiOtkir)}% — MSKT yoki angiografiya yo'qolgan`, '#c2410c')}
         ${MarshrutPage.kpiCard('log-out', 'Chiqishda o\'tkazilgan',
@@ -222,11 +222,11 @@ const MarshrutPage = {
             return `
             <tr style="cursor:default">
               <td>
-                <div class="text-sm font-semibold text-gray-800">${esc(r.muassasa_dan || '—')}</div>
+                <div class="text-sm font-semibold text-gray-800">${esc(I18n.facilityName(r.muassasa_dan || '—'))}</div>
                 <div class="text-xs text-gray-400">${MarshrutPage.darajaBadge(r.dan_daraja)} ${MarshrutPage.imkBadge(r.dan_mskt, r.dan_angio)}</div>
               </td>
               <td>
-                <div class="text-sm font-semibold text-gray-800">${esc(r.muassasa_ga || '—')}</div>
+                <div class="text-sm font-semibold text-gray-800">${esc(I18n.facilityName(r.muassasa_ga || '—'))}</div>
                 <div class="text-xs text-gray-400">${MarshrutPage.darajaBadge(r.ga_daraja)} ${MarshrutPage.imkBadge(r.ga_mskt, r.ga_angio)}</div>
               </td>
               <td>${MarshrutPage.yonalishBadge(r.yonalish)}</td>
@@ -273,7 +273,7 @@ const MarshrutPage = {
     const cnt = document.getElementById('mr-audit-count');
     if (!el) return;
     const rows = MarshrutPage._audit;
-    if (cnt) cnt.textContent = rows.length ? `${rows.length} ta holat` : '';
+    if (cnt) cnt.textContent = rows.length ? t('routing.caseCount', {count: rows.length}) : '';
 
     if (!rows.length) {
       el.innerHTML = `<div class="py-14 text-center text-green-600 font-semibold">
@@ -301,8 +301,8 @@ const MarshrutPage = {
               <td><span class="badge ${r.turi === 'infarkt' ? 'badge-red' : 'badge-purple'}">${esc(r.turi)}</span></td>
               <td class="font-mono text-xs text-gray-500">${esc(r.kt_no)}</td>
               <td class="text-sm text-gray-600">${esc(Utils.formatDate(r.sana))}</td>
-              <td class="text-sm text-gray-800">${esc(r.muassasa_dan)}</td>
-              <td class="text-sm text-gray-800">${esc(r.muassasa_ga)}</td>
+              <td class="text-sm text-gray-800">${esc(I18n.facilityName(r.muassasa_dan))}</td>
+              <td class="text-sm text-gray-800">${esc(I18n.facilityName(r.muassasa_ga))}</td>
               <td class="text-xs text-gray-500">${esc(r.sabab || '— ko\'rsatilmagan')}</td>
               <td class="text-xs font-semibold text-red-700">${esc(r.muammo)}</td>
             </tr>`).join('')}

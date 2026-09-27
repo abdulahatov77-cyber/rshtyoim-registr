@@ -116,11 +116,11 @@ const PD = {
     if (!btn) return;
     const open = this.visible;
     btn.innerHTML = (open ? this._eyeOff() : this._eye()) +
-      '<span>' + (open ? 'Yashirish' : "F.I.O. ni ko'rsatish") + '</span>';
+      '<span>' + (open ? t('patients.hideName') : t('patients.showName')) + '</span>';
     btn.classList.toggle('pd-open', open);
     btn.title = open
-      ? '2 daqiqadan keyin avtomatik yopiladi'
-      : 'Shaxsiy ma\'lumotlar himoyalangan';
+      ? t('patients.autoHide')
+      : t('patients.protectedData');
   },
 
   _eye() {

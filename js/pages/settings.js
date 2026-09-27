@@ -21,8 +21,8 @@ const SettingsPage = {
     if (!inner) return;
     const isRahbar = profile?.real_role === 'rahbar';
 
-    const viloyatOptions = APP_CONFIG.VILOYATLAR.map(v =>
-      `<option value="${v}" ${profile?.viloyat === v ? 'selected' : ''}>${v}</option>`
+    const viloyatOptions = APP_CONFIG.VILOYATLAR.map((v, i) =>
+      `<option value="${v}" ${profile?.viloyat === v ? 'selected' : ''}>${I18n.t('region.' + i)}</option>`
     ).join('');
 
     inner.innerHTML = `
@@ -50,7 +50,7 @@ const SettingsPage = {
             <label class="form-label">To'liq ism (F.I.Sh)</label>
             <input type="text" id="s-fio" class="form-input"
               value="${profile?.fio || profile?.full_name || ''}"
-              placeholder="Familiya Ism Sharifingiz" required />
+              placeholder="${t('settings.fullNamePlaceholder')}" required />
           </div>
 
           <div class="form-group">
@@ -63,7 +63,7 @@ const SettingsPage = {
           <div class="form-group">
             <label class="form-label">Viloyat</label>
             <select id="s-viloyat" class="form-select" disabled>
-              <option value="">— Tanlang —</option>
+              <option value="">— ${t('common.select')} —</option>
               ${viloyatOptions}
             </select>
             <p class="text-xs text-gray-400 mt-1">Viloyatni faqat Super Administrator o'zgartira oladi</p>
@@ -90,7 +90,7 @@ const SettingsPage = {
             <label class="form-label">Yangi parol</label>
             <div class="relative group">
               <input type="password" id="s-pass1" class="form-input pr-12"
-                placeholder="Kamida 6 ta belgi" minlength="6" required />
+                placeholder="${t('settings.passwordMinimumPlaceholder')}" minlength="6" required />
               <button type="button" onclick="SettingsPage.togglePwd('s-pass1', 'eye-1')"
                 class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-blue-600 transition-colors" id="eye-1">
                 ${icon('eye', 18)}
@@ -102,7 +102,7 @@ const SettingsPage = {
             <label class="form-label">Parolni tasdiqlang</label>
             <div class="relative group">
               <input type="password" id="s-pass2" class="form-input pr-12"
-                placeholder="Parolni takrorlang" minlength="6" required />
+                placeholder="${t('settings.repeatPassword')}" minlength="6" required />
               <button type="button" onclick="SettingsPage.togglePwd('s-pass2', 'eye-2')"
                 class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-blue-600 transition-colors" id="eye-2">
                 ${icon('eye', 18)}
@@ -157,8 +157,8 @@ const SettingsPage = {
           Bu tanlov "Qabul kutilmoqda" ro'yxati va hisobotlar uchun ishlatiladi.
         </div>
         <select id="s-muassasa" class="form-select">
-          <option value="">— Muassasangizni tanlang —</option>
-          ${list.map(m => `<option value="${esc(m)}">${esc(m)}</option>`).join('')}
+          <option value="">— ${t('settings.institutionRequired')} —</option>
+          ${list.map(m => `<option value="${esc(m)}">${esc(I18n.facilityName(m))}</option>`).join('')}
         </select>
       </div>`;
   },
@@ -168,7 +168,7 @@ const SettingsPage = {
     const fio = document.getElementById('s-fio').value.trim();
     const btn = document.getElementById('save-profile-btn');
 
-    if (!fio) { showToast("Ism kiritilmagan", 'warning'); return; }
+    if (!fio) { showToast(t('settings.nameRequired'), 'warning'); return; }
 
     const updates = { fio, full_name: fio };
 
@@ -176,10 +176,8 @@ const SettingsPage = {
     const muaEl = document.getElementById('s-muassasa');
     if (muaEl) {
       const mua = (muaEl.value || '').trim();
-      if (!mua) { showToast('Muassasangizni tanlang', 'warning'); return; }
-      const ok = confirm(`Ish joyingiz sifatida quyidagi muassasa belgilanadi:\n\n${mua}\n\n` +
-        `Bu tanlov bir marta qilinadi — keyin uni faqat Super Administrator o'zgartira oladi.\n\n` +
-        `Tasdiqlaysizmi?`);
+      if (!mua) { showToast(t('settings.institutionRequired'), 'warning'); return; }
+      const ok = confirm(t('settings.institutionConfirm', { institution: mua }));
       if (!ok) return;
       updates.muassasa = mua;
     }
@@ -187,13 +185,13 @@ const SettingsPage = {
     setLoading(btn, true, 'Saqlanmoqda...');
     try {
       await Profile.update(updates);
-      showToast('Profil muvaffaqiyatli yangilandi', 'success');
+      showToast(t('settings.profileUpdated'), 'success');
       Profile._cache = {};   // muassasa o'zgargan bo'lsa keshni yangilaymiz
       const profile = await Profile.getCurrent();
       SettingsPage._profile = profile;
       if (updates.muassasa) SettingsPage.renderContent(profile, SettingsPage._user);
     } catch (err) {
-      showToast('Xatolik: ' + err.message, 'error');
+      showToast(t('common.errorPrefix', { error: err.message }), 'error');
     } finally {
       setLoading(btn, false);
     }
@@ -209,18 +207,18 @@ const SettingsPage = {
     errEl.classList.add('hidden');
 
     if (p1.length < 6) {
-      errEl.textContent = 'Parol kamida 6 ta belgi bo\'lishi kerak';
+      errEl.textContent = t('auth.passwordMinimum');
       errEl.classList.remove('hidden'); return;
     }
     if (p1 !== p2) {
-      errEl.textContent = 'Parollar mos kelmaydi';
+      errEl.textContent = t('settings.passwordMismatch');
       errEl.classList.remove('hidden'); return;
     }
 
     setLoading(btn, true, "O'zgartirilmoqda...");
     try {
       await Auth.updatePassword(p1);
-      showToast('Parol muvaffaqiyatli o\'zgartirildi', 'success');
+      showToast(t('settings.passwordUpdated'), 'success');
       document.getElementById('s-pass1').value = '';
       document.getElementById('s-pass2').value = '';
     } catch (err) {

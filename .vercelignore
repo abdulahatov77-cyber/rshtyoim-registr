@@ -11,3 +11,4 @@ tests/
 # Local environment and Vercel link metadata
 .env*
 .vercel/
+release-localization-preview-20260925/

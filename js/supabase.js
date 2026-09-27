@@ -1225,6 +1225,7 @@ const DB = {
     return combined.slice(0, limit);
   },
 
+  // 15+ kun davolanayotganlar
   // Uzoq vaqt "davolanmoqda" bo'lib turgan bemorlar, muassasa bo'yicha.
   // Amalda bular ko'pincha chiqarilgan, lekin tizimda belgilanmagan bemorlar.
   async getLongStayPatients(overrideViloyat, overrideMuassasa, kunlar = 15) {

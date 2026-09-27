@@ -160,7 +160,7 @@ const BemorKartaPage = {
         <button
           class="flex items-center gap-1.5 px-4 py-2.5 rounded-xl border text-sm font-bold transition-all active:scale-95 shadow-sm ${hasPrev ? 'bg-white border-gray-200 text-gray-800 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700 cursor-pointer' : 'bg-gray-50 border-gray-100 text-gray-300 cursor-not-allowed'}" 
           ${hasPrev ? 'onclick="BemorKartaPage.navPrev()"' : 'disabled'}>
-          ${icon('chevron-left', 18)} Avvalgi
+          ${icon('chevron-left', 18)} ${t('card.previous')}
         </button>
 
         <span class="px-3 py-2 bg-white border border-gray-200 rounded-xl text-xs font-bold text-gray-500 shadow-sm min-w-[60px] text-center">
@@ -170,7 +170,7 @@ const BemorKartaPage = {
         <button
           class="flex items-center gap-1.5 px-4 py-2.5 rounded-xl border text-sm font-bold transition-all active:scale-95 shadow-sm ${hasNext ? 'bg-white border-gray-200 text-gray-800 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700 cursor-pointer' : 'bg-gray-50 border-gray-100 text-gray-300 cursor-not-allowed'}"
           ${hasNext ? 'onclick="BemorKartaPage.navNext()"' : 'disabled'}>
-          Keyingi ${icon('chevron-right', 18)}
+          ${t('card.next')} ${icon('chevron-right', 18)}
         </button>
       </div>`;
   },
@@ -215,24 +215,24 @@ const BemorKartaPage = {
               <div class="flex items-center gap-3 mb-1 flex-wrap">
                 <h2 class="text-2xl font-bold m-0">${p.fio||'Ism kiritilmagan'}</h2>
                 ${p.status==='active'
-                  ? '<span class="bg-green-500/20 text-green-100 border border-green-400/50 px-2 py-0.5 rounded text-xs font-bold tracking-wide">AKTIV</span>'
+                  ? `<span class="bg-green-500/20 text-green-100 border border-green-400/50 px-2 py-0.5 rounded text-xs font-bold tracking-wide">${t('card.activeUpper')}</span>`
                   : p.status==='chiqarildi'
-                  ? '<span class="bg-blue-500/20 text-blue-100 border border-blue-400/50 px-2 py-0.5 rounded text-xs font-bold tracking-wide">CHIQARILGAN</span>'
+                  ? `<span class="bg-blue-500/20 text-blue-100 border border-blue-400/50 px-2 py-0.5 rounded text-xs font-bold tracking-wide">${t('card.dischargedUpper')}</span>`
                   : p.status==='otkazildi'
-                  ? '<span class="bg-orange-500/30 text-orange-100 border border-orange-400/50 px-2 py-0.5 rounded text-xs font-bold tracking-wide">O\'TKAZILGAN</span>'
-                  : '<span class="bg-gray-500/50 text-gray-100 border border-gray-400/50 px-2 py-0.5 rounded text-xs font-bold tracking-wide">VAFOT</span>'}
+                  ? `<span class="bg-orange-500/30 text-orange-100 border border-orange-400/50 px-2 py-0.5 rounded text-xs font-bold tracking-wide">${t('card.transferredUpper')}</span>`
+                  : `<span class="bg-gray-500/50 text-gray-100 border border-gray-400/50 px-2 py-0.5 rounded text-xs font-bold tracking-wide">${t('card.deceasedUpper')}</span>`}
               </div>
               <p class="text-white/80 text-sm font-medium mb-1">
-                K/T: <span class="font-bold text-white">${p.kt_no}</span> &nbsp;&bull;&nbsp; ${age?age+' yosh':'Yoshi nom\'alum'} &nbsp;&bull;&nbsp; ${p.viloyat||'Viloyat noma\'lum'}
+                K/T: <span class="font-bold text-white">${p.kt_no}</span> &nbsp;&bull;&nbsp; ${age ? t('dashboard.ageYears', { age }) : t('card.ageUnknown')} &nbsp;&bull;&nbsp; ${p.viloyat ? esc(I18n.translateText(p.viloyat)) : t('card.regionUnknown')}
               </p>
               <p class="text-white/60 text-xs flex items-center gap-1 mt-2">
-                ${icon('clock', 12)} Qabul qilingan: ${Utils.formatDateTime(p.qabul_vaqt)}
+                ${icon('clock', 12)} ${t('card.admittedLabel')}: ${Utils.formatDateTime(p.qabul_vaqt)}
               </p>
               ${(p.status === 'chiqarildi' || p.status === 'otkazildi' || p.status === 'vafot') && p._chiqarish?.chiqish_sana ? `
               <p class="text-white/60 text-xs flex items-center gap-1 mt-1">
                 ${icon(p.status === 'vafot' ? 'x-circle' : p.status === 'otkazildi' ? 'arrow-right-circle' : 'log-out', 12)}
-                ${p.status === 'chiqarildi' ? 'Chiqarilgan' : p.status === 'otkazildi' ? 'O\'tkazilgan' : 'Vafot etgan'}: <span class="text-white/80 font-semibold">${Utils.formatDateTime(p._chiqarish.chiqish_sana)}</span>
-                ${p._chiqarish.natija ? `<span class="ml-1 opacity-70">— ${p._chiqarish.natija}</span>` : ''}
+                ${p.status === 'chiqarildi' ? t('status.discharged') : p.status === 'otkazildi' ? t('status.transferred') : t('status.dead')}: <span class="text-white/80 font-semibold">${Utils.formatDateTime(p._chiqarish.chiqish_sana)}</span>
+                ${p._chiqarish.natija ? `<span class="ml-1 opacity-70">— ${esc(I18n.translateText(p._chiqarish.natija))}</span>` : ''}
               </p>` : (p.status === 'chiqarildi' || p.status === 'vafot') ? `
               <p class="text-xs flex items-center gap-1 mt-1 font-bold" style="color:#fde047">
                 ⚠️ Chiqarish varaqasi to'ldirilmagan —
@@ -247,7 +247,7 @@ const BemorKartaPage = {
               </button>` : ''}
             ${p.status==='active' && canEdit ?`
               <button class="px-5 py-2 bg-white text-gray-900 hover:bg-gray-50 rounded-lg text-sm font-bold shadow-md transition-colors flex items-center gap-2" onclick="BemorKartaPage.chiqarishModal()">
-                ${icon('log-out', 16)} Chiqarish
+                ${icon('log-out', 16)} ${t('card.dischargeAction')}
               </button>
             `:''}
             ${isSuperAdmin ? `
@@ -263,14 +263,14 @@ const BemorKartaPage = {
       ${(p.status === 'vafot' && p.muolaja_turi?.includes("o'tkazildi")) || (p.status === 'otkazildi' && p.muolaja_turi?.toLowerCase().includes('vafot')) ? `
       <div style="background:#fef3c7;border:1px solid #f59e0b;border-radius:12px;padding:12px 16px;margin-bottom:16px;color:#92400e;display:flex;gap:10px;align-items:center">
         <span style="font-size:20px">⚠️</span>
-        <span><b>Diqqat:</b> Bemor holati (<b>${p.status === 'vafot' ? 'Vafot' : "O'tkazildi"}</b>) va muolaja (<b>${esc(p.muolaja_turi||'')}</b>) mos kelmaydi — Tahrirlash orqali to'g'irlang</span>
+        <span>${esc(t('card.statusTreatmentMismatch', { status: I18n.translateText(p.status === 'vafot' ? 'Vafot' : "O'tkazildi"), treatment: I18n.translateText(p.muolaja_turi || '') }))}</span>
       </div>` : ''}
 
       <!-- Tabs Navigation -->
       <div class="flex items-center gap-2 mb-6 overflow-x-auto pb-2 border-b border-gray-200">
-        ${['Umumiy', 'Davolash', 'Holat', 'Multimedia', 'Navbatchi', 'Chiqarish', 'Kuzatuv', '🚑 Harakat'].map((t, i) => `
+        ${['card.tabOverview', 'card.tabTreatment', 'card.tabCondition', 'card.tabMedia', 'card.tabHandover', 'card.tabDischarge', 'card.tabFollowup', 'card.tabMovement'].map((key, i) => `
           <button onclick="BemorKartaPage.switchTab(${i})" id="tab-btn-${i}" class="px-5 py-2.5 rounded-full text-sm font-semibold transition-all whitespace-nowrap ${BemorKartaPage._activeTab === i ? 'bg-blue-600 text-white shadow-md' : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'}">
-            ${t}
+            ${t(key)}
           </button>
         `).join('')}
       </div>
@@ -340,7 +340,7 @@ const BemorKartaPage = {
   renderUmumiy(el, p, type) {
     const row = (label, val) => `
       <div class="flex items-center justify-between py-3 border-b border-gray-100 last:border-0">
-        <span class="text-sm text-gray-500">${label}</span>
+        <span class="text-sm text-gray-500">${I18n.translateText(label)}</span>
         <span class="text-sm font-semibold text-gray-900 text-right max-w-[60%]">${val||'—'}</span>
       </div>`;
 
@@ -361,26 +361,26 @@ const BemorKartaPage = {
         const onTime = pciDt <= deadline;
         const diffH = ((pciDt - new Date(p.qabul_vaqt)) / 3600000).toFixed(1);
         statusHtml = onTime
-          ? `<span style="color:#16a34a;font-weight:700">✓ Muddatда bajarildi (${diffH} soat)</span>`
-          : `<span style="color:#dc2626;font-weight:700">✗ Kechikди (${diffH} soat)</span>`;
+          ? `<span style="color:#16a34a;font-weight:700">✓ ${t('card.pciOnTime', { hours: diffH })}</span>`
+          : `<span style="color:#dc2626;font-weight:700">✗ ${t('card.pciLate', { hours: diffH })}</span>`;
       } else {
         const now = new Date();
         const overdue = now > deadline;
         const leftH = ((deadline - now) / 3600000).toFixed(1);
         statusHtml = overdue
-          ? `<span style="color:#dc2626;font-weight:700">⚠️ Muddat o'tди — PCI hali qilinmagan</span>`
-          : `<span style="color:#d97706;font-weight:700">⏳ ${leftH} soat qoldi</span>`;
+          ? `<span style="color:#dc2626;font-weight:700">⚠️ ${t('card.pciOverdue')}</span>`
+          : `<span style="color:#d97706;font-weight:700">⏳ ${t('card.pciRemaining', { hours: leftH })}</span>`;
       }
-      const riskLabel = grace > 140 ? 'Yuqori xavf' : "O'rta xavf";
+      const riskLabel = grace > 140 ? t('card.highRisk') : t('card.mediumRisk');
       return `
         <div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:12px;padding:14px 16px;margin-bottom:16px">
           <div style="font-size:12px;font-weight:800;color:#c2410c;margin-bottom:8px;display:flex;align-items:center;gap:6px">
-            ${icon('activity',14)} NSTEMI — invaziv strategiya oynasi
+            ${icon('activity',14)} ${t('card.pciWindowTitle')}
           </div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:13px">
             <div><span style="color:#78716c">GRACE:</span> <b>${grace}</b> (${riskLabel})</div>
-            <div><span style="color:#78716c">Kerakli muddat:</span> <b>&lt; ${limitH} soat</b></div>
-            <div style="grid-column:1/3"><span style="color:#78716c">Oxirgi muddat:</span> <b>${Utils.formatDateTime(deadline.toISOString())}</b></div>
+            <div><span style="color:#78716c">${t('card.pciRequiredWindow')}:</span> <b>&lt; ${t('card.pciHours', { hours: limitH })}</b></div>
+            <div style="grid-column:1/3"><span style="color:#78716c">${t('card.pciDeadline')}:</span> <b>${Utils.formatDateTime(deadline.toISOString())}</b></div>
             <div style="grid-column:1/3;padding-top:4px;border-top:1px solid #fed7aa">${statusHtml}</div>
           </div>
         </div>`;
@@ -410,13 +410,13 @@ const BemorKartaPage = {
                   ? `${esc(p.yashash_viloyat || '')}${p.yashash_tuman ? ', ' + esc(p.yashash_tuman) : ''}`
                   : null)}
             ${row('Viloyat', p.viloyat)}
-            ${row('Muassasa', p.muassasa)}
+            ${row('Muassasa', I18n.facilityName(p.muassasa))}
             ${row('Murojaat yo\'li', p.murojaat_yoli)}
-            ${row('Yuborgan muassasa', p.yuborgan_muassasa)}
+            ${row('Yuborgan muassasa', I18n.facilityName(p.yuborgan_muassasa))}
           </div>
         </div>
         <div class="card !mb-0">
-          <div class="card-header bg-gray-50 border-b border-gray-100 !mb-0"><h3 class="card-title text-gray-900 flex items-center gap-2">${icon('activity', 18)} Klinik holat (Qabul)</h3></div>
+          <div class="card-header bg-gray-50 border-b border-gray-100 !mb-0"><h3 class="card-title text-gray-900 flex items-center gap-2">${icon('activity', 18)} ${t('card.overviewClinical')}</h3></div>
           <div class="card-body p-5">
             ${row('Qon bosimi', p.qon_bosimi)}
             ${type==='infarkt'?`
@@ -428,9 +428,9 @@ const BemorKartaPage = {
               ${row('AHA bali', p.aha_bali ? p.aha_bali + ' ball' : null)}
               ${(p.infarkt_turi || '').toUpperCase().includes('NSTEMI') ? row('GRACE Score', (() => {
                 const gb = parseInt(p.grace_bali);
-                if (isNaN(gb)) return `<span class="text-orange-600">kiritilmagan</span>`;
-                const r = gb > 140 ? ['Yuqori xavf', '#b91c1c'] : (gb >= 109 ? ["O'rta xavf", '#b45309'] : ['Past xavf', '#15803d']);
-                return `${gb} ball <span style="color:${r[1]}">(${r[0]})</span>`;
+                if (isNaN(gb)) return `<span class="text-orange-600">${t('common.notSpecified')}</span>`;
+                const r = gb > 140 ? [t('card.highRisk'), '#b91c1c'] : (gb >= 109 ? [t('card.mediumRisk'), '#b45309'] : [t('card.lowRisk'), '#15803d']);
+                return `${t('card.scorePoints', { score: gb })} <span style="color:${r[1]}">(${r[0]})</span>`;
               })()) : ''}
             `: `
               ${row('Insult turi', p.insult_turi)}
@@ -440,7 +440,7 @@ const BemorKartaPage = {
               ${p.gcs_bali!=null ? Calculators.tavsiyaHtml(Calculators.gcsTavsiya(p.gcs_bali), p.gcs_bali, 'Glazgo (GCS)') : ''}
               ${row('Puls', p.puls || null)}
               ${row('AHA bali', p.aha_bali!=null ? p.aha_bali+' ball' : null)}
-              ${row('MSKT o\'tkazilganmi?', p.mskt)}
+              ${row('MSKT o\'tkazilganmi?', p.mskt ? I18n.translateText(p.mskt) : null)}
               ${p.mskt_angiografiya ? row('MSKT angiografiya', p.mskt_angiografiya) : ''}
               ${p.aspects_ball!=null ? row('ASPECTS', p.aspects_ball + ' / 10') : ''}
               ${p.okklyuziya_segmenti ? row('Okklyuziya segmenti', p.okklyuziya_segmenti) : ''}
@@ -449,11 +449,11 @@ const BemorKartaPage = {
                   '', 'Davolash taktikasi')}
             `}
             ${row('Asosiy muolaja', p.muolaja_turi)}
-            ${p.otkazilgan_muassasa ? row('O\'tkazilgan muassasa', p.otkazilgan_muassasa) : ''}
+            ${p.otkazilgan_muassasa ? row('O\'tkazilgan muassasa', I18n.facilityName(p.otkazilgan_muassasa)) : ''}
           </div>
         </div>
         <div class="card !mb-0">
-          <div class="card-header bg-gray-50 border-b border-gray-100 !mb-0"><h3 class="card-title text-gray-900 flex items-center gap-2">${icon('clock', 18)} Vaqt ko'rsatkichlari</h3></div>
+          <div class="card-header bg-gray-50 border-b border-gray-100 !mb-0"><h3 class="card-title text-gray-900 flex items-center gap-2">${icon('clock', 18)} ${t('card.overviewTimes')}</h3></div>
           <div class="card-body p-5">
             ${row('Kasallik turi', p.birlamchi_yoki_takroriy)}
             ${row('Simptomlar boshlanishi', p.simptom_vaqt)}
@@ -510,12 +510,12 @@ const BemorKartaPage = {
                 <div class="relative">
                   <div class="absolute -left-[31px] top-1 w-4 h-4 bg-blue-500 rounded-full border-2 border-white shadow-sm"></div>
                   <div class="font-bold text-gray-900 text-sm">Qabul qilindi</div>
-                  <div class="text-xs text-gray-500">${p.muassasa} (${Utils.formatDateTime(p.qabul_vaqt)})</div>
+                  <div class="text-xs text-gray-500">${I18n.facilityName(p.muassasa)} (${Utils.formatDateTime(p.qabul_vaqt)})</div>
                 </div>
                 <div class="relative">
                   <div class="absolute -left-[31px] top-1 w-4 h-4 bg-orange-500 rounded-full border-2 border-white shadow-sm"></div>
                   <div class="font-bold text-gray-900 text-sm">Yo'naltirildi</div>
-                  <div class="text-xs text-gray-500">${p.otkazilgan_muassasa}${p._chiqarish?.chiqish_sana ? ` (${Utils.formatDateTime(p._chiqarish.chiqish_sana)})` : ''}</div>
+                  <div class="text-xs text-gray-500">${I18n.facilityName(p.otkazilgan_muassasa)}${p._chiqarish?.chiqish_sana ? ` (${Utils.formatDateTime(p._chiqarish.chiqish_sana)})` : ''}</div>
                 </div>
               </div>
             </div>
@@ -569,18 +569,18 @@ const BemorKartaPage = {
   readVaqt(prefix) {
     const sanaVal = document.getElementById(`${prefix}-sana`)?.value || '';
     const soatVal = document.getElementById(`${prefix}-soat`)?.value || '';
-    if (!sanaVal || !soatVal) { showToast('Sana va soatni kiriting', 'warning'); return null; }
+      if (!sanaVal || !soatVal) { showToast(t('validation.dateTimeRequired'), 'warning'); return null; }
     const vaqtDate = new Date(`${sanaVal}T${soatVal}:00+05:00`);
-    if (vaqtDate > new Date()) { showToast('Vaqt kelajakda bo\'lishi mumkin emas', 'warning'); return null; }
+      if (vaqtDate > new Date()) { showToast(t('validation.timeFuture'), 'warning'); return null; }
     const p = BemorKartaPage._patient;
     if (p?.qabul_vaqt && vaqtDate < new Date(p.qabul_vaqt)) {
-      showToast('Vaqt bemor qabul qilingan vaqtdan oldin bo\'lishi mumkin emas', 'warning'); return null;
+        showToast(t('validation.timeBeforeAdmission'), 'warning'); return null;
     }
     if (['chiqarildi', 'otkazildi', 'vafot'].includes(p?.status) && p?._chiqarish?.chiqish_sana) {
       const raw = String(p._chiqarish.chiqish_sana);
       const chiqLimit = raw.length <= 10 ? new Date(raw + 'T23:59:59+05:00') : new Date(raw);
       if (vaqtDate > chiqLimit) {
-        showToast('Vaqt bemor ketgan (chiqarilgan) vaqtdan keyin bo\'lishi mumkin emas', 'warning'); return null;
+        showToast(t('validation.timeAfterDischarge'), 'warning'); return null;
       }
     }
     return vaqtDate.toISOString();
@@ -593,14 +593,14 @@ const BemorKartaPage = {
         <div class="lg:col-span-1">
           <div class="card sticky top-6 border-t-4 border-t-blue-500">
             <div class="card-header bg-gray-50 border-b border-gray-100 p-5 !mb-0">
-              <h3 class="card-title text-gray-900 flex items-center gap-2">${icon('plus-circle', 18)} Yangi o'lchov</h3>
+              <h3 class="card-title text-gray-900 flex items-center gap-2">${icon('plus-circle', 18)} ${t('card.newMeasurement')}</h3>
             </div>
             <div class="card-body p-5">
               <div class="form-group">
                 <label class="form-label required">Bemor holati</label>
                 <select id="holat-holat" class="form-select">
-                  <option value="">Tanlang...</option>
-                  ${HOLATLAR.map(h => `<option value="${h}">${h}</option>`).join('')}
+              <option value="">${t('select.placeholder')}</option>
+                  ${HOLATLAR.map(h => `<option value="${esc(h)}">${esc(I18n.translateText(h))}</option>`).join('')}
                 </select>
               </div>
               <div class="grid grid-cols-2 gap-3">
@@ -620,10 +620,10 @@ const BemorKartaPage = {
               ${BemorKartaPage.vaqtInputsHtml(p, 'holat')}
               <div class="form-group">
                 <label class="form-label">Izoh</label>
-                <textarea id="holat-izoh" class="form-textarea" rows="2" placeholder="Qo'shimcha kuzatuvlar..."></textarea>
+            <textarea id="holat-izoh" class="form-textarea" rows="2" placeholder="${t('patientCard.notesPlaceholder')}"></textarea>
               </div>
               <button class="btn btn-primary w-full mt-2 flex items-center justify-center gap-2" id="btn-holat-save" onclick="BemorKartaPage.saveHolat()">
-                ${icon('save', 18)} Saqlash
+                ${icon('save', 18)} ${t('common.save')}
               </button>
             </div>
           </div>
@@ -631,7 +631,7 @@ const BemorKartaPage = {
         <div class="lg:col-span-2">
           <div class="card">
             <div class="card-header bg-gray-50 border-b border-gray-100 p-5 !mb-0">
-              <h3 class="card-title text-gray-900 flex items-center gap-2">${icon('activity', 18)} Holat dinamikasi tarixi</h3>
+              <h3 class="card-title text-gray-900 flex items-center gap-2">${icon('activity', 18)} ${t('card.conditionHistory')}</h3>
             </div>
             <div class="card-body p-0" id="holat-history">
               <div class="flex justify-center py-8"><div class="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div></div>
@@ -644,32 +644,32 @@ const BemorKartaPage = {
       const el2 = document.getElementById('holat-history');
       if (!el2) return;
       if (records.length === 0) {
-        el2.innerHTML = `<div class="py-10 text-center text-gray-400">${icon('inbox', 32, 'mx-auto mb-2')}<p class="text-sm mt-2">Hali o'lchov kiritilmagan</p></div>`;
+        el2.innerHTML = `<div class="py-10 text-center text-gray-400">${icon('inbox', 32, 'mx-auto mb-2')}<p class="text-sm mt-2">${t('card.noMeasurements')}</p></div>`;
         initIcons(); return;
       }
       const holatColor = { 'Yaxshi':'text-green-600 bg-green-50 border-green-200', 'Qoniqarli':'text-blue-600 bg-blue-50 border-blue-200', "Og'ir":'text-orange-600 bg-orange-50 border-orange-200', "Juda og'ir":'text-red-600 bg-red-50 border-red-200', 'Kritik':'text-red-800 bg-red-100 border-red-300' };
       el2.innerHTML = `<table class="w-full text-sm">
         <thead class="bg-gray-50 border-b border-gray-100">
           <tr>
-            <th class="p-3 text-left text-xs font-bold text-gray-500 uppercase">Vaqt</th>
-            <th class="p-3 text-left text-xs font-bold text-gray-500 uppercase">Holat</th>
-            <th class="p-3 text-left text-xs font-bold text-gray-500 uppercase">QB</th>
-            <th class="p-3 text-left text-xs font-bold text-gray-500 uppercase">Puls</th>
-            <th class="p-3 text-left text-xs font-bold text-gray-500 uppercase">Harorat</th>
-            <th class="p-3 text-left text-xs font-bold text-gray-500 uppercase">Shifokor</th>
+            <th class="p-3 text-left text-xs font-bold text-gray-500 uppercase">${t('card.dateTime')}</th>
+            <th class="p-3 text-left text-xs font-bold text-gray-500 uppercase">${t('card.condition')}</th>
+            <th class="p-3 text-left text-xs font-bold text-gray-500 uppercase">${t('card.bp')}</th>
+            <th class="p-3 text-left text-xs font-bold text-gray-500 uppercase">${t('card.pulse')}</th>
+            <th class="p-3 text-left text-xs font-bold text-gray-500 uppercase">${t('card.temperature')}</th>
+            <th class="p-3 text-left text-xs font-bold text-gray-500 uppercase">${t('card.doctorName')}</th>
           </tr>
         </thead>
         <tbody>
           ${records.map(r => `
             <tr class="border-b border-gray-50 hover:bg-gray-50">
               <td class="p-3 text-xs text-gray-500 whitespace-nowrap">${Utils.formatDateTime(r.created_at)}</td>
-              <td class="p-3"><span class="px-2 py-0.5 rounded-lg border text-xs font-bold ${holatColor[r.holat]||'text-gray-600 bg-gray-50 border-gray-200'}">${r.holat||'—'}</span></td>
-              <td class="p-3 font-mono text-xs">${r.qon_bosimi||'—'}</td>
-              <td class="p-3 text-xs">${r.puls ? r.puls+' ur/min' : '—'}</td>
-              <td class="p-3 text-xs">${r.temperatura ? r.temperatura+'°C' : '—'}</td>
-              <td class="p-3 text-xs text-gray-500">${r.shifokor_fio||'—'}</td>
+              <td class="p-3"><span class="px-2 py-0.5 rounded-lg border text-xs font-bold ${holatColor[r.holat]||'text-gray-600 bg-gray-50 border-gray-200'}">${r.holat ? esc(I18n.translateText(r.holat)) : '—'}</span></td>
+              <td class="p-3 font-mono text-xs">${esc(r.qon_bosimi||'—')}</td>
+              <td class="p-3 text-xs">${r.puls ? esc(r.puls) + ' ' + t('units.bpm') : '—'}</td>
+              <td class="p-3 text-xs">${r.temperatura ? esc(r.temperatura) + '°C' : '—'}</td>
+              <td class="p-3 text-xs text-gray-500">${esc(r.shifokor_fio||'—')}</td>
             </tr>
-            ${r.izoh ? `<tr class="border-b border-gray-50 bg-gray-50/50"><td colspan="6" class="px-3 pb-2 text-xs text-gray-500 italic">"${r.izoh}"</td></tr>` : ''}
+            ${r.izoh ? `<tr class="border-b border-gray-50 bg-gray-50/50"><td colspan="6" class="px-3 pb-2 text-xs text-gray-500 italic">"${esc(r.izoh)}"</td></tr>` : ''}
           `).join('')}
         </tbody>
       </table>`;
@@ -682,7 +682,7 @@ const BemorKartaPage = {
 
   async saveHolat() {
     const holat = document.getElementById('holat-holat')?.value;
-    if (!holat) { showToast('Bemor holatini tanlang', 'warning'); return; }
+    if (!holat) { showToast(t('patientCard.selectCondition'), 'warning'); return; }
     const vaqt = BemorKartaPage.readVaqt('holat');
     if (!vaqt) return;
     const btn = document.getElementById('btn-holat-save');
@@ -700,7 +700,7 @@ const BemorKartaPage = {
         izoh: document.getElementById('holat-izoh')?.value || null,
         shifokor_fio: await Profile.currentName()
       });
-      showToast('O\'lchov saqlandi', 'success');
+      showToast(t('patientCard.measurementSaved'), 'success');
       BemorKartaPage.loadTab(2);
     } catch(err) {
       showToast(err.message, 'error');
@@ -725,7 +725,7 @@ const BemorKartaPage = {
         <div class="lg:col-span-1">
           <div class="card sticky top-6 border-t-4 ${borderColor}">
             <div class="card-header bg-gray-50 border-b border-gray-100 p-5 !mb-0">
-              <h3 class="card-title text-gray-900 flex items-center gap-2">${icon('plus-circle', 18)} Yangi muolaja qo'shish</h3>
+              <h3 class="card-title text-gray-900 flex items-center gap-2">${icon('plus-circle', 18)} ${t('card.addTreatment')}</h3>
             </div>
             <div class="card-body p-5">
               <div class="grid grid-cols-1 gap-2 mb-4" id="din-muolaja-list">
@@ -733,18 +733,18 @@ const BemorKartaPage = {
                   <label class="flex items-center gap-3 p-3 border rounded-xl cursor-pointer transition-all border-gray-200 hover:bg-gray-50 text-gray-600">
                     <input type="radio" name="din-muolaja" value="${item}" class="hidden">
                     <div class="w-5 h-5 rounded-full border flex items-center justify-center flex-shrink-0 border-gray-300 bg-white"></div>
-                    <span class="text-sm">${item}</span>
+                    <span class="text-sm">${I18n.translateText(item)}</span>
                   </label>`).join('')}
               </div>
               <div id="din-otkazish-div" class="form-group mt-3 p-3 bg-orange-50 border border-orange-200 rounded-xl" style="display:none">
                 <label class="form-label required text-orange-900" id="din-otkazish-label">Qaysi muassasaga o'tkaziladi?</label>
                 <select id="din-otkazilgan-muassasa" class="form-select mt-1">
-                  <option value="">Muassasani tanlang...</option>
-                  ${Object.values(APP_CONFIG.MUASSASALAR).flat().sort().map(m=>`<option value="${m}">${m}</option>`).join('')}
-                  <option value="__boshqa__">— Ro'yxatda yo'q (qo'lda kiritish) —</option>
+                <option value="">${t('institution.choose')}</option>
+                  ${Object.values(APP_CONFIG.MUASSASALAR).flat().sort().map(m=>`<option value="${m}">${I18n.facilityName(m)}</option>`).join('')}
+                <option value="__boshqa__">${t('institution.notListed')}</option>
                 </select>
                 <small id="din-otkaz-hint" class="text-xs text-blue-700 block mt-1"></small>
-                <input id="din-otkazilgan-muassasa-custom" type="text" class="form-input mt-2" placeholder="Muassasa nomini kiriting..." style="display:none">
+              <input id="din-otkazilgan-muassasa-custom" type="text" class="form-input mt-2" placeholder="${t('institution.enterName')}" style="display:none">
               </div>
               ${(() => {
                 // Ketgan bemor uchun sana bo'sh qoladi — operator majburan tanlaydi
@@ -766,14 +766,14 @@ const BemorKartaPage = {
                   </div>
                   <p class="text-xs ${ketgan ? 'text-orange-600 font-medium' : 'text-gray-400'} mt-1">
                     ${ketgan
-                      ? `Bemor ketgan (${p.status === 'vafot' ? 'vafot' : p.status === 'otkazildi' ? "o'tkazilgan" : 'chiqarilgan'}) — muolajaning haqiqiy sanasi va soatini tanlang`
-                      : 'Muolaja haqiqatda o\'tkazilgan vaqtni tanlang'}
+                      ? t('card.treatmentAfterDeparture', { status: p.status === 'vafot' ? t('status.dead') : p.status === 'otkazildi' ? t('status.transferred') : t('status.discharged') })
+                      : t('card.treatmentActualTime')}
                   </p>
                 </div>`;
               })()}
               <div class="form-group mt-3">
                 <label class="form-label">Qo'shimcha izoh</label>
-                <textarea id="din-izoh" class="form-textarea" rows="2" placeholder="Ixtiyoriy..."></textarea>
+            <textarea id="din-izoh" class="form-textarea" rows="2" placeholder="${t('common.optional')}"></textarea>
               </div>
               <button class="btn btn-primary w-full mt-4 flex items-center justify-center gap-2" id="btn-davolash-save" onclick="BemorKartaPage.saveDavolash()">
                 ${icon('save', 18)} Saqlash
@@ -784,7 +784,7 @@ const BemorKartaPage = {
         <div class="lg:col-span-2">
           <div class="card">
             <div class="card-header bg-gray-50 border-b border-gray-100 p-5 !mb-0">
-              <h3 class="card-title text-gray-900 flex items-center gap-2">${icon('history', 18)} Muolajalar tarixi</h3>
+              <h3 class="card-title text-gray-900 flex items-center gap-2">${icon('history', 18)} ${t('card.treatmentHistory')}</h3>
             </div>
             <div class="card-body p-5 bg-gray-50/50 min-h-[300px]" id="din-history">
               <div class="flex justify-center py-8"><div class="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div></div>
@@ -831,7 +831,7 @@ const BemorKartaPage = {
       const histEl = document.getElementById('din-history');
       if (!histEl) return;
       if (records.length === 0 && !p.muolaja_turi) {
-        histEl.innerHTML = `<div class="text-center py-10 text-gray-400">${icon('inbox', 32, 'mx-auto mb-2')} <p class="text-sm">Hali muolaja yozilmagan</p></div>`;
+        histEl.innerHTML = `<div class="text-center py-10 text-gray-400">${icon('inbox', 32, 'mx-auto mb-2')} <p class="text-sm">${t('card.noProcedures')}</p></div>`;
         initIcons();
         return;
       }
@@ -844,10 +844,10 @@ const BemorKartaPage = {
           </div>
           <div class="pb-4 flex-1">
             <div class="flex items-center gap-2 mb-1">
-              <span class="text-xs font-bold text-blue-600 uppercase">Qabul muolajasi</span>
+              <span class="text-xs font-bold text-blue-600 uppercase">${t('card.admissionTreatment')}</span>
               <span class="text-xs text-gray-400">${Utils.formatDateTime(p.qabul_vaqt)}</span>
             </div>
-            <p class="text-sm font-semibold text-gray-800">${p.muolaja_turi}</p>
+            <p class="text-sm font-semibold text-gray-800">${esc(I18n.translateText(p.muolaja_turi))}</p>
           </div>
         </div>` : '';
       // Tahrirlash huquqi — admin va super_admin
@@ -860,17 +860,17 @@ const BemorKartaPage = {
           </div>
           <div class="pb-4 flex-1 group">
             <div class="flex items-center gap-2 mb-1">
-              <span class="text-xs font-bold ${type==='infarkt'?'text-red-600':'text-purple-600'} uppercase">Dinamik muolaja</span>
+              <span class="text-xs font-bold ${type==='infarkt'?'text-red-600':'text-purple-600'} uppercase">${t('card.followupTreatment')}</span>
               <span class="text-xs text-gray-400">${Utils.formatDateTime(r.created_at)}</span>
               ${canEdit ? `
                 <div class="ml-auto flex gap-1">
-                  <button onclick="BemorKartaPage.editDinamika('${r.id}')" title="Tahrirlash"
+                  <button onclick="BemorKartaPage.editDinamika('${r.id}')" title="${t('common.edit')}"
                     class="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 border border-slate-200 transition-colors">${icon('pencil',14)}</button>
-                  <button onclick="BemorKartaPage.deleteDinamika('${r.id}')" title="O'chirish"
+                  <button onclick="BemorKartaPage.deleteDinamika('${r.id}')" title="${t('common.delete')}"
                     class="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 border border-slate-200 transition-colors">${icon('trash-2',14)}</button>
                 </div>` : ''}
             </div>
-            <p class="text-sm font-semibold text-gray-800">${esc(r.muolaja_turi)}</p>
+            <p class="text-sm font-semibold text-gray-800">${esc(I18n.translateText(r.muolaja_turi))}</p>
             ${r.izoh ? `<p class="text-xs text-gray-500 mt-1 italic">"${esc(r.izoh)}"</p>` : ''}
             <p class="text-xs text-gray-400 mt-1">— ${esc(BemorKartaPage._drName(r.shifokor_fio))}</p>
           </div>
@@ -941,17 +941,17 @@ const BemorKartaPage = {
       }
     }
 
-    const apparat = talab === 'mskt' ? 'MSKT' : 'angiografiya';
+    const apparat = talab === 'mskt' ? 'MSKT' : t('capabilities.angiography');
     const koretish = isOtkTanlov || majburiy;
     if (otkazDiv) otkazDiv.style.display = koretish ? 'block' : 'none';
     if (labelEl) {
       labelEl.innerHTML = majburiy
-        ? `⚠️ <b>${esc(joyMuassasa)}</b> da ${apparat} apparati yo'q — bu muolajani shu yerda bajarib bo'lmaydi.<br>Bemor qaysi muassasaga yuboriladi?`
-        : "Qaysi muassasaga o'tkaziladi?";
+        ? `⚠️ <b>${esc(I18n.facilityName(joyMuassasa))}</b> ${t('card.deviceUnavailableAtFacility', {device: apparat})}<br>${t('card.transferDestinationQuestion')}`
+        : t('card.transferDestinationQuestion');
     }
     if (majburiy) {
-      showToast(`⚠️ ${joyMuassasa} da ${apparat} apparati mavjud emas — "${value}" muolajasini shu muassasada bajarib bo'lmaydi. ` +
-        `Bemorni imkoniyati bor muassasaga yo'naltiring (pastdagi ro'yxatdan tanlang).`, 'warning', 9000);
+      showToast(t('facility.treatmentUnavailable', { institution: I18n.facilityName(joyMuassasa), equipment: apparat, treatment: I18n.translateText(value) }) + ' ' +
+        t('card.selectCapableFacility'), 'warning', 9000);
       otkazDiv?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
     if (koretish) BemorKartaPage.refreshDinMuassasa(majburiy ? talab : value);
@@ -980,9 +980,9 @@ const BemorKartaPage = {
     const filtered = !!names;
     if (!names) names = Object.values(APP_CONFIG.MUASSASALAR).flat().sort();
     if (current && current !== '__boshqa__' && !names.includes(current)) names = [current, ...names];
-    sel.innerHTML = `<option value="">Muassasani tanlang...</option>` +
-      names.map(m => `<option value="${esc(m)}" ${current === m ? 'selected' : ''}>${esc(m)}</option>`).join('') +
-      `<option value="__boshqa__" ${current === '__boshqa__' ? 'selected' : ''}>— Ro'yxatda yo'q (qo'lda kiritish) —</option>`;
+      sel.innerHTML = `<option value="">${t('institution.choose')}</option>` +
+      names.map(m => `<option value="${esc(m)}" ${current === m ? 'selected' : ''}>${esc(I18n.facilityName(m))}</option>`).join('') +
+        `<option value="__boshqa__" ${current === '__boshqa__' ? 'selected' : ''}>${t('institution.notListed')}</option>`;
     const hint = document.getElementById('din-otkaz-hint');
     if (hint) hint.textContent = (talab && filtered)
       ? `Faqat ${talab === 'mskt' ? 'MSKT' : 'angiografiya'} imkoniyati bor ${names.length} ta muassasa ko'rsatilmoqda`
@@ -991,7 +991,7 @@ const BemorKartaPage = {
 
   async saveDavolash() {
     const selected = document.querySelector('input[name="din-muolaja"]:checked')?.value;
-    if (!selected) { showToast('Muolaja turini tanlang', 'warning'); return; }
+    if (!selected) { showToast(t('treatment.select'), 'warning'); return; }
     // Majburiy yo'naltirish — muassasada kerakli apparat yo'q (onDinMuolajaChange aniqlaydi)
     const talabMajburiy = BemorKartaPage._dinTalab || null;
     const isOtk = selected.includes("Boshqa muassasaga o'tkazildi") || !!talabMajburiy;
@@ -1009,15 +1009,15 @@ const BemorKartaPage = {
     // Tanlangan sana+soat Toshkent (+05:00) vaqti sifatida qabul qilinadi
     const sanaVal = document.getElementById('din-sana')?.value || '';
     const soatVal = document.getElementById('din-soat')?.value || '';
-    if (!sanaVal || !soatVal) { showToast('Muolaja sanasi va soatini kiriting', 'warning'); return; }
+    if (!sanaVal || !soatVal) { showToast(t('treatment.dateTime'), 'warning'); return; }
     const vaqtVal = `${sanaVal}T${soatVal}`;
     const vaqtDate = new Date(vaqtVal + ':00+05:00');
     if (vaqtDate > new Date()) {
-      showToast('Muolaja vaqti kelajakda bo\'lishi mumkin emas', 'warning'); return;
+      showToast(t('treatment.future'), 'warning'); return;
     }
     const pQabul = BemorKartaPage._patient?.qabul_vaqt;
     if (pQabul && vaqtDate < new Date(pQabul)) {
-      showToast('Muolaja vaqti bemor qabul qilingan vaqtdan oldin bo\'lishi mumkin emas', 'warning'); return;
+      showToast(t('treatment.beforeAdmission'), 'warning'); return;
     }
     // Ketgan bemor uchun — chiqarilgan vaqtdan keyingi muolaja taqiqlanadi
     const pStatus = BemorKartaPage._patient?.status;
@@ -1026,7 +1026,7 @@ const BemorKartaPage = {
       const raw = String(chiqRaw);
       const chiqLimit = raw.length <= 10 ? new Date(raw + 'T23:59:59+05:00') : new Date(raw);
       if (vaqtDate > chiqLimit) {
-        showToast('Muolaja vaqti bemor ketgan (chiqarilgan) vaqtdan keyin bo\'lishi mumkin emas', 'warning'); return;
+        showToast(t('treatment.afterDischarge'), 'warning'); return;
       }
     }
     const muolajaVaqti = vaqtDate.toISOString();
@@ -1094,7 +1094,7 @@ const BemorKartaPage = {
         // O'CHIRILDI: dinamika_muolajalar jadvaliga yozuv tushganda server-bot ("DINAMIKA YANGILANDI")
         // avtomatik xabar yuboradi. Bu qatorni qoldirsak, bitta hodisaga ikkita xabar ketadi (dublikat).
         // Telegram.notifyDinamika(p, BemorKartaPage._type, selected, profile?.fio).catch(()=>{});
-        showToast('Muolaja saqlandi', 'success');
+      showToast(t('treatment.saved'), 'success');
         BemorKartaPage.loadTab(1);
       }
     } catch(err) {
@@ -1106,7 +1106,7 @@ const BemorKartaPage = {
   // ===== Dinamik muolajani tahrirlash =====
   editDinamika(id) {
     const r = (BemorKartaPage._dinRecords || []).find(x => String(x.id) === String(id));
-    if (!r) { showToast('Yozuv topilmadi', 'error'); return; }
+    if (!r) { showToast(t('common.recordNotFound'), 'error'); return; }
     const type = BemorKartaPage._type;
     const muolajaList = type === 'infarkt'
       ? APP_CONFIG.DINAMIKA_MUOLAJALAR
@@ -1124,7 +1124,7 @@ const BemorKartaPage = {
           </div>
           <div>
             <label class="form-label">Izoh</label>
-            <textarea id="edit-din-izoh" class="form-textarea" rows="3" placeholder="Ixtiyoriy">${esc(r.izoh || '')}</textarea>
+          <textarea id="edit-din-izoh" class="form-textarea" rows="3" placeholder="${t('common.optional')}">${esc(r.izoh || '')}</textarea>
           </div>
           <div>
             <label class="form-label">Shifokor F.I.O</label>
@@ -1150,18 +1150,18 @@ const BemorKartaPage = {
 
   async saveDinamikaEdit(id) {
     const muolaja = document.getElementById('edit-din-muolaja')?.value;
-    if (!muolaja) { showToast('Muolaja turini tanlang', 'warning'); return; }
+    if (!muolaja) { showToast(t('treatment.select'), 'warning'); return; }
     const sanaVal = document.getElementById('edit-din-sana')?.value || '';
     const soatVal = document.getElementById('edit-din-soat')?.value || '';
     const vaqtVal = sanaVal && soatVal ? `${sanaVal}T${soatVal}` : '';
     if (vaqtVal) {
       const vaqtDate = new Date(vaqtVal + ':00+05:00');
       if (vaqtDate > new Date()) {
-        showToast('Muolaja vaqti kelajakda bo\'lishi mumkin emas', 'warning'); return;
+      showToast(t('treatment.future'), 'warning'); return;
       }
       const pQabul = BemorKartaPage._patient?.qabul_vaqt;
       if (pQabul && vaqtDate < new Date(pQabul)) {
-        showToast('Muolaja vaqti bemor qabul qilingan vaqtdan oldin bo\'lishi mumkin emas', 'warning'); return;
+      showToast(t('treatment.beforeAdmission'), 'warning'); return;
       }
       const pStatus = BemorKartaPage._patient?.status;
       const chiqRaw = BemorKartaPage._patient?._chiqarish?.chiqish_sana;
@@ -1169,7 +1169,7 @@ const BemorKartaPage = {
         const raw = String(chiqRaw);
         const chiqLimit = raw.length <= 10 ? new Date(raw + 'T23:59:59+05:00') : new Date(raw);
         if (vaqtDate > chiqLimit) {
-          showToast('Muolaja vaqti bemor ketgan (chiqarilgan) vaqtdan keyin bo\'lishi mumkin emas', 'warning'); return;
+        showToast(t('treatment.afterDischarge'), 'warning'); return;
         }
       }
     }
@@ -1183,7 +1183,7 @@ const BemorKartaPage = {
         ...(vaqtVal ? { created_at: new Date(vaqtVal + ':00+05:00').toISOString() } : {})
       });
       closeModal();
-      showToast('Muolaja yangilandi', 'success');
+      showToast(t('treatment.updated'), 'success');
       BemorKartaPage.loadTab(1);
     } catch(err) {
       showToast(err.message, 'error');
@@ -1193,10 +1193,10 @@ const BemorKartaPage = {
 
   async deleteDinamika(id) {
     const r = (BemorKartaPage._dinRecords || []).find(x => String(x.id) === String(id));
-    if (!confirm(`"${r?.muolaja_turi || 'Bu muolaja'}" yozuvini o'chirasizmi?\nBu amalni qaytarib bo'lmaydi!`)) return;
+    if (!confirm(t('treatment.deleteConfirm', { treatment: r?.muolaja_turi || t('treatment.defaultName') }))) return;
     try {
       await DB.deleteDinamikaMuolaja(id);
-      showToast('Muolaja o\'chirildi', 'success');
+      showToast(t('treatment.deleted'), 'success');
       BemorKartaPage.loadTab(1);
     } catch(err) {
       showToast(err.message, 'error');
@@ -1210,20 +1210,20 @@ const BemorKartaPage = {
       const records = await DB.getKuzatuv(p.kt_no);
       
       let recordsHtml = records.length === 0 
-        ? `<div class="text-center py-10 text-gray-400">Kuzatuv yozuvlari mavjud emas</div>`
+        ? `<div class="text-center py-10 text-gray-400">${t('card.noFollowup')}</div>`
         : records.map(r => `
             <div class="p-4 border border-gray-100 rounded-xl mb-3 bg-white hover:shadow-sm transition-shadow">
               <div class="flex justify-between items-start mb-2">
-                <span class="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-bold">${r.kuzatuv_davri}</span>
+                <span class="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-bold">${esc(I18n.translateText(r.kuzatuv_davri))}</span>
                 <span class="text-xs text-gray-400">${Utils.formatDateTime(r.created_at)}</span>
               </div>
               <div class="flex items-center gap-2 mb-2">
                 <div class="w-2 h-2 rounded-full ${r.holati==='Vafot etdi'?'bg-red-500':'bg-green-500'}"></div>
-                <span class="font-bold text-gray-800">${r.holati}</span>
-                ${r.qayta_xuruj ? '<span class="text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded font-bold">QAYTA XURUJ!</span>' : ''}
+                <span class="font-bold text-gray-800">${esc(I18n.translateText(r.holati))}</span>
+                ${r.qayta_xuruj ? `<span class="text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded font-bold">${t('card.recurrence')}</span>` : ''}
               </div>
-              ${r.nogironlik_guruhi ? `<div class="text-xs text-gray-600 mb-1"><b>Nogironlik:</b> ${r.nogironlik_guruhi}</div>` : ''}
-              ${r.izoh ? `<p class="text-sm text-gray-600 mt-2 italic">"${r.izoh}"</p>` : ''}
+              ${r.nogironlik_guruhi ? `<div class="text-xs text-gray-600 mb-1"><b>${t('card.disability')}</b> ${esc(I18n.translateText(r.nogironlik_guruhi))}</div>` : ''}
+              ${r.izoh ? `<p class="text-sm text-gray-600 mt-2 italic">"${esc(r.izoh)}"</p>` : ''}
               <div class="text-xs text-gray-400 mt-2 text-right">— ${esc(BemorKartaPage._drName(r.shifokor_fio))}</div>
             </div>
           `).join('');
@@ -1233,19 +1233,19 @@ const BemorKartaPage = {
           <div class="lg:col-span-1">
             <div class="card sticky top-6">
               <div class="card-header bg-gray-50 border-b border-gray-100 p-5 !mb-0">
-                <h3 class="card-title text-gray-900 flex items-center gap-2">${icon('plus-circle', 18)} Yangi kuzatuv</h3>
+                <h3 class="card-title text-gray-900 flex items-center gap-2">${icon('plus-circle', 18)} ${t('card.newFollowup')}</h3>
               </div>
               <div class="card-body p-5">
                 <div class="form-group">
                   <label class="form-label">Kuzatuv davri</label>
                   <select id="k-davri" class="form-select">
-                    ${APP_CONFIG.KUZATUV_DAVRLARI.map(d=>`<option value="${d}">${d}</option>`).join('')}
+                    ${APP_CONFIG.KUZATUV_DAVRLARI.map(d=>`<option value="${d}">${I18n.translateText(d)}</option>`).join('')}
                   </select>
                 </div>
                 <div class="form-group">
                   <label class="form-label">Bemor holati</label>
                   <select id="k-holati" class="form-select">
-                    ${APP_CONFIG.KUZATUV_HOLATLARI.map(h=>`<option value="${h}">${h}</option>`).join('')}
+                    ${APP_CONFIG.KUZATUV_HOLATLARI.map(h=>`<option value="${h}">${I18n.translateText(h)}</option>`).join('')}
                   </select>
                 </div>
                 <div class="form-group flex items-center gap-2 py-2">
@@ -1255,15 +1255,15 @@ const BemorKartaPage = {
                 <div class="form-group">
                   <label class="form-label">Nogironlik guruhi</label>
                   <select id="k-nogironlik" class="form-select">
-                    <option value="">Yo'q / Ma'lum emas</option>
-                    <option value="1-guruh">1-guruh</option>
-                    <option value="2-guruh">2-guruh</option>
-                    <option value="3-guruh">3-guruh</option>
+                    <option value="">${t('disability.noneUnknown')}</option>
+                    <option value="1-guruh">${t('disability.group1')}</option>
+                    <option value="2-guruh">${t('disability.group2')}</option>
+                    <option value="3-guruh">${t('disability.group3')}</option>
                   </select>
                 </div>
                 <div class="form-group">
                   <label class="form-label">Qo'shimcha izoh</label>
-                  <textarea id="k-izoh" class="form-textarea" rows="3" placeholder="Batafsil..."></textarea>
+                  <textarea id="k-izoh" class="form-textarea" rows="3" placeholder="${t('common.detailsPlaceholder')}"></textarea>
                 </div>
                 <button class="btn btn-primary w-full mt-4 flex items-center justify-center gap-2" id="save-kuzatuv-btn" onclick="BemorKartaPage.saveKuzatuv()">
                   ${icon('save', 18)} Saqlash
@@ -1274,7 +1274,7 @@ const BemorKartaPage = {
           <div class="lg:col-span-2">
             <div class="card">
               <div class="card-header bg-gray-50 border-b border-gray-100 p-5 !mb-0">
-                <h3 class="card-title text-gray-900 flex items-center gap-2">${icon('history', 18)} Kuzatuvlar tarixi</h3>
+                <h3 class="card-title text-gray-900 flex items-center gap-2">${icon('history', 18)} ${t('card.followupHistory')}</h3>
               </div>
               <div class="card-body p-5 bg-gray-50/50 min-h-[300px]">
                 ${recordsHtml}
@@ -1305,7 +1305,7 @@ const BemorKartaPage = {
     setLoading(btn, true);
     try {
       await DB.addKuzatuv(data);
-      showToast('Kuzatuv saqlandi', 'success');
+      showToast(t('patientCard.followupSaved'), 'success');
       BemorKartaPage.loadTab(6); // Reload tab
     } catch(err) {
       showToast(err.message, 'error');
@@ -1320,27 +1320,27 @@ const BemorKartaPage = {
         <div class="lg:col-span-1">
           <div class="card sticky top-6 border-t-4 border-t-indigo-500">
             <div class="card-header bg-gray-50 border-b border-gray-100 p-5 !mb-0">
-              <h3 class="card-title text-gray-900 flex items-center gap-2">${icon('users', 18)} Navbat topshirish</h3>
+              <h3 class="card-title text-gray-900 flex items-center gap-2">${icon('users', 18)} ${t('card.handoverHeading')}</h3>
             </div>
             <div class="card-body p-5">
               <div class="form-group">
                 <label class="form-label required">Bemor holati baholash</label>
                 <select id="shift-holat" class="form-select">
-                  <option value="">Tanlang...</option>
-                  ${HOLATLAR.map(h => `<option value="${h}">${h}</option>`).join('')}
+                  <option value="">${t('select.placeholder')}</option>
+                  ${HOLATLAR.map((h, i) => `<option value="${h}">${t(['card.handoverStable', 'card.handoverImproved', 'card.handoverWorsened', 'card.handoverCritical'][i])}</option>`).join('')}
                 </select>
               </div>
               <div class="form-group">
                 <label class="form-label">Keyingi navbat shifokor</label>
-                <input id="shift-keyingi" class="form-input" placeholder="F.I.Sh..."/>
+                <input id="shift-keyingi" class="form-input" placeholder="${t('shift.nextDoctorPlaceholder')}"/>
               </div>
               <div class="form-group">
                 <label class="form-label">Topshirish qo'shimchasi / Ko'rsatmalar</label>
-                <textarea id="shift-izoh" class="form-textarea" rows="4" placeholder="Navbat davomida nima bo'ldi, keyingi shifokorga ko'rsatmalar..."></textarea>
+                <textarea id="shift-izoh" class="form-textarea" rows="4" placeholder="${t('shift.notesPlaceholder')}"></textarea>
               </div>
               ${BemorKartaPage.vaqtInputsHtml(p, 'shift')}
               <button class="btn btn-primary w-full mt-2 flex items-center justify-center gap-2" id="btn-shift-save" onclick="BemorKartaPage.saveShift()">
-                ${icon('save', 18)} Navbatni topshirish
+                ${icon('save', 18)} ${t('card.handoverAction')}
               </button>
             </div>
           </div>
@@ -1348,7 +1348,7 @@ const BemorKartaPage = {
         <div class="lg:col-span-2">
           <div class="card">
             <div class="card-header bg-gray-50 border-b border-gray-100 p-5 !mb-0">
-              <h3 class="card-title text-gray-900 flex items-center gap-2">${icon('history', 18)} Navbat jurnali</h3>
+              <h3 class="card-title text-gray-900 flex items-center gap-2">${icon('history', 18)} ${t('card.handoverHistory')}</h3>
             </div>
             <div class="card-body p-5 bg-gray-50/50 min-h-[300px]" id="shift-history">
               <div class="flex justify-center py-8"><div class="w-6 h-6 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div></div>
@@ -1361,7 +1361,7 @@ const BemorKartaPage = {
       const el2 = document.getElementById('shift-history');
       if (!el2) return;
       if (records.length === 0) {
-        el2.innerHTML = `<div class="py-10 text-center text-gray-400">${icon('book-open', 32, 'mx-auto mb-2')}<p class="text-sm mt-2">Hali navbat yozuvi yo'q</p></div>`;
+        el2.innerHTML = `<div class="py-10 text-center text-gray-400">${icon('book-open', 32, 'mx-auto mb-2')}<p class="text-sm mt-2">${t('card.noHandover')}</p></div>`;
         initIcons(); return;
       }
       const hColor = { 'Barqaror':'text-green-700 bg-green-50 border-green-200', 'Yaxshilangan':'text-blue-700 bg-blue-50 border-blue-200', 'Yomonlashgan':'text-orange-700 bg-orange-50 border-orange-200', 'Kritik':'text-red-700 bg-red-50 border-red-200' };
@@ -1369,8 +1369,8 @@ const BemorKartaPage = {
         <div class="p-4 border border-gray-100 rounded-xl mb-3 bg-white hover:shadow-sm transition-shadow">
           <div class="flex items-start justify-between mb-2">
             <div class="flex items-center gap-2">
-              <span class="px-2 py-0.5 rounded-lg border text-xs font-bold ${hColor[r.holat_baholash]||'text-gray-600 bg-gray-50 border-gray-200'}">${r.holat_baholash||'—'}</span>
-              ${r.keyingi_shifokor ? `<span class="text-xs text-indigo-600 font-medium">${icon('arrow-right', 12)} ${r.keyingi_shifokor}</span>` : ''}
+              <span class="px-2 py-0.5 rounded-lg border text-xs font-bold ${hColor[r.holat_baholash]||'text-gray-600 bg-gray-50 border-gray-200'}">${I18n.translateText(r.holat_baholash||'—')}</span>
+              ${r.keyingi_shifokor ? `<span class="text-xs text-indigo-600 font-medium">${icon('arrow-right', 12)} ${esc(r.keyingi_shifokor)}</span>` : ''}
             </div>
             <span class="text-xs text-gray-400">${Utils.formatDateTime(r.created_at)}</span>
           </div>
@@ -1386,7 +1386,7 @@ const BemorKartaPage = {
 
   async saveShift() {
     const holat = document.getElementById('shift-holat')?.value;
-    if (!holat) { showToast('Bemor holat baholashni tanlang', 'warning'); return; }
+    if (!holat) { showToast(t('shift.selectAssessment'), 'warning'); return; }
     const vaqt = BemorKartaPage.readVaqt('shift');
     if (!vaqt) return;
     const btn = document.getElementById('btn-shift-save');
@@ -1402,7 +1402,7 @@ const BemorKartaPage = {
         izoh: document.getElementById('shift-izoh')?.value || null,
         shifokor_fio: await Profile.currentName()
       });
-      showToast('Navbat muvaffaqiyatli topshirildi', 'success');
+      showToast(t('shift.handoverSaved'), 'success');
       BemorKartaPage.loadTab(4);
     } catch(err) {
       showToast(err.message, 'error');
@@ -1416,32 +1416,32 @@ const BemorKartaPage = {
         <div class="lg:col-span-1">
           <div class="card sticky top-6">
             <div class="card-header bg-gray-50 border-b border-gray-100 p-5 !mb-0">
-              <h3 class="card-title text-gray-900 flex items-center gap-2">${icon('upload-cloud', 18)} Fayl yuklash</h3>
+              <h3 class="card-title text-gray-900 flex items-center gap-2">${icon('upload-cloud', 18)} ${t('file.uploadHeading')}</h3>
             </div>
             <div class="card-body p-5">
               <div class="form-group">
-                <label class="form-label">Hujjat turi</label>
+                <label class="form-label">${t('card.documentType')}</label>
                 <select id="mm-type" class="form-select">
-                  <option value="KT Natijasi">KT / MRT Natijasi</option>
-                  <option value="EKG">EKG tasviri</option>
-                  <option value="Tahlil">Tahlil natijalari</option>
-                  <option value="Boshqa">Boshqa hujjat</option>
+                  <option value="KT Natijasi">${t('file.ctMriResult')}</option>
+                  <option value="EKG">${t('file.ecgImage')}</option>
+                  <option value="Tahlil">${t('file.labResults')}</option>
+                  <option value="Boshqa">${t('file.otherDocument')}</option>
                 </select>
               </div>
               <div class="form-group mt-3">
-                <label class="form-label">Izoh</label>
-                <input type="text" id="mm-izoh" class="form-input" placeholder="Qisqacha izoh..."/>
+                <label class="form-label">${t('card.additionalNote')}</label>
+                <input type="text" id="mm-izoh" class="form-input" placeholder="${t('file.shortNote')}"/>
               </div>
               <div class="form-group mt-4">
                 <label class="block w-full text-center border-2 border-dashed border-gray-300 rounded-xl p-6 cursor-pointer hover:bg-gray-50 hover:border-blue-500 transition-all">
-                  <input type="file" id="mm-file" class="hidden" onchange="document.getElementById('mm-filename').textContent = this.files[0] ? this.files[0].name : 'Fayl tanlanmadi'">
+                  <input type="file" id="mm-file" class="hidden" onchange="document.getElementById('mm-filename').textContent = this.files[0] ? this.files[0].name : t('file.noneSelected')">
                   ${icon('image', 32, 'mx-auto text-gray-400 mb-2')}
-                  <span class="text-sm font-bold text-gray-600 block">Faylni tanlang yoki shu yerga tashlang</span>
-                  <span id="mm-filename" class="text-xs text-gray-400 mt-1 block">Fayl tanlanmadi</span>
+                  <span class="text-sm font-bold text-gray-600 block">${t('file.dropHint')}</span>
+                  <span id="mm-filename" class="text-xs text-gray-400 mt-1 block">${t('file.noneSelected')}</span>
                 </label>
               </div>
               <button class="btn btn-primary w-full mt-4 flex items-center justify-center gap-2" onclick="BemorKartaPage.uploadMultimedia()">
-                ${icon('upload', 18)} Yuklash
+                ${icon('upload', 18)} ${t('file.uploadAction')}
               </button>
             </div>
           </div>
@@ -1449,12 +1449,12 @@ const BemorKartaPage = {
         <div class="lg:col-span-2">
           <div class="card">
             <div class="card-header bg-gray-50 border-b border-gray-100 p-5 !mb-0 flex justify-between items-center">
-              <h3 class="card-title text-gray-900 flex items-center gap-2">${icon('folder-open', 18)} Bemor fayllari</h3>
+              <h3 class="card-title text-gray-900 flex items-center gap-2">${icon('folder-open', 18)} ${t('file.patientFiles')}</h3>
             </div>
             <div class="card-body p-5 min-h-[300px]">
               <div class="text-center py-16 text-gray-400" id="mm-list">
                 ${icon('images', 48, 'mx-auto text-gray-200 mb-3')}
-                Yuklangan fayllar hozircha yo'q. (Supabase Storage funksiyasi qo'shildi!)
+                ${t('file.empty')}
               </div>
             </div>
           </div>
@@ -1485,15 +1485,15 @@ const BemorKartaPage = {
       el.innerHTML = '<div class="grid grid-cols-2 md:grid-cols-3 gap-4">' + data.map(f => `
         <div class="border border-gray-200 rounded-xl overflow-hidden hover:shadow-md transition-all group">
           <div class="h-32 bg-gray-100 relative">
-            <img src="${esc(signedByPath.get(f.path) || '')}" alt="${esc(f.nomi || 'Bemor fayli')}" class="w-full h-full object-cover" onerror="this.src=''; this.parentElement.innerHTML='<div class=\\'flex items-center justify-center h-full text-gray-400\\'>${icon('file-text', 32)}</div>'">
+            <img src="${esc(signedByPath.get(f.path) || '')}" alt="${esc(f.nomi || t('file.patientFile'))}" class="w-full h-full object-cover" onerror="this.src=''; this.parentElement.innerHTML='<div class=\\'flex items-center justify-center h-full text-gray-400\\'>${icon('file-text', 32)}</div>'">
             <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none flex items-center justify-center gap-3">
-              <a href="${esc(signedByPath.get(f.path) || '')}" target="_blank" rel="noopener noreferrer" aria-label="Faylni ko'rish" class="w-8 h-8 bg-white rounded-full flex items-center justify-center text-blue-600 hover:scale-110 transition-transform pointer-events-auto">${icon('eye', 16)}</a>
-              <button onclick="BemorKartaPage.deleteMultimedia('${f.id}', decodeURIComponent('${encodeURIComponent(f.path)}'))" aria-label="Faylni o'chirish" class="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center text-white hover:scale-110 transition-transform pointer-events-auto">${icon('trash-2', 16)}</button>
+              <a href="${esc(signedByPath.get(f.path) || '')}" target="_blank" rel="noopener noreferrer" aria-label="${t('file.view')}" class="w-8 h-8 bg-white rounded-full flex items-center justify-center text-blue-600 hover:scale-110 transition-transform pointer-events-auto">${icon('eye', 16)}</a>
+              <button onclick="BemorKartaPage.deleteMultimedia('${f.id}', decodeURIComponent('${encodeURIComponent(f.path)}'))" aria-label="${t('file.delete')}" class="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center text-white hover:scale-110 transition-transform pointer-events-auto">${icon('trash-2', 16)}</button>
             </div>
           </div>
           <div class="p-3">
-            <span class="text-[10px] font-bold text-blue-600 uppercase block mb-1">${esc(f.tur)}</span>
-            <p class="text-xs font-medium text-gray-800 line-clamp-2" title="${esc(f.nomi)}">${esc(f.nomi)}</p>
+            <span class="text-[10px] font-bold text-blue-600 uppercase block mb-1">${esc(({ 'KT Natijasi': t('file.ctMriResult'), 'EKG': t('file.ecgImage'), 'Tahlil': t('file.labResults'), 'Boshqa': t('file.otherDocument') })[f.tur] || f.tur)}</span>
+            <p class="text-xs font-medium text-gray-800 line-clamp-2" title="${esc(f.nomi)}">${esc(f.nomi)}</p><!-- i18n-audit-allow: escaped uploaded file name -->
             ${f.izoh ? `<p class="text-[10px] text-gray-500 mt-1 line-clamp-1">${esc(f.izoh)}</p>` : ''}
           </div>
         </div>
@@ -1511,7 +1511,7 @@ const BemorKartaPage = {
     const file = fileInput.files[0];
     
     if (!file) {
-      showToast('Fayl tanlang!', 'warning');
+      showToast(t('file.select'), 'warning');
       return;
     }
     
@@ -1520,7 +1520,7 @@ const BemorKartaPage = {
       .toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 10) || 'bin';
     const filePath = kt_no + '/' + Date.now() + '.' + ext;
     
-    showToast('Fayl yuklanmoqda...', 'info', 2000);
+    showToast(t('file.uploading'), 'info', 2000);
     try {
       const sb = getSupabase();
       
@@ -1548,28 +1548,28 @@ const BemorKartaPage = {
         throw dbErr;
       }
       
-      showToast('Fayl muvaffaqiyatli yuklandi!', 'success');
+      showToast(t('file.uploaded'), 'success');
       fileInput.value = '';
-      document.getElementById('mm-filename').textContent = 'Fayl tanlanmadi';
+      document.getElementById('mm-filename').textContent = t('file.noneSelected');
       document.getElementById('mm-izoh').value = '';
       
       BemorKartaPage.loadMultimedia();
       
     } catch(err) {
-      showToast('Fayl yuklashda xatolik: ' + err.message, 'error');
+      showToast(t('file.uploadError', { error: err.message }), 'error');
     }
   },
 
   async deleteMultimedia(id, path) {
-    if(!confirm("Ushbu faylni rostdan ham o'chirmoqchimisiz?")) return;
+    if(!confirm(t('file.deleteConfirm'))) return;
     try {
       const sb = getSupabase();
       await sb.storage.from('multimedia').remove([path]);
       await sb.from('bemor_fayllari').delete().eq('id', id);
-      showToast("Fayl o'chirildi", 'success');
+      showToast(t('file.deleted'), 'success');
       BemorKartaPage.loadMultimedia();
     } catch(err) {
-      showToast("Xatolik: " + err.message, 'error');
+      showToast(t('common.errorPrefix', { error: err.message }), 'error');
     }
   },
 
@@ -1578,9 +1578,9 @@ const BemorKartaPage = {
     const varaqaYoq = (p.status === 'chiqarildi' || p.status === 'vafot') && !p._chiqarish?.chiqish_sana;
     if (p.status !== 'active' && !varaqaYoq) {
       const statusLabels = {
-        chiqarildi: { icon: 'log-out', color: 'blue',   label: 'Bemor chiqarilgan',              desc: 'Bemor shifoxonadan muvaffaqiyatli chiqarilgan.' },
-        otkazildi:  { icon: 'share-2', color: 'orange', label: "Bemor boshqa muassasaga o'tkazilgan", desc: "Bemor boshqa tibbiyot muassasasiga o'tkazilgan." },
-        vafot:      { icon: 'x-circle', color: 'red',   label: 'Bemor vafot etgan',              desc: 'Bemor vafot etgan. Qayta chiqarish mumkin emas.' },
+        chiqarildi: { icon: 'log-out', color: 'blue', label: t('card.dischargedTitle'), desc: t('card.dischargedDescription') },
+        otkazildi: { icon: 'share-2', color: 'orange', label: t('card.transferredTitle'), desc: t('card.transferredDescription') },
+        vafot: { icon: 'x-circle', color: 'red', label: t('card.deceasedTitle'), desc: t('card.deceasedDescription') },
       };
       const s = statusLabels[p.status] || { icon: 'info', color: 'gray', label: p.status, desc: '' };
       el.innerHTML = `
@@ -1588,8 +1588,8 @@ const BemorKartaPage = {
           <div class="w-16 h-16 rounded-full bg-${s.color}-100 text-${s.color}-500 flex items-center justify-center mx-auto mb-4">
             ${icon(s.icon, 32)}
           </div>
-          <h3 class="text-xl font-bold text-gray-900 mb-2">${s.label}</h3>
-          <p class="text-gray-500">${s.desc}</p>
+          <h3 class="text-xl font-bold text-gray-900 mb-2">${esc(s.label)}</h3>
+          <p class="text-gray-500">${esc(s.desc)}</p>
         </div>
       `;
       return;
@@ -1603,8 +1603,8 @@ const BemorKartaPage = {
       <div class="form-group mt-4">
         <label class="form-label required">NIHSS ball chiqarishda</label>
         <div class="flex gap-2 items-center">
-          <input type="number" id="ch-nihss" min="0" max="42" class="form-input w-full" placeholder="0 dan 42 gacha"/>
-          <button type="button" class="flex-shrink-0 bg-blue-100 text-blue-700 hover:bg-blue-200 px-3 py-2 rounded-lg text-sm font-bold shadow-sm transition-colors border border-blue-200 flex items-center gap-1" onclick="Calculators.openNIHSS('ch-nihss')">🧮 Hisoblash</button>
+              <input type="number" id="ch-nihss" min="0" max="42" class="form-input w-full" placeholder="${t('validation.nihssRange')}"/>
+          <button type="button" class="flex-shrink-0 bg-blue-100 text-blue-700 hover:bg-blue-200 px-3 py-2 rounded-lg text-sm font-bold shadow-sm transition-colors border border-blue-200 flex items-center gap-1" onclick="Calculators.openNIHSS('ch-nihss')">${t('forms.calculate')}</button>
         </div>
       </div>
       <div class="form-group mt-4">
@@ -1613,19 +1613,19 @@ const BemorKartaPage = {
           ${APP_CONFIG.MRS_DARAJALAR.map(item => `
             <label class="flex items-center gap-3 p-3 border rounded-xl cursor-pointer ${hoverColor} transition-colors">
               <input type="radio" name="ch-mrs" value="${item}" class="w-4 h-4 ${radioColor}">
-              <span class="text-sm text-gray-700">${item}</span>
+              <span class="text-sm text-gray-700">${I18n.translateText(item)}</span>
             </label>
           `).join('')}
         </div>
       </div>
     ` : `
       <div class="form-group mt-4">
-        <label class="form-label required">Asoratlar</label>
+        <label class="form-label required">${t('card.complications')}</label>
         <div class="grid grid-cols-1 gap-2 mt-2">
           ${APP_CONFIG.CHIQARISH_ASORATLAR.map(item => `
             <label class="flex items-center gap-3 p-3 border rounded-xl cursor-pointer hover:bg-gray-50 transition-colors">
               <input type="checkbox" name="ch-asorat" value="${item}" class="w-4 h-4 text-blue-600 rounded">
-              <span class="text-sm text-gray-700">${item}</span>
+              <span class="text-sm text-gray-700">${I18n.translateText(item)}</span>
             </label>
           `).join('')}
         </div>
@@ -1636,12 +1636,11 @@ const BemorKartaPage = {
       <div class="max-w-2xl mx-auto">
         ${varaqaYoq ? `
         <div class="mb-4 p-4 rounded-xl bg-amber-50 border border-amber-300 text-amber-800 text-sm">
-          ⚠️ Bu bemor <b>"${p.status === 'vafot' ? 'vafot' : 'chiqarildi'}"</b> deb belgilangan, lekin chiqarish varaqasi
-          to'ldirilmagan. Quyida haqiqiy chiqish sanasi va ma'lumotlarini kiritib saqlang.
+          ${t('card.retrospectiveDischarge', { status: p.status === 'vafot' ? t('card.statusDeceased') : t('card.statusDischarged') })}
         </div>` : ''}
         <div class="card border-t-4 ${borderColor}">
           <div class="card-header bg-gray-50 border-b border-gray-100 p-5 !mb-0">
-            <h3 class="card-title text-gray-900 flex items-center gap-2">${icon('log-out', 18)} Bemorni chiqarish</h3>
+            <h3 class="card-title text-gray-900 flex items-center gap-2">${icon('log-out', 18)} ${t('card.dischargeHeading')}</h3>
           </div>
           <div class="card-body p-6">
 
@@ -1661,31 +1660,31 @@ const BemorKartaPage = {
                 ${APP_CONFIG.CHIQARISH_NATIJALARI.map(item => `
                   <label class="flex items-center gap-3 p-3 border rounded-xl cursor-pointer ${hoverColor} transition-all">
                     <input type="radio" name="ch-natija" value="${item}" class="w-4 h-4 ${radioColor} ch-natija-radio">
-                    <span class="text-sm font-medium text-gray-700">${item}</span>
+                    <span class="text-sm font-medium text-gray-700">${t(['card.outcomeRecovered', 'card.outcomeUnchanged', 'card.outcomeRehabilitation', 'card.outcomeTransferred', 'card.outcomeDied'][APP_CONFIG.CHIQARISH_NATIJALARI.indexOf(item)])}</span>
                   </label>
                 `).join('')}
               </div>
             </div>
 
             <div id="ch-boshqa-div" class="form-group mt-4 p-4 bg-blue-50 border border-blue-200 rounded-xl" style="display:none">
-              <label class="form-label required text-blue-900">Qaysi muassasaga o'tkazildi?</label>
+              <label class="form-label required text-blue-900">${t('card.transferredTo')}</label>
               <select id="ch-boshqa-shifoxona" class="form-select mt-1" onchange="BemorKartaPage.onMuassasaSelect(this)">
-                <option value="">— Muassasani tanlang —</option>
+                <option value="">${t('institution.choose')}</option>
                 ${Object.entries(APP_CONFIG.MUASSASALAR).map(([vil, list]) =>
-                  `<optgroup label="${vil}">${list.map(m => `<option value="${m}">${m}</option>`).join('')}</optgroup>`
+                  `<optgroup label="${esc(I18n.translateText(vil))}">${list.map(m => `<option value="${esc(m)}">${esc(I18n.facilityName(m))}</option>`).join('')}</optgroup>`
                 ).join('')}
-                <option value="__boshqa__">Boshqa (qo'lda kiritish)...</option>
+                <option value="__boshqa__">${t('institution.otherManualShort')}</option>
               </select>
-              <input type="text" id="ch-boshqa-qolda" class="form-input mt-2" placeholder="Muassasa nomini kiriting..." style="display:none"/>
+              <input type="text" id="ch-boshqa-qolda" class="form-input mt-2" placeholder="${t('institution.enterName')}" style="display:none"/>
             </div>
 
             <div id="ch-reabil-div" class="form-group mt-4" style="display:none">
-              <label class="form-label required">Reabilitatsiya markazi nomi</label>
-              <input type="text" id="ch-reabil-markaz" class="form-input" placeholder="Markaz nomini kiriting"/>
+              <label class="form-label required">${t('card.rehabCentre')}</label>
+              <input type="text" id="ch-reabil-markaz" class="form-input" placeholder="${t('institution.enterCentre')}"/>
             </div>
 
             <div class="mt-6 flex justify-end">
-              <button class="btn btn-primary px-8" id="btn-chiqarish" onclick="BemorKartaPage.chiqarishSave()">Saqlash va Chiqarish</button>
+              <button class="btn btn-primary px-8" id="btn-chiqarish" onclick="BemorKartaPage.chiqarishSave()">${t('card.saveDischarge')}</button>
             </div>
           </div>
         </div>
@@ -1737,7 +1736,7 @@ const BemorKartaPage = {
 
   editPatient() {
     if (BemorKartaPage._profile?.real_role === 'rahbar') {
-      showToast("Rahbar roli faqat ko'rish huquqiga ega", 'warning');
+      showToast(t('access.readOnlyRole'), 'warning');
       return;
     }
     const p = BemorKartaPage._patient;
@@ -1763,7 +1762,7 @@ const BemorKartaPage = {
           <div class="form-group col-span-2">
             <label class="form-label">Kasallik tarixi raqami (K/T No)</label>
             <input id="edit-kt-no" class="form-input font-mono" value="${esc(p.kt_no||'')}"
-              ${['admin','super_admin'].includes(BemorKartaPage._profile?.role) ? '' : 'readonly style="opacity:0.6;cursor:not-allowed" title="Faqat admin o\'zgartira oladi"'}/>
+              ${['admin','super_admin'].includes(BemorKartaPage._profile?.role) ? '' : `readonly style="opacity:0.6;cursor:not-allowed" title="${t('admin.onlyAdminEdit')}"`}/>
             <small class="text-xs text-slate-400">O'zgartirilsa barcha bog'liq yozuvlar (muolajalar, chiqarish varaqasi, fayllar, harakat) yangi raqamga ko'chiriladi</small>
           </div>
           <div class="form-group col-span-2">
@@ -1786,17 +1785,17 @@ const BemorKartaPage = {
           <div class="form-group">
             <label class="form-label">Jinsi</label>
             <select id="edit-jins" class="form-select">
-              <option value="Erkak" ${p.jins==='Erkak'?'selected':''}>Erkak</option>
-              <option value="Ayol" ${p.jins==='Ayol'?'selected':''}>Ayol</option>
+              <option value="Erkak" ${p.jins==='Erkak'?'selected':''}>${t('common.male')}</option>
+              <option value="Ayol" ${p.jins==='Ayol'?'selected':''}>${t('common.female')}</option>
             </select>
           </div>
           <div class="form-group">
             <label class="form-label">Tana vazni (kg)</label>
-            <input id="edit-vazn" type="number" min="2" max="350" step="0.1" class="form-input" value="${p.vazn||''}" placeholder="Masalan: 78" oninput="this.value=this.value.replace(/[^0-9.]/g,'')"/>
+            <input id="edit-vazn" type="number" min="2" max="350" step="0.1" class="form-input" value="${p.vazn||''}" placeholder="${t('placeholder.weightExample')}" oninput="this.value=this.value.replace(/[^0-9.]/g,'')"/>
           </div>
           <div class="form-group">
             <label class="form-label">Bo'y uzunligi (sm)</label>
-            <input id="edit-boy" type="number" min="50" max="250" class="form-input" value="${p.boy||''}" placeholder="Masalan: 172"/>
+            <input id="edit-boy" type="number" min="50" max="250" class="form-input" value="${p.boy||''}" placeholder="${t('placeholder.heightExample')}"/>
             <div class="text-xs text-slate-400 mt-1">Santimetrda, butun son — metrda EMAS</div>
           </div>
           <div class="form-group">
@@ -1808,7 +1807,7 @@ const BemorKartaPage = {
           <div class="form-group">
             <label class="form-label">Muassasa</label>
             <select id="edit-muassasa" class="form-select">
-              ${muassasalar.map(m => `<option value="${esc(m)}" ${p.muassasa===m?'selected':''}>${esc(m)}</option>`).join('')}
+              ${muassasalar.map(m => `<option value="${esc(m)}" ${p.muassasa===m?'selected':''}>${esc(I18n.facilityName(m))}</option>`).join('')}
             </select>
           </div>
           <div class="form-group">
@@ -1821,10 +1820,10 @@ const BemorKartaPage = {
             <label class="form-label">Holat (status)</label>
             <select id="edit-status" class="form-select"
               onchange="var w=document.getElementById('edit-chiqish-wrap'); if(w) w.style.display=(this.value==='active')?'none':''">
-              <option value="active" ${p.status==='active'?'selected':''}>Aktiv (davolanmoqda)</option>
-              <option value="chiqarildi" ${p.status==='chiqarildi'?'selected':''}>Chiqarildi</option>
-              <option value="otkazildi" ${p.status==='otkazildi'?'selected':''}>O'tkazildi</option>
-              <option value="vafot" ${p.status==='vafot'?'selected':''}>Vafot</option>
+              <option value="active" ${p.status==='active'?'selected':''}>${t('status.activeTreatment')}</option>
+              <option value="chiqarildi" ${p.status==='chiqarildi'?'selected':''}>${t('status.discharged')}</option>
+              <option value="otkazildi" ${p.status==='otkazildi'?'selected':''}>${t('status.transferred')}</option>
+              <option value="vafot" ${p.status==='vafot'?'selected':''}>${t('status.dead')}</option>
             </select>
           </div>
           <div class="form-group" id="edit-chiqish-wrap" ${p.status==='active' ? 'style="display:none"' : ''}>
@@ -1857,7 +1856,7 @@ const BemorKartaPage = {
           <div class="form-group">
             <label class="form-label">Birlamchi yoki takroriy?</label>
             <select id="edit-birlamchi" class="form-select">
-              <option value="">— tanlanmagan —</option>
+                <option value="">${t('common.notSelected')}</option>
               ${APP_CONFIG.BIRLAMCHI_TAKROIRIY.map(b => `<option value="${b}" ${p.birlamchi_yoki_takroriy===b?'selected':''}>${b}</option>`).join('')}
             </select>
           </div>
@@ -1882,16 +1881,16 @@ const BemorKartaPage = {
           </div>
           <div class="form-group">
             <label class="form-label">Troponin</label>
-            <input id="edit-troponin" class="form-input" value="${p.troponin||''}" placeholder="O'lchanmagan"/>
+              <input id="edit-troponin" class="form-input" value="${p.troponin||''}" placeholder="${t('common.notMeasured')}"/>
           </div>
           <div class="form-group">
             <label class="form-label">KFK-MB</label>
-            <input id="edit-kkfmb" class="form-input" value="${p.kkfmb||''}" placeholder="O'lchanmagan"/>
+              <input id="edit-kkfmb" class="form-input" value="${p.kkfmb||''}" placeholder="${t('common.notMeasured')}"/>
           </div>
           <div class="form-group col-span-2" id="edit-grace-wrap" style="display:${(p.infarkt_turi||'').toUpperCase().includes('NSTEMI') ? '' : 'none'}">
             <label class="form-label">GRACE Score (NSTEMI xavf baholash)</label>
             <div class="flex gap-2 items-center">
-              <input id="edit-grace" type="number" min="0" max="400" class="form-input w-full" value="${p.grace_bali||''}" placeholder="Kalkulyator orqali hisoblang"/>
+              <input id="edit-grace" type="number" min="0" max="400" class="form-input w-full" value="${p.grace_bali||''}" placeholder="${t('placeholder.calculate')}"/>
               <button type="button" class="flex-shrink-0 bg-indigo-100 text-indigo-700 hover:bg-indigo-200 px-3 py-2 rounded-lg text-sm font-bold border border-indigo-200"
                 onclick="BemorKartaPage.openGraceCalc()">🧮 Hisoblash</button>
             </div>
@@ -1979,33 +1978,33 @@ const BemorKartaPage = {
     const sel = document.getElementById('edit-muassasa');
     if (!vil || !sel) return;
     const list = APP_CONFIG.MUASSASALAR[vil] || [];
-    sel.innerHTML = list.map(m => `<option value="${esc(m)}">${esc(m)}</option>`).join('');
+    sel.innerHTML = list.map(m => `<option value="${esc(m)}">${esc(I18n.facilityName(m))}</option>`).join('');
   },
 
   async saveEdit() {
     if (BemorKartaPage._profile?.real_role === 'rahbar') {
-      showToast("Rahbar roli faqat ko'rish huquqiga ega", 'warning');
+      showToast(t('access.readOnlyRole'), 'warning');
       return;
     }
     const p = BemorKartaPage._patient;
     const type = BemorKartaPage._type;
     const isInf = type === 'infarkt';
     const fio = Utils.toTitleCase(document.getElementById('edit-fio')?.value?.trim());
-    if (!fio) { showToast('F.I.O ni kiriting', 'warning'); return; }
+    if (!fio) { showToast(t('patientCard.nameRequired'), 'warning'); return; }
     // K/T raqami o'zgarishi — faqat admin/super_admin, tasdiq bilan
     const newKtRaw = (document.getElementById('edit-kt-no')?.value || '').trim();
     const ktChanged = !!newKtRaw && newKtRaw !== p.kt_no;
     if (ktChanged && !['admin', 'super_admin'].includes(BemorKartaPage._profile?.role)) {
-      showToast('K/T raqamini faqat admin o\'zgartira oladi', 'error'); return;
+      showToast(t('patientCard.ktAdminOnly'), 'error'); return;
     }
-    if (ktChanged && !confirm(`Kasallik tarixi raqami o'zgartirilsinmi?\n\n"${p.kt_no}"  →  "${newKtRaw}"\n\nBarcha bog'liq yozuvlar (muolajalar, chiqarish varaqasi, fayllar, harakat) yangi raqamga ko'chiriladi.`)) return;
+    if (ktChanged && !confirm(t('patientCard.ktChangeConfirm', { old: p.kt_no, new: newKtRaw }))) return;
     const g = id => document.getElementById(id);
     const now = new Date();
     const qabulD = g('edit-qabul-vaqt-d')?.value;
     const qabulT = g('edit-qabul-vaqt-t')?.value;
     const qv = (qabulD && qabulT) ? new Date(`${qabulD}T${qabulT}:00+05:00`) : null;
     if (qv && qv > now) {
-      showToast('⚠️ Qabul vaqti kelajakda bo\'lishi mumkin emas!', 'error', 5000);
+      showToast(t('validation.admissionFuture'), 'error', 5000);
       return;
     }
     // Sana+vaqt inputlardan UTC ISO string olish
@@ -2020,24 +2019,24 @@ const BemorKartaPage = {
       : [['edit-kt-vaqti-d','edit-kt-vaqti-t','KT/MSKT vaqti'],['edit-trombolizis-vaqti-d','edit-trombolizis-vaqti-t','Trombolizis vaqti'],['edit-trombektomiya-vaqti-d','edit-trombektomiya-vaqti-t','Trombektomiya vaqti']]
     ).filter(([dId]) => !!g(dId));
     for (const [dId, tId, label] of vaqtFields) {
-      const d = g(dId)?.value, t = g(tId)?.value;
-      if (!d && !t) continue;
-      if (d && !t) { showToast(`⚠️ ${label} vaqtini kiriting`, 'error', 4000); return; }
-      if (!d && t) { showToast(`⚠️ ${label} sanasini kiriting`, 'error', 4000); return; }
-      const vt = new Date(`${d}T${t}:00+05:00`);
-      if (vt > now) { showToast(`⚠️ ${label} kelajakda bo'lishi mumkin emas!`, 'error', 5000); return; }
-      if (qv && vt < qv) { showToast(`⚠️ ${label} bemor qabul vaqtidan oldin bo'lishi mumkin emas!`, 'error', 5000); return; }
+      const d = g(dId)?.value, timeValue = g(tId)?.value;
+      if (!d && !timeValue) continue;
+      if (d && !timeValue) { showToast(t('validation.labelTime', { label }), 'error', 4000); return; }
+      if (!d && timeValue) { showToast(t('validation.labelDate', { label }), 'error', 4000); return; }
+      const vt = new Date(`${d}T${timeValue}:00+05:00`);
+      if (vt > now) { showToast(t('validation.labelFuture', { label }), 'error', 5000); return; }
+      if (qv && vt < qv) { showToast(t('validation.labelBeforeAdmission', { label }), 'error', 5000); return; }
     }
     // Chiqarilgan sana/vaqt tekshiruvi
     const chiqishD = g('edit-chiqish-d')?.value, chiqishT = g('edit-chiqish-t')?.value;
     const newStatus = g('edit-status')?.value;
     let chiqishIso = null;
     if (newStatus !== 'active' && (chiqishD || chiqishT)) {
-      if (!chiqishD) { showToast('⚠️ Chiqarilgan sanani kiriting', 'error', 4000); return; }
-      if (!chiqishT) { showToast('⚠️ Chiqarilgan vaqtni kiriting', 'error', 4000); return; }
+      if (!chiqishD) { showToast(t('discharge.dateRequired'), 'error', 4000); return; }
+      if (!chiqishT) { showToast(t('discharge.timeRequired'), 'error', 4000); return; }
       const cd = new Date(`${chiqishD}T${chiqishT}:00+05:00`);
-      if (cd > now) { showToast('⚠️ Chiqarilgan vaqt kelajakda bo\'lishi mumkin emas!', 'error', 5000); return; }
-      if (qv && cd < qv) { showToast('⚠️ Chiqarilgan vaqt qabul vaqtidan oldin bo\'lishi mumkin emas!', 'error', 5000); return; }
+      if (cd > now) { showToast(t('discharge.future'), 'error', 5000); return; }
+      if (qv && cd < qv) { showToast(t('discharge.beforeAdmission'), 'error', 5000); return; }
       chiqishIso = cd.toISOString();
     }
     // Bo'y — faqat santimetrda, butun son (metrda kiritilsa xato)
@@ -2046,7 +2045,7 @@ const BemorKartaPage = {
       const boyVE = parseFloat(boyRawE.replace(',', '.'));
       if (boyRawE.includes('.') || boyRawE.includes(',') || boyVE < 50 || boyVE > 250) {
         g('edit-boy')?.classList.add('border-red-500');
-        showToast("⚠️ Bo'y SANTIMETRDA, butun son bo'lib kiritilsin (masalan 172) — metrda EMAS!", 'error', 7000);
+        showToast(t('validation.heightCentimetres'), 'error', 7000);
         return;
       }
     }
@@ -2055,7 +2054,7 @@ const BemorKartaPage = {
       const vaznVE = parseFloat(vaznRawE);
       if (!(vaznVE >= 2 && vaznVE <= 350)) {
         g('edit-vazn')?.classList.add('border-red-500');
-        showToast("⚠️ Tana vazni 2–350 kg oralig'ida bo'lishi kerak!", 'error', 6000);
+        showToast(t('validation.weightRange'), 'error', 6000);
         return;
       }
     }
@@ -2131,12 +2130,12 @@ const BemorKartaPage = {
       }
       closeModal();
       if (ktChanged) {
-        showToast(`✅ K/T raqami "${ktNo}" ga o'zgartirildi, ma'lumotlar yangilandi`, 'success', 5000);
+        showToast(t('patientCard.ktChanged', { kt: ktNo }), 'success', 5000);
         // URL va sahifani yangi raqam bilan qayta ochamiz
         Router.go('bemor-karta', { kt_no: ktNo, type });
         return;
       }
-      showToast('Ma\'lumotlar yangilandi', 'success');
+      showToast(t('patientCard.updated'), 'success');
       BemorKartaPage.renderContent(BemorKartaPage._patient, type);
     } catch(err) {
       showToast(err.message, 'error');
@@ -2146,22 +2145,22 @@ const BemorKartaPage = {
 
   async deletePatient() {
     if (BemorKartaPage._profile?.role !== 'super_admin' || BemorKartaPage._profile?.real_role === 'rahbar') {
-      showToast("Faqat Super Administrator o'chirish huquqiga ega", 'error');
+      showToast(t('patientCard.deleteRestricted'), 'error');
       return;
     }
-    if (!confirm("Rostdan ham ushbu bemor ma'lumotlarini o'chirmoqchimisiz? Bu amalni ortga qaytarib bo'lmaydi!")) return;
+    if (!confirm(t('patientCard.deleteConfirm'))) return;
     try {
       const kt = BemorKartaPage._patient.kt_no;
       // Bemor va barcha bog'liq yozuvlarni o'chiradi (davolash, transfer, fayllar ham)
       await DB.deletePatientCascade(kt, BemorKartaPage._type);
-      showToast("Bemor muvaffaqiyatli o'chirildi", 'success');
+      showToast(t('patientCard.deleted'), 'success');
       // Keshlarni tozalash — hisobot va bemorlar ro'yxati yangilansin
       if (window.HisobotPage) { HisobotPage._lastData = null; HisobotPage._lastListType = null; }
       BemorKartaPage._navList = [];
       BemorKartaPage._navIndex = -1;
       setTimeout(() => Router.go('bemorlar'), 1500);
     } catch(err) {
-      showToast("O'chirishda xatolik: " + err.message, 'error');
+      showToast(t('patientCard.deleteError', { error: err.message }), 'error');
     }
   },
 
@@ -2201,18 +2200,18 @@ const BemorKartaPage = {
     const boshqaShifoxona = BemorKartaPage.getChiqarishMuassasa();
     const reabilMarkaz   = document.getElementById('ch-reabil-markaz')?.value   || '';
 
-    if (!sana) return showToast('Chiqarilgan sanani kiriting', 'warning');
-    if (!vaqt) return showToast('Chiqarilgan vaqtni kiriting', 'warning');
-    if (!natija) return showToast('Natijani tanlang', 'warning');
-    if (type === 'infarkt' && asoratlar.length === 0) return showToast('Asoratlarni belgilang', 'warning');
-    if (type === 'insult' && !nihssChiqarish) return showToast('NIHSS ballini kiriting', 'warning');
-    if (type === 'insult' && !mrsDaraja) return showToast('mRS darajasini tanlang', 'warning');
-    if (natija === "Boshqa shifoxonaga o'tkazildi" && !boshqaShifoxona.trim()) return showToast('Boshqa shifoxona nomini kiriting', 'warning');
-    if (natija === 'Reabilitatsiyaga yuborildi' && !reabilMarkaz.trim()) return showToast('Reabilitatsiya markazi nomini kiriting', 'warning');
+    if (!sana) return showToast(t('discharge.dateRequired'), 'warning');
+    if (!vaqt) return showToast(t('discharge.timeRequired'), 'warning');
+    if (!natija) return showToast(t('discharge.selectOutcome'), 'warning');
+    if (type === 'infarkt' && asoratlar.length === 0) return showToast(t('discharge.selectComplications'), 'warning');
+    if (type === 'insult' && !nihssChiqarish) return showToast(t('discharge.nihssRequired'), 'warning');
+    if (type === 'insult' && !mrsDaraja) return showToast(t('discharge.mrsRequired'), 'warning');
+    if (natija === "Boshqa shifoxonaga o'tkazildi" && !boshqaShifoxona.trim()) return showToast(t('discharge.otherHospital'), 'warning');
+    if (natija === 'Reabilitatsiyaga yuborildi' && !reabilMarkaz.trim()) return showToast(t('discharge.rehabCentre'), 'warning');
 
     // Chiqish vaqti kelajakda bo'lmasligi kerak
     if (new Date(`${sana}T${vaqt || '00:00'}:00+05:00`) > new Date()) {
-      return showToast('⚠️ Chiqish sanasi kelajakda bo\'lishi mumkin emas!', 'error', 7000);
+      return showToast(t('discharge.dateFuture'), 'error', 7000);
     }
 
     // Chiqish vaqti qabul vaqtidan oldin bo'lmasligi kerak
@@ -2228,16 +2227,16 @@ const BemorKartaPage = {
       // Faqat chiqish SANASI qabul SANASIDAN oldin bo'lsa xato
       if (chiqishSana < qabulSana) {
         const qabulStr = Utils.formatDateTime(qabulVaqt);
-        return showToast(`⚠️ Chiqish sanasi (${sana}) qabul sanasidan (${qabulStr}) oldin bo'lishi mumkin emas!`, 'error', 7000);
+        return showToast(t('discharge.dateBefore', { date: sana, admission: qabulStr }), 'error', 7000);
       }
       // Bir xil sana bo'lsa va vaqt kiritilgan bo'lsa — vaqtni ham solishtir
       if (vaqt && chiqishSana === qabulSana && chiqishDt < qabulDt) {
         const qabulStr = Utils.formatDateTime(qabulVaqt);
-        return showToast(`⚠️ Chiqish vaqti (${sana} ${vaqt}) qabul vaqtidan (${qabulStr}) oldin bo'lishi mumkin emas!`, 'error', 7000);
+        return showToast(t('discharge.timeBefore', { dateTime: `${sana} ${vaqt}`, admission: qabulStr }), 'error', 7000);
       }
     }
 
-    if (!confirm('Rostdan ham bemorni shifoxonadan chiqarmoqchimisiz?')) return;
+    if (!confirm(t('discharge.confirm'))) return;
 
     const btn = document.getElementById('btn-chiqarish');
     setLoading(btn, true);
@@ -2273,7 +2272,7 @@ const BemorKartaPage = {
         });
       }
 
-      showToast('Bemor muvaffaqiyatli chiqarildi', 'success');
+      showToast(t('discharge.success'), 'success');
       setTimeout(() => Router.go('bemorlar'), 1500);
     } catch(err) {
       showToast(err.message, 'error');
@@ -2331,7 +2330,7 @@ const BemorKartaPage = {
                   ${isFirst ? 'Dastlabki qabul' : `${idx}-o'tkazish`}
                   ${log.sabab && !isFirst ? `· <span style="color:#059669">${esc(log.sabab)}</span>` : ''}
                 </div>
-                <div style="font-size:15px;font-weight:700;color:#1e293b">${esc(log.muassasa_ga)}</div>
+                <div style="font-size:15px;font-weight:700;color:#1e293b">${esc(I18n.facilityName(log.muassasa_ga))}</div>
                 ${log.viloyat_ga ? `<div style="font-size:12px;color:#64748b;margin-top:2px">${esc(log.viloyat_ga)}</div>` : ''}
               </div>
               <div style="text-align:right;flex-shrink:0">
@@ -2367,14 +2366,14 @@ const BemorKartaPage = {
             <div>
               <label style="font-size:11px;font-weight:700;color:#64748b;display:block;margin-bottom:4px">VILOYAT</label>
               <select id="tr-viloyat" onchange="BemorKartaPage._onTrViloyat(this.value)" class="form-select" style="font-size:13px;padding:7px 10px">
-                <option value="">Tanlang...</option>
+                <option value="">${t('select.placeholder')}</option>
                 ${viloyatOpts}
               </select>
             </div>
             <div>
               <label style="font-size:11px;font-weight:700;color:#64748b;display:block;margin-bottom:4px">MUASSASA</label>
               <select id="tr-muassasa" class="form-select" style="font-size:13px;padding:7px 10px">
-                <option value="">Avval viloyat tanlang</option>
+                <option value="">${t('select.regionFirst')}</option>
               </select>
             </div>
             <div>
@@ -2384,17 +2383,17 @@ const BemorKartaPage = {
             <div>
               <label style="font-size:11px;font-weight:700;color:#64748b;display:block;margin-bottom:4px">SABAB</label>
               <select id="tr-sabab" class="form-select" style="font-size:13px;padding:7px 10px">
-                <option>Angiografiya uchun</option>
-                <option>Endovaskulyar muolaja</option>
-                <option>Reabilitatsiya</option>
-                <option>Ixtisoslashgan davolash</option>
-                <option>Yaxshilanmadi</option>
-                <option>Boshqa sabab</option>
+                <option value="Angiografiya uchun">${t('transfer.angiography')}</option>
+                <option value="Endovaskulyar muolaja">${t('transfer.endovascular')}</option>
+                <option value="Reabilitatsiya">${t('transfer.rehabilitation')}</option>
+                <option value="Ixtisoslashgan davolash">${t('transfer.specialised')}</option>
+                <option value="Yaxshilanmadi">${t('transfer.notImproved')}</option>
+                <option value="Boshqa sabab">${t('transfer.otherReason')}</option>
               </select>
             </div>
             <div style="grid-column:1/-1">
               <label style="font-size:11px;font-weight:700;color:#64748b;display:block;margin-bottom:4px">IZOH (ixtiyoriy)</label>
-              <input id="tr-izoh" type="text" class="form-input" placeholder="Qo'shimcha ma'lumot..." style="font-size:13px;padding:7px 10px">
+              <input id="tr-izoh" type="text" class="form-input" placeholder="${t('transfer.notesPlaceholder')}" style="font-size:13px;padding:7px 10px">
             </div>
           </div>
           <div style="display:flex;gap:8px;margin-top:12px">
@@ -2418,7 +2417,7 @@ const BemorKartaPage = {
     const sel = document.getElementById('tr-muassasa');
     if (!sel) return;
     const muassasalar = APP_CONFIG.MUASSASALAR[v] || [];
-    sel.innerHTML = muassasalar.map(m => `<option value="${m}">${m}</option>`).join('');
+    sel.innerHTML = muassasalar.map(m => `<option value="${m}">${I18n.facilityName(m)}</option>`).join('');
   },
 
   async _saveTransfer() {
@@ -2427,7 +2426,7 @@ const BemorKartaPage = {
     const sana = document.getElementById('tr-sana')?.value;
     const sabab = document.getElementById('tr-sabab')?.value;
     const izoh = document.getElementById('tr-izoh')?.value?.trim();
-    if (!muassasa || !sana) { showToast('Muassasa va sana majburiy', 'warning'); return; }
+    if (!muassasa || !sana) { showToast(t('transfer.institutionDateRequired'), 'warning'); return; }
 
     const p = BemorKartaPage._patient;
     const type = BemorKartaPage._type;
@@ -2446,23 +2445,23 @@ const BemorKartaPage = {
         sabab,
         izoh: izoh || null
       });
-      showToast('O\'tkazish yozuvi saqlandi', 'success');
+      showToast(t('transfer.saved'), 'success');
       BemorKartaPage.renderHarakat(document.getElementById('tab-content'), p, type);
     } catch(e) {
-      showToast('Xato: ' + e.message, 'error');
+      showToast(t('common.errorPrefix', { error: e.message }), 'error');
     }
   },
 
   async _deleteTransfer(id) {
-    if (!confirm('Bu yozuvni o\'chirmoqchimisiz?')) return;
+    if (!confirm(t('common.deleteRecordConfirm'))) return;
     try {
       await TransferLog.remove(id);
-      showToast('O\'chirildi', 'success');
+      showToast(t('validation.deleted'), 'success');
       const p = BemorKartaPage._patient;
       const type = BemorKartaPage._type;
       BemorKartaPage.renderHarakat(document.getElementById('tab-content'), p, type);
     } catch(e) {
-      showToast('Xato: ' + e.message, 'error');
+      showToast(t('common.errorPrefix', { error: e.message }), 'error');
     }
   }
 };

@@ -2,6 +2,14 @@
 const Calculators = {
   _currentInputId: null,
 
+  _scaleQuestion(id, key, scores) {
+    return {
+      id,
+      title: t(`${key}.title`),
+      opts: scores.map(score => ({ val: score, text: `${score} — ${t(`${key}.score${score}`)}` }))
+    };
+  },
+
   openModal(title, bodyHtml, onSave) {
     const el = document.createElement('div');
     el.id = 'calc-modal-wrapper';
@@ -22,11 +30,11 @@ const Calculators = {
           </div>
           <div class="p-5 border-t border-gray-100 bg-white rounded-b-2xl flex justify-between items-center shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
             <div class="text-lg font-bold text-gray-900 bg-blue-50 px-4 py-2 rounded-xl border border-blue-100">
-              Jami ball: <span id="calc-total" class="text-2xl text-blue-600">0</span>
+              ${t('calc.totalScore')}: <span id="calc-total" class="text-2xl text-blue-600">0</span>
             </div>
             <div class="flex gap-3">
-              <button class="px-5 py-2.5 rounded-xl font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 transition-colors" onclick="Calculators.closeModal()">Bekor qilish</button>
-              <button class="px-5 py-2.5 rounded-xl font-bold text-white bg-blue-600 hover:bg-blue-700 shadow-md shadow-blue-600/20 transition-all" onclick="${onSave}">Natijani saqlash</button>
+              <button class="px-5 py-2.5 rounded-xl font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 transition-colors" onclick="Calculators.closeModal()">${t('common.cancel')}</button>
+              <button class="px-5 py-2.5 rounded-xl font-bold text-white bg-blue-600 hover:bg-blue-700 shadow-md shadow-blue-600/20 transition-all" onclick="${onSave}">${t('calc.saveResult')}</button>
             </div>
           </div>
         </div>
@@ -55,9 +63,9 @@ const Calculators = {
       if (groupClass === 'aha-radio') {
         let level = '';
         let color = '';
-        if (total <= 6) { level = " (Past xavf)"; color = "text-green-600"; }
-        else if (total <= 13) { level = " (O'rta xavf)"; color = "text-amber-500"; }
-        else { level = " (Yuqori xavf)"; color = "text-red-600"; }
+        if (total <= 6) { level = ` (${t('risk.low')})`; color = "text-green-600"; }
+        else if (total <= 13) { level = ` (${t('risk.medium')})`; color = "text-amber-500"; }
+        else { level = ` (${t('risk.high')})`; color = "text-red-600"; }
         totalEl.innerHTML = `<span class="${color}">${total}${level}</span>`;
       } else {
         totalEl.textContent = total;
@@ -68,93 +76,21 @@ const Calculators = {
   openNIHSS(targetInputId) {
     this._currentInputId = targetInputId;
     const questions = [
-      { id: 'n1a', title: "1A. Ong darajasi", opts: [
-        {val:0, text:"0 - Hushida, faol"},
-        {val:1, text:"1 - Uyquchan, yengil turtkiga uyg'onadi"},
-        {val:2, text:"2 - Stupor, faqat kuchli og'riqqa javob beradi"},
-        {val:3, text:"3 - Koma, hech qanday javob yo'q"}
-      ]},
-      { id: 'n1b', title: "1B. Savollarga javob (Joriy oy va yoshini so'rash)", opts: [
-        {val:0, text:"0 - Ikkalasiga ham to'g'ri javob"},
-        {val:1, text:"1 - Bittasiga to'g'ri javob"},
-        {val:2, text:"2 - Ikkalasiga ham noto'g'ri"}
-      ]},
-      { id: 'n1c', title: "1C. Buyruqlarni bajarish (Ko'zni yum/och, qo'lni qis)", opts: [
-        {val:0, text:"0 - Ikkalasini ham to'g'ri bajaradi"},
-        {val:1, text:"1 - Bittasini to'g'ri bajaradi"},
-        {val:2, text:"2 - Bajarolmaydi"}
-      ]},
-      { id: 'n2', title: "2. Ko'zlarning harakati", opts: [
-        {val:0, text:"0 - Normal harakat"},
-        {val:1, text:"1 - Qisman parez (nigoh cheklangan)"},
-        {val:2, text:"2 - To'liq parez (majburiy nigoh)"}
-      ]},
-      { id: 'n3', title: "3. Ko'rish maydoni", opts: [
-        {val:0, text:"0 - Normal"},
-        {val:1, text:"1 - Qisman gemianopsiya"},
-        {val:2, text:"2 - To'liq gemianopsiya"},
-        {val:3, text:"3 - Ikki tomonlama ko'rlik"}
-      ]},
-      { id: 'n4', title: "4. Yuz mushaklari parezi", opts: [
-        {val:0, text:"0 - Normal (simmetrik)"},
-        {val:1, text:"1 - Yengil asimmetriya (kulishda)"},
-        {val:2, text:"2 - Qisman parez (pastki qism)"},
-        {val:3, text:"3 - To'liq parez (plegiya)"}
-      ]},
-      { id: 'n5a', title: "5A. Chap qo'l harakati (10 soniya ushlab turish)", opts: [
-        {val:0, text:"0 - Normal ushlaydi (tushmaydi)"},
-        {val:1, text:"1 - Sekin pastga tushadi"},
-        {val:2, text:"2 - Tortishish kuchi bor, lekin darhol tushib ketadi"},
-        {val:3, text:"3 - Faqat gorizontal siljish (tortishish yo'q)"},
-        {val:4, text:"4 - Harakat mutlaqo yo'q (Plegiya)"}
-      ]},
-      { id: 'n5b', title: "5B. O'ng qo'l harakati (10 soniya ushlab turish)", opts: [
-        {val:0, text:"0 - Normal ushlaydi (tushmaydi)"},
-        {val:1, text:"1 - Sekin pastga tushadi"},
-        {val:2, text:"2 - Tortishish kuchi bor, lekin darhol tushib ketadi"},
-        {val:3, text:"3 - Faqat gorizontal siljish (tortishish yo'q)"},
-        {val:4, text:"4 - Harakat mutlaqo yo'q (Plegiya)"}
-      ]},
-      { id: 'n6a', title: "6A. Chap oyoq harakati (5 soniya ushlab turish)", opts: [
-        {val:0, text:"0 - Normal ushlaydi (tushmaydi)"},
-        {val:1, text:"1 - Sekin pastga tushadi"},
-        {val:2, text:"2 - Tortishish kuchi bor, lekin darhol tushib ketadi"},
-        {val:3, text:"3 - Faqat gorizontal siljish"},
-        {val:4, text:"4 - Harakat mutlaqo yo'q (Plegiya)"}
-      ]},
-      { id: 'n6b', title: "6B. O'ng oyoq harakati (5 soniya ushlab turish)", opts: [
-        {val:0, text:"0 - Normal ushlaydi (tushmaydi)"},
-        {val:1, text:"1 - Sekin pastga tushadi"},
-        {val:2, text:"2 - Tortishish kuchi bor, lekin darhol tushib ketadi"},
-        {val:3, text:"3 - Faqat gorizontal siljish"},
-        {val:4, text:"4 - Harakat mutlaqo yo'q (Plegiya)"}
-      ]},
-      { id: 'n7', title: "7. Ataksiya (Barmoq-burun, Tizza-tovon testi)", opts: [
-        {val:0, text:"0 - Ataksiya yo'q"},
-        {val:1, text:"1 - Bir tomonda mavjud"},
-        {val:2, text:"2 - Ikki tomonda mavjud"}
-      ]},
-      { id: 'n8', title: "8. Sezgi (Og'riqqa reaksiya)", opts: [
-        {val:0, text:"0 - Normal sezgi"},
-        {val:1, text:"1 - Qisman pasaygan"},
-        {val:2, text:"2 - To'liq yo'qolgan"}
-      ]},
-      { id: 'n9', title: "9. Afaziya (Nutq va tushunish)", opts: [
-        {val:0, text:"0 - Normal"},
-        {val:1, text:"1 - Yengil / O'rta afaziya"},
-        {val:2, text:"2 - Og'ir afaziya (Faqat ayrim so'zlar)"},
-        {val:3, text:"3 - To'liq afaziya / Mutizm"}
-      ]},
-      { id: 'n10', title: "10. Dizartriya (Talaffuz)", opts: [
-        {val:0, text:"0 - Normal"},
-        {val:1, text:"1 - Yengil dizartriya"},
-        {val:2, text:"2 - Og'ir dizartriya (gapini umuman tushunib bo'lmaydi)"}
-      ]},
-      { id: 'n11', title: "11. Ignor qilish (Inattention / Neglect)", opts: [
-        {val:0, text:"0 - Yo'q"},
-        {val:1, text:"1 - Qisman (bir tomonlama vizual/taktil ignor)"},
-        {val:2, text:"2 - To'liq (ikki tomonlama / chuqur ignor)"}
-      ]}
+      this._scaleQuestion('n1a', 'nihss.1a', [0,1,2,3]),
+      this._scaleQuestion('n1b', 'nihss.1b', [0,1,2]),
+      this._scaleQuestion('n1c', 'nihss.1c', [0,1,2]),
+      this._scaleQuestion('n2', 'nihss.2', [0,1,2]),
+      this._scaleQuestion('n3', 'nihss.3', [0,1,2,3]),
+      this._scaleQuestion('n4', 'nihss.4', [0,1,2,3]),
+      this._scaleQuestion('n5a', 'nihss.5a', [0,1,2,3,4]),
+      this._scaleQuestion('n5b', 'nihss.5b', [0,1,2,3,4]),
+      this._scaleQuestion('n6a', 'nihss.6a', [0,1,2,3,4]),
+      this._scaleQuestion('n6b', 'nihss.6b', [0,1,2,3,4]),
+      this._scaleQuestion('n7', 'nihss.7', [0,1,2]),
+      this._scaleQuestion('n8', 'nihss.8', [0,1,2]),
+      this._scaleQuestion('n9', 'nihss.9', [0,1,2,3]),
+      this._scaleQuestion('n10', 'nihss.10', [0,1,2]),
+      this._scaleQuestion('n11', 'nihss.11', [0,1,2])
     ];
 
     let html = `<div class="space-y-5">`;
@@ -175,34 +111,16 @@ const Calculators = {
     });
     html += `</div>`;
 
-    this.openModal('NIHSS Kalkulyatori', html, `Calculators.saveResult('nihss-radio')`);
+    this.openModal(t('nihss.title'), html, `Calculators.saveResult('nihss-radio')`);
     setTimeout(() => this.updateTotal('nihss-radio'), 50);
   },
 
   openGCS(targetInputId) {
     this._currentInputId = targetInputId;
     const questions = [
-      { id: 'g1', title: "1. Ko'zlarni ochishi (Eye opening)", opts: [
-        {val:4, text:"4 - O'z-o'zidan ochiladi"},
-        {val:3, text:"3 - Ovoz / chaqiriqqa ochiladi"},
-        {val:2, text:"2 - Og'riq ta'siriga ochiladi"},
-        {val:1, text:"1 - Umuman ochilmaydi"}
-      ]},
-      { id: 'g2', title: "2. Nutq reaksiyasi (Verbal response)", opts: [
-        {val:5, text:"5 - Bemor orientatsiyalangan, to'g'ri javob beradi"},
-        {val:4, text:"4 - Orientatsiya buzilgan, chalkash nutq"},
-        {val:3, text:"3 - Faqat alohida so'zlarni aytadi"},
-        {val:2, text:"2 - Tushunarsiz tovushlar (ingrash)"},
-        {val:1, text:"1 - Nutq mutlaqo yo'q"}
-      ]},
-      { id: 'g3', title: "3. Harakat reaksiyasi (Motor response)", opts: [
-        {val:6, text:"6 - Buyruqlarni to'g'ri bajaradi"},
-        {val:5, text:"5 - Og'riqni joyini aniqlaydi (lokalizatsiya)"},
-        {val:4, text:"4 - Og'riqdan qochadi (normal bukish)"},
-        {val:3, text:"3 - Patologik bukish (dekortikatsion poza)"},
-        {val:2, text:"2 - Patologik yozish (deserebratsion poza)"},
-        {val:1, text:"1 - Harakat mutlaqo yo'q"}
-      ]}
+      this._scaleQuestion('g1', 'gcs.eye', [4,3,2,1]),
+      this._scaleQuestion('g2', 'gcs.verbal', [5,4,3,2,1]),
+      this._scaleQuestion('g3', 'gcs.motor', [6,5,4,3,2,1])
     ];
 
     let html = `<div class="space-y-5">`;
@@ -223,7 +141,7 @@ const Calculators = {
     });
     html += `</div>`;
 
-    this.openModal('Glazgo Koma Shkalasi (GCS)', html, `Calculators.saveResult('gcs-radio')`);
+    this.openModal(t('gcs.title'), html, `Calculators.saveResult('gcs-radio')`);
     setTimeout(() => this.updateTotal('gcs-radio'), 50);
   },
 
@@ -293,12 +211,12 @@ const Calculators = {
     questions.forEach((q) => {
       html += `
         <div class="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
-          <h4 class="font-bold text-gray-800 mb-4">${q.title}</h4>
+          <h4 class="font-bold text-gray-800 mb-4">${I18n.translateText(q.title)}</h4>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
             ${q.opts.map((opt, j) => `
               <label class="group relative flex items-start gap-3 p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-rose-50 hover:border-rose-300 transition-all has-[:checked]:bg-rose-50/50 has-[:checked]:border-rose-500 has-[:checked]:shadow-sm">
                 <input type="radio" name="${q.id}" value="${opt.val}" class="aha-radio mt-0.5 text-rose-600 focus:ring-rose-500" ${j===0?'checked':''} onchange="Calculators.updateTotal('aha-radio')">
-                <span class="text-sm font-medium text-gray-700 group-has-[:checked]:text-rose-900">${opt.text}</span>
+                <span class="text-sm font-medium text-gray-700 group-has-[:checked]:text-rose-900">${I18n.translateText(opt.text)}</span>
               </label>
             `).join('')}
           </div>
@@ -307,7 +225,7 @@ const Calculators = {
     });
     html += `</div>`;
 
-    this.openModal('AHA Xavfni Baholash Shkalasi', html, `Calculators.saveResult('aha-radio')`);
+    this.openModal(t('aha.questionnaireTitle'), html, `Calculators.saveResult('aha-radio')`);
     setTimeout(() => this.updateTotal('aha-radio'), 50);
   },
 
@@ -341,9 +259,9 @@ const Calculators = {
   },
 
   graceRiskInfo(total) {
-    if (total <= 108) return { level: "Past xavf", percent: "< 1%", color: "text-green-700", bg: "bg-green-50", border: "border-green-200", tavsiya: "Konservativ yondashuv mumkin" };
-    if (total <= 140) return { level: "O'rta xavf", percent: "1–3%", color: "text-amber-700", bg: "bg-amber-50", border: "border-amber-200", tavsiya: "Erta invaziv strategiya — 72 soat ichida" };
-    return { level: "Yuqori xavf", percent: "> 3%", color: "text-red-700", bg: "bg-red-50", border: "border-red-200", tavsiya: "Erta invaziv strategiya — 24 soat ichida (og'ir holatda < 2 soat)" };
+    if (total <= 108) return { level: t('risk.low'), percent: "< 1%", color: "text-green-700", bg: "bg-green-50", border: "border-green-200", tavsiya: t('grace.recommendation.low') };
+    if (total <= 140) return { level: t('risk.medium'), percent: "1–3%", color: "text-amber-700", bg: "bg-amber-50", border: "border-amber-200", tavsiya: t('grace.recommendation.medium') };
+    return { level: t('risk.high'), percent: "> 3%", color: "text-red-700", bg: "bg-red-50", border: "border-red-200", tavsiya: t('grace.recommendation.high') };
   },
 
   graceResultBadgeHtml(total) {
@@ -352,9 +270,9 @@ const Calculators = {
     return `<div class="mt-3 p-4 rounded-xl border ${r.border} ${r.bg}">
       <div class="flex items-center justify-between flex-wrap gap-2">
         <div>
-          <div class="text-xs font-bold uppercase tracking-wide ${r.color} mb-1">GRACE Score natijasi</div>
-          <div class="text-2xl font-black ${r.color}">${total} ball — ${r.level}</div>
-          <div class="text-sm font-semibold ${r.color} mt-0.5">Gospital o'lim xavfi: ${r.percent}</div>
+          <div class="text-xs font-bold uppercase tracking-wide ${r.color} mb-1">${t('grace.result')}</div>
+          <div class="text-2xl font-black ${r.color}">${t('calc.points', { count: total })} — ${r.level}</div>
+          <div class="text-sm font-semibold ${r.color} mt-0.5">${t('grace.hospitalMortality', { percent: r.percent })}</div>
         </div>
         <div class="text-xs font-bold ${r.color} bg-white/70 px-3 py-2 rounded-lg border ${r.border} max-w-xs">${r.tavsiya}</div>
       </div>
@@ -376,7 +294,7 @@ const Calculators = {
 
     if (isNaN(age) || isNaN(hr) || isNaN(sbp) || isNaN(cr)) {
       if (totalEl) totalEl.textContent = '—';
-      if (riskBox) riskBox.innerHTML = '<span class="text-gray-400 text-sm">Barcha majburiy maydonlarni to\'ldiring</span>';
+      if (riskBox) riskBox.innerHTML = `<span class="text-gray-400 text-sm">${t('grace.fillRequired')}</span>`;
       return null;
     }
 
@@ -429,41 +347,41 @@ const Calculators = {
     const ekg = Array.isArray(d.ekg_natija) ? d.ekg_natija : (d.ekg_natija ? [d.ekg_natija] : []);
     const defaultSt = ekg.some(e => e && (e.toLowerCase().includes('st pasayishi') || e.toLowerCase().includes("st ko'tarilishi")));
 
-    const killipOpts = Object.entries(this.GRACE_KILLIP_MAP).map(([label, num]) =>
-      `<option value="${num}" ${num === killipNum ? 'selected' : ''}>${label}</option>`
+    const killipOpts = Object.entries(this.GRACE_KILLIP_MAP).map(([, num]) =>
+      `<option value="${num}" ${num === killipNum ? 'selected' : ''}>${t(`killip.class${num}`)}</option>`
     ).join('');
 
     const html = `
       <div class="space-y-5">
         <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 text-sm text-blue-800 font-medium">
-          GRACE 2.0 — NSTEMI bemorlar uchun gospital ichi o'lim xavfini baholash shkalasi
+          ${t('grace.description')}
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div class="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
-            <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Yosh (yil) *</label>
+            <label class="block text-xs font-bold text-gray-500 uppercase mb-2">${t('grace.age')} *</label>
             <input id="g_age" type="number" min="18" max="120" class="form-input w-full"
-              value="${defaultAge}" placeholder="Masalan: 65" oninput="Calculators.updateGraceTotal()"/>
+              value="${defaultAge}" placeholder="${t('calc.example', { value: 65 })}" oninput="Calculators.updateGraceTotal()"/>
           </div>
           <div class="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
-            <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Puls (zarbalar/min) *</label>
+            <label class="block text-xs font-bold text-gray-500 uppercase mb-2">${t('grace.heartRate')} *</label>
             <input id="g_hr" type="number" min="20" max="300" class="form-input w-full"
-              value="${defaultHr}" placeholder="Masalan: 80" oninput="Calculators.updateGraceTotal()"/>
+              value="${defaultHr}" placeholder="${t('calc.example', { value: 80 })}" oninput="Calculators.updateGraceTotal()"/>
           </div>
           <div class="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
-            <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Sistolik AD (mmHg) *</label>
+            <label class="block text-xs font-bold text-gray-500 uppercase mb-2">${t('grace.sbp')} *</label>
             <input id="g_sbp" type="number" min="40" max="300" class="form-input w-full"
-              value="${defaultSbp}" placeholder="Masalan: 130" oninput="Calculators.updateGraceTotal()"/>
+              value="${defaultSbp}" placeholder="${t('calc.example', { value: 130 })}" oninput="Calculators.updateGraceTotal()"/>
           </div>
           <div class="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
-            <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Serum kreatinin (mg/dL) *</label>
+            <label class="block text-xs font-bold text-gray-500 uppercase mb-2">${t('grace.creatinine')} *</label>
             <input id="g_cr" type="number" min="0" max="20" step="0.1" class="form-input w-full"
-              value="" placeholder="Masalan: 1.0" oninput="Calculators.updateGraceTotal()"/>
+              value="" placeholder="${t('calc.example', { value: '1.0' })}" oninput="Calculators.updateGraceTotal()"/>
           </div>
         </div>
 
         <div class="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
-          <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Killip klassifikatsiyasi</label>
+          <label class="block text-xs font-bold text-gray-500 uppercase mb-2">${t('grace.killip')}</label>
           <select id="g_killip" class="form-select" onchange="Calculators.updateGraceTotal()">
             ${killipOpts}
           </select>
@@ -474,45 +392,45 @@ const Calculators = {
             <input type="checkbox" id="g_arrest" class="w-5 h-5 rounded text-indigo-600"
               ${false ? 'checked' : ''} onchange="Calculators.updateGraceTotal()"/>
             <div>
-              <div class="font-bold text-gray-800 text-sm">Kardioarest bo'lganmi?</div>
-              <div class="text-xs text-gray-500">Qabul paytida yoki oldin yurak to'xtashi</div>
+              <div class="font-bold text-gray-800 text-sm">${t('grace.arrest')}</div>
+              <div class="text-xs text-gray-500">${t('grace.arrestHelp')}</div>
             </div>
-            <span class="ml-auto text-xs font-black text-indigo-600 bg-indigo-50 px-2 py-1 rounded">+39 ball</span>
+            <span class="ml-auto text-xs font-black text-indigo-600 bg-indigo-50 px-2 py-1 rounded">+${t('calc.points', { count: 39 })}</span>
           </label>
           <label class="flex items-center gap-3 p-4 bg-white border border-gray-200 rounded-xl cursor-pointer hover:bg-indigo-50 transition-all">
             <input type="checkbox" id="g_stdev" class="w-5 h-5 rounded text-indigo-600"
               ${defaultSt ? 'checked' : ''} onchange="Calculators.updateGraceTotal()"/>
             <div>
-              <div class="font-bold text-gray-800 text-sm">ST segment deviatsiyasi</div>
-              <div class="text-xs text-gray-500">EKG da ST ko'tarilishi yoki pasayishi</div>
+              <div class="font-bold text-gray-800 text-sm">${t('grace.stDeviation')}</div>
+              <div class="text-xs text-gray-500">${t('grace.stDeviationHelp')}</div>
             </div>
-            <span class="ml-auto text-xs font-black text-indigo-600 bg-indigo-50 px-2 py-1 rounded">+28 ball</span>
+            <span class="ml-auto text-xs font-black text-indigo-600 bg-indigo-50 px-2 py-1 rounded">+${t('calc.points', { count: 28 })}</span>
           </label>
           <label class="flex items-center gap-3 p-4 bg-white border border-gray-200 rounded-xl cursor-pointer hover:bg-indigo-50 transition-all">
             <input type="checkbox" id="g_enzymes" class="w-5 h-5 rounded text-indigo-600"
               ${defaultEnzymes ? 'checked' : ''} onchange="Calculators.updateGraceTotal()"/>
             <div>
-              <div class="font-bold text-gray-800 text-sm">Kardiomarkerlar ko'tarilgan</div>
-              <div class="text-xs text-gray-500">Troponin yoki KFK-MB yuqori</div>
+              <div class="font-bold text-gray-800 text-sm">${t('grace.markers')}</div>
+              <div class="text-xs text-gray-500">${t('grace.markersHelp')}</div>
             </div>
-            <span class="ml-auto text-xs font-black text-indigo-600 bg-indigo-50 px-2 py-1 rounded">+14 ball</span>
+            <span class="ml-auto text-xs font-black text-indigo-600 bg-indigo-50 px-2 py-1 rounded">+${t('calc.points', { count: 14 })}</span>
           </label>
         </div>
 
         <div id="grace-risk-box" class="min-h-[60px] flex items-center">
-          <span class="text-gray-400 text-sm">Barcha majburiy maydonlarni to'ldiring</span>
+          <span class="text-gray-400 text-sm">${t('grace.fillRequired')}</span>
         </div>
       </div>
     `;
 
-    this.openModal('GRACE Score Kalkulyatori (NSTEMI)', html, "Calculators.saveGraceResult()");
+    this.openModal(t('grace.title'), html, "Calculators.saveGraceResult()");
     setTimeout(() => this.updateGraceTotal(), 50);
   },
 
   saveGraceResult() {
     const total = this.updateGraceTotal();
     if (total === null || isNaN(total)) {
-      showToast('⚠️ Barcha majburiy maydonlarni (yosh, puls, AD, kreatinin) to\'ldiring!', 'warning');
+      showToast(`⚠️ ${t('grace.fillRequiredDetailed')}`, 'warning');
       return;
     }
     const input = document.getElementById(this._currentInputId);
@@ -668,14 +586,20 @@ const Calculators = {
   // Tavsiya blokining HTML ko'rinishi
   tavsiyaHtml(t, ball, nomi) {
     if (!t) return '';
+    const label = I18n.translateText(nomi);
+    const level = /^ASPECTS (\d+) — konservativ$/.test(t.daraja)
+      ? I18n.t('calcRec.aspectsConservative', { score: t.daraja.match(/\d+/)[0] })
+      : /^ASPECTS (\d+) · (M[1-4]) segment$/.test(t.daraja)
+        ? I18n.t('calcRec.aspectsSegment', { score: t.daraja.match(/\d+/)[0], segment: t.daraja.match(/M[1-4]/)[0] })
+        : I18n.translateText(t.daraja);
     return `<div class="mt-2 p-3 rounded-xl border" style="background:${t.fon};border-color:${t.chegara}">
       <div class="flex items-start gap-2">
         <span style="font-size:16px;line-height:1.2">${t.belgi}</span>
         <div>
           <div style="color:${t.rang};font-weight:800;font-size:12px;text-transform:uppercase;letter-spacing:.03em">
-            ${nomi} ${ball} — ${t.daraja}
+            ${label} ${ball} — ${level}
           </div>
-          <div style="color:#334155;font-size:13px;margin-top:2px;line-height:1.45">${t.matn}</div>
+          <div style="color:#334155;font-size:13px;margin-top:2px;line-height:1.45">${I18n.translateText(t.matn)}</div>
         </div>
       </div>
     </div>`;

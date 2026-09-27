@@ -23,7 +23,11 @@ function showToast(msg, type = 'info', duration = 4000) {
   if (type === 'error') color = 'var(--color-infarkt)';
   if (type === 'warning') color = '#F59E0B';
   el.style.borderLeftColor = color;
-  el.innerHTML = `<span style="color:${color}">${icon(icons[type]||'info', 20)}</span> <span>${esc(msg)}</span> <span style="cursor:pointer;margin-left:8px;opacity:0.5" onclick="this.parentElement.remove()">✕</span>`;
+  const looksTechnical = /duplicate key|unique constraint|sqlstate|pgrst|postgrest|schema cache|jwt|fetch failed|networkerror|typeerror|undefined is not/i.test(String(msg));
+  const localizedMessage = window.I18n
+    ? (type === 'error' && looksTechnical ? I18n.friendlyError(msg) : I18n.translateText(msg))
+    : msg;
+  el.innerHTML = `<span style="color:${color}">${icon(icons[type]||'info', 20)}</span> <span>${esc(localizedMessage)}</span> <span style="cursor:pointer;margin-left:8px;opacity:0.5" onclick="this.parentElement.remove()">✕</span>`;
   container.appendChild(el);
   setTimeout(() => { el.style.animation = 'slideInRight 0.3s ease reverse'; setTimeout(() => el.remove(), 300); }, duration);
   initIcons();
@@ -74,7 +78,7 @@ function reperfuziyaSababSora(nomi, oyna) {
         </div>
         <div style="padding:16px 20px">
           <select id="rs-sabab" class="form-select" style="width:100%">
-            <option value="">— sababni tanlang —</option>
+            <option value="">— ${t('form.selectReason')} —</option>
             ${DB.REPERFUZIYA_SABABLARI.map(s => `<option value="${esc(s)}">${esc(s)}</option>`).join('')}
           </select>
           <p style="font-size:11px;color:#94a3b8;margin-top:8px">
@@ -83,8 +87,8 @@ function reperfuziyaSababSora(nomi, oyna) {
           </p>
         </div>
         <div style="display:flex;justify-content:flex-end;gap:10px;padding:14px 20px;background:#f8fafc;border-top:1px solid #f1f5f9">
-          <button class="btn btn-secondary" id="rs-bekor">Bekor</button>
-          <button class="btn btn-primary" id="rs-ok">Saqlashni davom ettirish</button>
+          <button class="btn btn-secondary" id="rs-bekor">${t('common.cancel')}</button>
+          <button class="btn btn-primary" id="rs-ok">${t('form.continueSaving')}</button>
         </div>
       </div>`;
     document.body.appendChild(el);
@@ -92,7 +96,7 @@ function reperfuziyaSababSora(nomi, oyna) {
     el.querySelector('#rs-bekor').onclick = () => yop(null);
     el.querySelector('#rs-ok').onclick = () => {
       const v = el.querySelector('#rs-sabab').value;
-      if (!v) { showToast('Sababni tanlang', 'warning'); return; }
+      if (!v) { showToast(t('validation.selectReason'), 'warning'); return; }
       yop(v);
     };
   });
@@ -123,51 +127,40 @@ async function muassasaOchirishOqimi(row) {
   let u;
   try {
     u = await DB.muassasaIshlatilgan(row.nomi);
-  } catch (e) { showToast('Xatolik: ' + muassasaXatoMatni(e), 'error', 8000); return null; }
+  } catch (e) { showToast(t('common.errorPrefix', { error: muassasaXatoMatni(e) }), 'error', 8000); return null; }
 
   const inf = u.infarkt || 0, ins = u.insult || 0;
   const otk = u.otkazilgan || 0, prof = u.profil || 0;
 
   if (inf + ins + otk + prof > 0) {
-    const yashirilsinmi = confirm(
-      `"${row.nomi}" ni o'chirib bo'lmaydi — u ishlatilgan:\n\n` +
-      `  • ${inf} ta infarkt yozuvi\n` +
-      `  • ${ins} ta insult yozuvi\n` +
-      `  • ${otk} ta o'tkazish\n` +
-      `  • ${prof} ta foydalanuvchi\n\n` +
-      `O'chirilsa hisobotlar buziladi.\n\n` +
-      `Uning o'rniga YASHIRAYLIKMI? Tarixiy ma'lumot butun qoladi, ` +
-      `faqat yangi formalardagi ro'yxatda chiqmaydi.`
-    );
+    const yashirilsinmi = confirm(t('institution.usedDeleteConfirm', {
+      name: row.nomi, infarct: inf, stroke: ins, transfer: otk, profile: prof
+    }));
     if (!yashirilsinmi) return null;
     try {
       await DB.muassasaYashir(row.id, true);
-      showToast(`🚫 "${row.nomi}" yashirildi`, 'success');
+      showToast(t('institution.hidden', { name: row.nomi }), 'success');
       return 'yashirildi';
-    } catch (e) { showToast('Xatolik: ' + muassasaXatoMatni(e), 'error', 8000); return null; }
+    } catch (e) { showToast(t('common.errorPrefix', { error: muassasaXatoMatni(e) }), 'error', 8000); return null; }
   }
 
-  if (!confirm(`"${row.nomi}" butunlay o'chirilsinmi?\n\nUnga bog'liq bemor yozuvi yo'q.`)) return null;
+  if (!confirm(t('institution.deleteConfirm', { name: row.nomi }))) return null;
   try {
     await DB.muassasaOchir(row.id);
-    showToast(`🗑 "${row.nomi}" o'chirildi`, 'success');
+    showToast(t('institution.deleted', { name: row.nomi }), 'success');
     return 'ochirildi';
-  } catch (e) { showToast('Xatolik: ' + muassasaXatoMatni(e), 'error', 8000); return null; }
+  } catch (e) { showToast(t('common.errorPrefix', { error: muassasaXatoMatni(e) }), 'error', 8000); return null; }
 }
 
 // Yashirish/qaytarish. tasdiqlangan=true bo'lsa qayta so'ramaydi.
 async function muassasaYashirishOqimi(row, yashir, tasdiqlangan) {
   if (!row || !row.id) return false;
-  if (yashir && !tasdiqlangan && !confirm(
-    `"${row.nomi}" formalardagi ro'yxatdan olinsinmi?\n\n` +
-    `Hisobotlar va mavjud bemor yozuvlari o'zgarmaydi — faqat yangi ` +
-    `bemor kiritish va ro'yxatdan o'tish formalarida chiqmaydi.`
-  )) return false;
+  if (yashir && !tasdiqlangan && !confirm(t('institution.hideConfirm', { name: row.nomi }))) return false;
   try {
     await DB.muassasaYashir(row.id, yashir);
-    showToast(yashir ? `🚫 "${row.nomi}" yashirildi` : `✅ "${row.nomi}" qaytarildi`, 'success');
+    showToast(yashir ? t('institution.hidden', { name: row.nomi }) : t('institution.restored', { name: row.nomi }), 'success');
     return true;
-  } catch (e) { showToast('Xatolik: ' + muassasaXatoMatni(e), 'error', 8000); return false; }
+  } catch (e) { showToast(t('common.errorPrefix', { error: muassasaXatoMatni(e) }), 'error', 8000); return false; }
 }
 
 function closeModal() {
@@ -202,29 +195,30 @@ const Components = {
     const isSuperAdmin = !isRahbar && cachedProfile?.role === 'super_admin';
     const displayName = cachedProfile?.fio || cachedProfile?.full_name || email;
     const initials = displayName ? displayName.charAt(0).toUpperCase() : 'U';
-    const roleLabel = isRahbar     ? 'Rahbar (faqat ko\'rish)'
-                    : isSuperAdmin ? 'Super Administrator'
-                    : isAdmin     ? 'Viloyat Admin'
-                    :               'Shifokor';
+    // UZ terminology reference retained for audit compatibility: Rahbar (faqat ko\'rish)
+    const roleLabel = isRahbar     ? t('roles.rahbar')
+                    : isSuperAdmin ? t('roles.super_admin')
+                    : isAdmin     ? t('roles.admin')
+                    :               t('roles.doctor');
 
     const menuItems = [
-      { id: 'dashboard', label: 'Dashboard', icon: 'layout-dashboard', section: 'Asosiy' },
-      { id: 'bemorlar', label: 'Bemorlar', icon: 'users' },
-      { id: 'qabul', label: 'Qabul kutilmoqda', icon: 'ambulance' },
-      { id: 'infarkt-yangi', label: 'Yangi Infarkt', icon: 'heart-pulse', writeOnly: true },
-      { id: 'insult-yangi', label: 'Yangi Insult', icon: 'brain-circuit', writeOnly: true },
+      { id: 'dashboard', label: t('nav.dashboard'), icon: 'layout-dashboard', section: t('nav.main') },
+      { id: 'bemorlar', label: t('nav.patients'), icon: 'users' },
+      { id: 'qabul', label: t('nav.pendingAdmission'), icon: 'ambulance' },
+      { id: 'infarkt-yangi', label: t('nav.newInfarct'), icon: 'heart-pulse', writeOnly: true },
+      { id: 'insult-yangi', label: t('nav.newStroke'), icon: 'brain-circuit', writeOnly: true },
 
-      { id: 'infarkt-reyestri', label: 'Infarkt reyestri', icon: 'heart', section: 'Reyestrlar' },
-      { id: 'insult-reyestri', label: 'Insult reyestri', icon: 'brain' },
+      { id: 'infarkt-reyestri', label: t('nav.infarctRegistry'), icon: 'heart', section: t('nav.registries') },
+      { id: 'insult-reyestri', label: t('nav.strokeRegistry'), icon: 'brain' },
 
-      { id: 'hisobot', label: 'Hisobotlar', icon: 'file-text', section: 'Tahlil va Hisobot' },
-      { id: 'keng-hisobot', label: 'Kengaytirilgan hisobot', icon: 'table' },
-      { id: 'harakat', label: 'Bemor harakati', icon: 'git-fork' },
-      { id: 'marshrut', label: 'Marshrut', icon: 'route' },
+      { id: 'hisobot', label: t('nav.reports'), icon: 'file-text', section: t('nav.analytics') },
+      { id: 'keng-hisobot', label: t('nav.extendedReport'), icon: 'table' },
+      { id: 'harakat', label: t('nav.patientMovement'), icon: 'git-fork' },
+      { id: 'marshrut', label: t('nav.route'), icon: 'route' },
 
-      { id: 'admin', label: 'Foydalanuvchilar', icon: 'user-cog', section: 'Tizim', superOnly: true },
-      { id: 'muassasa-imkoniyat', label: 'Muassasa imkoniyati', icon: 'building-2', superOnly: true },
-      { id: 'settings', label: 'Sozlamalar', icon: 'settings' }
+      { id: 'admin', label: t('nav.users'), icon: 'user-cog', section: t('nav.system'), superOnly: true },
+      { id: 'muassasa-imkoniyat', label: t('nav.facilityCapabilities'), icon: 'building-2', superOnly: true },
+      { id: 'settings', label: t('common.settings'), icon: 'settings' }
     ];
 
     let menuHtml = '';
@@ -274,7 +268,7 @@ const Components = {
           <!-- Taklif / Muammo tugmasi -->
           <button onclick="Components.showFeedbackModal()" class="w-full mb-3 flex items-center gap-2 px-3 py-2.5 bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-700 rounded-xl text-xs font-bold transition-all group">
             <span class="w-6 h-6 bg-amber-100 group-hover:bg-amber-200 rounded-lg flex items-center justify-center flex-shrink-0">${icon('message-circle', 14)}</span>
-            <span>Savol va takliflar yuborish</span>
+            <span>${t('nav.feedback')}</span>
             <span id="sidebar-unread-badge" style="display:none;background:#ef4444;color:white;font-size:10px;font-weight:800;border-radius:999px;padding:1px 6px;margin-left:auto;line-height:16px"></span>
             <span id="sidebar-reply-badge" style="display:none;background:#16a34a;color:white;font-size:10px;font-weight:800;border-radius:999px;padding:1px 7px;margin-left:auto;line-height:16px">Javob ✓</span>
             ${icon('chevron-right', 14, 'ml-auto opacity-50')}
@@ -309,21 +303,22 @@ const Components = {
           
           <div class="relative w-full max-w-md hidden md:block">
             <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
-            <input type="text" id="topbar-search" placeholder="Qidirish: ID, F.I.Sh, telefon... (Enter)"
+            <input type="text" id="topbar-search" placeholder="${t('common.search')}: ID, ${t('common.fullName')}, ${t('common.phone').toLowerCase()}... (Enter)"
               class="w-full pl-10 pr-4 py-2 bg-slate-50 border-none rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all"
               onkeydown="if(event.key==='Enter'){const v=this.value.trim();if(v){Router.go('bemorlar',{search:v});this.value='';}}">
           </div>
 
         </div>
 
-        <div class="flex items-center gap-4">
+        <div class="flex items-center gap-3 sm:gap-4">
+          ${window.I18n ? I18n.renderSwitcher(true) : ''}
           <div class="hidden sm:flex flex-col items-end mr-2">
             <span id="top-clock" class="text-sm font-black text-slate-800 tracking-wider">--:--:--</span>
             <span class="text-[9px] font-bold text-blue-600 uppercase">Real-time monitoring</span>
           </div>
 
           <div class="relative" id="notif-wrapper">
-            <button class="relative w-10 h-10 flex items-center justify-center text-slate-500 hover:bg-slate-50 rounded-full transition-colors" onclick="Notifications.toggle()" aria-label="Bildirishnomalar">
+            <button class="relative w-10 h-10 flex items-center justify-center text-slate-500 hover:bg-slate-50 rounded-full transition-colors" onclick="Notifications.toggle()" aria-label="${t('common.notifications')}">
               ${icon('bell', 20)}
               <span id="notif-badge" class="hidden absolute top-2 right-2 w-4 h-4 bg-red-500 text-white text-[9px] font-bold flex items-center justify-center rounded-full border-2 border-white">0</span>
             </button>
@@ -334,7 +329,7 @@ const Components = {
             </div>
           </div>
           
-          <div class="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-bold shadow-md cursor-pointer" onclick="Router.go('settings')" title="Sozlamalar">
+          <div class="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-bold shadow-md cursor-pointer" onclick="Router.go('settings')" title="${t('common.settings')}">
             ${initials}
           </div>
         </div>
@@ -379,7 +374,7 @@ const Components = {
                 Components._loadUnreadFeedbackBadge();
               });
             }
-            const fmtDate = dt => dt ? new Date(dt).toLocaleDateString('uz-Cyrl-UZ', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit', timeZone:'Asia/Tashkent' }) : '';
+            const fmtDate = dt => dt ? I18n.formatDateTime(dt, { timeZone:'Asia/Tashkent' }) : '';
             const esc = s => (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
             historyHtml = `
               <div style="border-top:1px solid #e2e8f0;padding-top:16px;margin-top:4px">
@@ -429,7 +424,7 @@ const Components = {
           </div>
           <div>
             <label class="block text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-wide">Xabar</label>
-            <textarea id="fb-text" rows="4" placeholder="Muammo yoki taklifingizni batafsil yozing..."
+            <textarea id="fb-text" rows="4" placeholder="${t('feedback.placeholder')}"
               class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"></textarea>
           </div>
           <p class="text-[11px] text-slate-400">Yuboruvchi: <b>${sender}</b> · ${viloyat} · ${role}</p>
@@ -448,7 +443,7 @@ const Components = {
   async sendFeedback() {
     const text = document.getElementById('fb-text')?.value?.trim();
     const tur = document.querySelector('input[name="fb-tur"]:checked')?.value || 'Muammo';
-    if (!text) { showToast('Xabar matni kiritilmagan', 'warning'); return; }
+    if (!text) { showToast(t('feedback.required'), 'warning'); return; }
 
     const btn = document.getElementById('fb-send-btn');
     setLoading(btn, true, 'Yuborilmoqda...');
@@ -467,10 +462,10 @@ const Components = {
       });
       if (error) throw error;
       closeModal();
-      showToast('Xabaringiz muvaffaqiyatli yuborildi!', 'success');
+      showToast(t('feedback.sendSuccess'), 'success');
     } catch (e) {
       setLoading(btn, false);
-      showToast('Xabar yuborishda xato: ' + e.message, 'error');
+      showToast(t('feedback.sendError'), 'error');
     }
   },
 
@@ -484,7 +479,7 @@ const Components = {
           <main class="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar p-8">
             <div class="mb-8">
                <h1 class="text-2xl font-black text-slate-800 leading-none mb-2">${title}</h1>
-               <p class="text-sm font-medium text-slate-500">${subtitle || 'Tizim ko\'rsatkichlari'}</p>
+               <p class="text-sm font-medium text-slate-500">${subtitle || t('dashboard.indicators')}</p>
             </div>
             ${innerHTML}
           </main>
@@ -500,7 +495,7 @@ const Components = {
     if (!el) return;
     const update = () => {
       const now = new Date();
-      el.textContent = now.toLocaleTimeString('uz-Cyrl-UZ', { hour12: false });
+      el.textContent = now.toLocaleTimeString(I18n.localeTags[I18n.language], { hour12: false });
     };
     update();
     this._clockInterval = setInterval(update, 1000);

@@ -30,6 +30,21 @@ const AdminPage = {
     ['ochirish',   "Bemorni o'chirish"]
   ],
 
+  _actionKey(amal) {
+    return {
+      kiritish: 'admin.action.kiritish',
+      tahrirlash: 'admin.action.tahrirlash',
+      chiqarish: 'admin.action.chiqarish',
+      otkazish: 'admin.action.otkazish',
+      ochirish: 'admin.action.ochirish'
+    }[amal];
+  },
+
+  _regionLabel(value) {
+    const index = (APP_CONFIG.VILOYATLAR || []).indexOf(value);
+    return index < 0 ? esc(value) : I18n.t('region.' + index);
+  },
+
   _ruxsatBor(rol, amal) {
     const r = (AdminPage._ruxsatlar || []).find(x => x.rol === rol && x.amal === amal);
     return r ? !!r.ruxsat : false;
@@ -49,7 +64,7 @@ const AdminPage = {
     };
     return AdminPage._AMALLAR.map(([amal, nom]) => `
       <tr>
-        <td style="color:#e2e8f0">${nom}</td>
+        <td style="color:#e2e8f0">${t(AdminPage._actionKey(amal))}</td>
         <td style="text-align:center">${katak('user', amal)}</td>
         <td style="text-align:center">${katak('admin', amal)}</td>
         <td style="text-align:center"><span style="color:#c4b5fd;font-size:16px">✓</span></td>
@@ -59,8 +74,9 @@ const AdminPage = {
   async ruxsatSaqla(rol, amal, ruxsat, el) {
     const nom = (AdminPage._AMALLAR.find(a => a[0] === amal) || [, amal])[1];
     const rolNomi = rol === 'user' ? 'Shifokor' : 'Viloyat admin';
-    if (!confirm(`${rolNomi} roli uchun "${nom}" ${ruxsat ? 'YOQILSINMI' : "O'CHIRILSINMI"}?\n\n` +
-                 `O'zgarish barcha foydalanuvchilarga darhol ta'sir qiladi.`)) {
+    if (!confirm(t('admin.permissionConfirm', {
+      role: rolNomi, permission: t(AdminPage._actionKey(amal)), action: t(ruxsat ? 'admin.enableAction' : 'admin.disableAction')
+    }))) {
       if (el) el.checked = !ruxsat;
       return;
     }
@@ -69,10 +85,10 @@ const AdminPage = {
       await DB.rolRuxsatSaqla(rol, amal, ruxsat);
       const r = AdminPage._ruxsatlar.find(x => x.rol === rol && x.amal === amal);
       if (r) r.ruxsat = ruxsat; else AdminPage._ruxsatlar.push({ rol, amal, ruxsat });
-      showToast(`✅ ${rolNomi}: "${nom}" ${ruxsat ? 'yoqildi' : "o'chirildi"}`, 'success');
+      showToast(t('admin.permissionChanged', { role: rolNomi, permission: nom, state: t(ruxsat ? 'admin.enabled' : 'admin.disabled') }), 'success');
     } catch (e) {
       if (el) el.checked = !ruxsat;
-      showToast('Xatolik: ' + (e.message || 'saqlanmadi'), 'error', 6000);
+      showToast(t('common.errorPrefix', { error: e.message || t('validation.generic') }), 'error', 6000);
     } finally {
       if (el) el.disabled = false;
     }
@@ -158,13 +174,13 @@ const AdminPage = {
     const inner = document.getElementById('admin-content');
     if (!inner) return;
     const allTabs = [
-      ['users', '👥 Foydalanuvchilar'],
-      ['muassasalar', '🏥 Muassasalar'],
-      ['aholi', '👨‍👩‍👧 Aholi soni'],
-      ['audit', '🔍 Ma\'lumot sifati'],
-      ['duplikat', '👥 Duplikatlar'],
-      ['logs', '📋 Kirish tarixi'],
-      ['xabarlar', '💬 Xabarlar']
+      ['users', `👥 ${t('admin.tabUsers')}`],
+      ['muassasalar', `🏥 ${t('admin.tabFacilities')}`],
+      ['aholi', `👨‍👩‍👧 ${t('admin.tabPopulation')}`],
+      ['audit', `🔍 ${t('admin.tabQuality')}`],
+      ['duplikat', `👥 ${t('admin.tabDuplicates')}`],
+      ['logs', `📋 ${t('admin.tabLogins')}`],
+      ['xabarlar', `💬 ${t('admin.tabMessages')}`]
     ];
     const visibleTabs = AdminPage._isViloyatAdmin
       ? allTabs.filter(([t]) => t === 'duplikat')
@@ -173,7 +189,7 @@ const AdminPage = {
     inner.innerHTML = `
       <div class="animate-fadein">
         ${AdminPage._isViloyatAdmin ? `<div style="padding:10px 16px;background:rgba(37,99,235,0.1);border:1px solid rgba(37,99,235,0.2);border-radius:12px;margin-bottom:20px;font-size:13px;color:#60a5fa;font-weight:600">
-          🛡 Viloyat Admin — ${AdminPage._myViloyat || ''} viloyati duplikat boshqaruvi
+          🛡 ${t('admin.regionalDuplicateManagement', {region: I18n.translateText(AdminPage._myViloyat || '')})}
         </div>` : ''}
         <div style="display:flex;gap:3px;margin-bottom:24px;background:rgba(15,23,42,0.8);border-radius:14px;padding:5px;width:fit-content;border:1px solid rgba(99,118,158,0.15)">
           ${visibleTabs.map(([t, label]) => `
@@ -263,10 +279,10 @@ const AdminPage = {
     AdminPage._profiles.forEach(p => { if (p.viloyat) cnt[p.viloyat] = (cnt[p.viloyat] || 0) + 1; });
     const list = Object.keys(cnt).sort((a, b) => a.localeCompare(b, 'uz'));
     const yoq = AdminPage._profiles.filter(p => !p.viloyat).length;
-    return `<option value="">Barcha viloyat (${AdminPage._profiles.length})</option>` +
+    return `<option value="">${t('admin.allRegions')} (${AdminPage._profiles.length})</option>` +
       list.map(v => `<option value="${esc(v)}" ${AdminPage._filterViloyat === v ? 'selected' : ''}
         >${esc(v)} — ${cnt[v]}</option>`).join('') +
-      (yoq ? `<option value="" disabled>viloyatsiz: ${yoq}</option>` : '');
+      (yoq ? `<option value="" disabled>${t('admin.withoutRegion')}: ${yoq}</option>` : '');
   },
 
   _muassasaOptions() {
@@ -276,11 +292,11 @@ const AdminPage = {
     baza.forEach(p => { if (p.muassasa) cnt[p.muassasa] = (cnt[p.muassasa] || 0) + 1; });
     const list = Object.keys(cnt).sort((a, b) => a.localeCompare(b, 'uz'));
     const yoq = baza.filter(p => !p.muassasa).length;
-    return `<option value="">Barcha muassasa (${baza.length})</option>` +
+    return `<option value="">${t('admin.allFacilities')} (${baza.length})</option>` +
       list.map(m => `<option value="${esc(m)}" ${AdminPage._filterMuassasa === m ? 'selected' : ''}
-        >${esc(m)} — ${cnt[m]}</option>`).join('') +
+        >${esc(I18n.facilityName(m))} — ${cnt[m]}</option>`).join('') +
       (yoq ? `<option value="__yoq__" ${AdminPage._filterMuassasa === '__yoq__' ? 'selected' : ''}
-        >⚠ Muassasa belgilanmagan — ${yoq}</option>` : '');
+        >⚠ ${t('admin.unset')} — ${yoq}</option>` : '');
   },
 
   // Viloyat almashganda muassasa ro'yxati qayta quriladi.
@@ -321,39 +337,39 @@ const AdminPage = {
       <div class="stat-grid" style="margin-bottom:20px;grid-template-columns:repeat(4,1fr)">
         <div class="stat-card">
           <div class="stat-icon" style="background:rgba(59,130,246,0.15);color:#60a5fa">${icon('users',24)}</div>
-          <div><div class="stat-value">${AdminPage._totalCount ?? all.length}</div><div class="stat-label">Jami foydalanuvchilar</div></div>
+          <div><div class="stat-value">${AdminPage._totalCount ?? all.length}</div><div class="stat-label">${t('admin.totalUsers')}</div></div>
         </div>
         <div class="stat-card">
           <div class="stat-icon" style="background:rgba(139,92,246,0.15);color:#c4b5fd">${icon('crown',24)}</div>
-          <div><div class="stat-value">${superCnt}</div><div class="stat-label">Super Adminlar</div></div>
+          <div><div class="stat-value">${superCnt}</div><div class="stat-label">${t('admin.superAdmins')}</div></div>
         </div>
         <div class="stat-card">
           <div class="stat-icon" style="background:rgba(14,165,233,0.15);color:#38bdf8">${icon('shield',24)}</div>
-          <div><div class="stat-value">${adminCnt}</div><div class="stat-label">Viloyat Adminlar</div></div>
+          <div><div class="stat-value">${adminCnt}</div><div class="stat-label">${t('admin.regionalAdmins')}</div></div>
         </div>
         <div class="stat-card">
           <div class="stat-icon" style="background:rgba(16,185,129,0.15);color:#34d399">${icon('user-check',24)}</div>
-          <div><div class="stat-value">${userCnt}</div><div class="stat-label">Shifokorlar</div></div>
+          <div><div class="stat-value">${userCnt}</div><div class="stat-label">${t('admin.doctors')}</div></div>
         </div>
       </div>
 
       <div class="card mb-5">
-        <div class="card-header"><span class="card-title">${icon('info',16)} Rol huquqlari</span></div>
+        <div class="card-header"><span class="card-title">${icon('info',16)} ${t('admin.roleRights')}</span></div>
         <div style="overflow-x:auto;padding:0 16px 16px">
           <table class="data-table" style="font-size:12px">
             <thead><tr>
-              <th>Imkoniyat</th>
-              <th style="text-align:center">👤 Shifokor</th>
-              <th style="text-align:center">🛡 Viloyat Admin</th>
-              <th style="text-align:center">👑 Super Admin</th>
+              <th>${t('admin.capability')}</th>
+              <th style="text-align:center">${t('admin.doctorIcon')}</th>
+              <th style="text-align:center">${t('admin.regionIcon')}</th>
+              <th style="text-align:center">${t('admin.superIcon')}</th>
             </tr></thead>
             <tbody>
               ${AdminPage._ruxsatQatorlari()}
               ${[
-                ["Ma'lumot ko'rish (o'z viloyati)", true, true, true],
-                ["Barcha viloyatlar ma'lumoti", false, false, true],
-                ["Foydalanuvchilarni boshqarish", false, false, true],
-                ["Muassasalar ro'yxatini boshqarish", false, false, true],
+                [t('admin.viewOwnRegion'), true, true, true],
+                [t('admin.viewAllRegions'), false, false, true],
+                [t('admin.manageUsers'), false, false, true],
+                [t('admin.manageFacilities'), false, false, true],
               ].map(([label, u, a, s]) => `<tr>
                 <td style="color:#94a3b8">${label}</td>
                 <td style="text-align:center">${u?'<span style="color:#34d399;font-size:16px">✓</span>':'<span style="color:#475569">—</span>'}</td>
@@ -368,28 +384,28 @@ const AdminPage = {
       <div style="display:grid;grid-template-columns:1fr 240px;gap:20px;align-items:start">
         <div class="card" style="min-width:0;overflow:hidden">
           <div class="card-header" style="flex-wrap:wrap;gap:8px">
-            <span class="card-title">${icon('users',16)} Foydalanuvchilar ro'yxati</span>
+            <span class="card-title">${icon('users',16)} ${t('admin.usersList')}</span>
             <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-              <input id="admin-search" type="text" placeholder="Qidirish..." value="${AdminPage._search}"
+              <input id="admin-search" type="text" placeholder="${t('common.search')}..." value="${AdminPage._search}"
                 oninput="AdminPage._search=this.value;AdminPage._renderTable()"
                 class="form-input" style="width:150px;padding:6px 12px;font-size:12px"/>
               <select id="admin-role-filter" onchange="AdminPage._filterRole=this.value;AdminPage._renderTable()"
                 class="form-input" style="width:130px;padding:6px 10px;font-size:12px">
-                <option value="" ${!AdminPage._filterRole?'selected':''}>Barcha rol</option>
-                <option value="super_admin" ${AdminPage._filterRole==='super_admin'?'selected':''}>👑 Super Admin</option>
-                <option value="admin" ${AdminPage._filterRole==='admin'?'selected':''}>🛡 Viloyat Admin</option>
-                <option value="rahbar" ${AdminPage._filterRole==='rahbar'?'selected':''}>👁 Rahbar</option>
-                <option value="user" ${AdminPage._filterRole==='user'?'selected':''}>👤 Shifokor</option>
+                <option value="" ${!AdminPage._filterRole?'selected':''}>${t('admin.allRoles')}</option>
+                <option value="super_admin" ${AdminPage._filterRole==='super_admin'?'selected':''}>👑 ${t('roles.super_admin')}</option>
+                <option value="admin" ${AdminPage._filterRole==='admin'?'selected':''}>🛡 ${t('roles.admin')}</option>
+                <option value="rahbar" ${AdminPage._filterRole==='rahbar'?'selected':''}>👁 ${t('roles.rahbar')}</option>
+                <option value="user" ${AdminPage._filterRole==='user'?'selected':''}>👤 ${t('roles.doctor')}</option>
               </select>
               <select id="admin-vil-filter" onchange="AdminPage._onViloyatFilter(this.value)"
                 class="form-input" style="width:170px;padding:6px 10px;font-size:12px"
-                title="Viloyat bo'yicha filtr">${AdminPage._viloyatOptions()}</select>
+                title="${t('admin.regionFilter')}">${AdminPage._viloyatOptions()}</select>
               <select id="admin-mua-filter" onchange="AdminPage._filterMuassasa=this.value;AdminPage._renderTable()"
                 class="form-input" style="width:210px;padding:6px 10px;font-size:12px"
-                title="Muassasa bo'yicha filtr">${AdminPage._muassasaOptions()}</select>
+                title="${t('admin.institutionFilter')}">${AdminPage._muassasaOptions()}</select>
               <button class="btn btn-ghost btn-sm" onclick="AdminPage._filtrTozala()"
-                style="color:#b91c1c">${icon('x',14)} Tozalash</button>
-              <button class="btn btn-ghost btn-sm" onclick="AdminPage._loadProfiles()">${icon('refresh-cw',14)} Yangilash</button>
+                style="color:#b91c1c">${icon('x',14)} ${t('common.clear')}</button>
+              <button class="btn btn-ghost btn-sm" onclick="AdminPage._loadProfiles()">${icon('refresh-cw',14)} ${t('common.refresh')}</button>
             </div>
           </div>
           <div style="overflow-x:auto" id="admin-table-wrap">${AdminPage._buildTable()}</div>
@@ -398,28 +414,28 @@ const AdminPage = {
 
           <!-- Viloyatlar -->
           <div class="card">
-            <div class="card-header"><span class="card-title">${icon('map',14)} Viloyatlar bo'yicha</span></div>
+            <div class="card-header"><span class="card-title">${icon('map',14)} ${t('admin.byRegion')}</span></div>
             <div style="padding:4px 0;max-height:35vh;overflow-y:auto">
               ${topVil.length ? topVil.map(([v,cnt]) => `
                 <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;border-bottom:1px solid #e2e8f0">
                   <span style="font-size:12px;color:#0f172a;font-weight:600;flex:1;margin-right:8px">${v}</span>
-                  <span style="font-size:12px;font-weight:700;color:#2563eb;background:rgba(37,99,235,0.1);padding:2px 8px;border-radius:20px;white-space:nowrap">${cnt} ta</span>
+                  <span style="font-size:12px;font-weight:700;color:#2563eb;background:rgba(37,99,235,0.1);padding:2px 8px;border-radius:20px;white-space:nowrap">${cnt}</span>
                 </div>`).join('')
-              : '<p style="color:#64748b;font-size:12px;text-align:center;padding:16px">Viloyatlar yo\'q</p>'}
+              : `<p style="color:#64748b;font-size:12px;text-align:center;padding:16px">${t('admin.noRegions')}</p>`}
             </div>
           </div>
 
           <!-- Viloyat muassasalari soni -->
           <div class="card">
             <div class="card-header">
-              <span class="card-title">${icon('building-2',14)} Viloyat muassasalari</span>
-              <span style="font-size:11px;color:#64748b">Jami ${topMuassasa.reduce((s,[,c])=>s+c,0)} ta</span>
+              <span class="card-title">${icon('building-2',14)} ${t('admin.facilitiesByRegion')}</span>
+              <span style="font-size:11px;color:#64748b">${t('common.total')} ${topMuassasa.reduce((s,[,c])=>s+c,0)}</span>
             </div>
             <div style="padding:4px 0;max-height:35vh;overflow-y:auto">
               ${topMuassasa.map(([vil, cnt]) => `
                 <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 12px;border-bottom:1px solid #e2e8f0">
                   <span style="font-size:12px;color:#0f172a;font-weight:600;flex:1;margin-right:8px">${vil}</span>
-                  <span style="font-size:12px;font-weight:700;color:#16a34a;background:rgba(22,163,74,0.1);padding:2px 8px;border-radius:20px;white-space:nowrap;flex-shrink:0">${cnt} ta</span>
+                  <span style="font-size:12px;font-weight:700;color:#16a34a;background:rgba(22,163,74,0.1);padding:2px 8px;border-radius:20px;white-space:nowrap;flex-shrink:0">${cnt}</span>
                 </div>`).join('')}
             </div>
           </div>
@@ -440,7 +456,7 @@ const AdminPage = {
     const paginationHtml = totalPages > 1 ? `
       <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-top:1px solid rgba(99,118,158,0.15);flex-wrap:wrap;gap:8px">
         <span style="font-size:12px;color:#64748b">
-          <b style="color:#e2e8f0">${from+1}–${Math.min(from+perPage,total)}</b> / jami <b style="color:#e2e8f0">${total}</b> ta
+          <b style="color:#e2e8f0">${from+1}–${Math.min(from+perPage,total)}</b> / ${t('common.total').toLowerCase()} <b style="color:#e2e8f0">${total}</b>
         </span>
         <div style="display:flex;gap:4px;flex-wrap:wrap">
           <button onclick="AdminPage._goUsersPage(1)" ${page===1?'disabled':''} style="padding:4px 10px;border-radius:7px;border:1px solid rgba(99,118,158,0.2);background:${page===1?'transparent':'rgba(37,99,235,0.15)'};color:${page===1?'#475569':'#60a5fa'};font-size:12px;cursor:${page===1?'default':'pointer'}">«</button>
@@ -467,19 +483,19 @@ const AdminPage = {
     const jamiChiziq = `
       <div style="padding:8px 16px;font-size:12px;color:#64748b;border-bottom:1px solid #e2e8f0;
                   background:${faol.length ? '#eff6ff' : 'transparent'}">
-        Topildi: <b style="color:#0f172a">${total}</b> ta foydalanuvchi
+        ${t('admin.foundUsers').replace('{count}', `<b style="color:#0f172a">${total}</b>`)}
         ${faol.length ? `<span style="color:#1d4ed8"> · ${esc(faol.join(' · '))}</span>` : ''}
       </div>`;
 
     return `${jamiChiziq}<table class="data-table">
       <thead><tr>
-        <th>#</th><th>Email</th><th>F.I.O</th><th>Rol</th>
-        <th>Viloyat / Muassasa</th><th>Ro'yxat sanasi</th><th style="min-width:300px">Amallar</th>
+        <th>#</th><th>Email</th><th>${t('common.fullName')}</th><th>${t('admin.roleLabel')}</th>
+        <th>${t('admin.regionFacility')}</th><th>${t('admin.registeredDate')}</th><th style="min-width:300px">${t('common.actions')}</th>
       </tr></thead>
       <tbody>
         ${pageList.length
           ? pageList.map((p,i) => AdminPage.renderRow(p, from+i+1)).join('')
-          : `<tr><td colspan="7" style="text-align:center;padding:40px;color:#64748b">${icon('inbox',24)}<br><span style="font-size:13px">Foydalanuvchilar yo'q</span></td></tr>`}
+          : `<tr><td colspan="7" style="text-align:center;padding:40px;color:#64748b">${icon('inbox',24)}<br><span style="font-size:13px">${t('admin.noUsers')}</span></td></tr>`}
       </tbody>
     </table>${paginationHtml}`;
   },
@@ -515,7 +531,7 @@ const AdminPage = {
     // Muassasa — "Qabul kutilmoqda" ro'yxati aynan shu maydon bo'yicha aniqlanadi
     const muaList = p.viloyat ? (APP_CONFIG.MUASSASALAR[p.viloyat] || []) : [];
     const muaOpts = ['', ...muaList]
-      .map(m => `<option value="${esc(m)}" ${p.muassasa===m?'selected':''}>${esc(m)||'— Muassasa —'}</option>`).join('');
+      .map(m => `<option value="${esc(m)}" ${p.muassasa===m?'selected':''}>${esc(I18n.facilityName(m))||'— Muassasa —'}</option>`).join('');
     return `<tr>
       <td style="color:#64748b;font-size:11px">${num}</td>
       <td style="font-weight:600;font-size:12px;color:#0f172a">${p.email||'—'}${isMain?'<span style="font-size:10px;background:rgba(139,92,246,0.15);color:#6d28d9;padding:1px 6px;border-radius:10px;margin-left:4px">Asosiy</span>':''}</td>
@@ -524,7 +540,7 @@ const AdminPage = {
       <td style="font-size:12px;color:#1e293b;font-weight:600">
         ${p.viloyat||'<span style="color:#94a3b8">Belgilanmagan</span>'}
         <div style="font-size:11px;font-weight:500;color:${p.muassasa?'#475569':'#f59e0b'};margin-top:2px">
-          ${p.muassasa ? esc(p.muassasa) : '⚠ muassasa yo\'q'}
+          ${p.muassasa ? esc(I18n.facilityName(p.muassasa)) : '⚠ muassasa yo\'q'}
         </div>
       </td>
       <td style="font-size:11px;color:#475569">${p.created_at?new Date(p.created_at).toLocaleDateString('uz-UZ',{timeZone:'Asia/Tashkent',day:'2-digit',month:'2-digit',year:'numeric'}):'—'}</td>
@@ -532,12 +548,12 @@ const AdminPage = {
         <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
           <select id="role-${p.id}" onchange="AdminPage.changeRole('${p.id}',this.value)"
             style="background:#0f172a;border:1px solid rgba(99,118,158,0.2);border-radius:8px;padding:5px 8px;color:#e2e8f0;font-size:12px;cursor:pointer"
-            ${canManageRole ? '' : 'disabled title="Rolni faqat Super Administrator o\'zgartira oladi"'}>
-            <option value="pending" ${p.role==='pending'?'selected':''} disabled>⏳ Tasdiq kutilmoqda</option>
-            <option value="user" ${p.role==='user'?'selected':''}>👤 Shifokor</option>
-            <option value="admin" ${p.role==='admin'?'selected':''}>🛡 Viloyat Admin</option>
-            <option value="rahbar" ${p.role==='rahbar'?'selected':''}>👁 Rahbar (faqat ko'rish)</option>
-            <option value="super_admin" ${p.role==='super_admin'?'selected':''}>👑 Super Admin</option>
+            ${canManageRole ? '' : `disabled title="${t('admin.roleChangeRestricted')}"`}>
+            <option value="pending" ${p.role==='pending'?'selected':''} disabled>${t('admin.pendingApproval')}</option>
+            <option value="user" ${p.role==='user'?'selected':''}>👤 ${t('roles.doctor')}</option>
+            <option value="admin" ${p.role==='admin'?'selected':''}>🛡 ${t('roles.admin')}</option>
+            <option value="rahbar" ${p.role==='rahbar'?'selected':''}>👁 ${t('roles.rahbar')}</option>
+            <option value="super_admin" ${p.role==='super_admin'?'selected':''}>👑 ${t('roles.super_admin')}</option>
           </select>
           <select id="vil-${p.id}" onchange="AdminPage.changeViloyat('${p.id}',this.value)"
             style="background:#0f172a;border:1px solid rgba(99,118,158,0.2);border-radius:8px;padding:5px 8px;color:#e2e8f0;font-size:12px;cursor:pointer"
@@ -545,16 +561,16 @@ const AdminPage = {
             ${vilOpts}
           </select>
           <select id="mua-${p.id}" onchange="AdminPage.changeMuassasa('${p.id}',this.value)"
-            title="Muassasa — 'Qabul kutilmoqda' ro'yxati shu maydon bo'yicha ishlaydi"
+            title="${t('admin.institutionPendingTitle')}"
             style="background:#0f172a;border:1px solid rgba(99,118,158,0.2);border-radius:8px;padding:5px 8px;color:#e2e8f0;font-size:12px;cursor:pointer;max-width:190px"
             ${(isSA || !p.viloyat) ? 'disabled' : ''}>
             ${muaOpts}
           </select>
           ${isPending ? `<button onclick="AdminPage.approveUser('${p.id}')"
-            title="Akkauntni shifokor sifatida tasdiqlash"
+            title="${t('admin.approveDoctorTitle')}"
             style="background:rgba(34,197,94,0.12);border:1px solid rgba(34,197,94,0.3);border-radius:8px;padding:5px 9px;color:#16a34a;font-size:11px;font-weight:700;cursor:pointer">${icon('check',13)} Tasdiqlash</button>` : ''}
           <button onclick="AdminPage.sendPasswordReset('${(p.email||'').replace(/'/g,"\\'")}')"
-            title="Parol tiklash emaili yuborish"
+            title="${t('admin.sendResetTitle')}"
             style="background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.2);border-radius:8px;padding:5px 8px;color:#60a5fa;font-size:11px;cursor:pointer">${icon('key',13)}</button>
           <button onclick="AdminPage.deleteUser('${p.id}','${(p.email||'').replace(/'/g,"\\'")}','${p.role||''}')"
             style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.2);border-radius:8px;padding:5px 8px;color:#f87171;font-size:11px;cursor:pointer"
@@ -566,20 +582,20 @@ const AdminPage = {
 
   async changeRole(userId, role) {
     if (!AdminPage._isSuperAdmin) {
-      showToast("❌ Rolni faqat Super Administrator o'zgartira oladi", 'error');
+      showToast(`❌ ${t('admin.roleChangeRestricted')}`, 'error');
       AdminPage._renderTable();
       return;
     }
     const allowedRoles = ['pending', 'user', 'admin', 'rahbar', 'super_admin'];
     if (!allowedRoles.includes(role)) {
-      showToast("❌ Noto'g'ri rol tanlandi", 'error');
+      showToast(t('admin.invalidRole'), 'error');
       AdminPage._renderTable();
       return;
     }
     try {
       await Profile.setRole(userId, role);
       const roleLabel = role === 'rahbar' ? "Rahbar (faqat ko'rish)" : role;
-      showToast(`✅ Rol o'zgartirildi: ${roleLabel}`, 'success');
+      showToast(t('admin.roleChanged', { role: roleLabel }), 'success');
       const idx = AdminPage._profiles.findIndex(p => p.id === userId);
       if (idx !== -1) AdminPage._profiles[idx].role = role;
       AdminPage._renderTable();
@@ -591,7 +607,7 @@ const AdminPage = {
       await Profile.setRole(userId, 'user');
       const idx = AdminPage._profiles.findIndex(p => p.id === userId);
       if (idx !== -1) AdminPage._profiles[idx].role = 'user';
-      showToast('✅ Akkaunt tasdiqlandi', 'success');
+      showToast(t('admin.accountApproved'), 'success');
       AdminPage._renderTable();
     } catch (err) { showToast('❌ ' + err.message, 'error'); }
   },
@@ -599,7 +615,7 @@ const AdminPage = {
   async changeViloyat(userId, viloyat) {
     try {
       await Profile.setViloyat(userId, viloyat);
-      showToast(`✅ Viloyat o'zgartirildi`, 'success');
+      showToast(t('admin.regionChanged'), 'success');
       const idx = AdminPage._profiles.findIndex(p => p.id === userId);
       if (idx !== -1) {
         AdminPage._profiles[idx].viloyat = viloyat;
@@ -627,22 +643,22 @@ const AdminPage = {
   },
 
   async sendPasswordReset(email) {
-    if (!confirm(`"${email}" manziliga parol tiklash havolasi yuborilsinmi?`)) return;
+    if (!confirm(t('admin.resetConfirm', { email }))) return;
     try {
       const { error } = await getSupabase().auth.resetPasswordForEmail(email, {
         redirectTo: window.location.origin + '/'
       });
       if (error) throw error;
-      showToast(`✅ Parol tiklash havolasi yuborildi: ${email}`, 'success');
+      showToast(t('admin.resetSent', { email }), 'success');
     } catch (err) { showToast('❌ ' + err.message, 'error'); }
   },
 
   async deleteUser(userId, email, role) {
-    if (role === 'super_admin') { showToast("⚠️ Super Admin o'chirilmaydi", 'warning'); return; }
-    if (!confirm(`"${email}" foydalanuvchisini o'chirishni tasdiqlaysizmi?`)) return;
+    if (role === 'super_admin') { showToast(t('admin.superAdminDeleteBlocked'), 'warning'); return; }
+    if (!confirm(t('admin.userDeleteConfirm', { email }))) return;
     try {
       await Profile.deleteProfile(userId);
-      showToast(`🗑 O'chirildi: ${email}`, 'success');
+      showToast(t('admin.deletedValue', { value: email }), 'success');
       AdminPage._profiles = AdminPage._profiles.filter(p => p.id !== userId);
       AdminPage._renderTabContent();
     } catch (err) { showToast('❌ ' + err.message, 'error'); }
@@ -658,9 +674,8 @@ const AdminPage = {
 
     if (AdminPage._muassasaXato) {
       return `<div class="card" style="padding:24px;text-align:center;color:#b91c1c">
-        Muassasalar jadvalini o'qib bo'lmadi: ${esc(AdminPage._muassasaXato)}<br>
-        <span style="font-size:12px;color:#64748b">muassasa_imkoniyat.sql va muassasa_qoshish_ochirish.sql
-        skriptlari Supabase'da ishga tushirilganini tekshiring</span></div>`;
+        ${t('admin.facilityLoadError', { error: esc(AdminPage._muassasaXato) })}<br>
+        <span style="font-size:12px;color:#64748b">${t('admin.facilitySetupHelp')}</span></div>`;
     }
 
     const yashirin = AdminPage._yashiringanSet();
@@ -680,14 +695,14 @@ const AdminPage = {
         background:${isYashirin ? 'rgba(148,163,184,0.12)' : 'rgba(30,41,59,0.8)'};
         border:1px solid ${isYashirin ? 'rgba(148,163,184,0.3)' : 'rgba(99,118,158,0.15)'}">
         <span style="font-size:13px;color:${isYashirin ? '#94a3b8' : '#cbd5e1'};
-          ${isYashirin ? 'text-decoration:line-through' : ''}">${esc(m.nomi)}</span>
-        ${m.mskt_bor ? '<span title="MSKT bor" style="font-size:9px;font-weight:700;color:#60a5fa">KT</span>' : ''}
-        ${m.angiografiya_bor ? '<span title="Angiografiya bor" style="font-size:9px;font-weight:700;color:#c4b5fd">AG</span>' : ''}
+          ${isYashirin ? 'text-decoration:line-through' : ''}">${esc(I18n.facilityName(m.nomi))}</span>
+              ${m.mskt_bor ? `<span title="${t('capabilities.msctAvailable')}" style="font-size:9px;font-weight:700;color:#60a5fa">KT</span>` : ''}
+              ${m.angiografiya_bor ? `<span title="${t('capabilities.angioAvailable')}" style="font-size:9px;font-weight:700;color:#c4b5fd">AG</span>` : ''}
         <button onclick="AdminPage.muassasaYashir(${m.id}, ${isYashirin ? 'false' : 'true'})"
-          title="${isYashirin ? 'Formalarga qaytarish' : 'Formalardan yashirish — tarix saqlanadi'}"
+                    title="${isYashirin ? t('institution.restoreTitle') : t('institution.hideTitle')}"
           style="background:none;border:none;cursor:pointer;padding:0 2px;color:${isYashirin ? '#34d399' : '#94a3b8'};font-size:12px">
           ${isYashirin ? '↩' : '👁'}</button>
-        <button onclick="AdminPage.muassasaOchir(${m.id})" title="Butunlay o'chirish"
+            <button onclick="AdminPage.muassasaOchir(${m.id})" title="${t('common.delete')}"
           style="background:none;border:none;cursor:pointer;padding:0 2px;color:#ef4444;line-height:1">✕</button>
       </div>`;
 
@@ -697,7 +712,7 @@ const AdminPage = {
         <!-- Viloyat list -->
         <div class="card" style="padding:8px">
           <div style="padding:10px 12px;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.05em">
-            Viloyat tanlang
+            ${t('admin.selectRegion')}
           </div>
           ${viloyatlar.map(v => {
             const n = AdminPage._muassasalar.filter(m => m.viloyat === v).length;
@@ -705,7 +720,7 @@ const AdminPage = {
             return `<button onclick="AdminPage.selectViloyat(this.dataset.v)" data-v="${v.replace(/"/g,'&quot;')}"
               style="display:flex;justify-content:space-between;align-items:center;gap:6px;width:100%;padding:9px 12px;border:none;border-radius:8px;cursor:pointer;text-align:left;font-size:13px;transition:background 0.15s;
               ${sel === v ? 'background:#1e293b;color:#e2e8f0;font-weight:700' : 'background:transparent;color:#94a3b8'}">
-              <span style="flex:1">${v}</span>
+              <span style="flex:1">${AdminPage._regionLabel(v)}</span>
               <span style="font-size:11px;color:#64748b">${n}</span>
               ${hasChanges ? '<span style="width:7px;height:7px;background:#f59e0b;border-radius:50%;flex-shrink:0"></span>' : ''}
             </button>`;
@@ -716,13 +731,13 @@ const AdminPage = {
         <div>
           <div class="card mb-4">
             <div class="card-header" style="flex-wrap:wrap;gap:8px">
-              <span class="card-title">${icon('building-2',16)} ${sel} — muassasalar ro'yxati</span>
+              <span class="card-title">${icon('building-2',16)} ${t('admin.facilitiesListFor', { region: AdminPage._regionLabel(sel) })}</span>
               <div style="display:flex;gap:8px;align-items:center">
-                <span style="font-size:12px;color:#64748b">${faol.length} ta faol</span>
-                ${berkit.length ? `<span style="font-size:12px;color:#94a3b8">${berkit.length} ta yashirilgan</span>` : ''}
+                <span style="font-size:12px;color:#64748b">${t('admin.activeCount', { count: faol.length })}</span>
+                ${berkit.length ? `<span style="font-size:12px;color:#94a3b8">${t('admin.hiddenCount', { count: berkit.length })}</span>` : ''}
                 <button onclick="Router.go('muassasa-imkoniyat')"
                   style="background:none;border:none;cursor:pointer;font-size:12px;color:#2563eb;font-weight:600;padding:0">
-                  MSKT / daraja tahriri →</button>
+                  ${t('admin.editCapabilities')} →</button>
               </div>
             </div>
             <div style="padding:0 16px 8px">
@@ -730,14 +745,14 @@ const AdminPage = {
               <!-- Faol muassasalar -->
               <div style="display:flex;flex-wrap:wrap;gap:8px;padding:12px 0">
                 ${faol.map(m => chip(m, false)).join('')
-                  || '<p style="color:#64748b;font-size:13px;padding:8px 0">Muassasalar yo\'q</p>'}
+                  || `<p style="color:#64748b;font-size:13px;padding:8px 0">${t('admin.noFacilities')}</p>`}
               </div>
 
               <!-- Yashirilganlar -->
               ${berkit.length ? `
                 <div style="border-top:1px solid rgba(99,118,158,0.1);padding-top:12px;margin-top:4px">
                   <div style="font-size:11px;color:#64748b;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px">
-                    Yashirilganlar — formalarda chiqmaydi, hisobotda qoladi
+                    ${t('admin.hiddenFacilitiesHelp')}
                   </div>
                   <div style="display:flex;flex-wrap:wrap;gap:8px">
                     ${berkit.map(m => chip(m, true)).join('')}
@@ -746,19 +761,19 @@ const AdminPage = {
 
               <!-- Yangi qo'shish -->
               <div style="display:flex;gap:8px;align-items:center;border-top:1px solid rgba(99,118,158,0.1);padding-top:14px;margin-top:8px">
-                <input id="m-new-nomi" type="text" placeholder="Yangi muassasa nomi..."
+          <input id="m-new-nomi" type="text" placeholder="${t('institution.newName')}"
                   class="form-input" style="flex:1;padding:8px 14px;font-size:13px"
                   onkeydown="if(event.key==='Enter')AdminPage.addMuassasa()"/>
                 <select id="m-new-daraja" class="form-input" style="width:180px;padding:8px 10px;font-size:12px">
-                  <option value="">— daraja —</option>
-                  <option value="ttb">1 · TTB / ShTB</option>
-                  <option value="politravma">2 · Politravma markazi</option>
-                  <option value="filial">3 · Viloyat filiali</option>
-                  <option value="markaz">4 · Respublika markazi</option>
+            <option value="">${t('capabilities.level')}</option>
+            <option value="ttb">${t('capabilities.levelTtb')}</option>
+            <option value="politravma">${t('capabilities.levelTrauma')}</option>
+            <option value="filial">${t('capabilities.levelBranch')}</option>
+            <option value="markaz">${t('capabilities.levelNational')}</option>
                 </select>
                 <button onclick="AdminPage.addMuassasa()"
                   style="padding:8px 18px;background:#2563eb;border:none;border-radius:10px;color:#fff;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap">
-                  + Qo'shish
+                  + ${t('common.add')}
                 </button>
               </div>
             </div>
@@ -768,19 +783,18 @@ const AdminPage = {
             <div class="card" style="border:1px solid rgba(245,158,11,0.35)">
               <div style="padding:12px 16px">
                 <div style="font-size:13px;color:#b45309;font-weight:700;margin-bottom:6px">
-                  ${icon('alert-circle',14)} ${yetishmagan.length} ta muassasa formada bor, jadvalda yo'q
+                  ${icon('alert-circle',14)} ${t('admin.missingFacilitiesCount', { count: yetishmagan.length })}
                 </div>
                 <div style="font-size:12px;color:#78350f;margin-bottom:10px">
-                  Bu muassasalarga bemor kiritilsa, hisobotda bosqichi aniqlanmaydi
-                  va marshrut tahlilidan tushib qoladi.
+                  ${t('admin.missingFacilitiesHelp')}
                 </div>
                 <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px">
                   ${yetishmagan.map(n => `<span style="font-size:12px;color:#92400e;background:rgba(245,158,11,0.12);
-                    border-radius:12px;padding:3px 10px">${esc(n)}</span>`).join('')}
+                    border-radius:12px;padding:3px 10px">${esc(I18n.facilityName(n))}</span>`).join('')}
                 </div>
                 <button onclick="AdminPage.yetishmaganQosh()"
                   style="padding:7px 16px;background:#b45309;border:none;border-radius:9px;color:#fff;font-size:12px;font-weight:700;cursor:pointer">
-                  Barchasini jadvalga qo'shish
+                  ${t('admin.addAllMissing')}
                 </button>
               </div>
             </div>` : ''}
@@ -799,13 +813,13 @@ const AdminPage = {
   async addMuassasa() {
     const input = document.getElementById('m-new-nomi');
     const nomi = input?.value?.trim();
-    if (!nomi) { showToast('Muassasa nomini kiriting', 'warning'); return; }
+    if (!nomi) { showToast(t('institution.enterName'), 'warning'); return; }
     const v = AdminPage._selViloyat;
     if (!v) return;
     const daraja = document.getElementById('m-new-daraja')?.value || '';
     try {
       await DB.muassasaQosh(nomi, v, daraja, false, false);
-      showToast(`✅ "${nomi}" qo'shildi`, 'success');
+      showToast(t('institution.added', { name: nomi }), 'success');
       if (input) input.value = '';
       await AdminPage.muassasaQaytaYukla();
     } catch(err) { showToast('❌ ' + muassasaXatoMatni(err), 'error', 8000); }
@@ -828,17 +842,15 @@ const AdminPage = {
     const yoq = ((APP_CONFIG.MUASSASALAR)[sel] || [])
       .filter(n => !jadval.has((n || '').toLowerCase()));
     if (!yoq.length) return;
-    if (!confirm(`${yoq.length} ta muassasa jadvalga qo'shilsinmi?\n\n` +
-      `Darajasi va MSKT/angiografiya belgilari bo'sh bo'ladi — ` +
-      `keyin "Muassasa imkoniyati" sahifasida to'ldiring.`)) return;
+    if (!confirm(t('admin.addMissingConfirm', { count: yoq.length }))) return;
     let ok = 0, xato = [];
     for (const nomi of yoq) {
       try { await DB.muassasaQosh(nomi, sel, '', false, false); ok++; }
       catch (e) { xato.push(nomi); }
     }
     showToast(xato.length
-      ? `${ok} ta qo'shildi, ${xato.length} tasida xato`
-      : `✅ ${ok} ta muassasa jadvalga qo'shildi`, xato.length ? 'warning' : 'success', 6000);
+      ? t('admin.missingAddedErrors', { added: ok, errors: xato.length })
+      : t('admin.missingAdded', { count: ok }), xato.length ? 'warning' : 'success', 6000);
     await AdminPage.muassasaQaytaYukla();
   },
 
@@ -900,7 +912,7 @@ const AdminPage = {
         <div style="display:flex;gap:12px;align-items:center">
           <button onclick="AdminPage._saveAholi()"
             style="background:#2563eb;color:#fff;border:none;padding:10px 24px;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">
-            💾 Saqlash
+            💾 ${t('common.save')}
           </button>
           <span id="aholi-save-status" style="color:#64748b;font-size:13px"></span>
         </div>
@@ -932,10 +944,10 @@ const AdminPage = {
     try {
       localStorage.setItem('aholi_18plus', JSON.stringify(APP_CONFIG.AHOLI_18PLUS));
       localStorage.setItem('aholi_30plus', JSON.stringify(APP_CONFIG.AHOLI_30PLUS));
-      if (statusEl) statusEl.textContent = '✅ Saqlandi';
+      if (statusEl) statusEl.textContent = t('admin.saved');
       setTimeout(() => { if (statusEl) statusEl.textContent = ''; }, 4000);
     } catch(e) {
-      if (statusEl) statusEl.textContent = '❌ Xato: ' + e.message;
+      if (statusEl) statusEl.textContent = t('common.errorPrefix', { error: e.message });
     }
   },
 
@@ -954,13 +966,13 @@ const AdminPage = {
     if (!d) return `
       <div class="card" style="text-align:center;padding:60px">
         <div style="font-size:48px;margin-bottom:16px">🔍</div>
-        <h3 style="color:#e2e8f0;font-size:18px;font-weight:700;margin-bottom:8px">Ma'lumot sifatini tekshirish</h3>
+        <h3 style="color:#e2e8f0;font-size:18px;font-weight:700;margin-bottom:8px">${t('admin.qualityCheck')}</h3>
         <p style="color:#64748b;font-size:14px;margin-bottom:24px;max-width:440px;margin-left:auto;margin-right:auto">
-          Barcha bemorlar rekordlarini ko'rib chiqib, viloyatiga mos kelmaydigan yoki bo'sh muassasa/viloyat maydonlari topiladi.
+          ${t('admin.qualityHelp')}
         </p>
         <button onclick="AdminPage.runAudit()"
           style="padding:12px 32px;background:#2563eb;border:none;border-radius:12px;color:#fff;font-size:14px;font-weight:700;cursor:pointer">
-          Tekshirishni boshlash
+          ${t('admin.startCheck')}
         </button>
       </div>`;
 
@@ -997,7 +1009,7 @@ const AdminPage = {
         </div>` : `
         <div class="card">
           <div class="card-header" style="flex-wrap:wrap;gap:8px">
-            <span class="card-title">${icon('alert-triangle',16)} ${all.length} ta muammo topildi</span>
+            <span class="card-title">${icon('alert-triangle',16)} ${t('admin.issuesFound', {count: all.length})}</span>
             <div style="display:flex;gap:8px">
               <button onclick="AdminPage.runAudit()" class="btn btn-ghost btn-sm">${icon('refresh-cw',14)} Yangilash</button>
               <button onclick="AdminPage._auditData=null;AdminPage._renderTabContent()"
@@ -1018,7 +1030,7 @@ const AdminPage = {
                   <td style="font-family:monospace;font-size:12px;color:#64748b">${esc(r.kt_no)}</td>
                   <td style="font-weight:600;font-size:13px">${esc(r.fio)||'—'}</td>
                   <td style="font-size:12px;color:#94a3b8">${esc(r.viloyat)||'<span style="color:#f87171">Bo\'sh</span>'}</td>
-                  <td style="font-size:12px;color:#94a3b8">${esc(r.muassasa)||'<span style="color:#f87171">Bo\'sh</span>'}</td>
+                  <td style="font-size:12px;color:#94a3b8">${esc(I18n.facilityName(r.muassasa))||'<span style="color:#f87171">Bo\'sh</span>'}</td>
                   <td>${r._issue === 'mismatch'
                     ? '<span style="color:#fbbf24;font-size:12px">Viloyatga mos kelmaydi</span>'
                     : '<span style="color:#f87171;font-size:12px">Bo\'sh maydon</span>'}</td>
@@ -1163,11 +1175,11 @@ const AdminPage = {
         const { error } = await sb.from(table).update({ muassasa: fix.correct }).eq('kt_no', fix.kt_no);
         if (!error) autoFixed++;
       }
-      if (autoFixed > 0) showToast(`✅ ${autoFixed} ta yozuv avtomatik tuzatildi`, 'success');
+      if (autoFixed > 0) showToast(t('admin.autoFixed', { count: autoFixed }), 'success');
 
       AdminPage._auditData = issues;
     } catch(err) {
-      showToast('❌ Audit xatosi: ' + err.message, 'error');
+      showToast(t('admin.auditError', { error: err.message }), 'error');
       AdminPage._auditData = [];
     } finally {
       AdminPage._auditLoading = false;
@@ -1196,17 +1208,17 @@ const AdminPage = {
     if (!groups) return `
       <div class="card" style="text-align:center;padding:60px">
         <div style="font-size:48px;margin-bottom:16px">👥</div>
-        <h3 style="color:#e2e8f0;font-size:18px;font-weight:700;margin-bottom:8px">Duplikat bemorlarni tekshirish</h3>
+        <h3 style="color:#e2e8f0;font-size:18px;font-weight:700;margin-bottom:8px">${t('admin.duplicateCheck')}</h3>
         <p style="color:#64748b;font-size:14px;margin-bottom:20px;max-width:480px;margin-left:auto;margin-right:auto">
-          Bir xil F.I.O (Kirill yoki Lotin) va tug'ilgan yiliga ega bemorlar topiladi.
+          ${t('admin.duplicateHelp')}
         </p>
         <div style="display:flex;gap:10px;justify-content:center;margin-bottom:24px">
-          ${modeBtn('day','Bir kunda (bir muassasa)')}
-          ${modeBtn('all','Barcha vaqt (Kirill+Lotin)')}
+          ${modeBtn('day',t('admin.duplicateModeDay'))}
+          ${modeBtn('all',t('admin.duplicateModeAll'))}
         </div>
         <button onclick="AdminPage.runDupCheck()"
           style="padding:12px 32px;background:#2563eb;border:none;border-radius:12px;color:#fff;font-size:14px;font-weight:700;cursor:pointer">
-          Tekshirishni boshlash
+          ${t('admin.startCheck')}
         </button>
       </div>`;
 
@@ -1251,7 +1263,7 @@ const AdminPage = {
               <td style="font-family:monospace;font-size:12px;color:#64748b">${esc(r.kt_no)}</td>
               <td style="font-weight:600;font-size:13px">${esc(r.fio)||'—'}</td>
               <td style="font-size:12px;color:#94a3b8">${r._type==='infarkt'?'Infarkt':'Insult'}</td>
-              <td style="font-size:12px;color:#94a3b8">${esc(r.muassasa)||'—'}</td>
+              <td style="font-size:12px;color:#94a3b8">${esc(I18n.facilityName(r.muassasa))||'—'}</td>
               <td style="font-size:12px;color:#94a3b8">${r.qabul_vaqt ? new Date(r.qabul_vaqt).toLocaleString('uz-UZ',{timeZone:'Asia/Tashkent',day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '—'}</td>
               ${showDelete?`<td>
                 <button onclick="AdminPage.deleteDupRecord('${r.kt_no}','${r._type}')"
@@ -1283,7 +1295,7 @@ const AdminPage = {
 
       <div class="card">
         <div class="card-header" style="flex-wrap:wrap;gap:8px">
-          <span class="card-title">${icon('alert-triangle',16)} ${dupGroups.length} ta duplikat${isAllMode && qaytaGroups.length ? `, ${qaytaGroups.length} ta qayta murojaat` : ''} — ${isAllMode?'Barcha vaqt (Kirill+Lotin)':'Bir kunda (bir muassasa)'}</span>
+          <span class="card-title">${icon('alert-triangle',16)} ${t('admin.duplicateCount', {count: dupGroups.length})}${isAllMode && qaytaGroups.length ? t('admin.repeatCountSuffix', {count: qaytaGroups.length}) : ''} — ${t(isAllMode ? 'admin.duplicateModeAll' : 'admin.duplicateModeDay')}</span>
           <div style="display:flex;gap:8px;flex-wrap:wrap">
             <button onclick="AdminPage._dupMode='day';AdminPage._dupData=null;AdminPage.runDupCheck()" class="btn btn-ghost btn-sm" ${AdminPage._dupMode==='day'?'style="color:#60a5fa"':''}>Bir kunda</button>
             <button onclick="AdminPage._dupMode='all';AdminPage._dupData=null;AdminPage.runDupCheck()" class="btn btn-ghost btn-sm" ${AdminPage._dupMode==='all'?'style="color:#60a5fa"':''}>Barcha vaqt</button>
@@ -1310,7 +1322,7 @@ const AdminPage = {
         ? MuassasaDB.findAllDuplicates(all)
         : MuassasaDB.findDuplicates(all);
     } catch(err) {
-      showToast('❌ Tekshirish xatosi: ' + err.message, 'error');
+      showToast(t('admin.checkError', { error: err.message }), 'error');
       AdminPage._dupData = [];
     } finally {
       AdminPage._dupLoading = false;
@@ -1319,20 +1331,20 @@ const AdminPage = {
   },
 
   async deleteDupRecord(kt_no, type) {
-    if (!confirm(`K/T No: ${kt_no} — bu duplikat bemor yozuvini o'chirmoqchimisiz?`)) return;
+    if (!confirm(t('admin.duplicateDeleteConfirm', { kt: kt_no }))) return;
     try {
       const table = type === 'infarkt' ? 'infarkt_qabul' : 'insult_qabul';
       // Viloyat admin faqat o'z viloyatidagi bemorni o'chira oladi
       if (AdminPage._isViloyatAdmin && AdminPage._myViloyat) {
         const { data: rec } = await getSupabase().from(table).select('viloyat').eq('kt_no', kt_no).single();
         if (!rec || (rec.viloyat || '').toLowerCase() !== AdminPage._myViloyat.toLowerCase()) {
-          showToast('❌ Siz faqat o\'z viloyatingizdagi bemorlarni o\'chira olasiz', 'error');
+        showToast(t('admin.regionDeleteRestricted'), 'error');
           return;
         }
       }
       const { error } = await getSupabase().from(table).delete().eq('kt_no', kt_no);
       if (error) throw error;
-      showToast(`✅ O'chirildi: ${kt_no}`, 'success');
+      showToast(t('admin.deletedValue', { value: kt_no }), 'success');
       if (AdminPage._dupData) {
         const isAllMode = AdminPage._dupMode === 'all';
         if (isAllMode) {
@@ -1350,12 +1362,12 @@ const AdminPage = {
   },
 
   async fixAuditRecord(kt_no, type, newMuassasa, oldMuassasa) {
-    if (!confirm(`K/T No: ${kt_no}\n"${oldMuassasa}" → "${newMuassasa}"\nTuzatilsinmi?`)) return;
+    if (!confirm(t('admin.fixConfirm', { kt: kt_no, old: oldMuassasa, new: newMuassasa }))) return;
     try {
       const table = type === 'infarkt' ? 'infarkt_qabul' : 'insult_qabul';
       const { error } = await getSupabase().from(table).update({ muassasa: newMuassasa }).eq('kt_no', kt_no);
       if (error) throw error;
-      showToast(`✅ Tuzatildi: ${kt_no}`, 'success');
+      showToast(t('admin.fixedValue', { value: kt_no }), 'success');
       if (AdminPage._auditData) {
         AdminPage._auditData = AdminPage._auditData.filter(r => !(String(r.kt_no) === String(kt_no) && r._type === type));
         AdminPage._renderTabContent();
@@ -1412,10 +1424,10 @@ const AdminPage = {
       <div class="card" style="margin-bottom:16px">
         <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px">
           ${[
-            ['📊', 'Jami yozuvlar', total, '#3b82f6'],
-            ['✅', 'Kirish', logins, '#22c55e'],
-            ['🚪', 'Chiqish', logouts, '#ef4444'],
-            ['👤', 'Faol foydalanuvchilar', uniqueUsers, '#8b5cf6']
+            ['📊', t('admin.totalRecords'), total, '#3b82f6'],
+            ['✅', t('admin.signIns'), logins, '#22c55e'],
+            ['🚪', t('admin.signOuts'), logouts, '#ef4444'],
+            ['👤', t('admin.activeUsers'), uniqueUsers, '#8b5cf6']
           ].map(([ic,lbl,val,clr]) => `
             <div style="background:#0f172a;border:1px solid #1e293b;border-radius:12px;padding:16px;text-align:center">
               <div style="font-size:24px">${ic}</div>
@@ -1426,8 +1438,8 @@ const AdminPage = {
       </div>
       <div class="card" style="padding:0;overflow:hidden">
         <div style="padding:16px 20px;border-bottom:1px solid #1e293b;display:flex;justify-content:space-between;align-items:center">
-          <h3 style="color:#e2e8f0;font-weight:700;font-size:15px">📋 Kirish / Chiqish tarixi</h3>
-          <span style="color:#64748b;font-size:12px">Oxirgi ${logs.length} ta yozuv</span>
+          <h3 style="color:#e2e8f0;font-weight:700;font-size:15px">${t('admin.loginHistory')}</h3>
+          <span style="color:#64748b;font-size:12px">${t('admin.latestRecords', { count: logs.length })}</span>
         </div>
         <div style="overflow-x:auto">
           <table style="width:100%;border-collapse:collapse;font-size:13px">
@@ -1534,16 +1546,16 @@ const AdminPage = {
               <div style="padding:14px 20px;background:#f0fdf4;border-top:1px solid #bbf7d0;display:flex;gap:10px">
                 <div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#7c3aed,#4f46e5);color:white;font-weight:700;font-size:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0">A</div>
                 <div style="flex:1">
-                  <div style="font-size:11px;font-weight:700;color:#166534;margin-bottom:4px">Administrator javobi · ${fmtDate(item.javob_vaqt)}</div>
+                  <div style="font-size:11px;font-weight:700;color:#166534;margin-bottom:4px">${t('admin.administratorReply')} · ${fmtDate(item.javob_vaqt)}</div>
                   <p style="font-size:13px;color:#166534;line-height:1.5;white-space:pre-wrap">${esc(item.javob)}</p>
                 </div>
               </div>` : ''}
             <div style="padding:12px 20px;border-top:1px solid #f1f5f9;display:flex;gap:8px;align-items:flex-end">
-              <textarea id="javob-${item.id}" rows="2" placeholder="Javob yozing..."
+          <textarea id="javob-${item.id}" rows="2" placeholder="${t('feedback.replyPlaceholder')}"
                 style="flex:1;border:1px solid #e2e8f0;border-radius:10px;padding:8px 12px;font-size:13px;resize:none;outline:none;font-family:inherit;color:#1e293b;background:#fff">${item.javob ? esc(item.javob) : ''}</textarea>
               <button onclick="AdminPage._sendJavob('${item.id}')"
                 style="padding:8px 16px;background:#2563eb;color:white;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:6px">
-                ${icon('send',14)} ${item.javob ? 'Yangilash' : 'Javob berish'}
+                ${icon('send',14)} ${t(item.javob ? 'admin.updateReply' : 'admin.writeReply')}
               </button>
             </div>
           </div>`).join('')}
@@ -1553,7 +1565,7 @@ const AdminPage = {
   async _sendJavob(id) {
     const textarea = document.getElementById(`javob-${id}`);
     const javob = textarea?.value?.trim();
-    if (!javob) { showToast('Javob matni kiritilmagan', 'warning'); return; }
+    if (!javob) { showToast(t('feedback.replyRequired'), 'warning'); return; }
     try {
       const { error } = await getSupabase().from('feedback').update({
         javob,
@@ -1561,20 +1573,20 @@ const AdminPage = {
         o_qildi: true
       }).eq('id', id);
       if (error) throw error;
-      showToast('Javob saqlandi!', 'success');
+      showToast(t('feedback.replySaved'), 'success');
       AdminPage._loadFeedback();
       AdminPage._loadTabUnreadBadge();
       Components._loadUnreadFeedbackBadge();
-    } catch(err) { showToast('Xato: ' + err.message, 'error'); }
+    } catch(err) { showToast(t('common.errorPrefix', { error: err.message }), 'error'); }
   },
 
   async deleteAuditRecord(kt_no, type) {
-    if (!confirm(`K/T No: ${kt_no} — bemorni o'chirmoqchimisiz?`)) return;
+    if (!confirm(t('admin.patientDeleteConfirm', { kt: kt_no }))) return;
     try {
       const table = type === 'infarkt' ? 'infarkt_qabul' : 'insult_qabul';
       const { error } = await getSupabase().from(table).delete().eq('kt_no', kt_no);
       if (error) throw error;
-      showToast(`✅ O'chirildi: ${kt_no}`, 'success');
+      showToast(t('admin.deletedValue', { value: kt_no }), 'success');
       if (AdminPage._auditData) {
         AdminPage._auditData = AdminPage._auditData.filter(r => !(String(r.kt_no) === String(kt_no) && r._type === type));
         AdminPage._renderTabContent();

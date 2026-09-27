@@ -10,7 +10,7 @@ const InfarktReyestriPage = {
     this._viloyat = profile?.role === 'super_admin' ? null : profile?.viloyat;
 
     document.getElementById('app').innerHTML = Components.renderLayout(
-      'infarkt-reyestri', 'Infarkt Reyestri', 'Viloyatlar va muassasalar tahlili',
+      'infarkt-reyestri', t('nav.infarctRegistry'), 'Viloyatlar va muassasalar tahlili',
       `<div id="reyestr-wrap" class="animate-fadein">
         <div class="flex items-center justify-center py-20">
           <div class="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
@@ -30,7 +30,7 @@ const InfarktReyestriPage = {
     try {
       const updated = await DB.fixInstitutionNames();
       if (updated > 0) {
-        showToast(`${updated} ta muassasa nomi yangilandi`, 'success');
+      showToast(t('registry.institutionsUpdated', { count: updated }), 'success');
       }
       await this.loadStats();
     } catch (err) {
@@ -53,7 +53,7 @@ const InfarktReyestriPage = {
 
   renderContent(data) {
     const wrap = document.getElementById('reyestr-wrap');
-    const title = this._viloyat ? `${this._viloyat} muassasalari` : 'Viloyatlar kesimida';
+    const title = this._viloyat ? t('registry.regionFacilities', {region: I18n.translateText(this._viloyat)}) : t('registry.byRegion');
 
     let html = `
       <div class="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -99,7 +99,7 @@ const InfarktReyestriPage = {
                         <div class="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-500 group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors">
                           ${icon(this._viloyat ? 'building-2' : 'map-pin', 16)}
                         </div>
-                        <span class="text-sm font-bold text-slate-700">${esc(r.name)}</span>
+                        <span class="text-sm font-bold text-slate-700">${esc(this._viloyat ? I18n.facilityName(r.name) : I18n.translateText(r.name))}</span>
                       </div>
                     </td>
                     <td class="px-6 py-5 text-center font-black text-slate-900">${r.jami}</td>

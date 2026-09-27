@@ -131,13 +131,13 @@ const HisobotPage = {
           <div>
             <label class="form-label !text-blue-900 font-semibold mb-1 block">Davr turi</label>
             <select id="h-period" class="form-select bg-slate-50 text-blue-900 border-blue-200 focus:border-blue-500 font-medium" onchange="HisobotPage.onPeriodChange()">
-              <option value="custom">Maxsus sana</option>
-              <option value="today">Bugun</option>
-              <option value="week">So'nggi 7 kun</option>
-              <option value="month" selected>So'nggi 30 kun</option>
-              <option value="3month">So'nggi 3 oy</option>
-              <option value="6month">So'nggi 6 oy</option>
-              <option value="year">So'nggi 1 yil</option>
+              <option value="custom">${t('period.custom')}</option>
+              <option value="today">${t('period.today')}</option>
+              <option value="week">${t('period.last7')}</option>
+              <option value="month" selected>${t('period.last30')}</option>
+              <option value="3month">${t('period.last3Months')}</option>
+              <option value="6month">${t('period.last6Months')}</option>
+              <option value="year">${t('period.lastYear')}</option>
             </select>
           </div>
           <div>
@@ -165,7 +165,7 @@ const HisobotPage = {
             <label class="form-label !text-blue-900 font-semibold mb-1 block">${icon('map-pin', 14)} Viloyat</label>
             ${isSuperAdmin ? `
             <select id="h-viloyat" class="form-select bg-slate-50 text-blue-900 border-blue-200 font-medium" onchange="HisobotPage.onHViloyatChange(this.value)">
-              <option value="">— Barcha viloyatlar —</option>
+              <option value="">${t('filter.allRegions')}</option>
               ${Object.keys(APP_CONFIG.MUASSASALAR).map(v => `<option value="${v}">${v}</option>`).join('')}
             </select>` : `
             <input id="h-viloyat" type="hidden" value="${myViloyat}"/>
@@ -174,8 +174,8 @@ const HisobotPage = {
           <div>
             <label class="form-label !text-blue-900 font-semibold mb-1 block">${icon('building-2', 14)} Muassasa (ixtiyoriy)</label>
             <select id="h-muassasa" class="form-select bg-slate-50 text-blue-900 border-blue-200 font-medium">
-              <option value="">— Barcha muassasalar —</option>
-              ${(!isSuperAdmin && myViloyat) ? (APP_CONFIG.MUASSASALAR[myViloyat]||[]).map(m=>`<option value="${m}">${m}</option>`).join('') : ''}
+              <option value="">${t('filter.allInstitutions')}</option>
+              ${(!isSuperAdmin && myViloyat) ? (APP_CONFIG.MUASSASALAR[myViloyat]||[]).map(m=>`<option value="${m}">${I18n.facilityName(m)}</option>`).join('') : ''}
             </select>
           </div>
         </div>
@@ -183,14 +183,14 @@ const HisobotPage = {
           <button class="btn btn-primary shadow-md hover:shadow-lg flex items-center justify-center gap-2 px-5 rounded-xl" onclick="HisobotPage.loadReport()">
             ${icon('bar-chart-2', 18)} Ko'rish
           </button>
-          <button class="btn btn-success shadow-md hover:shadow-lg flex items-center justify-center gap-2 px-4 rounded-xl" onclick="HisobotPage.exportReport()" title="Eksport (CSV)">
+          <button class="btn btn-success shadow-md hover:shadow-lg flex items-center justify-center gap-2 px-4 rounded-xl" onclick="HisobotPage.exportReport()" title="${t('reports.exportCsvTitle')}">
             ${icon('download', 16)} Eksport
           </button>
-          <button class="btn btn-secondary shadow-md hover:shadow-lg flex items-center justify-center gap-2 px-4 rounded-xl" onclick="HisobotPage.printReport()" title="Chop etish">
+          <button class="btn btn-secondary shadow-md hover:shadow-lg flex items-center justify-center gap-2 px-4 rounded-xl" onclick="HisobotPage.printReport()" title="${t('common.print')}">
             ${icon('printer', 16)} Chop etish
           </button>
           ${user?.role === 'super_admin' ? `
-          <button class="shadow-md hover:shadow-lg flex items-center justify-center gap-2 px-4 rounded-xl font-bold text-white text-sm" style="background:#2481cc;padding-top:8px;padding-bottom:8px" onclick="HisobotPage.sendTelegramReport()" title="Tanlangan davr hisobotini Telegramga yuborish">
+          <button class="shadow-md hover:shadow-lg flex items-center justify-center gap-2 px-4 rounded-xl font-bold text-white text-sm" style="background:#2481cc;padding-top:8px;padding-bottom:8px" onclick="HisobotPage.sendTelegramReport()" title="${t('reports.telegramTitle')}">
             ${icon('send', 16)} Telegram hisobot
           </button>` : ''}
         </div>
@@ -205,11 +205,11 @@ const HisobotPage = {
           </div>
           <div class="flex flex-wrap items-center gap-2">
             <select id="vhf-viloyat" class="form-select bg-slate-50 text-blue-900 border-blue-200 font-medium" style="max-width:180px" onchange="HisobotPage.onVHViloyatChange(this.value)">
-              <option value="">— Barcha viloyatlar —</option>
+              <option value="">${t('filter.allRegions')}</option>
               ${Object.keys(APP_CONFIG.MUASSASALAR).map(v => `<option value="${v}">${v}</option>`).join('')}
             </select>
             <select id="vhf-muassasa" class="form-select bg-slate-50 text-blue-900 border-blue-200 font-medium" style="max-width:210px">
-              <option value="">— Barcha muassasalar —</option>
+              <option value="">${t('filter.allInstitutions')}</option>
             </select>
             <input id="vh-from" type="date" class="form-input bg-slate-50 text-blue-900 border-blue-200 font-medium" style="max-width:150px" value="${_uztDate(Date.now()-90*864e5)}"/>
             <span class="text-slate-400">—</span>
@@ -234,14 +234,14 @@ const HisobotPage = {
           <div class="flex flex-wrap items-center gap-2">
             ${isSuperAdmin ? `
             <select id="pq-viloyat" class="form-select bg-slate-50 text-blue-900 border-blue-200 font-medium" style="max-width:180px" onchange="HisobotPage.onPQViloyatChange(this.value)">
-              <option value="">— Respublika —</option>
+                <option value="">${t('filter.national')}</option>
               ${Object.keys(APP_CONFIG.MUASSASALAR).map(v => `<option value="${v}">${v}</option>`).join('')}
             </select>` : `
             <input id="pq-viloyat" type="hidden" value="${myViloyat}"/>
             <div class="form-input bg-slate-100 text-blue-900 border-blue-200 font-semibold cursor-not-allowed opacity-80" style="max-width:180px">${myViloyat || '—'}</div>`}
             <select id="pq-muassasa" class="form-select bg-slate-50 text-blue-900 border-blue-200 font-medium" style="max-width:220px">
-              <option value="">— Barcha muassasalar —</option>
-              ${(!isSuperAdmin && myViloyat) ? (APP_CONFIG.MUASSASALAR[myViloyat]||[]).map(m=>`<option value="${m}">${m}</option>`).join('') : ''}
+                <option value="">${t('filter.allInstitutions')}</option>
+              ${(!isSuperAdmin && myViloyat) ? (APP_CONFIG.MUASSASALAR[myViloyat]||[]).map(m=>`<option value="${m}">${I18n.facilityName(m)}</option>`).join('') : ''}
             </select>
             <input id="pq-from" type="date" class="form-input bg-slate-50 text-blue-900 border-blue-200 font-medium" style="max-width:150px" value="${today.slice(0,4)}-01-01"/>
             <span class="text-slate-400">—</span>
@@ -269,12 +269,12 @@ const HisobotPage = {
             <input id="pq-oy" type="month" class="form-input bg-slate-50 text-blue-900 border-blue-200 font-medium" style="max-width:160px"/>
             ${isSuperAdmin ? `
             <select id="pq-oy-viloyat" class="form-select bg-slate-50 text-blue-900 border-blue-200 font-medium" style="max-width:180px" onchange="HisobotPage.onPQOyViloyat(this.value)">
-              <option value="">— Barcha viloyatlar —</option>
+              <option value="">${t('filter.allRegions')}</option>
               ${Object.keys(APP_CONFIG.MUASSASALAR).map(v => `<option value="${v}">${v}</option>`).join('')}
             </select>` : ''}
             <select id="pq-oy-muassasa" class="form-select bg-slate-50 text-blue-900 border-blue-200 font-medium" style="max-width:250px">
-              <option value="">— Barcha muassasalar —</option>
-              ${(!isSuperAdmin && myViloyat) ? (APP_CONFIG.MUASSASALAR[myViloyat]||[]).map(m=>`<option value="${m}">${m}</option>`).join('') : ''}
+              <option value="">${t('filter.allInstitutions')}</option>
+              ${(!isSuperAdmin && myViloyat) ? (APP_CONFIG.MUASSASALAR[myViloyat]||[]).map(m=>`<option value="${m}">${I18n.facilityName(m)}</option>`).join('') : ''}
             </select>
             <button class="btn btn-success shadow-md hover:shadow-lg flex items-center gap-2 px-4 rounded-xl" onclick="HisobotPage.exportPQ20Oylik()">
               ${icon('download', 16)} Shaklni yuklab olish
@@ -294,15 +294,15 @@ const HisobotPage = {
           </div>
           <div class="flex flex-wrap items-center gap-2">
             <select id="ls-kun" class="form-select bg-slate-50 text-blue-900 border-blue-200 font-medium" style="max-width:170px">
-              <option value="10">10 kundan ortiq</option>
-              <option value="15" selected>15 kundan ortiq</option>
-              <option value="30">30 kundan ortiq</option>
-              <option value="60">60 kundan ortiq</option>
-              <option value="120">120 kundan ortiq</option>
+              <option value="10">${t('reports.overDays', { days: 10 })}</option>
+              <option value="15" selected>${t('reports.overDays', { days: 15 })}</option>
+              <option value="30">${t('reports.overDays', { days: 30 })}</option>
+              <option value="60">${t('reports.overDays', { days: 60 })}</option>
+              <option value="120">${t('reports.overDays', { days: 120 })}</option>
             </select>
             ${isSuperAdmin ? `
             <select id="ls-viloyat" class="form-select bg-slate-50 text-blue-900 border-blue-200 font-medium" style="max-width:190px">
-              <option value="">— Barcha viloyatlar —</option>
+              <option value="">${t('filter.allRegions')}</option>
               ${Object.keys(APP_CONFIG.MUASSASALAR).map(v => `<option value="${v}">${v}</option>`).join('')}
             </select>` : ''}
             <button class="btn btn-primary shadow-md hover:shadow-lg flex items-center gap-2 px-4 rounded-xl" onclick="HisobotPage.loadLongStay()">
@@ -331,34 +331,34 @@ const HisobotPage = {
   onPQOyViloyat(viloyat) {
     const sel = document.getElementById('pq-oy-muassasa');
     if (!sel) return;
-    sel.innerHTML = `<option value="">— Barcha muassasalar —</option>` +
-      (APP_CONFIG.MUASSASALAR[viloyat] || []).map(m => `<option value="${m}">${m}</option>`).join('');
+    sel.innerHTML = `<option value="">${t('filter.allInstitutions')}</option>` +
+      (APP_CONFIG.MUASSASALAR[viloyat] || []).map(m => `<option value="${m}">${I18n.facilityName(m)}</option>`).join('');
   },
 
   async exportPQ20Oylik() {
     const oy = document.getElementById('pq-oy')?.value;   // 'YYYY-MM'
-    if (!oy) { showToast('Oyni tanlang', 'warning'); return; }
+    if (!oy) { showToast(t('reports.selectMonth'), 'warning'); return; }
     const muassasa = document.getElementById('pq-oy-muassasa')?.value || '';
     const info = document.getElementById('pq-oy-info');
     const [yil, oyRaqam] = oy.split('-').map(Number);
     const boshi = new Date(Date.UTC(yil, oyRaqam - 1, 1, -5, 0, 0)).toISOString();
     const oxiri = new Date(Date.UTC(yil, oyRaqam, 1, -5, 0, 0)).toISOString();
-    if (info) info.textContent = 'Yuklanmoqda...';
+    if (info) info.textContent = t('common.loading');
     try {
       await HisobotPage._ensureExcelJS();
       const d = await DB.pq20Oylik(boshi, oxiri, muassasa || undefined);
       if (!d.inf.length && !d.ins.length) {
-        if (info) info.textContent = 'Tanlangan oy va muassasa bo\'yicha bemor topilmadi.';
-        showToast('Ma\'lumot topilmadi', 'warning');
+        if (info) info.textContent = t('reports.noPatientsMonth');
+        showToast(t('common.noData'), 'warning');
         return;
       }
       await HisobotPage._pq20Workbook(d, yil, oyRaqam, muassasa);
       if (info) info.innerHTML = `ЎМИ: <b>${d.inf.length}</b> · ЎЦВК: <b>${d.ins.length}</b>` +
         (d.tashlangan ? ` · AMI sifatida qayd etilgan <b>${d.tashlangan}</b> yozuv shaklga kiritilmadi` : '');
-      showToast('✅ Shakl yuklab olindi', 'success');
+      showToast(t('reports.formDownloaded'), 'success');
     } catch (e) {
       if (info) info.textContent = '';
-      showToast('Xatolik: ' + (e.message || 'shakl yasalmadi'), 'error', 7000);
+      showToast(t('common.errorPrefix', { error: e.message || t('validation.generic') }), 'error', 7000);
     }
   },
 
@@ -593,15 +593,13 @@ const HisobotPage = {
       const jami = guruhlar.reduce((a, g) => a + g.bemorlar.length, 0);
       if (!jami) {
         el.innerHTML = `<div class="text-center py-10 text-slate-500 text-sm">
-          ${kun} kundan ortiq davolanayotgan bemor yo'q — hammasi tartibda.</div>`;
+          ${t('reports.longStayNone', { days: kun })}</div>`;
         return;
       }
       const rang = (k) => k >= 90 ? '#b91c1c' : k >= 30 ? '#c2410c' : '#b45309';
       el.innerHTML = `
         <div class="mb-3 p-3 rounded-xl bg-amber-50 border border-amber-200 text-sm text-amber-900">
-          <b>${jami} ta bemor</b> ${kun} kundan ortiq "davolanmoqda" holatida —
-          ${guruhlar.length} ta muassasada.
-          Har birini kartadan ochib, haqiqiy chiqish sanasi bilan chiqarish kerak.
+          ${t('reports.longStaySummary', { patients: jami, days: kun, facilities: guruhlar.length })}
         </div>
         <div class="overflow-x-auto">
           <table class="w-full text-sm border-collapse">
@@ -620,16 +618,16 @@ const HisobotPage = {
                 return `
                 <tr style="background:${i % 2 === 0 ? '#f8fafc' : '#fff'}">
                   <td class="p-2.5 font-semibold text-slate-800 border-b border-slate-200 align-top">
-                    ${esc(g.muassasa)}
-                    <div class="text-[11px] text-slate-400 font-normal">${esc(royxat[0]?.viloyat || '')}</div>
+                    ${esc(I18n.facilityName(g.muassasa))}
+                    <div class="text-[11px] text-slate-400 font-normal">${esc(I18n.translateText(royxat[0]?.viloyat || ''))}</div>
                   </td>
                   <td class="p-2.5 text-center font-bold text-blue-700 border-b border-slate-200 align-top">${g.bemorlar.length}</td>
-                  <td class="p-2.5 text-center font-bold border-b border-slate-200 align-top" style="color:${rang(eng)}">${eng} kun</td>
+                  <td class="p-2.5 text-center font-bold border-b border-slate-200 align-top" style="color:${rang(eng)}">${t('reports.daysCount', { days: eng })}</td>
                   <td class="p-2.5 border-b border-slate-200">
                     <div class="flex flex-wrap gap-1.5">
                       ${royxat.map(b => `
                         <button onclick="Router.go('bemor-karta',{kt_no:'${esc(b.kt_no)}',type:'${b._type}'})"
-                          title="${esc(b.kt_no)} · ${b._type}"
+                    title="${esc(b.kt_no)} · ${b._type}" data-i18n-skip data-i18n-audit="i18n-audit-allow: escaped record number and technical registry type"
                           style="border:1px solid #e2e8f0;background:#fff;border-radius:8px;padding:3px 8px;
                                  font-size:11px;cursor:pointer;white-space:nowrap">
                           ${esc(b.fio || '—')}
@@ -650,7 +648,7 @@ const HisobotPage = {
 
   exportLongStay() {
     const d = HisobotPage._lastLongStay;
-    if (!d) { showToast('Avval ro\'yxatni shakllantiring', 'warning'); return; }
+    if (!d) { showToast(t('reports.listFirst'), 'warning'); return; }
     const rows = [];
     d.guruhlar.forEach(g => {
       [...g.bemorlar].sort((a, b) => b.kunlar - a.kunlar).forEach(b => {
@@ -670,13 +668,13 @@ const HisobotPage = {
     if (!rows.length) return;
     const bugun = new Date(Date.now() + 5 * 3600000).toISOString().slice(0, 10);
     Utils.exportXLSX(rows, `Uzoq_davolanayotganlar_${d.kun}kun_${bugun}.xlsx`, 'Uzoq davolanayotganlar');
-    showToast('✅ Excel fayl yuklab olindi', 'success');
+    showToast(t('export.excelDownloaded'), 'success');
   },
 
   async loadViloyatReport() {
     const from = document.getElementById('vh-from')?.value;
     const to   = document.getElementById('vh-to')?.value;
-    if (!from || !to) { showToast('Sana oralig\'ini tanlang', 'warning'); return; }
+    if (!from || !to) { showToast(t('reports.selectDateRange'), 'warning'); return; }
     const el = document.getElementById('vh-results');
     if (!el) return;
     el.innerHTML = `
@@ -841,12 +839,12 @@ const HisobotPage = {
                 <th class="p-2.5 text-center text-white font-bold">NSTEMI</th>
                 <th class="p-2.5 text-center text-white font-bold">AMI</th>
                 <th class="p-2.5 text-center text-white font-bold" style="background:#1d4ed8">Jami infarkt</th>
-                <th class="p-2.5 text-center text-white font-bold" style="background:#991b1b" title="Infarkt bo'yicha vafot etganlar soni va ulushi">O'lim (infarkt)</th>
+                <th class="p-2.5 text-center text-white font-bold" style="background:#991b1b" title="${t('reports.infarctMortalityTitle')}">O'lim (infarkt)</th>
                 <th class="p-2.5 text-center text-white font-bold">Ishemik</th>
                 <th class="p-2.5 text-center text-white font-bold">Gemorragik</th>
                 <th class="p-2.5 text-center text-white font-bold">TIA</th>
                 <th class="p-2.5 text-center text-white font-bold" style="background:#1d4ed8">Jami insult</th>
-                <th class="p-2.5 text-center text-white font-bold rounded-tr-lg" style="background:#991b1b" title="Insult bo'yicha vafot etganlar soni va ulushi">O'lim (insult)</th>
+                <th class="p-2.5 text-center text-white font-bold rounded-tr-lg" style="background:#991b1b" title="${t('reports.strokeMortalityTitle')}">O'lim (insult)</th>
               </tr>
             </thead>
             <tbody>
@@ -897,7 +895,7 @@ const HisobotPage = {
               <p class="text-sm text-slate-500 mb-3">Bir xil bemor (F.I.O + tug'ilgan yil) bo'yicha bir nechta muassasada qayd etilgan yozuvlar — birinchi qabuldan oxirgi qabulgacha o'tgan vaqt bilan</p>
               ${viloyatlarBoFlows.map(vil => `
                 <div class="mb-4">
-                  <div class="font-bold text-blue-900 text-sm mb-2">${vil} — ${chainsByViloyat[vil].length} ta zanjir</div>
+                  <div class="font-bold text-blue-900 text-sm mb-2">${I18n.translateText(vil)} — ${t('report.chainCount', {count: chainsByViloyat[vil].length})}</div>
                   <div class="overflow-x-auto">
                     <table class="w-full text-sm border-collapse">
                       <thead>
@@ -972,17 +970,17 @@ const HisobotPage = {
 
   async exportViloyatReport() {
     const d = HisobotPage._lastViloyatData;
-    if (!d) { showToast('Avval hisobotni shakllantiring', 'warning'); return; }
+    if (!d) { showToast(t('reports.generateFirst'), 'warning'); return; }
     const btn = document.getElementById('vh-export-btn');
     if (btn) { btn.disabled = true; btn.style.opacity = '0.5'; }
     try {
       await HisobotPage._ensureExcelJS();
       await HisobotPage._buildViloyatWorkbook(d);
-      showToast('✅ Excel fayl yuklab olindi', 'success');
+      showToast(t('export.excelDownloaded'), 'success');
     } catch (err) {
       console.warn('Formatlangan eksport ishlamadi, oddiy eksportga qaytildi:', err);
       HisobotPage._exportViloyatPlain(d);
-      showToast('⚠️ Formatlangan shakl yuklanmadi — oddiy Excel eksport qilindi', 'warning');
+      showToast(t('export.fallbackExcel'), 'warning');
     } finally {
       if (btn) { btn.disabled = false; btn.style.opacity = ''; }
     }
@@ -1243,16 +1241,16 @@ const HisobotPage = {
     const sel = document.getElementById('h-muassasa');
     if (!sel) return;
     const muassasalar = APP_CONFIG.MUASSASALAR[viloyat] || [];
-    sel.innerHTML = `<option value="">— Barcha muassasalar —</option>` +
-      muassasalar.map(m => `<option value="${m}">${m}</option>`).join('');
+    sel.innerHTML = `<option value="">${t('filter.allInstitutions')}</option>` +
+      muassasalar.map(m => `<option value="${m}">${I18n.facilityName(m)}</option>`).join('');
   },
 
   onVHViloyatChange(viloyat) {
     const sel = document.getElementById('vhf-muassasa');
     if (!sel) return;
     const muassasalar = APP_CONFIG.MUASSASALAR[viloyat] || [];
-    sel.innerHTML = `<option value="">— Barcha muassasalar —</option>` +
-      muassasalar.map(m => `<option value="${m}">${m}</option>`).join('');
+    sel.innerHTML = `<option value="">${t('filter.allInstitutions')}</option>` +
+      muassasalar.map(m => `<option value="${m}">${I18n.facilityName(m)}</option>`).join('');
   },
 
   // ==================== PQ-20 RASMIY HISOBOTI ====================
@@ -1261,8 +1259,8 @@ const HisobotPage = {
     const sel = document.getElementById('pq-muassasa');
     if (!sel) return;
     const muassasalar = APP_CONFIG.MUASSASALAR[viloyat] || [];
-    sel.innerHTML = `<option value="">— Barcha muassasalar —</option>` +
-      muassasalar.map(m => `<option value="${m}">${m}</option>`).join('');
+    sel.innerHTML = `<option value="">${t('filter.allInstitutions')}</option>` +
+      muassasalar.map(m => `<option value="${m}">${I18n.facilityName(m)}</option>`).join('');
   },
 
   // Muolaja guruhlari — rasmiy shakl tartibida [sarlavha, maydon prefiksi, 1-ustun nomi?]
@@ -1291,7 +1289,7 @@ const HisobotPage = {
   async loadPQ20Report() {
     const from = document.getElementById('pq-from')?.value;
     const to   = document.getElementById('pq-to')?.value;
-    if (!from || !to) { showToast('Sana oralig\'ini tanlang', 'warning'); return; }
+    if (!from || !to) { showToast(t('reports.selectDateRange'), 'warning'); return; }
     const el = document.getElementById('pq-results');
     if (!el) return;
     el.innerHTML = `
@@ -1390,23 +1388,23 @@ const HisobotPage = {
           O = n(j.nazorat_otkazildi), B = n(j.nazorat_boshqa);
     const ok = (A + M + O + B) === N;
     const notes = [];
-    if (B > 0) notes.push(`${B} ta bemorda muolaja kiritilmagan`);
+    if (B > 0) notes.push(t('reports.pq20MissingTreatment', { count: B }));
     if (turi === 'insult') {
       const endo = n(j.nazorat_boshqa_endo);
-      if (endo > 0) notes.push(`${endo} ta bemorda serebral angiografiya + stentlash/TLBAP — rasmiy shaklda ustuni yo'q`);
+      if (endo > 0) notes.push(t('reports.pq20EndovascularOutsideForm', { count: endo }));
       const tia = n(data.tashqari?.insult_tia);
-      if (tia > 0) notes.push(`TIA bemorlari (${tia} ta) rasmiy shaklga kirmaydi`);
+      if (tia > 0) notes.push(t('reports.pq20TiaOutsideForm', { count: tia }));
     }
     return `
       <div class="mt-2 px-3 py-2 rounded-lg text-xs ${ok ? 'bg-slate-50 text-slate-500 border border-slate-200' : 'bg-red-50 text-red-700 border border-red-200 font-semibold'}">
-        ${ok ? '' : '⚠️ NOMUVOFIQLIK: '}Nazorat: bemorlar (${N}) ${ok ? '=' : '≠'} amaliyot (${A}) + medikamentoz (${M}) + o'tkazildi (${O}) + boshqa (${B})
-        ${notes.length ? `<div class="mt-1">${notes.map(t => `· ${esc(t)}`).join('<br>')}</div>` : ''}
+        ${ok ? '' : `⚠️ ${t('reports.pq20Mismatch')} `}${t('reports.pq20Control', { patients: N, sign: ok ? '=' : '≠', operations: A, medical: M, transferred: O, other: B })}
+        ${notes.length ? `<div class="mt-1">${notes.map(note => `· ${esc(note)}`).join('<br>')}</div>` : ''}
       </div>`;
   },
 
   async exportPQ20Report() {
     const d = HisobotPage._lastPQ20;
-    if (!d) { showToast('Avval hisobotni shakllantiring', 'warning'); return; }
+    if (!d) { showToast(t('reports.generateFirst'), 'warning'); return; }
     await Utils.loadXLSX();
     const n = v => +(v || 0);
     const letl = v => Number(v || 0).toFixed(1);
@@ -1439,13 +1437,13 @@ const HisobotPage = {
     XLSX.utils.book_append_sheet(wb, ws, 'PQ-20');
     const scope = (d.muassasa || d.viloyat || 'respublika').replace(/[\\/:*?"<>|]/g, '-');
     XLSX.writeFile(wb, `pq20_hisobot_${scope}_${d.from}_${d.to}.xlsx`);
-    showToast('✅ Excel fayl yuklab olindi', 'success');
+      showToast(t('export.excelDownloaded'), 'success');
   },
 
   async loadReport() {
     const from = document.getElementById('h-from')?.value;
     const to = document.getElementById('h-to')?.value;
-    if (!from||!to) { showToast('Sana oralig\'ini tanlang','warning'); return; }
+    if (!from||!to) { showToast(t('reports.selectDateRange'),'warning'); return; }
     // Viloyat admin o'z viloyatini majburiy ko'rsin
     if (!HisobotPage._isSuperAdmin && HisobotPage._myViloyat) {
       const vilEl = document.getElementById('h-viloyat');
@@ -1565,7 +1563,7 @@ const HisobotPage = {
       const validKtNos = new Set([...infs.map(p => p.kt_no), ...ins.map(p => p.kt_no)]);
       const kuzatuv = kuzatuvAll.filter(k => validKtNos.has(k.kt_no));
 
-      const ageLabel = (ageFrom > 0 || ageTo < 120) ? ` · Yosh: ${ageFrom}–${ageTo}` : '';
+      const ageLabel = (ageFrom > 0 || ageTo < 120) ? ` · ${t('reports.ageRange', { from: ageFrom, to: ageTo })}` : '';
       const locationLabel = selMuassasa ? ` · ${selMuassasa}` : selViloyat ? ` · ${selViloyat}` : '';
       HisobotPage._lastData = { infs, ins, kuzatuv, from, to, ageLabel, locationLabel, dinamikaInfMap, dinamikaInsMap };
       reEnableTg();
@@ -1813,7 +1811,7 @@ const HisobotPage = {
         <!-- Infarkt Detail -->
         <div class="h-card !p-0 overflow-hidden">
           <div class="bg-red-50 p-5 border-b border-red-100 flex items-center justify-between">
-            <h3 class="h-title !mb-0 text-red-900">${icon('activity', 24)} Infarkt tahlili (${infs.length} ta)</h3>
+            <h3 class="h-title !mb-0 text-red-900">${icon('activity', 24)} ${t('report.infarctionAnalysisCount', {count: infs.length})}</h3>
             <button class="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-xl text-xs font-bold hover:bg-red-700 transition-colors shadow-sm" onclick="HisobotPage.showPatientList('infarkt')">
               ${icon('list', 14)} Ro'yxatni ko'rish
             </button>
@@ -1832,7 +1830,7 @@ const HisobotPage = {
         <!-- Insult Detail -->
         <div class="h-card !p-0 overflow-hidden">
           <div class="bg-purple-50 p-5 border-b border-purple-100 flex items-center justify-between">
-            <h3 class="h-title !mb-0 text-purple-900">${icon('brain', 24)} Insult tahlili (${ins.length} ta)</h3>
+            <h3 class="h-title !mb-0 text-purple-900">${icon('brain', 24)} ${t('report.strokeAnalysisCount', {count: ins.length})}</h3>
             <button class="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-xl text-xs font-bold hover:bg-purple-700 transition-colors shadow-sm" onclick="HisobotPage.showPatientList('insult')">
               ${icon('list', 14)} Ro'yxatni ko'rish
             </button>
@@ -1939,7 +1937,7 @@ const HisobotPage = {
                       <div style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;margin-bottom:6px">${label}</div>
                       <div style="font-size:22px;font-weight:900;color:#cbd5e1;margin:4px 0">—</div>
                       <div style="margin:6px 0">${badge}</div>
-                      ${nTotal > 0 ? `<div style="font-size:10px;color:#94a3b8">Muolaja: ${nTotal} ta · vaqt kiritilmagan</div>` : `<div style="font-size:10px;color:#94a3b8">Bu muolaja bajarilmagan</div>`}
+                      <div style="font-size:10px;color:#94a3b8">${nTotal > 0 ? t('report.treatmentTimeMissing', {count: nTotal}) : t('report.treatmentNotPerformed')}</div>
                     </div>`;
                   }
                   const pct = Math.min(100, Math.round((stats.median / target) * 100));
@@ -1985,7 +1983,7 @@ const HisobotPage = {
                       <div style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;margin-bottom:6px">${label}</div>
                       <div style="font-size:22px;font-weight:900;color:#cbd5e1;margin:4px 0">—</div>
                       <div style="margin:6px 0">${badge}</div>
-                      ${nTotal > 0 ? `<div style="font-size:10px;color:#94a3b8">Muolaja: ${nTotal} ta · vaqt kiritilmagan</div>` : `<div style="font-size:10px;color:#94a3b8">Bu muolaja bajarilmagan</div>`}
+                      <div style="font-size:10px;color:#94a3b8">${nTotal > 0 ? t('report.treatmentTimeMissing', {count: nTotal}) : t('report.treatmentNotPerformed')}</div>
                     </div>`;
                   }
                   const pct = Math.min(100, Math.round((stats.median / target) * 100));
@@ -2074,7 +2072,7 @@ const HisobotPage = {
         ${kelgan.length ? `
         <div class="h-card !p-0 overflow-hidden mt-6">
           <div class="bg-green-50 p-5 border-b border-green-100">
-            <h3 class="h-title !mb-0 text-green-900">${icon('arrow-down-to-line', 20)} Boshqa muassasadan kelgan bemorlar — ${kelgan.length} ta</h3>
+            <h3 class="h-title !mb-0 text-green-900">${icon('arrow-down-to-line', 20)} ${t('report.incomingPatientCount', {count: kelgan.length})}</h3>
           </div>
           <div class="grid grid-cols-1 lg:grid-cols-2">
             <div class="border-r border-slate-100 flex flex-col">
@@ -2084,7 +2082,7 @@ const HisobotPage = {
                   ${tableHead([{label:'Muassasa'},{label:'Infarkt',align:'center'},{label:'Insult',align:'center'},{label:'Jami',align:'center'}])}
                   <tbody>${kelganMuassasalar.map((m,i)=>`
                     <tr class="${i%2===0?'bg-white':'bg-slate-50/50'} hover:bg-green-50">
-                      <td class="p-3 font-semibold text-slate-700">${esc(m.nomi)}</td>
+                      <td class="p-3 font-semibold text-slate-700">${esc(I18n.facilityName(m.nomi))}</td>
                       <td class="p-3 text-center">${badge(m.infarkt,'bg-red-100 text-red-700')}</td>
                       <td class="p-3 text-center">${badge(m.insult,'bg-purple-100 text-purple-700')}</td>
                       <td class="p-3 text-center font-black">${m.infarkt+m.insult}</td>
@@ -2102,7 +2100,7 @@ const HisobotPage = {
                       <td class="p-3 font-semibold text-slate-800">${esc(p.fio||'—')}</td>
                       <td class="p-3">${turiBadge(p._isInf)}</td>
                       <td class="p-3 text-slate-500 text-xs">${Utils.formatDate(p.qabul_vaqt)}</td>
-                      <td class="p-3 text-green-700 font-medium text-xs">${esc(p.yuborgan_muassasa||'—')}</td>
+                      <td class="p-3 text-green-700 font-medium text-xs">${esc(I18n.facilityName(p.yuborgan_muassasa||'—'))}</td>
                     </tr>`).join('')}</tbody>
                 </table>
               </div>
@@ -2114,7 +2112,7 @@ const HisobotPage = {
         ${otkazilgan.length ? `
         <div class="h-card !p-0 overflow-hidden mt-6">
           <div class="bg-orange-50 p-5 border-b border-orange-100">
-            <h3 class="h-title !mb-0 text-orange-900">${icon('arrow-up-from-line', 20)} Boshqa muassasaga o'tkazilgan bemorlar — ${otkazilgan.length} ta</h3>
+            <h3 class="h-title !mb-0 text-orange-900">${icon('arrow-up-from-line', 20)} ${t('report.transferredPatientCount', {count: otkazilgan.length})}</h3>
           </div>
           <div class="grid grid-cols-1 lg:grid-cols-2">
             <div class="border-r border-slate-100 flex flex-col">
@@ -2124,7 +2122,7 @@ const HisobotPage = {
                   ${tableHead([{label:'Muassasa'},{label:'Infarkt',align:'center'},{label:'Insult',align:'center'},{label:'Jami',align:'center'}])}
                   <tbody>${otkazilganMuassasalar.map((m,i)=>`
                     <tr class="${i%2===0?'bg-white':'bg-slate-50/50'} hover:bg-orange-50">
-                      <td class="p-3 font-semibold text-slate-700">${esc(m.nomi)}</td>
+                      <td class="p-3 font-semibold text-slate-700">${esc(I18n.facilityName(m.nomi))}</td>
                       <td class="p-3 text-center">${badge(m.infarkt,'bg-red-100 text-red-700')}</td>
                       <td class="p-3 text-center">${badge(m.insult,'bg-purple-100 text-purple-700')}</td>
                       <td class="p-3 text-center font-black">${m.infarkt+m.insult}</td>
@@ -2142,7 +2140,7 @@ const HisobotPage = {
                       <td class="p-3 font-semibold text-slate-800">${esc(p.fio||'—')}</td>
                       <td class="p-3">${turiBadge(p._isInf)}</td>
                       <td class="p-3 text-slate-500 text-xs">${Utils.formatDate(p.qabul_vaqt)}</td>
-                      <td class="p-3 text-orange-700 font-semibold text-xs">${esc(p.otkazilgan_muassasa||'—')}</td>
+                      <td class="p-3 text-orange-700 font-semibold text-xs">${esc(I18n.facilityName(p.otkazilgan_muassasa||'—'))}</td>
                     </tr>`).join('')}</tbody>
                 </table>
               </div>
@@ -2154,7 +2152,7 @@ const HisobotPage = {
         ${shifokorlar.length ? `
         <div class="h-card !p-0 overflow-hidden mt-6">
           <div class="bg-teal-50 p-5 border-b border-teal-100">
-            <h3 class="h-title !mb-0 text-teal-900">${icon('stethoscope', 20)} Shifokorlar bo'yicha — ${shifokorlar.length} ta</h3>
+            <h3 class="h-title !mb-0 text-teal-900">${icon('stethoscope', 20)} ${t('report.doctorCount', {count: shifokorlar.length})}</h3>
             <p class="text-xs text-teal-600 mt-1">Raqam ustiga bosing — o'sha shifokor kiritgan bemorlar ro'yxatini ko'rish uchun</p>
           </div>
           <div style="max-height:500px;overflow-y:auto;overflow-x:auto">
@@ -2189,9 +2187,8 @@ const HisobotPage = {
 
       <div class="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-2xl text-sm font-semibold text-blue-900 text-center shadow-sm flex items-center justify-center gap-2 flex-wrap">
         ${icon('calendar', 18)}
-        Hisobot davri: <span class="bg-white px-2 py-1 rounded border border-blue-200">${from}</span> dan
-        <span class="bg-white px-2 py-1 rounded border border-blue-200">${to}</span> gacha ·
-        Jami: <span class="text-blue-600">${infs.length+ins.length}</span> ta bemor
+        ${t('report.periodRange', {from: `<span class="bg-white px-2 py-1 rounded border border-blue-200">${from}</span>`, to: `<span class="bg-white px-2 py-1 rounded border border-blue-200">${to}</span>`})} ·
+        ${t('report.totalPatientCount', {count: `<span class="text-blue-600">${infs.length+ins.length}</span>`})}
         ${locationLabel ? `· <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded border border-blue-300">${icon('building-2',14)} ${locationLabel.replace(' · ','')}</span>` : ''}
         ${ageLabel ? `· <span class="bg-slate-100 text-slate-700 px-2 py-1 rounded border border-slate-200">${ageLabel.replace(' · ','')}</span>` : ''}
       </div>
@@ -2222,10 +2219,10 @@ const HisobotPage = {
       return `<tr style="border-bottom:1px solid #f1f5f9;cursor:pointer" onclick="document.getElementById('h-modal')?.remove();Router.go('bemor-karta',{kt_no:'${esc(p.kt_no)}',type:'${esc(type)}'})"  >
         <td style="padding:10px 14px;font-family:monospace;font-size:12px;color:#64748b">${esc(p.kt_no)}</td>
         <td style="padding:10px 14px;font-weight:700;color:#0f172a">${esc(p.fio) || '—'}</td>
-        <td style="padding:10px 14px;color:#475569">${age} yosh · ${esc(p.jins) || '—'}</td>
-        <td style="padding:10px 14px;color:#475569;font-size:12px">${esc(p.viloyat) || '—'}</td>
+        <td style="padding:10px 14px;color:#475569">${esc(t('dashboard.ageYears', { age }))} · ${esc(I18n.translateText(p.jins || '—'))}</td>
+        <td style="padding:10px 14px;color:#475569;font-size:12px">${esc(I18n.translateText(p.viloyat || '—'))}</td>
         <td style="padding:10px 14px;font-size:12px;color:#475569">${Utils.formatDate(p.qabul_vaqt)}</td>
-        <td style="padding:10px 14px"><span style="background:${sc}20;color:${sc};font-size:11px;font-weight:800;padding:3px 10px;border-radius:8px;text-transform:uppercase">${esc(p.status) || '—'}</span></td>
+        <td style="padding:10px 14px"><span style="background:${sc}20;color:${sc};font-size:11px;font-weight:800;padding:3px 10px;border-radius:8px;text-transform:uppercase">${esc(({ active: t('status.active'), chiqarildi: t('status.discharged'), vafot: t('status.dead'), otkazildi: t('status.transferred') })[p.status] || p.status || '—')}</span></td>
       </tr>`;
     }).join('');
 
@@ -2236,8 +2233,8 @@ const HisobotPage = {
       <div style="background:#fff;border-radius:24px;width:100%;max-width:900px;overflow:hidden;box-shadow:0 25px 60px rgba(0,0,0,0.3)">
         <div style="background:${color};padding:20px 24px;display:flex;align-items:center;justify-content:space-between">
           <div style="color:#fff">
-            <div style="font-size:18px;font-weight:900">${title} bemorlari ro'yxati</div>
-            <div style="font-size:12px;opacity:0.8;margin-top:2px">${d.from} — ${d.to}${d.ageLabel || ''} · Jami: ${patients.length} ta</div>
+            <div style="font-size:18px;font-weight:900">${t('reports.patientListTitle', { type: I18n.translateText(title) })}</div>
+            <div style="font-size:12px;opacity:0.8;margin-top:2px">${d.from} — ${d.to}${d.ageLabel || ''} · ${t('reports.patientListCount', { count: patients.length })}</div>
           </div>
           <button onclick="HisobotPage._lastListType=null;document.getElementById('h-modal').remove()" style="background:rgba(255,255,255,0.2);border:none;color:#fff;width:36px;height:36px;border-radius:50%;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center">✕</button>
         </div>
@@ -2306,7 +2303,7 @@ const HisobotPage = {
         <div class="bg-teal-50 p-5 border-b border-teal-100 flex items-center justify-between flex-shrink-0">
           <div>
             <h3 class="font-bold text-slate-800 flex items-center gap-2">${icon('stethoscope',20)} ${esc(sh.fio)}</h3>
-            <p class="text-xs text-slate-500 mt-0.5">${esc(sh.viloyat)} · <span class="${color} font-semibold">${title} — ${bemorlar.length} ta</span></p>
+            <p class="text-xs text-slate-500 mt-0.5">${esc(I18n.translateText(sh.viloyat))} · <span class="${color} font-semibold">${title} — ${t('report.patientCountShort', {count: bemorlar.length})}</span></p>
           </div>
           <button onclick="this.closest('.fixed').remove()" class="p-2 hover:bg-teal-100 rounded-xl transition-colors">${icon('x',20)}</button>
         </div>
@@ -2334,7 +2331,7 @@ const HisobotPage = {
 
   printReport() {
     const d = HisobotPage._lastData;
-    if (!d) { showToast('Avval hisobot yuklab oling','warning'); return; }
+    if (!d) { showToast(t('reports.downloadFirst'),'warning'); return; }
     const { infs, ins, from, to } = d;
     const stemi = infs.filter(p=>p.infarkt_turi?.toUpperCase().includes('STEMI')&&!p.infarkt_turi?.toUpperCase().includes('NSTEMI')).length;
     const stemiDavol = infs.filter(p=>p.infarkt_turi?.toUpperCase().includes('STEMI')&&!p.infarkt_turi?.toUpperCase().includes('NSTEMI')&&p.status==='chiqarildi').length;
@@ -2454,7 +2451,7 @@ const HisobotPage = {
 
   async sendTelegramReport() {
     const d = HisobotPage._lastData;
-    if (!d) { showToast('Avval hisobotni yuklab oling (Ko\'rish tugmasini bosing)', 'warning'); return; }
+    if (!d) { showToast(t('reports.viewFirst'), 'warning'); return; }
 
     const { infs, ins, from, to } = d;
 
@@ -2468,7 +2465,7 @@ const HisobotPage = {
     const endLabel   = fmtDate(to);
     const periodLabel = startLabel === endLabel ? startLabel : `${startLabel} — ${endLabel}`;
 
-    showToast('📊 Hisobot tayyorlanmoqda...', 'info', 3000);
+    showToast(t('reports.preparing'), 'info', 3000);
 
     try {
       const sb = getSupabase();
@@ -2576,20 +2573,20 @@ ${muolajaStr(insMuolajaNorm)}
       ]);
 
       if (r1.ok && r2.ok) {
-        showToast('✅ Hisobot Telegramga yuborildi!', 'success', 5000);
+      showToast(t('reports.telegramSent'), 'success', 5000);
       } else {
         const err = r1.error || r2.error || 'Noma\'lum';
         console.error('Telegram hisobot xato — infarkt:', r1.full, 'insult:', r2.full);
-        showToast('⚠️ Telegram xato: ' + err, 'error', 9000);
+      showToast(t('reports.telegramError', { error: err }), 'error', 9000);
       }
     } catch(err) {
-      showToast('❌ Xato: ' + err.message, 'error');
+    showToast(t('common.errorPrefix', { error: err.message }), 'error');
     }
   },
 
   exportReport() {
     const d = HisobotPage._lastData;
-    if (!d) { showToast('Avval hisobot yuklab oling','warning'); return; }
+    if (!d) { showToast(t('reports.downloadFirst'),'warning'); return; }
     const all = [
       ...d.infs.map(p=>({...p,_turi:'infarkt'})),
       ...d.ins.map(p=>({...p,_turi:'insult'}))
@@ -2620,6 +2617,6 @@ ${muolajaStr(insMuolajaNorm)}
         Muolaja: muolajaStr(p)
       };
     }), `hisobot_${d.from}_${d.to}.csv`);
-    showToast('✅ Eksport boshlandi','success');
+    showToast(t('export.started'),'success');
   }
 };

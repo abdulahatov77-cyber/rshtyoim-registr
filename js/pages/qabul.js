@@ -25,26 +25,26 @@ const QabulPage = {
     QabulPage._kuzatuvchi   = kuzatuvchi;
 
     document.getElementById('app').innerHTML = Components.renderLayout(
-      'qabul', '🚑 Qabul kutilmoqda', 'Boshqa muassasadan yuborilgan bemorlar',
+      'qabul', `🚑 ${t('nav.pendingAdmission')}`, t('pages.pendingSubtitle'),
       `<div id="qb-inner" class="animate-fadein">
         <div id="qb-filter" class="card mb-4" style="display:none">
           <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-[minmax(240px,1fr)_220px_minmax(260px,1fr)_auto] items-end gap-3">
             <div class="relative min-w-0">
-              <label class="form-label !mb-1">Qidirish</label>
+              <label class="form-label !mb-1">${t('pending.searchLabel')}</label>
               <input id="qb-q" class="form-input pl-9 w-full" autocomplete="off"
-                     placeholder="F.I.O yoki K/T raqami..."/>
+            placeholder="${t('pending.search')}"/>
               <span class="absolute left-3 text-gray-400" style="top:34px">${icon('search', 16)}</span>
             </div>
             <div class="min-w-0">
-              <label class="form-label !mb-1">Qabul qiluvchi viloyat</label>
+              <label class="form-label !mb-1">${t('pending.regionLabel')}</label>
               <select id="qb-viloyat" class="form-select w-full"></select>
             </div>
             <div class="min-w-0">
-              <label class="form-label !mb-1">Qabul qiluvchi muassasa</label>
+              <label class="form-label !mb-1">${t('pending.facilityLabel')}</label>
               <select id="qb-muassasa" class="form-select w-full"></select>
             </div>
             <button id="qb-tozala" class="btn btn-secondary flex items-center gap-2">
-              ${icon('x', 15)} Tozalash
+              ${icon('x', 15)} ${t('pending.clear')}
             </button>
           </div>
           <div id="qb-filter-info" class="text-xs text-slate-500 mt-2"></div>
@@ -61,8 +61,7 @@ const QabulPage = {
     initIcons();
 
     if (!kuzatuvchi && !muassasa && !viloyat) {
-      QabulPage._xabar('info', 'Profilingizda viloyat ko\'rsatilmagan',
-        'Bu ro\'yxat foydalanuvchining viloyati yoki muassasasi bo\'yicha shakllanadi. Administratorga murojaat qiling.');
+      QabulPage._xabar('info', t('pending.profileRegionMissing'), t('pending.profileRegionHelp'));
       return;
     }
     try {
@@ -71,7 +70,7 @@ const QabulPage = {
       QabulPage._filtrniQur();
       QabulPage._draw();
     } catch (e) {
-      QabulPage._xabar('error', 'Ma\'lumot yuklanmadi', e.message);
+      QabulPage._xabar('error', t('routing.loadFailed'), I18n.friendlyError(e.message));
     }
   },
 
@@ -100,8 +99,8 @@ const QabulPage = {
     const vilSel = document.getElementById('qb-viloyat');
     const viloyatlar = [...new Set(QabulPage._rows
       .map(r => QabulPage._manzilViloyat(r.otkazilgan_muassasa)).filter(Boolean))].sort();
-    vilSel.innerHTML = `<option value="">— Barcha viloyatlar —</option>` +
-      viloyatlar.map(v => `<option value="${esc(v)}">${esc(v)}</option>`).join('');
+    vilSel.innerHTML = `<option value="">${t('filter.allRegions')}</option>` +
+      viloyatlar.map(v => `<option value="${esc(v)}">${esc(I18n.translateText(v))}</option>`).join('');
 
     const yangila = () => {
       QabulPage._f = {
@@ -123,8 +122,8 @@ const QabulPage = {
         son[m] = (son[m] || 0) + 1;
       });
       const nomlar = Object.keys(son).sort();
-      sel.innerHTML = `<option value="">— Barcha muassasalar —</option>` +
-        nomlar.map(m => `<option value="${esc(m)}">${esc(m)} (${son[m]})</option>`).join('');
+    sel.innerHTML = `<option value="">${t('filter.allInstitutions')}</option>` +
+        nomlar.map(m => `<option value="${esc(m)}">${esc(I18n.facilityName(m))} (${son[m]})</option>`).join('');
       sel.value = nomlar.includes(tanlangan) ? tanlangan : '';
     };
     muassasaniQur();
@@ -148,7 +147,7 @@ const QabulPage = {
       if (f.viloyat && QabulPage._manzilViloyat(r.otkazilgan_muassasa) !== f.viloyat) return false;
       if (f.muassasa && r.otkazilgan_muassasa !== f.muassasa) return false;
       if (q) {
-        const matn = `${r.fio || ''} ${r.kt_no || ''} ${r.muassasa || ''} ${r.otkazilgan_muassasa || ''}`;
+        const matn = `${r.fio || ''} ${r.kt_no || ''} ${r.muassasa || ''} ${r.otkazilgan_muassasa || ''} ${I18n.facilityName(r.muassasa)} ${I18n.facilityName(r.otkazilgan_muassasa)}`;
         if (!matn.toLowerCase().includes(q)) return false;
       }
       return true;
@@ -185,22 +184,19 @@ const QabulPage = {
     const info = document.getElementById('qb-filter-info');
     if (info) {
       const boshi = rows.length === jami
-        ? `Jami <b>${jami}</b> ta yozuv`
-        : `<b>${rows.length}</b> ta ko'rsatilmoqda · jami ${jami} ta`;
+        ? t('pending.totalRecords', {count: `<b>${jami}</b>`})
+        : t('pending.filteredRecords', {shown: `<b>${rows.length}</b>`, total: jami});
       info.innerHTML = boshi + (kuzatuv.length
-        ? ` · <b>${asosiy.length}</b> asosiy ro'yxatda ·
-           <span style="color:#b45309">${kuzatuv.length}</span> pastdagi kuzatuv bo'limida`
+        ? t('pending.splitRecords', {main: `<b>${asosiy.length}</b>`, watch: `<span style="color:#b45309">${kuzatuv.length}</span>`})
         : '');
     }
 
     if (!jami) {
-      QabulPage._xabar('info', 'Kutilayotgan bemor yo\'q',
-        'Sizning muassasangizga yuborilgan, hali qabul qilinmagan bemor topilmadi.');
+      QabulPage._xabar('info', t('pending.emptyTitle'), t('pending.emptyHelp'));
       return;
     }
     if (!rows.length) {
-      QabulPage._xabar('info', 'Topilmadi',
-        'Qidiruv yoki filtr shartiga mos bemor yo\'q. "Tozalash" ni bosing.');
+      QabulPage._xabar('info', t('pending.noResultsTitle'), t('pending.noResultsHelp'));
       return;
     }
 
@@ -214,20 +210,17 @@ const QabulPage = {
         ${icon('info', 18)}
         <span class="text-sm text-blue-900">
           ${QabulPage._kuzatuvchi ? `
-            <b>${asosiy.length} ta bemor</b> respublika bo'yicha yuborilgan va hali qabul qilinmagan.${kuzatuv.length ? `
-            Yana <b>${kuzatuv.length}</b> ta yozuv pastdagi kuzatuv bo'limida.` : ''}
+            <b>${t('pending.patientCount', {count: asosiy.length})}</b> ${t('pending.observerSummary')}${kuzatuv.length ? `
+            ${t('pending.moreWatchRecords', {count: `<b>${kuzatuv.length}</b>`})}` : ''}
             <div class="mt-1 text-xs text-blue-800">
-              Siz kuzatuvchi rolidasiz — bu ro'yxat nazorat uchun. Bemorni qabul qilishni
-              qabul qiluvchi muassasa shifokori bajaradi.
+              ${t('pending.observerNotice')}
             </div>` : `
-            <b>${asosiy.length} ta bemor</b>
-            ${QabulPage._aniqMuassasa ? 'muassasangizga' : 'viloyatingizdagi muassasalarga'} yuborilgan.
-            "Qabul qilish" bosilganda kelish vaqti so'raladi va forma bemorning
-            shaxsiy ma'lumotlari bilan to'ldirilgan holda ochiladi.
+            <b>${t('pending.patientCount', {count: asosiy.length})}</b>
+            ${t(QabulPage._aniqMuassasa ? 'pending.sentToFacility' : 'pending.sentToRegion')}
+            ${t('pending.acceptInstructions')}
             ${QabulPage._aniqMuassasa ? '' : `
             <div class="mt-1 text-xs text-blue-800">
-              ⚠️ Profilingizda muassasa ko'rsatilmagani uchun ro'yxat butun viloyat bo'yicha chiqyapti.
-              Har bir kartochkada bemor <b>qaysi muassasaga</b> yuborilgani yozilgan — faqat o'zingiznikini qabul qiling.
+              ${t('pending.regionWideNotice')}
             </div>`}`}
         </span>
       </div>
@@ -237,8 +230,7 @@ const QabulPage = {
       </div>` : `
       <div class="card text-center py-10">
         <div class="text-gray-300 mb-3">${icon('inbox', 40, 'mx-auto')}</div>
-        <p class="text-gray-500 text-sm">Registrni yurituvchi muassasaga yuborilgan,
-        hali qabul qilinmagan bemor yo'q.</p>
+        <p class="text-gray-500 text-sm">${t('pending.noRegistryPatients')}</p>
       </div>`}
       ${kuzatuv.length ? `
       <div class="card mt-6 !p-0 overflow-hidden">
@@ -247,16 +239,13 @@ const QabulPage = {
           ${icon('archive', 18)}
           <span class="flex-1">
             <span class="block text-sm font-bold text-slate-700">
-              ${kuzatuv.length} ta bemor — qabul qiluvchi registrni yuritmaydi
+              ${t('pending.watchPatientCount', {count: kuzatuv.length})}
             </span>
             <span class="block text-xs text-slate-500 mt-1">
-              Bu bemorlar kardiologiya markazi, xususiy klinika yoki registrga
-              bemor kiritmaydigan boshqa muassasaga yo'naltirilgan. Ularni ro'yxatdan
-              tushiradigan tomon tizimda yo'q, shuning uchun alohida ajratilgan.
-              Ro'yxat "Muassasa imkoniyati" sahifasidagi belgiga qarab shakllanadi.
+              ${t('pending.watchExplanation')}
             </span>
           </span>
-          <span id="qb-kuzatuv-strelka" class="text-slate-400 text-sm shrink-0">${QabulPage._kuzatuvOchiq ? '▲ yopish' : '▼ ochish'}</span>
+          <span id="qb-kuzatuv-strelka" class="text-slate-400 text-sm shrink-0">${QabulPage._kuzatuvOchiq ? t('pending.collapse') : t('pending.expand')}</span>
         </button>
         <div id="qb-kuzatuv-royxat" style="display:${QabulPage._kuzatuvOchiq ? 'block' : 'none'}" class="p-4 pt-0">
           <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4">
@@ -274,7 +263,7 @@ const QabulPage = {
         const ochiq = el.style.display !== 'none';
         el.style.display = ochiq ? 'none' : 'block';
         QabulPage._kuzatuvOchiq = !ochiq;
-        if (st) st.textContent = ochiq ? '▼ ochish' : '▲ yopish';
+        if (st) st.textContent = ochiq ? t('pending.expand') : t('pending.collapse');
       };
     }
   },
@@ -297,51 +286,51 @@ const QabulPage = {
             <div class="min-w-0">
               <div class="flex items-center gap-2 mb-1">
                 <span class="badge ${isInf ? 'badge-red' : 'badge-purple'}">
-                  ${icon(isInf ? 'heart' : 'brain', 12)} ${isInf ? 'Infarkt' : 'Insult'}
+                  ${icon(isInf ? 'heart' : 'brain', 12)} ${t(isInf ? 'glossary.infarction' : 'glossary.stroke')}
                 </span>
                 <span class="text-xs text-gray-400 font-mono">${esc(r.kt_no)}</span>
               </div>
               <div class="text-base font-bold text-gray-900 truncate">${esc(r.fio || "—")}</div>
               <div class="text-xs text-gray-500">
-                ${esc(yosh || '—')} yosh · ${esc(r.jins || '—')}
+                ${esc(t('dashboard.ageYears', { age: yosh || '—' }))} · ${esc(I18n.translateText(r.jins || '—'))}
               </div>
             </div>
             ${QabulPage._kuzatuvchi ? '' : `
             <div class="shrink-0 flex flex-col items-end gap-1.5">
               <button class="btn btn-primary !py-2 !px-3 flex items-center gap-1"
                       onclick="QabulPage.qabulQil(${i})">
-                ${icon('log-in', 14)} Qabul qilish
+                ${icon('log-in', 14)} ${t('pending.accept')}
               </button>
               ${r._mavjud ? `
               <button onclick="QabulPage.mavjudModal(${i})"
-                      title="Muassasangizda shu bemorga o'xshash karta topildi — tekshiring"
+              title="${t('pending.possibleDuplicate')}"
                       style="border:1px solid ${r._mavjud.aniq ? '#86efac' : '#fcd34d'};
                              background:${r._mavjud.aniq ? '#f0fdf4' : '#fffbeb'};
                              color:${r._mavjud.aniq ? '#15803d' : '#b45309'};border-radius:8px;
                              padding:5px 9px;font-size:11px;font-weight:700;cursor:pointer;
                              display:flex;align-items:center;gap:5px;white-space:nowrap">
-                ${icon('user-check', 13)} Bu bemor muassasada mavjud
+                ${icon('user-check', 13)} ${t('pending.alreadyAtFacility')}
               </button>` : ''}
               ${kechikkan ? `
               <button onclick="QabulPage.kelmadiModal(${i})"
-                      title="Bemor yetib kelmagan bo'lsa — yozuvni ro'yxatdan yopish"
+              title="${t('pending.closeTitle')}"
                       style="border:1px solid #e2e8f0;background:#f8fafc;color:#64748b;
                              border-radius:8px;padding:5px 9px;font-size:11px;font-weight:700;
                              cursor:pointer;display:flex;align-items:center;gap:5px;white-space:nowrap">
-                ${icon('user-x', 13)} Bemor kelmadi
+                ${icon('user-x', 13)} ${t('pending.didNotArrive')}
               </button>` : ''}
             </div>`}
           </div>
           ${kechikkan ? `
           <div class="mb-3 text-[11px] font-semibold ${kutganKun >= 5 ? 'text-red-600' : 'text-amber-600'}">
-            ${icon('clock', 12)} ${kutganKun} kundan beri kutilmoqda
+            ${icon('clock', 12)} ${t('pending.waitingDays', { days: kutganKun })}
           </div>` : ''}
           ${r._mavjud ? `
           <div class="mb-3 p-2.5 rounded-lg"
                style="background:${r._mavjud.aniq ? '#f0fdf4' : '#fffbeb'};
                       border:1px solid ${r._mavjud.aniq ? '#bbf7d0' : '#fde68a'}">
             <div class="text-[11px] ${r._mavjud.aniq ? 'text-green-800' : 'text-amber-800'}">
-              Muassasangizda o'xshash karta bor:
+              ${t('pending.similarRecord')}
               <b>${esc(r._mavjud.fio || '—')}</b> ·
               <span class="font-mono">${esc(r._mavjud.kt_no || '—')}</span> ·
               ${esc(Utils.formatDateTime(r._mavjud.vaqt))}
@@ -350,21 +339,20 @@ const QabulPage = {
 
           <div class="border-t border-dashed border-gray-200 pt-3 grid grid-cols-1 sm:grid-cols-2 gap-y-1 text-xs">
             <div class="sm:col-span-2 mb-1 p-2 rounded-lg bg-blue-50 border border-blue-100">
-              <span class="text-gray-500">Qaysi muassasaga yuborilgan:</span>
-              <span class="font-bold text-blue-900">${esc(r.otkazilgan_muassasa || '—')}</span>
+              <span class="text-gray-500">${t('pending.destinationLabel')}</span>
+              <span class="font-bold text-blue-900">${esc(I18n.facilityName(r.otkazilgan_muassasa || '—'))}</span>
             </div>
-            <div><span class="text-gray-400">Yuborgan:</span>
-                 <span class="font-semibold text-gray-700">${esc(r.muassasa || '—')}</span></div>
-            <div><span class="text-gray-400">Yuborilgan vaqt:</span>
+            <div><span class="text-gray-400">${t('pending.senderLabel')}</span>
+                 <span class="font-semibold text-gray-700">${esc(I18n.facilityName(r.muassasa || '—'))}</span></div>
+            <div><span class="text-gray-400">${t('pending.sentTime')}</span>
                  <span class="font-semibold text-gray-700">${esc(Utils.formatDateTime(r.qabul_vaqt))}</span></div>
-            <div><span class="text-gray-400">Tashxisi:</span>
-                 <span class="text-gray-700">${esc(tashxis)}</span></div>
-            ${sabab ? `<div><span class="text-gray-400">Sababi:</span>
-                 <span class="text-orange-700 font-semibold">${esc(sabab)}</span></div>` : ''}
+            <div><span class="text-gray-400">${t('pending.diagnosisLabel')}</span>
+                 <span class="text-gray-700">${esc(I18n.translateText(tashxis))}</span></div>
+            ${sabab ? `<div><span class="text-gray-400">${t('pending.reasonLabel')}</span>
+                 <span class="text-orange-700 font-semibold">${esc(I18n.translateText(sabab))}</span></div>` : ''}
           </div>
           <div class="mt-2 text-[11px] text-gray-400">
-            Bu ma'lumot yuboruvchi muassasadan — faqat ko'rish uchun.
-            Tekshiruv va ballar sizda qaytadan kiritiladi.
+            ${t('pending.readOnlyReferralNotice')}
           </div>
         </div>
       </div>`;
@@ -382,35 +370,34 @@ const QabulPage = {
         <td style="padding:6px 8px;font-size:13px;font-weight:600">${ong}</td>
       </tr>`;
     showModal({
-      title: `${icon('user-check', 18)} Bu o'sha bemormi?`,
+      title: `${icon('user-check', 18)} ${t('pending.samePatientQuestion')}`,
       body: `
         <table style="width:100%;border-collapse:collapse">
           <thead>
             <tr style="background:#f1f5f9">
               <th></th>
-              <th style="padding:6px 8px;font-size:11px;color:#475569;text-align:left">Yuborilgan</th>
-              <th style="padding:6px 8px;font-size:11px;color:#475569;text-align:left">Muassasangizda</th>
+              <th style="padding:6px 8px;font-size:11px;color:#475569;text-align:left">${t('pending.sent')}</th>
+              <th style="padding:6px 8px;font-size:11px;color:#475569;text-align:left">${t('pending.atYourFacility')}</th>
             </tr>
           </thead>
           <tbody>
-            ${qator('F.I.O', esc(r.fio || "—"), esc(m.fio || '—'))}
-            ${qator("Tug'ilgan", esc(r.tugilgan_sana || r.tugilgan_yil || '—'), esc(m.tug || '—'))}
+            ${qator(t('common.fullName'), esc(r.fio || "—"), esc(m.fio || '—'))}
+            ${qator(t('common.birthDate'), esc(r.tugilgan_sana || r.tugilgan_yil || '—'), esc(m.tug || '—'))}
             ${qator('K/T', `<span style="font-family:monospace">${esc(r.kt_no)}</span>`,
                             `<span style="font-family:monospace">${esc(m.kt_no || '—')}</span>`)}
-            ${qator('Vaqti', esc(Utils.formatDateTime(r.qabul_vaqt)), esc(Utils.formatDateTime(m.vaqt)))}
+            ${qator(t('common.time'), esc(Utils.formatDateTime(r.qabul_vaqt)), esc(Utils.formatDateTime(m.vaqt)))}
           </tbody>
         </table>
         <p class="text-xs text-slate-500 mt-3">
-          Ishonchingiz komil bo'lmasa — avval kartani oching va solishtiring.
-          "Ha, shu bemor" bosilsa, yozuv ro'yxatdan olib tashlanadi.
+          ${t('pending.samePatientHelp')}
         </p>`,
       footer: `
-        <button class="btn btn-secondary" onclick="closeModal()">Bekor</button>
+        <button class="btn btn-secondary" onclick="closeModal()">${t('common.cancel')}</button>
         <button class="btn btn-secondary" onclick="QabulPage.mavjudKarta(${i})">
-          ${icon('external-link', 14)} Kartani ochish
+          ${icon('external-link', 14)} ${t('pending.openRecord')}
         </button>
         <button class="btn btn-primary" onclick="QabulPage.mavjudTasdiq(${i})">
-          ${icon('check', 14)} Ha, shu bemor
+          ${icon('check', 14)} ${t('pending.confirmSamePatient')}
         </button>`
     });
     initIcons();
@@ -438,10 +425,10 @@ const QabulPage = {
       });
       QabulPage._rows = QabulPage._rows.filter(x => x !== r);
       QabulPage._draw();
-      showToast("✅ Ro'yxatdan olib tashlandi", 'success');
+      showToast(t('pending.removed'), 'success');
     } catch (e) {
-      showToast('Xatolik: ' + (e.message || 'saqlanmadi') +
-        "\nqabul_tasdiq.sql ishga tushirilganini tekshiring", 'error', 7000);
+      showToast(t('common.errorPrefix', { error: (e.message || t('validation.generic')) }) +
+        `\n${t('pending.sqlCheck')}`, 'error', 7000);
     }
   },
 
@@ -451,29 +438,28 @@ const QabulPage = {
     if (!r) return;
     const kun = Math.floor((Date.now() - new Date(r.qabul_vaqt).getTime()) / 864e5);
     showModal({
-      title: `${icon('user-x', 18)} Bemor kelmadi`,
+      title: `${icon('user-x', 18)} ${t('pending.didNotArrive')}`,
       body: `
         <div class="mb-3 p-3 rounded-xl bg-slate-50 border border-slate-200">
           <div class="font-bold text-slate-800">${esc(r.fio || '—')}</div>
           <div class="text-xs text-slate-500 mt-0.5">
-            ${esc(r.muassasa || '—')} dan · ${esc(Utils.formatDateTime(r.qabul_vaqt))}
-            · <b>${kun} kundan beri</b>
+            ${t('pending.fromInstitution', {name: esc(I18n.facilityName(r.muassasa || '—'))})} · ${esc(Utils.formatDateTime(r.qabul_vaqt))}
+            · <b>${t('pending.daysAgo', {days: kun})}</b>
           </div>
         </div>
-        <label class="form-label">Nima uchun kelmadi?</label>
+        <label class="form-label">${t('pending.nonArrivalQuestion')}</label>
         <select id="qb-kelmadi-sabab" class="form-select w-full">
-          <option value="boshqa_joyga">Boshqa muassasaga ketgan</option>
-          <option value="rad_etdi">Bemor yoki qarindoshlari rad etgan</option>
-          <option value="nomalum">Sababi noma'lum</option>
+              <option value="boshqa_joyga">${t('pending.reasonElsewhere')}</option>
+              <option value="rad_etdi">${t('pending.reasonRefused')}</option>
+              <option value="nomalum">${t('pending.reasonUnknown')}</option>
         </select>
         <p class="text-xs text-slate-500 mt-3">
-          Yozuv ro'yxatdan olib tashlanadi. Bemor ma'lumotlari va yuboruvchi
-          muassasadagi kartasi o'z holicha qoladi — faqat shu eslatma yopiladi.
+          ${t('pending.closeReferralHelp')}
         </p>`,
       footer: `
-        <button class="btn btn-secondary" onclick="closeModal()">Bekor</button>
+        <button class="btn btn-secondary" onclick="closeModal()">${t('common.cancel')}</button>
         <button class="btn btn-primary" onclick="QabulPage.kelmadiTasdiq(${i})">
-          ${icon('check', 14)} Tasdiqlash
+          ${icon('check', 14)} ${t('pending.confirm')}
         </button>`
     });
     initIcons();
@@ -493,10 +479,10 @@ const QabulPage = {
       });
       QabulPage._rows = QabulPage._rows.filter(x => x !== r);
       QabulPage._draw();
-      showToast("✅ Ro'yxatdan olib tashlandi", 'success');
+      showToast(t('pending.removed'), 'success');
     } catch (e) {
-      showToast('Xatolik: ' + (e.message || 'saqlanmadi') +
-        "\nqabul_tasdiq.sql ishga tushirilganini tekshiring", 'error', 7000);
+      showToast(t('common.errorPrefix', { error: (e.message || t('validation.generic')) }) +
+        `\n${t('pending.sqlCheck')}`, 'error', 7000);
     }
   },
 
@@ -508,33 +494,33 @@ const QabulPage = {
     const yuborilgan = new Date(new Date(r.qabul_vaqt).getTime() + 5 * 3600000).toISOString();
 
     showModal({
-      title: `${icon('log-in', 18)} Bemorni qabul qilish`,
+      title: `${icon('log-in', 18)} ${t('pending.admitPatient')}`,
       body: `
         <div class="mb-4 p-3 rounded-xl bg-slate-50 border border-slate-200">
           <div class="font-bold text-slate-800">${esc(r.fio || '—')}</div>
           <div class="text-xs text-slate-500 mt-0.5">
-            ${esc(r.muassasa || '—')} dan · ${esc(Utils.formatDateTime(r.qabul_vaqt))}
+            ${t('pending.fromInstitution', {name: esc(I18n.facilityName(r.muassasa || '—'))})} · ${esc(Utils.formatDateTime(r.qabul_vaqt))}
           </div>
         </div>
-        <label class="form-label required">Bemor sizga qachon yetib keldi?</label>
+        <label class="form-label required">${t('pending.arrivalQuestion')}</label>
         <div class="flex gap-2">
           <div class="flex-1">
-            <div class="text-[10px] font-bold text-slate-500 uppercase mb-1">Sana</div>
+            <div class="text-[10px] font-bold text-slate-500 uppercase mb-1">${t('common.date')}</div>
             <input id="qb-sana" type="date" class="form-input w-full"
                    min="${yuborilgan.slice(0, 10)}" max="${endi.slice(0, 10)}"
                    value="${endi.slice(0, 10)}"/>
           </div>
           <div class="flex-1">
-            <div class="text-[10px] font-bold text-slate-500 uppercase mb-1">Soat (HH:MM)</div>
+            <div class="text-[10px] font-bold text-slate-500 uppercase mb-1">${t('pending.timeLabel')}</div>
             <input id="qb-soat" type="time" class="form-input w-full" value="${endi.slice(11, 16)}"/>
           </div>
         </div>
         <p class="text-xs text-slate-400 mt-2">
-          Bu vaqt yangi kartaning "Qabul vaqti" si bo'ladi va marshrut hisobotida ishlatiladi.
+          ${t('pending.arrivalTimeHelp')}
         </p>`,
       footer: `
-        <button class="btn btn-secondary" onclick="closeModal()">Bekor</button>
-        <button class="btn btn-primary" onclick="QabulPage._davomEt(${i})">Davom etish</button>`
+        <button class="btn btn-secondary" onclick="closeModal()">${t('common.cancel')}</button>
+        <button class="btn btn-primary" onclick="QabulPage._davomEt(${i})">${t('common.continue')}</button>`
     });
   },
 
@@ -543,13 +529,13 @@ const QabulPage = {
     if (!r) return;
     const sana = document.getElementById('qb-sana')?.value;
     const soat = document.getElementById('qb-soat')?.value;
-    if (!sana || !soat) { showToast('Kelish sanasi va soatini kiriting', 'warning'); return; }
+    if (!sana || !soat) { showToast(t('pending.arrivalDateTime'), 'warning'); return; }
 
     const kelish = new Date(`${sana}T${soat}:00+05:00`);
-    if (isNaN(kelish)) { showToast('Vaqt noto\'g\'ri', 'warning'); return; }
-    if (kelish > new Date()) { showToast('Kelish vaqti kelajakda bo\'lishi mumkin emas', 'warning'); return; }
+    if (isNaN(kelish)) { showToast(t('validation.invalidTime'), 'warning'); return; }
+    if (kelish > new Date()) { showToast(t('pending.arrivalFuture'), 'warning'); return; }
     if (kelish < new Date(r.qabul_vaqt)) {
-      showToast('Kelish vaqti yuborilgan vaqtdan oldin bo\'lishi mumkin emas', 'warning');
+      showToast(t('pending.arrivalBeforeReferral'), 'warning');
       return;
     }
 

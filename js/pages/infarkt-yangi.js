@@ -4,21 +4,21 @@ const InfarktYangiPage = {
   _data: {},
   STEPS: ['Muassasa', 'Bemor', 'Klinik', 'Muolaja'],
 
-  async render() {
+  async render({ preserveDraft = false } = {}) {
     const user = await Auth.getUser();
     const profile = await Profile.getCurrent();
     if (profile?.real_role === 'rahbar') {
-      showToast("Rahbar roli faqat ko'rish huquqiga ega", 'warning');
+      showToast(t('access.readOnlyRole'), 'warning');
       Router.go('dashboard');
       return;
     }
     InfarktYangiPage._profile = profile;
     InfarktYangiPage._saving = false;
-    InfarktYangiPage._step = 0;
+    if (!preserveDraft) InfarktYangiPage._step = 0;
     // Viloyat va muassasa profildan avtomatik to'ladi. Admin/super_admin
     // bo'lsa bo'sh qoladi — ular istalgan joyni tanlashi mumkin.
     const oziniki = profile?.role !== 'admin' && profile?.role !== 'super_admin';
-    InfarktYangiPage._data = {
+    if (!preserveDraft) InfarktYangiPage._data = {
       kt_no: Utils.generateKtNo(profile?.muassasa || ''),
       qabul_vaqt: Utils.formatDateInput(new Date()),
       viloyat:  oziniki ? (profile?.viloyat  || '') : '',
@@ -28,11 +28,11 @@ const InfarktYangiPage = {
 
     // "Qabul kutilmoqda" dan kelgan bo'lsa — shaxsiy ma'lumotlarni to'ldiramiz.
     // Tashxis, ballar va tekshiruvlar KO'CHIRILMAYDI (bu yerda qayta baholanadi).
-    const manba = await InfarktYangiPage._qabulManbasi();
+    const manba = preserveDraft ? InfarktYangiPage._manba : await InfarktYangiPage._qabulManbasi();
 
     document.getElementById('app').innerHTML = Components.renderLayout(
-      'infarkt-yangi', 'Yangi Infarkt Bemori',
-      manba ? `${manba.muassasa} dan kelgan bemorni qabul qilish` : 'Bemor qabul qilish formasi',
+      'infarkt-yangi', t('wizard.newInfarctPatient'),
+      manba ? t('wizard.incomingFromFacility', {facility: I18n.facilityName(manba.muassasa)}) : 'Bemor qabul qilish formasi',
       `<div id="infarkt-form-wrap"></div>`, user
     );
     Components.startClock();
@@ -64,16 +64,17 @@ const InfarktYangiPage = {
     const wrap = document.getElementById('infarkt-form-wrap');
     const sectionIcons = ['building-2', 'user', 'activity', 'pill'];
     const sectionTitles = [
-      'Muassasa ma\'lumotlari',
-      'Bemor ma\'lumotlari',
-      'Klinik ma\'lumotlar',
-      'Muolaja va Shifokor'
+      t('wizard.institutionDetails'),
+      t('wizard.patientDetails'),
+      t('wizard.clinicalDetails'),
+      t('wizard.infarctTreatment')
     ];
+    const stepLabels = ['institution', 'patient', 'clinical', 'treatment'].map(key => t(`wizard.${key}`));
 
     wrap.innerHTML = `
       <div class="max-w-4xl mx-auto animate-fadein pb-20">
         <div class="mb-4 sm:mb-10">
-          ${Components.renderSteps(InfarktYangiPage.STEPS, step)}
+          ${Components.renderSteps(stepLabels, step)}
         </div>
 
         <div class="bg-white rounded-2xl sm:rounded-[32px] shadow-xl sm:shadow-2xl border border-slate-100 overflow-hidden">
@@ -83,12 +84,12 @@ const InfarktYangiPage = {
                 ${icon(sectionIcons[step], 24)}
               </div>
               <div>
-                <p class="text-[10px] font-black text-red-600 uppercase tracking-widest mb-0.5">Bo'lim ${step+1} / 4</p>
+                <p class="text-[10px] font-black text-red-600 uppercase tracking-widest mb-0.5">${t('wizard.section', { current: step + 1, total: 4 })}</p>
                 <h3 class="text-base sm:text-xl font-black text-slate-800 tracking-tight">${sectionTitles[step]}</h3>
               </div>
             </div>
             <div class="hidden sm:block text-right">
-              <div class="text-[10px] font-bold text-slate-400 uppercase mb-1">To'ldirilish darajasi</div>
+              <div class="text-[10px] font-bold text-slate-400 uppercase mb-1">${t('wizard.completion')}</div>
               <div class="w-32 h-1.5 bg-slate-100 rounded-full overflow-hidden">
                 <div class="h-full bg-red-500" style="width: ${(step+1)/4*100}%"></div>
               </div>
@@ -132,7 +133,7 @@ const InfarktYangiPage = {
   },
 
   selectOptions(arr, selected) {
-    return `<option value="">Tanlang...</option>` + arr.map(a => `<option value="${a}" ${selected===a?'selected':''}>${a}</option>`).join('');
+    return `<option value="">${t('select.placeholder')}</option>` + arr.map(a => `<option value="${a}" ${selected===a?'selected':''}>${I18n.translateText(a)}</option>`).join('');
   },
 
   checkboxGroup(name, arr, selectedArr = []) {
@@ -146,7 +147,7 @@ const InfarktYangiPage = {
               <div class="w-5 h-5 rounded border flex items-center justify-center flex-shrink-0 transition-colors ${isSel ? 'bg-red-500 border-red-500 text-white' : 'border-gray-300 bg-white'}">
                 ${isSel ? icon('check', 14) : ''}
               </div>
-              <span class="text-sm">${item}</span>
+              <span class="text-sm">${I18n.translateText(item)}</span>
             </label>
           `;
         }).join('')}
@@ -165,7 +166,7 @@ const InfarktYangiPage = {
               <div class="w-5 h-5 rounded-full border flex items-center justify-center flex-shrink-0 transition-colors ${isSel ? 'bg-red-500 border-red-500 text-white' : 'border-gray-300 bg-white'}">
                 ${isSel ? '<div class="w-2 h-2 bg-white rounded-full"></div>' : ''}
               </div>
-              <span class="text-sm">${item}</span>
+              <span class="text-sm">${I18n.translateText(item)}</span>
             </label>
           `;
         }).join('')}
@@ -259,12 +260,12 @@ const InfarktYangiPage = {
     const d = InfarktYangiPage._data;
     return `
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6">
-        ${this.field('viloyat','Viloyat / Shahar',`<select id="viloyat" class="form-select" onchange="InfarktYangiPage.onViloyatChange(this.value)" ${InfarktYangiPage._profile?.role !== 'admin' && InfarktYangiPage._profile?.role !== 'super_admin' ? 'disabled' : ''}><option value="">Tanlang...</option>
-          ${APP_CONFIG.VILOYATLAR.map(v=>`<option value="${v}" ${d.viloyat===v?'selected':''}>${v}</option>`).join('')}</select>`,true)}
-        ${this.field('muassasa','Muassasa',`<select id="muassasa" class="form-select" onchange="InfarktYangiPage.onMuassasaChange(this.value)" ${this._muassasaQulf() ? 'disabled' : ''}><option value="">Tanlang...</option>${(APP_CONFIG.MUASSASALAR[d.viloyat]||[]).map(m=>`<option value="${m}" ${d.muassasa===m?'selected':''}>${m}</option>`).join('')}<option value="Boshqa" ${d.muassasa==='Boshqa'?'selected':''}>Boshqa</option></select>`,true,
+        ${this.field('viloyat','Viloyat / Shahar',`<select id="viloyat" class="form-select" onchange="InfarktYangiPage.onViloyatChange(this.value)" ${InfarktYangiPage._profile?.role !== 'admin' && InfarktYangiPage._profile?.role !== 'super_admin' ? 'disabled' : ''}><option value="">${t('select.placeholder')}</option>
+          ${APP_CONFIG.VILOYATLAR.map((v,i)=>`<option value="${v}" ${d.viloyat===v?'selected':''}>${I18n.t('region.'+i)}</option>`).join('')}</select>`,true)}
+        ${this.field('muassasa','Muassasa',`<select id="muassasa" class="form-select" onchange="InfarktYangiPage.onMuassasaChange(this.value)" ${this._muassasaQulf() ? 'disabled' : ''}><option value="">${t('select.placeholder')}</option>${(APP_CONFIG.MUASSASALAR[d.viloyat]||[]).map(m=>`<option value="${m}" ${d.muassasa===m?'selected':''}>${I18n.facilityName(m)}</option>`).join('')}<option value="Boshqa" ${d.muassasa==='Boshqa'?'selected':''}>${t('select.other')}</option></select>`,true,
           this._muassasaQulf() ? 'Profilingizdagi ish joyi' : '')}
         <div class="col-span-1 sm:col-span-2" id="boshqa-muassasa-div" style="display:${d.muassasa==='Boshqa'?'block':'none'}">
-          ${this.field('boshqa_muassasa','Boshqa muassasa nomi',`<input id="boshqa_muassasa" class="form-input" value="${d.boshqa_muassasa||''}" placeholder="Muassasa nomini kiriting"/>`,true)}
+          ${this.field('boshqa_muassasa','Boshqa muassasa nomi',`<input id="boshqa_muassasa" class="form-input" value="${d.boshqa_muassasa||''}" placeholder="${t('institution.enterName')}"/>`,true)}
         </div>
         ${this.field('kt_no','Kasallik tarixi №',`<input id="kt_no" class="form-input font-mono bg-gray-50" value="${d.kt_no||''}"/>`,true,'Avtomatik yaratiladi')}
         ${this.field('qabul_vaqt','Bemor qabul qilingan sana va vaqt',`<div class="flex gap-2">
@@ -276,7 +277,7 @@ const InfarktYangiPage = {
             ${this.selectOptions(APP_CONFIG.MUROJAAT_YOLLARI, d.murojaat_yoli||'')}</select>`,true)}
         </div>
         <div class="col-span-1 sm:col-span-2" id="yuborgan-div" style="display:${d.murojaat_yoli==='Boshqa muassasadan'?'block':'none'}">
-          ${this.field('yuborgan_muassasa','Yuborgan muassasa nomi',`<input id="yuborgan_muassasa" class="form-input" value="${d.yuborgan_muassasa||''}" placeholder="Muassasa nomini kiriting"/>`)}
+          ${this.field('yuborgan_muassasa','Yuborgan muassasa nomi',`<input id="yuborgan_muassasa" class="form-input" value="${d.yuborgan_muassasa||''}" placeholder="${t('institution.enterName')}"/>`)}
         </div>
         <div id="tez-yordam-div" style="display:${d.murojaat_yoli==='Tez tibbiy yordam bilan'?'block':'none'}">
           ${this.field('tez_yordam_kelgan_vaqt','Tez yordam yetib keldi (vaqt)',`
@@ -332,9 +333,9 @@ const InfarktYangiPage = {
     const sel = document.getElementById('muassasa');
     if (!sel) return;
     const list = APP_CONFIG.MUASSASALAR[val] || [];
-    sel.innerHTML = `<option value="">Tanlang...</option>` +
-      list.map(m => `<option value="${m}">${m}</option>`).join('') +
-      `<option value="Boshqa">Boshqa</option>`;
+    sel.innerHTML = `<option value="">${t('select.placeholder')}</option>` +
+      list.map(m => `<option value="${m}">${I18n.facilityName(m)}</option>`).join('') +
+      `<option value="Boshqa">${t('select.other')}</option>`;
     InfarktYangiPage.onMuassasaChange('');
   },
 
@@ -344,7 +345,7 @@ const InfarktYangiPage = {
     return `
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6">
         <div class="col-span-1 sm:col-span-2">
-          ${this.field('fio','Bemor F.I.O',`<input id="fio" class="form-input" value="${d.fio||''}" placeholder="Familiya Ism Otasining ismi" oninput="InfarktYangiPage.checkDuplicate(this.value)"/>`,true)}
+          ${this.field('fio','Bemor F.I.O',`<input id="fio" class="form-input" value="${d.fio||''}" placeholder="${t('placeholder.fullName')}" oninput="InfarktYangiPage.checkDuplicate(this.value)"/>`,true)}
           <div id="fio-dup-warn"></div>
         </div>
         ${this.field('tugilgan_sana','Tug\'ilgan sanasi',`<input id="tugilgan_sana" type="date" class="form-input" value="${d.tugilgan_sana||''}"/>`,true)}
@@ -362,8 +363,8 @@ const InfarktYangiPage = {
             </div>
           `,true)}
         </div>
-        ${this.field('vazn','Tana vazni (kg)',`<input id="vazn" type="number" min="2" max="350" step="0.1" class="form-input" placeholder="Masalan: 78" value="${d.vazn||''}" oninput="this.value=this.value.replace(/[^0-9.]/g,'')"/>`,true,'Kilogrammda')}
-        ${this.field('boy','Bo\'y uzunligi (sm)',`<input id="boy" type="number" min="50" max="250" class="form-input" placeholder="Masalan: 172" value="${d.boy||''}"/>`,true,"Santimetrda, butun son (masalan 172) — metrda EMAS")}
+        ${this.field('vazn','Tana vazni (kg)',`<input id="vazn" type="number" min="2" max="350" step="0.1" class="form-input" placeholder="${t('placeholder.weightExample')}" value="${d.vazn||''}" oninput="this.value=this.value.replace(/[^0-9.]/g,'')"/>`,true,'Kilogrammda')}
+        ${this.field('boy','Bo\'y uzunligi (sm)',`<input id="boy" type="number" min="50" max="250" class="form-input" placeholder="${t('placeholder.heightExample')}" value="${d.boy||''}"/>`,true,"Santimetrda, butun son (masalan 172) — metrda EMAS")}
 
         <!-- Doimiy yashash manzili -->
         <div class="col-span-1 sm:col-span-2 mt-2 pt-4 border-t border-dashed border-gray-200">
@@ -371,11 +372,11 @@ const InfarktYangiPage = {
             <div class="flex gap-3">
               <button type="button" onclick="InfarktYangiPage.onFuqarolikChange('O\\'zbekiston')"
                 class="flex-1 py-2.5 rounded-xl font-bold text-sm border-2 transition-all ${(d.fuqarolik||'O\'zbekiston')==='O\'zbekiston' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-slate-600 border-slate-200 hover:border-blue-400'}">
-                🇺🇿 O'zbekiston fuqarosi
+                🇺🇿 ${t('wizard.uzCitizen')}
               </button>
               <button type="button" onclick="InfarktYangiPage.onFuqarolikChange('Chet el')"
                 class="flex-1 py-2.5 rounded-xl font-bold text-sm border-2 transition-all ${d.fuqarolik==='Chet el' ? 'bg-amber-600 text-white border-amber-600' : 'bg-white text-slate-600 border-slate-200 hover:border-amber-400'}">
-                🌍 Chet el fuqarosi
+                🌍 ${t('wizard.foreignCitizen')}
               </button>
             </div>`,true)}
         </div>
@@ -384,8 +385,8 @@ const InfarktYangiPage = {
         <div id="yashash-uz-div" class="col-span-1 sm:col-span-2 ${d.fuqarolik==='Chet el' ? 'hidden' : ''}">
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6">
             ${this.field('yashash_viloyat','Yashash viloyati',`<select id="yashash_viloyat" class="form-select" onchange="InfarktYangiPage.onYashashViloyatChange(this.value)">
-              <option value="">Tanlang...</option>
-              ${APP_CONFIG.VILOYATLAR.map(v=>`<option value="${v}" ${d.yashash_viloyat===v?'selected':''}>${v}</option>`).join('')}
+              <option value="">${t('select.placeholder')}</option>
+              ${APP_CONFIG.VILOYATLAR.map((v,i)=>`<option value="${v}" ${d.yashash_viloyat===v?'selected':''}>${I18n.t('region.'+i)}</option>`).join('')}
             </select>`,true)}
             ${this.field('yashash_tuman','Tuman / shahar',`<select id="yashash_tuman" class="form-select">
               <option value="">${d.yashash_viloyat ? 'Tanlang...' : 'Avval viloyatni tanlang'}</option>
@@ -396,7 +397,7 @@ const InfarktYangiPage = {
 
         <!-- Chet el: davlat -->
         <div id="yashash-chet-div" class="col-span-1 sm:col-span-2 ${d.fuqarolik==='Chet el' ? '' : 'hidden'}">
-          ${this.field('chet_el_davlati','Qaysi davlat fuqarosi',`<input id="chet_el_davlati" class="form-input" value="${d.chet_el_davlati||''}" placeholder="Masalan: Rossiya, Qozog'iston, Tojikiston..."/>`,true)}
+          ${this.field('chet_el_davlati','Qaysi davlat fuqarosi',`<input id="chet_el_davlati" class="form-input" value="${d.chet_el_davlati||''}" placeholder="${t('placeholder.countryExample')}"/>`,true)}
         </div>
       </div>
     `;
@@ -421,7 +422,7 @@ const InfarktYangiPage = {
     const qv = InfarktYangiPage._qabulDate();
     let err = '';
     if (dt > new Date()) err = `${label} kelajakda bo'lishi mumkin emas!`;
-    else if (qv && dt < qv) err = `${label} bemor qabul vaqtidan oldin bo'lishi mumkin emas!`;
+    else if (qv && dt < qv) err = t('wizard.timeBeforeAdmission', {label: I18n.translateText(label)});
     [sanaEl, soatEl].forEach(el => el.classList.toggle('border-red-500', !!err));
     if (err) showToast('⚠️ ' + err, 'error', 4000);
   },
@@ -434,7 +435,7 @@ const InfarktYangiPage = {
     const qv = new Date(`${sanaEl.value}T${soatEl.value}:00+05:00`);
     const kelajak = qv > new Date();
     [sanaEl, soatEl].forEach(el => el.classList.toggle('border-red-500', kelajak));
-    if (kelajak) showToast('⚠️ Qabul vaqti kelajakda bo\'lishi mumkin emas!', 'error', 4000);
+    if (kelajak) showToast(t('validation.admissionFuture'), 'error', 4000);
   },
 
   onFuqarolikChange(val) {
@@ -466,14 +467,14 @@ const InfarktYangiPage = {
     const d = InfarktYangiPage._data;
     return `
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6">
-        ${this.field('aha_bali','AHA (American Heart Association) savolnomasi bali',`<div class="flex gap-2 items-center"><input id="aha_bali" type="number" class="form-input w-full bg-slate-50 cursor-not-allowed" value="${d.aha_bali||''}" placeholder="Kalkulyator orqali to'ldiring" readonly style="pointer-events:none;opacity:0.8"/><button type="button" class="flex-shrink-0 bg-rose-100 text-rose-700 hover:bg-rose-200 px-3 py-2 rounded-lg text-sm font-bold shadow-sm transition-colors border border-rose-200 flex items-center gap-1" onclick="Calculators.openAHA('aha_bali')">🧮 Hisoblash</button></div>`,true)}
+        ${this.field('aha_bali','AHA (American Heart Association) savolnomasi bali',`<div class="flex gap-2 items-center"><input id="aha_bali" type="number" class="form-input w-full bg-slate-50 cursor-not-allowed" value="${d.aha_bali||''}" placeholder="${t('placeholder.useCalculator')}" readonly style="pointer-events:none;opacity:0.8"/><button type="button" class="flex-shrink-0 bg-rose-100 text-rose-700 hover:bg-rose-200 px-3 py-2 rounded-lg text-sm font-bold shadow-sm transition-colors border border-rose-200 flex items-center gap-1" onclick="Calculators.openAHA('aha_bali')">🧮 Hisoblash</button></div>`,true)}
         ${this.field('simptom_vaqt','Simptomlar qachon boshlangan? (soat)',`
           <div class="flex gap-3 items-center">
             <input id="simptom_soat_raw" type="number" min="1" max="999" class="form-input w-32"
-              placeholder="Soat" value="${d._simptom_soat_raw||''}"
+              placeholder="${t('placeholder.hour')}" value="${d._simptom_soat_raw||''}"
               oninput="InfarktYangiPage.onSimptomSoat(this.value)"/>
             <div id="simptom_vaqt_label" class="text-sm font-bold px-3 py-2 rounded-lg ${d.simptom_vaqt ? (d.simptom_vaqt.includes('ko\'p') || d.simptom_vaqt.includes('ortiq') ? 'bg-red-50 text-red-600 border border-red-200' : 'bg-green-50 text-green-700 border border-green-200') : 'text-slate-400'}">
-              ${d.simptom_vaqt || '— soat kiriting'}
+              ${d._simptom_soat_raw ? (Number(d._simptom_soat_raw) > 24 ? t('form.over24Hours') : t('form.hoursCount', { count: d._simptom_soat_raw })) : (d.simptom_vaqt ? I18n.translateText(d.simptom_vaqt) : t('form.enterHours'))}
             </div>
           </div>
           <input id="simptom_vaqt" type="hidden" value="${d.simptom_vaqt||''}"/>
@@ -489,10 +490,10 @@ const InfarktYangiPage = {
           const [sys, dia] = (d.qon_bosimi || '').split('/');
           return `<div class="flex items-center gap-2">
             <input id="qon_sistolik" type="number" min="50" max="300" class="form-input font-mono text-center" placeholder="140"
-              value="${sys || ''}" oninput="this.value=this.value.replace(/[^0-9]/g,'')" title="Sistolik (yuqori)"/>
+              value="${sys || ''}" oninput="this.value=this.value.replace(/[^0-9]/g,'')" title="${t('bp.systolic')}"/>
             <span class="text-slate-400 font-bold text-lg">/</span>
             <input id="qon_diastolik" type="number" min="30" max="200" class="form-input font-mono text-center" placeholder="90"
-              value="${dia || ''}" oninput="this.value=this.value.replace(/[^0-9]/g,'')" title="Diastolik (pastki)"/>
+              value="${dia || ''}" oninput="this.value=this.value.replace(/[^0-9]/g,'')" title="${t('bp.diastolic')}"/>
             <span class="text-xs text-slate-400 whitespace-nowrap">mm Hg</span>
           </div>
           <div class="flex gap-2 mt-1">
@@ -516,7 +517,7 @@ const InfarktYangiPage = {
         <div id="grace-bali-div" class="col-span-1 sm:col-span-2" style="display:${d.infarkt_turi === "O'KS ST elevatsiyasiz (NSTEMI)" ? 'block' : 'none'}">
           ${this.field('grace_bali','GRACE Score (NSTEMI xavf baholash)',`
             <div class="flex gap-2 items-center">
-              <input id="grace_bali" type="number" class="form-input w-full bg-slate-50 cursor-not-allowed" value="${d.grace_bali||''}" placeholder="Kalkulyator orqali to'ldiring" readonly style="pointer-events:none;opacity:0.8"/>
+              <input id="grace_bali" type="number" class="form-input w-full bg-slate-50 cursor-not-allowed" value="${d.grace_bali||''}" placeholder="${t('placeholder.useCalculator')}" readonly style="pointer-events:none;opacity:0.8"/>
               <button type="button" class="flex-shrink-0 bg-indigo-100 text-indigo-700 hover:bg-indigo-200 px-3 py-2 rounded-lg text-sm font-bold shadow-sm transition-colors border border-indigo-200 flex items-center gap-1" onclick="Calculators.openGRACE('grace_bali')">🧮 Hisoblash</button>
             </div>
             <div id="grace-result-box">${d.grace_bali ? Calculators.graceResultBadgeHtml(parseInt(d.grace_bali)) : ''}</div>
@@ -599,13 +600,13 @@ const InfarktYangiPage = {
 
         <div id="otkazilgan-div" style="display:${showOtkazilgan?'block':'none'}">
           ${this.field('otkazilgan_muassasa','O\'tkazilgan muassasa nomi',`<select id="otkazilgan_muassasa" class="form-select" onchange="InfarktYangiPage.onOtkazilganMuassasa(this.value)">
-            <option value="">Muassasani tanlang...</option>
-            ${this.getAllMuassasalar().map(m => `<option value="${m}" ${d.otkazilgan_muassasa===m?'selected':''}>${m}</option>`).join('')}
-            <option value="__boshqa__" ${d.otkazilgan_muassasa==='__boshqa__'?'selected':''}>➕ Boshqa (ro'yxatda yo'q) — qo'lda yozish</option>
+            <option value="">${t('institution.choose')}</option>
+            ${this.getAllMuassasalar().map(m => `<option value="${m}" ${d.otkazilgan_muassasa===m?'selected':''}>${I18n.facilityName(m)}</option>`).join('')}
+            <option value="__boshqa__" ${d.otkazilgan_muassasa==='__boshqa__'?'selected':''}>${t('institution.otherManual')}</option>
           </select>`)}
           <small id="otkaz-hint" class="text-xs text-blue-600 block -mt-2 mb-2"></small>
           <div id="otkazilgan-boshqa-div" style="display:${d.otkazilgan_muassasa==='__boshqa__'?'block':'none'}">
-            ${this.field('otkazilgan_boshqa','Muassasa nomini qo\'lda yozing',`<input id="otkazilgan_boshqa" class="form-input" value="${d.otkazilgan_boshqa||''}" placeholder="Masalan: Toshkent shahar 1-son klinik shifoxonasi"/>`)}
+            ${this.field('otkazilgan_boshqa','Muassasa nomini qo\'lda yozing',`<input id="otkazilgan_boshqa" class="form-input" value="${d.otkazilgan_boshqa||''}" placeholder="${t('institution.enterName')}"/>`)}
           </div>
           ${this.field('otkazish_sana','O\'tkazish sanasi va vaqti',`
             <div class="grid grid-cols-2 gap-3">
@@ -616,7 +617,7 @@ const InfarktYangiPage = {
             </div>`,true,'Qabul sanasidan oldin va kelajakda bo\'lishi mumkin emas')}
         </div>
         <div class="mt-4 border-t border-dashed border-gray-200 pt-4">
-          ${this.field('shifokor_fio','Ushbu formani to\'ldiruvchi shifokor F.I.O',`<input id="shifokor_fio" class="form-input" value="${d.shifokor_fio||''}" placeholder="Familiya Ism Otasining ismi"/>`,true)}
+          ${this.field('shifokor_fio','Ushbu formani to\'ldiruvchi shifokor F.I.O',`<input id="shifokor_fio" class="form-input" value="${d.shifokor_fio||''}" placeholder="${t('placeholder.fullName')}"/>`,true)}
           ${this.field('shifokor_tel','Shifokor telefon raqami',`<input id="shifokor_tel" class="form-input" value="${d.shifokor_tel||''}" placeholder="+998 90 000 00 00" type="tel"/>`,true)}
         </div>
 
@@ -637,7 +638,7 @@ const InfarktYangiPage = {
     const hiddenEl = document.getElementById('simptom_vaqt');
     if (!labelEl || !hiddenEl) return;
     if (!val || isNaN(soat) || soat <= 0) {
-      labelEl.textContent = soat === 0 ? "0 bo'lmaydi — aniq soat kiriting" : '— soat kiriting';
+      labelEl.textContent = t(soat === 0 ? 'form.invalidZeroHours' : 'form.enterHours');
       labelEl.className = 'text-sm font-bold px-3 py-2 rounded-lg ' + (soat === 0 ? 'bg-red-50 text-red-600 border border-red-200' : 'text-slate-400');
       hiddenEl.value = '';
       InfarktYangiPage._data.simptom_vaqt = '';
@@ -653,7 +654,7 @@ const InfarktYangiPage = {
       label = `${soat} soat`;
       isOver = false;
     }
-    labelEl.textContent = label;
+    labelEl.textContent = isOver ? t('form.over24Hours') : t('form.hoursCount', { count: soat });
     labelEl.className = `text-sm font-bold px-3 py-2 rounded-lg border ${isOver ? 'bg-red-50 text-red-600 border-red-200' : 'bg-green-50 text-green-700 border-green-200'}`;
     hiddenEl.value = label;
     InfarktYangiPage._data.simptom_vaqt = label;
@@ -699,12 +700,12 @@ const InfarktYangiPage = {
     const filtered = !!names;
     if (!names) names = InfarktYangiPage.getAllMuassasalar();
     if (current && current !== '__boshqa__' && !names.includes(current)) names = [current, ...names];
-    sel.innerHTML = `<option value="">Muassasani tanlang...</option>` +
-      names.map(m => `<option value="${esc(m)}" ${current === m ? 'selected' : ''}>${esc(m)}</option>`).join('') +
-      `<option value="__boshqa__" ${current === '__boshqa__' ? 'selected' : ''}>➕ Boshqa (ro'yxatda yo'q) — qo'lda yozish</option>`;
+    sel.innerHTML = `<option value="">${t('institution.choose')}</option>` +
+      names.map(m => `<option value="${esc(m)}" ${current === m ? 'selected' : ''}>${esc(I18n.facilityName(m))}</option>`).join('') +
+      `<option value="__boshqa__" ${current === '__boshqa__' ? 'selected' : ''}>${t('institution.otherManual')}</option>`;
     const hint = document.getElementById('otkaz-hint');
     if (hint) hint.textContent = (talab && filtered)
-      ? `Faqat ${talab === 'mskt' ? 'MSKT' : 'angiografiya'} imkoniyati bor ${names.length} ta muassasa ko'rsatilmoqda`
+      ? t('wizard.capableFacilitiesCount', {capability: talab === 'mskt' ? 'MSKT' : t('wizard.angiography'), count: names.length})
       : '';
   },
 
@@ -721,7 +722,7 @@ const InfarktYangiPage = {
           const sel = document.getElementById('muolaja_turi');
           if (sel) sel.value = '';
           InfarktYangiPage.onMuolajaChange('');
-          showToast(`⚠️ ${muassasa} da angiografiya apparati mavjud emas — bu muolajani tanlab bo'lmaydi. "Boshqa muassasaga o'tkazildi — KAG/angiografiya uchun" variantini tanlang.`, 'error', 8000);
+          showToast(t('facility.angiographyUnavailable', { institution: muassasa }), 'error', 8000);
         }
       });
     }
@@ -814,7 +815,8 @@ const InfarktYangiPage = {
     }
 
     // ekg_vaqti_ts: sana + soat dan yig'ish
-    const ekgSana = document.getElementById('ekg_sana')?.value;
+    const ekgSanaEl = document.getElementById('ekg_sana');
+    const ekgSana = ekgSanaEl?.value;
     const ekgSoat = document.getElementById('ekg_soat')?.value;
     if (ekgSana && ekgSoat) {
       InfarktYangiPage._data.ekg_vaqti_ts = new Date(`${ekgSana}T${ekgSoat}:00+05:00`).toISOString();
@@ -823,7 +825,9 @@ const InfarktYangiPage = {
 
     // tlt_vaqt va pci_vaqt: sana + soat dan yig'ish
     for (const [prefix, field] of [['tlt','tlt_vaqt'],['pci','pci_vaqt']]) {
-      const sana = document.getElementById(`${prefix}_sana`)?.value;
+      const sanaEl = document.getElementById(`${prefix}_sana`);
+      if (!sanaEl) continue; // Hidden steps must not erase their saved values.
+      const sana = sanaEl.value;
       const soat = document.getElementById(`${prefix}_soat`)?.value;
       if (sana && soat) {
         InfarktYangiPage._data[field] = `${sana}T${soat}`;
@@ -868,7 +872,7 @@ const InfarktYangiPage = {
     if (bmi >= 30 && !has) {
       arr.push(LABEL);
       d._semizlikAuto = true;
-      showToast(`ℹ️ VMI (BMI) ${bmi.toFixed(1)} — "Semizlik" xavf omili avtomatik belgilandi`, 'success', 5000);
+      showToast(t('validation.bmiRiskSelected', { bmi: bmi.toFixed(1) }), 'success', 5000);
     } else if (bmi < 30 && has && d._semizlikAuto) {
       arr = arr.filter(x => x !== LABEL);
       d._semizlikAuto = false;
@@ -937,8 +941,8 @@ const InfarktYangiPage = {
       valid = false;
       const el = document.getElementById(key) || document.getElementById(key + '-group');
       if (el) el.classList.add('border', 'border-red-500', 'rounded-xl', 'err-red');
-      else if (key === 'jins') showToast('Jinsini tanlang', 'warning');
-      else if (key === 'ekg_natija') showToast('EKG natijasini tanlang', 'warning');
+      else if (key === 'jins') showToast(t('validation.selectGender'), 'warning');
+      else if (key === 'ekg_natija') showToast(t('validation.selectEcg'), 'warning');
       const errEl = document.getElementById('err-'+key);
       if (errEl) { errEl.textContent = msg; errEl.classList.remove('hidden'); }
     }
@@ -954,7 +958,7 @@ const InfarktYangiPage = {
       if (!(this._data.otkazilgan_boshqa || '').trim()) {
         valid = false;
         document.getElementById('otkazilgan_boshqa')?.classList.add('border-red-500', 'err-red');
-        showToast("⚠️ O'tkazilgan muassasa nomini qo'lda yozing!", 'error', 5000);
+        showToast(t('validation.transferInstitution'), 'error', 5000);
       }
     }
     // O'tkazish vaqti — qabuldan oldin va kelajakda bo'lishi mumkin emas
@@ -964,18 +968,18 @@ const InfarktYangiPage = {
       if (this._data.qabul_vaqt && otkDT < this._data.qabul_vaqt.slice(0, 16)) {
         valid = false;
         document.getElementById('otkazish_sana')?.classList.add('border-red-500', 'err-red');
-        showToast("⚠️ O'tkazish vaqti qabul vaqtidan oldin bo'lishi mumkin emas!", 'error', 5000);
+        showToast(t('validation.transferBeforeAdmission'), 'error', 5000);
       } else if (otkDT > nowTk) {
         valid = false;
         document.getElementById('otkazish_sana')?.classList.add('border-red-500', 'err-red');
-        showToast("⚠️ O'tkazish vaqti kelajakda bo'lishi mumkin emas!", 'error', 5000);
+        showToast(t('validation.transferFuture'), 'error', 5000);
       }
     }
     if (!valid) {
       const firstRed = document.querySelector('.err-red');
       if (firstRed) {
         firstRed.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        showToast("⚠️ Qizil belgilangan kataklarni to'ldiring!", 'error', 4000);
+      showToast(t('validation.fillHighlighted'), 'error', 4000);
       }
       InfarktYangiPage._wireRedClear();
     }
@@ -985,14 +989,14 @@ const InfarktYangiPage = {
         valid = false;
         const el = document.getElementById('simptom_soat_raw');
         if (el) el.classList.add('border-red-500');
-        showToast("⚠️ Simptom vaqti 0 bo'lishi mumkin emas — necha soat oldin boshlanganini kiriting!", 'error', 6000);
+        showToast(t('validation.symptomZero'), 'error', 6000);
       }
       const puls = parseInt(this._data.puls);
       if (this._data.puls !== undefined && this._data.puls !== '' && !(puls >= 20 && puls <= 300)) {
         valid = false;
         const el = document.getElementById('puls');
         if (el) el.classList.add('border-red-500');
-        showToast("⚠️ Puls qiymati noreal (20–300 oralig'ida bo'lishi kerak)!", 'error', 6000);
+        showToast(t('validation.pulseUnrealistic'), 'error', 6000);
       }
     }
     // Vazn (kg) va bo'y (sm) — noreal qiymatlar; bo'y metrda kiritilsa xato
@@ -1001,7 +1005,7 @@ const InfarktYangiPage = {
       if (this._data.vazn && !(vaznV >= 2 && vaznV <= 350)) {
         valid = false;
         document.getElementById('vazn')?.classList.add('border-red-500', 'err-red');
-        showToast("⚠️ Tana vazni 2–350 kg oralig'ida bo'lishi kerak!", 'error', 6000);
+        showToast(t('validation.weightRange'), 'error', 6000);
       }
       const boyRaw = String(this._data.boy || '');
       if (boyRaw) {
@@ -1009,11 +1013,11 @@ const InfarktYangiPage = {
         if (boyRaw.includes('.') || boyRaw.includes(',') || boyV < 50) {
           valid = false;
           document.getElementById('boy')?.classList.add('border-red-500', 'err-red');
-          showToast("⚠️ Bo'y SANTIMETRDA, butun son bo'lib kiritilsin (masalan 172) — metrda EMAS!", 'error', 7000);
+          showToast(t('validation.heightCentimetres'), 'error', 7000);
         } else if (boyV > 250) {
           valid = false;
           document.getElementById('boy')?.classList.add('border-red-500', 'err-red');
-          showToast("⚠️ Bo'y 50–250 sm oralig'ida bo'lishi kerak!", 'error', 6000);
+          showToast(t('validation.heightRange'), 'error', 6000);
         }
       }
     }
@@ -1023,7 +1027,7 @@ const InfarktYangiPage = {
         valid = false;
         const el = document.getElementById('fio');
         if (el) { el.classList.add('border-red-500'); el.focus(); }
-        showToast('⚠️ F.I.O harflardan iborat bo\'lishi kerak!', 'error', 5000);
+        showToast(t('validation.nameLetters'), 'error', 5000);
       }
     }
     // Tug'ilgan sana tekshiruvi
@@ -1036,17 +1040,17 @@ const InfarktYangiPage = {
         valid = false;
         const el = document.getElementById('tugilgan_sana');
         if (el) { el.classList.add('border-red-500'); el.focus(); }
-        showToast('⚠️ Tug\'ilgan sana bugun yoki kelajakda bo\'lishi mumkin emas!', 'error', 5000);
+        showToast(t('validation.birthNotPast'), 'error', 5000);
       } else if (age < 1) {
         valid = false;
         const el = document.getElementById('tugilgan_sana');
         if (el) { el.classList.add('border-red-500'); el.focus(); }
-        showToast('⚠️ Bemor yoshi 1 yoshdan kichik bo\'lishi mumkin emas!', 'error', 5000);
+        showToast(t('validation.minimumAge'), 'error', 5000);
       } else if (age > 120) {
         valid = false;
         const el = document.getElementById('tugilgan_sana');
         if (el) { el.classList.add('border-red-500'); el.focus(); }
-        showToast('⚠️ Tug\'ilgan sana noto\'g\'ri kiritilgan!', 'error', 5000);
+        showToast(t('validation.birthInvalid'), 'error', 5000);
       }
     }
     // Qabul vaqti — sana VA soat majburiy
@@ -1057,24 +1061,24 @@ const InfarktYangiPage = {
         if (!sanaEl.value) {
           valid = false;
           sanaEl.classList.add('border-red-500'); sanaEl.focus();
-          showToast('⚠️ Qabul sanasini kiriting!', 'error', 5000);
+          showToast(t('validation.admissionDate'), 'error', 5000);
         } else if (!soatEl.value) {
           valid = false;
           soatEl.classList.add('border-red-500'); soatEl.focus();
-          showToast('⚠️ Qabul soatini kiriting!', 'error', 5000);
+          showToast(t('validation.admissionTime'), 'error', 5000);
         } else {
           const qv = new Date(`${sanaEl.value}T${soatEl.value}:00+05:00`);
           const oneYearAgo = new Date(); oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
           if (qv > new Date()) {
             valid = false;
             sanaEl.classList.add('border-red-500');
-            showToast('⚠️ Qabul vaqti kelajakda bo\'lishi mumkin emas!', 'error', 5000);
+            showToast(t('validation.admissionFuture'), 'error', 5000);
             const errEl = document.getElementById('err-qabul_vaqt');
-            if (errEl) { errEl.textContent = 'Kelajak sana kiritilgan — iltimos to\'g\'irlang'; errEl.classList.remove('hidden'); }
+            if (errEl) { errEl.textContent = t('validation.futureDateCorrection'); errEl.classList.remove('hidden'); }
           } else if (qv < oneYearAgo) {
             valid = false;
             sanaEl.classList.add('border-red-500');
-            showToast('⚠️ Qabul vaqti 1 yildan eski bo\'lishi mumkin emas — sanani tekshiring!', 'error', 6000);
+            showToast(t('validation.admissionTooOld'), 'error', 6000);
           }
         }
       }
@@ -1086,7 +1090,7 @@ const InfarktYangiPage = {
           valid = false;
           if (!tySana) document.getElementById('tez_yordam_kelgan_sana')?.classList.add('border-red-500');
           if (!tySoat) document.getElementById('tez_yordam_kelgan_soat')?.classList.add('border-red-500');
-          showToast("⚠️ Tez yordam yetib kelgan sana VA soatni to'liq kiriting!", 'error', 5000);
+          showToast(t('validation.ambulanceDateTime'), 'error', 5000);
         }
       }
       // Tez yordam yetib kelgan vaqti — kelajakda bo'lmasin va qabul vaqtidan keyin bo'lmasin
@@ -1099,14 +1103,14 @@ const InfarktYangiPage = {
             valid = false;
             document.getElementById('tez_yordam_kelgan_sana')?.classList.add('border-red-500');
             document.getElementById('tez_yordam_kelgan_soat')?.classList.add('border-red-500');
-            showToast('⚠️ Tez yordam vaqti kelajakda bo\'lishi mumkin emas!', 'error', 5000);
+            showToast(t('validation.ambulanceFuture'), 'error', 5000);
           } else if (this._data.qabul_vaqt) {
             const qabulDt = new Date(`${this._data.qabul_vaqt}:00+05:00`);
             if (!isNaN(qabulDt) && tyDt > qabulDt) {
               valid = false;
               document.getElementById('tez_yordam_kelgan_sana')?.classList.add('border-red-500');
               document.getElementById('tez_yordam_kelgan_soat')?.classList.add('border-red-500');
-              showToast('⚠️ Tez yordam yetib kelgan vaqt bemor kasalxonaga yotqizilgan (qabul) vaqtidan keyin bo\'lishi mumkin emas!', 'error', 6000);
+              showToast(t('validation.ambulanceAfterAdmission'), 'error', 6000);
             }
           }
         }
@@ -1119,12 +1123,12 @@ const InfarktYangiPage = {
         valid = false;
         document.getElementById('ekg_sana')?.classList.add('border-red-500');
         document.getElementById('ekg_sana')?.focus();
-        showToast('⚠️ EKG sanasini kiriting!', 'error', 5000);
+        showToast(t('validation.ecgDate'), 'error', 5000);
       } else if (!ekgSoat) {
         valid = false;
         document.getElementById('ekg_soat')?.classList.add('border-red-500');
         document.getElementById('ekg_soat')?.focus();
-        showToast('⚠️ EKG soatini kiriting!', 'error', 5000);
+        showToast(t('validation.ecgTime'), 'error', 5000);
       } else {
         // EKG vaqti qabul vaqtidan oldin yoki kelajakда bo'lmasligi kerak
         const ekgDt = new Date(`${ekgSana}T${ekgSoat}:00+05:00`);
@@ -1132,11 +1136,11 @@ const InfarktYangiPage = {
         if (ekgDt > new Date()) {
           valid = false;
           document.getElementById('ekg_soat')?.classList.add('border-red-500');
-          showToast('⚠️ EKG vaqti kelajakда bo\'lishi mumkin emas!', 'error', 5000);
+          showToast(t('validation.ecgFuture'), 'error', 5000);
         } else if (qv && !isNaN(qv) && ekgDt < qv) {
           valid = false;
           document.getElementById('ekg_soat')?.classList.add('border-red-500');
-          showToast('⚠️ EKG vaqti bemor qabul vaqtidan oldin bo\'lishi mumkin emas!', 'error', 6000);
+          showToast(t('validation.ecgBeforeAdmission'), 'error', 6000);
         }
       }
     }
@@ -1147,7 +1151,7 @@ const InfarktYangiPage = {
         valid = false;
         document.getElementById('puls')?.classList.add('border-red-500');
         document.getElementById('puls')?.focus();
-        showToast('⚠️ Puls 20–300 oralig\'ida bo\'lishi kerak!', 'error', 5000);
+        showToast(t('validation.pulseRange'), 'error', 5000);
       } else {
         // Qon bosimi — sistolik va diastolik alohida tekshiriladi
         const sysEl = document.getElementById('qon_sistolik');
@@ -1157,28 +1161,28 @@ const InfarktYangiPage = {
         if (isNaN(sys) || sys < 50 || sys > 300) {
           valid = false;
           sysEl?.classList.add('border-red-500'); sysEl?.focus();
-          showToast('⚠️ Sistolik bosim 50–300 oralig\'ida bo\'lishi kerak!', 'error', 5000);
+          showToast(t('validation.systolicRange'), 'error', 5000);
         } else if (isNaN(dia) || dia < 30 || dia > 200) {
           valid = false;
           diaEl?.classList.add('border-red-500'); diaEl?.focus();
-          showToast('⚠️ Diastolik bosim 30–200 oralig\'ida bo\'lishi kerak!', 'error', 5000);
+          showToast(t('validation.diastolicRange'), 'error', 5000);
         } else if (dia >= sys) {
           valid = false;
           diaEl?.classList.add('border-red-500'); diaEl?.focus();
-          showToast('⚠️ Diastolik bosim sistolikdan kichik bo\'lishi kerak!', 'error', 5000);
+          showToast(t('validation.diastolicLess'), 'error', 5000);
         }
       }
     }
     if (this._step === 2 && valid) {
       if (!this._data.xavf_omil || this._data.xavf_omil.length === 0) {
         valid = false;
-        showToast('Xavf omillarini belgilang (kamida bittasini)', 'warning');
+        showToast(t('validation.riskFactor'), 'warning');
       }
     }
     if (this._step === 2 && valid && this._data.infarkt_turi === "O'KS ST elevatsiyasiz (NSTEMI)") {
       if (!this._data.grace_bali) {
         valid = false;
-        showToast("⚠️ NSTEMI tashxisi uchun GRACE Score hisoblang!", 'warning');
+        showToast(t('validation.graceRequired'), 'warning');
       }
     }
     // Step 3: vaqt mezonlari validatsiyasi
@@ -1190,7 +1194,7 @@ const InfarktYangiPage = {
           valid = false;
           document.getElementById('shifokor_tel')?.classList.add('border-red-500');
           document.getElementById('shifokor_tel')?.focus();
-          showToast('⚠️ Shifokor telefonini to\'g\'ri kiriting (kamida 7 raqam)!', 'error', 5000);
+          showToast(t('validation.doctorPhone'), 'error', 5000);
         }
       }
     }
@@ -1210,15 +1214,15 @@ const InfarktYangiPage = {
           valid = false;
           document.getElementById('tlt_sana')?.classList.add('border-red-500');
           document.getElementById('tlt_sana')?.focus();
-          showToast('⚠️ TLT sanasini kiriting!', 'error', 5000);
+          showToast(t('validation.tltDate'), 'error', 5000);
         } else if (!soat) {
           valid = false;
           document.getElementById('tlt_soat')?.classList.add('border-red-500');
           document.getElementById('tlt_soat')?.focus();
-          showToast('⚠️ TLT soatini kiriting!', 'error', 5000);
+          showToast(t('validation.tltTime'), 'error', 5000);
         } else {
           valid = false;
-          showToast('⚠️ TLT vaqtini kiriting!', 'error', 5000);
+          showToast(t('validation.tltDateTime'), 'error', 5000);
         }
       } else if (this._data.tlt_vaqt) {
         const tv = new Date(this._data.tlt_vaqt + ':00+05:00');
@@ -1226,12 +1230,12 @@ const InfarktYangiPage = {
           valid = false;
           const el = document.getElementById('tlt_vaqt');
           if (el) { el.classList.add('border-red-500'); el.focus(); }
-          showToast('⚠️ TLT vaqti kelajakda bo\'lishi mumkin emas!', 'error', 5000);
+          showToast(t('validation.tltFuture'), 'error', 5000);
         } else if (qv && tv < qv) {
           valid = false;
           const el = document.getElementById('tlt_vaqt');
           if (el) { el.classList.add('border-red-500'); el.focus(); }
-          showToast('⚠️ TLT vaqti bemor qabul vaqtidan oldin bo\'lishi mumkin emas!', 'error', 5000);
+          showToast(t('validation.tltBeforeAdmission'), 'error', 5000);
         }
       }
 
@@ -1243,26 +1247,26 @@ const InfarktYangiPage = {
           valid = false;
           document.getElementById('pci_sana')?.classList.add('border-red-500');
           document.getElementById('pci_sana')?.focus();
-          showToast('⚠️ PCI/KAG sanasini kiriting!', 'error', 5000);
+          showToast(t('validation.pciDate'), 'error', 5000);
         } else if (!soat) {
           valid = false;
           document.getElementById('pci_soat')?.classList.add('border-red-500');
           document.getElementById('pci_soat')?.focus();
-          showToast('⚠️ PCI/KAG soatini kiriting!', 'error', 5000);
+          showToast(t('validation.pciTime'), 'error', 5000);
         } else {
           valid = false;
-          showToast('⚠️ PCI/Groin vaqtini kiriting!', 'error', 5000);
+          showToast(t('validation.pciDateTime'), 'error', 5000);
         }
       } else if (this._data.pci_vaqt) {
         const pv = new Date(this._data.pci_vaqt + ':00+05:00');
         if (pv > now) {
           valid = false;
           document.getElementById('pci_sana')?.classList.add('border-red-500');
-          showToast('⚠️ PCI vaqti kelajakda bo\'lishi mumkin emas!', 'error', 5000);
+          showToast(t('validation.pciFuture'), 'error', 5000);
         } else if (qv && pv < qv) {
           valid = false;
           document.getElementById('pci_sana')?.classList.add('border-red-500');
-          showToast('⚠️ PCI vaqti bemor qabul vaqtidan oldin bo\'lishi mumkin emas!', 'error', 5000);
+          showToast(t('validation.pciBeforeAdmission'), 'error', 5000);
         }
       }
     }
@@ -1288,7 +1292,7 @@ const InfarktYangiPage = {
     if (InfarktYangiPage._saving) return;
     if (!this.validateStep()) return;
     if (this._data.infarkt_turi === "O'KS ST elevatsiyasiz (NSTEMI)" && !this._data.grace_bali) {
-      showToast("⚠️ NSTEMI tashxisi uchun GRACE Score hisoblang!", 'warning', 5000);
+      showToast(t('validation.graceRequired'), 'warning', 5000);
       return;
     }
     InfarktYangiPage._saving = true;
@@ -1333,7 +1337,7 @@ const InfarktYangiPage = {
       if (DB.muolajaAngioKerak(payload.muolaja_turi)) {
         const imk = await DB.getMuassasaImkoniyat(payload.muassasa).catch(() => null);
         if (imk && imk.angiografiya_bor === false) {
-          showToast(`⚠️ ${payload.muassasa} da angiografiya apparati mavjud emas — bu muolajani saqlab bo'lmaydi!`, 'error', 8000);
+          showToast(t('facility.angiographySaveBlocked', { institution: payload.muassasa }), 'error', 8000);
           setLoading(btn, false);
           InfarktYangiPage._saving = false;
           return;
@@ -1350,24 +1354,23 @@ const InfarktYangiPage = {
         if (dup.otkazilgan && boshqaJoy) {
           // "Qabul kutilmoqda" dan kelgan bo'lsa — shifokor allaqachon tasdiqlagan
           const oldinTasdiq = InfarktYangiPage._manba?.kt_no === dup.row.kt_no;
-          const ok = oldinTasdiq || confirm(`🚑 Bu bemor "${dup.row.muassasa}" dan o'tkazilgan.\n\n` +
-            `${dup.row.fio} · K/T: ${dup.row.kt_no}\n\n` +
-            `Uni "${payload.muassasa}" da qabul qilyapsizmi?\n` +
-            `"OK" — qabul qilib saqlash, "Bekor" — to'xtatish.`);
+          const ok = oldinTasdiq || confirm(t('duplicate.transferConfirm', {
+            from: dup.row.muassasa, name: dup.row.fio, kt: dup.row.kt_no, to: payload.muassasa
+          }));
           if (!ok) { setLoading(btn, false); InfarktYangiPage._saving = false; return; }
           if (!payload.yuborgan_muassasa) payload.yuborgan_muassasa = dup.row.muassasa;
           _qabulQilindi = dup.row;
         } else {
-          showToast(`❌ Bu bemor allaqachon ro'yxatda: ${dup.row.fio} · ${dup.row.muassasa} · K/T: ${dup.row.kt_no}`, 'error', 8000);
+          showToast(t('duplicate.exact', { name: dup.row.fio, institution: dup.row.muassasa, kt: dup.row.kt_no }), 'error', 8000);
           setLoading(btn, false);
           InfarktYangiPage._saving = false;
           return;
         }
       }
       if (dup && !dup.exact) {
-        const ok = confirm(`⚠️ Shubhali dublikat!\n\nShu kuni shu muassasada o'xshash bemor bor:\n` +
-          `${dup.row.fio} · ${dup.turi} registri · K/T: ${dup.row.kt_no}\n\n` +
-          `Bu boshqa bemormi? "OK" — baribir saqlash, "Bekor" — to'xtatish.`);
+        const ok = confirm(t('duplicate.suspectedConfirm', {
+          name: dup.row.fio, registry: I18n.translateText(dup.turi), kt: dup.row.kt_no
+        }));
         if (!ok) { setLoading(btn, false); InfarktYangiPage._saving = false; return; }
       }
 
@@ -1414,7 +1417,7 @@ const InfarktYangiPage = {
           return TransferLog.add(noVaqt).catch(() => {});
         });
       }
-      showToast(isOtk ? `✅ Bemor ${payload.otkazilgan_muassasa || 'boshqa muassasa'}ga o'tkazildi!` : '🎉 Bemor muvaffaqiyatli saqlandi!', 'success');
+      showToast(isOtk ? `✅ ${t('wizard.patientTransferredTo', {facility: I18n.facilityName(payload.otkazilgan_muassasa || t('wizard.otherInstitution'))})}` : '🎉 Bemor muvaffaqiyatli saqlandi!', 'success');
       setTimeout(() => Router.go('dashboard'), 1500);
     } catch(err) {
       showToast(err.message, 'error');

@@ -18,7 +18,7 @@ const MuassasaImkoniyatPage = {
   ],
 
   darajaNomi(k) {
-    return (this.DARAJALAR.find(d => d[0] === k) || [])[1] || '';
+    return I18n.translateText((this.DARAJALAR.find(d => d[0] === k) || [])[1] || '');
   },
 
   async render() {
@@ -27,39 +27,39 @@ const MuassasaImkoniyatPage = {
     if (!isSA) { Router.go('dashboard'); return; }
 
     document.getElementById('app').innerHTML = Components.renderLayout(
-      'muassasa-imkoniyat', 'Muassasa imkoniyati', 'MSKT va Angiografiya mavjudligi — yo\'naltirish filtri uchun',
+      'muassasa-imkoniyat', 'Muassasa imkoniyati', t('pages.capabilitiesSubtitle'),
       `<div id="mi-inner" class="animate-fadein">
         <div class="card mb-4">
           <div class="flex flex-wrap items-center justify-between gap-3">
             <div class="flex flex-wrap items-center gap-2">
               <div class="relative">
-                <input id="mi-search" class="form-input pl-9" style="min-width:260px" placeholder="Muassasa yoki viloyat bo'yicha qidirish..."/>
+                <input id="mi-search" class="form-input pl-9" style="min-width:260px" placeholder="${t('capabilities.search')}"/>
                 <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">${icon('search', 16)}</span>
               </div>
               <select id="mi-filter" class="form-select" style="max-width:220px">
-                <option value="">Barchasi</option>
-                <option value="mskt">Faqat MSKT bor</option>
-                <option value="angio">Faqat Angiografiya bor</option>
-                <option value="none">Hech qaysisi yo'q</option>
-                <option value="registrsiz">📋 Registr yuritmaydi</option>
+                <option value="">${t('common.all')}</option>
+                <option value="mskt">${t('capabilities.onlyMsct')}</option>
+                <option value="angio">${t('capabilities.onlyAngio')}</option>
+                <option value="none">${t('capabilities.neither')}</option>
+                <option value="registrsiz">${t('capabilities.noRegistry')}</option>
               </select>
               <select id="mi-daraja-filter" class="form-select" style="max-width:220px">
-                <option value="">Barcha darajalar</option>
-                <option value="__bosh__">⚠️ Daraja belgilanmagan</option>
-                ${MuassasaImkoniyatPage.DARAJALAR.map(([k, n]) => `<option value="${k}">${n}</option>`).join('')}
+                <option value="">${t('capabilities.allLevels')}</option>
+                <option value="__bosh__">${t('capabilities.levelMissing')}</option>
+                ${MuassasaImkoniyatPage.DARAJALAR.map(([k, n]) => `<option value="${k}">${I18n.translateText(n)}</option>`).join('')}
               </select>
               <select id="mi-holat-filter" class="form-select" style="max-width:200px">
-                <option value="">Faol + yashirilgan</option>
-                <option value="faol">Faqat faollari</option>
-                <option value="yashirin">🚫 Faqat yashirilganlar</option>
+                <option value="">${t('capabilities.activeHidden')}</option>
+                <option value="faol">${t('capabilities.activeOnly')}</option>
+                <option value="yashirin">${t('capabilities.hiddenOnly')}</option>
               </select>
             </div>
             <div class="flex items-center gap-2">
               <button id="mi-add" class="btn btn-secondary flex items-center gap-2">
-                ${icon('plus', 16)} Yangi muassasa
+                ${icon('plus', 16)} ${t('facility.newInstitution')}
               </button>
               <button id="mi-save" class="btn btn-primary flex items-center gap-2" disabled style="opacity:0.5">
-                ${icon('save', 16)} Saqlash
+                ${icon('save', 16)} ${t('common.save')}
               </button>
             </div>
           </div>
@@ -71,17 +71,17 @@ const MuassasaImkoniyatPage = {
               <thead style="position:sticky;top:0;z-index:1">
                 <tr>
                   <th style="width:4%">#</th>
-                  <th style="width:18%">Viloyat</th>
-                  <th>Muassasa</th>
-                  <th style="width:18%">Daraja</th>
+                  <th style="width:18%">${t('common.region')}</th>
+                  <th>${t('common.institution')}</th>
+                  <th style="width:18%">${t('capabilities.levelHeading')}</th>
                   <th style="width:7%;text-align:center">MSKT</th>
-                  <th style="width:9%;text-align:center">Angiografiya</th>
-                  <th style="width:11%;text-align:center" title="Muassasa registrga o'zi bemor kiritadimi. Belgilanmagan bo'lsa — unga yo'naltirilgan bemorlar 'Qabul kutilmoqda' da alohida kuzatuv bo'limida chiqadi.">Registr yuritadi</th>
-                  <th style="width:8%;text-align:center">Amallar</th>
+                  <th style="width:9%;text-align:center">${t('capabilities.angiography')}</th>
+                  <th style="width:11%;text-align:center" title="${t('capabilities.registryTitle')}">${t('facility.registry')}</th>
+                  <th style="width:8%;text-align:center">${t('common.actions')}</th>
                 </tr>
               </thead>
               <tbody id="mi-tbody">
-                <tr><td colspan="8" class="text-center py-10 text-gray-400">Yuklanmoqda...</td></tr>
+                <tr><td colspan="8" class="text-center py-10 text-gray-400">${t('common.loading')}</td></tr>
               </tbody>
             </table>
           </div>
@@ -97,8 +97,8 @@ const MuassasaImkoniyatPage = {
       await this.loadYashiringan();
     } catch (e) {
       document.getElementById('mi-tbody').innerHTML =
-        `<tr><td colspan="8" class="text-center py-10 text-red-500">Xatolik: ${esc(e.message)}<br>
-         <span class="text-xs text-gray-400">muassasa_imkoniyat.sql va muassasa_daraja.sql skriptlari Supabase'da ishga tushirilganini tekshiring</span></td></tr>`;
+        `<tr><td colspan="8" class="text-center py-10 text-red-500">${t('common.errorPrefix', { error: esc(e.message) })}<br>
+         <span class="text-xs text-gray-400">${t('capabilities.sqlHelp')}</span></td></tr>`;
       return;
     }
     this.dirty.clear();
@@ -160,7 +160,7 @@ const MuassasaImkoniyatPage = {
       const btn = document.getElementById('mi-save');
       btn.disabled = false;
       btn.style.opacity = '';
-      btn.innerHTML = `${icon('save', 16)} Saqlash (${this.dirty.size})`;
+      btn.innerHTML = `${icon('save', 16)} ${t('common.save')} (${this.dirty.size})`;
       initIcons();
       this.drawSummary();
     };
@@ -178,7 +178,9 @@ const MuassasaImkoniyatPage = {
       if (!okH) return false;
       const okQ = !q
         || (r.nomi || '').toLowerCase().includes(q)
-        || (r.viloyat || '').toLowerCase().includes(q);
+        || I18n.facilityName(r.nomi).toLowerCase().includes(q)
+        || (r.viloyat || '').toLowerCase().includes(q)
+        || I18n.translateText(r.viloyat || '').toLowerCase().includes(q);
       const okF = f === ''           ? true
                 : f === 'mskt'       ? r.mskt_bor
                 : f === 'angio'      ? r.angiografiya_bor
@@ -199,17 +201,17 @@ const MuassasaImkoniyatPage = {
         return `
           <tr style="${y ? 'background:#fafafa;opacity:.7' : ''}">
             <td class="text-xs text-gray-400">${i + 1}</td>
-            <td class="text-sm text-gray-600">${esc(r.viloyat || '—')}</td>
-            <td class="text-sm font-semibold text-gray-800">${esc(r.nomi)}
-              ${y ? `<span class="badge" style="background:#f1f5f9;color:#64748b;margin-left:6px;font-size:10px">🚫 yashirilgan</span>` : ''}
+            <td class="text-sm text-gray-600">${esc(I18n.translateText(r.viloyat || '—'))}</td>
+            <td class="text-sm font-semibold text-gray-800">${esc(I18n.facilityName(r.nomi))}
+              ${y ? `<span class="badge" style="background:#f1f5f9;color:#64748b;margin-left:6px;font-size:10px">${t('facility.hidden')}</span>` : ''}
             </td>
             <td>
               <select data-id="${r.id}" data-field="daraja"
                       class="form-select !py-1 !text-xs"
                       style="${r.daraja ? '' : 'border-color:#fca5a5;background:#fef2f2'}">
-                <option value="">— belgilanmagan —</option>
+                <option value="">${t('capabilities.notSpecified')}</option>
                 ${this.DARAJALAR.map(([k, n]) =>
-                  `<option value="${k}" ${r.daraja === k ? 'selected' : ''}>${n}</option>`).join('')}
+                  `<option value="${k}" ${r.daraja === k ? 'selected' : ''}>${I18n.translateText(n)}</option>`).join('')}
               </select>
             </td>
             <td style="text-align:center">
@@ -224,24 +226,24 @@ const MuassasaImkoniyatPage = {
             </td>
             <td style="text-align:center;${r.registrga_kiritadi === false ? 'background:#fff7ed' : ''}">
               <input type="checkbox" data-id="${r.id}" data-field="registr"
-                     title="Muassasa registrga o'zi bemor kiritadimi"
+                      title="${t('capabilities.registryShortTitle')}"
                      style="width:18px;height:18px;accent-color:#059669;cursor:pointer"
                      ${r.registrga_kiritadi === false ? '' : 'checked'}>
             </td>
             <td style="text-align:center;white-space:nowrap">
               <button data-act="yashir" data-id="${r.id}" data-yashir="${y ? '0' : '1'}"
-                      title="${y ? 'Formalarga qaytarish' : 'Formalardan yashirish — tarix saqlanadi'}"
+                      title="${y ? t('institution.restoreTitle') : t('institution.hideTitle')}"
                       style="border:none;background:none;cursor:pointer;padding:4px;color:${y ? '#0891b2' : '#94a3b8'}">
                 ${icon(y ? 'eye' : 'eye-off', 16)}
               </button>
               <button data-act="ochir" data-id="${r.id}"
-                      title="Butunlay o'chirish — faqat yozuvi yo'q muassasa"
+                      title="${t('institution.deleteTitle')}"
                       style="border:none;background:none;cursor:pointer;padding:4px;color:#dc2626">
                 ${icon('trash-2', 16)}
               </button>
             </td>
           </tr>`; }).join('')
-      : `<tr><td colspan="8" class="text-center py-10 text-gray-400">Topilmadi</td></tr>`;
+      : `<tr><td colspan="8" class="text-center py-10 text-gray-400">${t('common.noData')}</td></tr>`;
     initIcons();
     this.drawSummary(list.length);
   },
@@ -257,47 +259,46 @@ const MuassasaImkoniyatPage = {
     el.innerHTML = `
       <div style="background:#fff;border-radius:18px;max-width:520px;width:100%;box-shadow:0 24px 60px rgba(0,0,0,.28);overflow:hidden">
         <div style="padding:16px 20px;background:#eff6ff;border-bottom:1px solid #bfdbfe">
-          <div style="font-weight:800;color:#1d4ed8;font-size:15px">➕ Yangi muassasa qo'shish</div>
+          <div style="font-weight:800;color:#1d4ed8;font-size:15px">${t('facility.addHeading')}</div>
           <div style="font-size:12px;color:#1e3a8a;margin-top:3px">
-            Muassasa ham hisobot jadvaliga, ham bemor formalaridagi ochiluvchi
-            ro'yxatga qo'shiladi.
+            ${t('capabilities.addHelp')}
           </div>
         </div>
         <div style="padding:16px 20px;display:flex;flex-direction:column;gap:12px">
           <div>
-            <label class="form-label">Viloyat <span style="color:#dc2626">*</span></label>
+            <label class="form-label">${t('common.region')} <span style="color:#dc2626">*</span></label>
             <select id="mi-a-vil" class="form-select" style="width:100%">
-              <option value="">— tanlang —</option>
-              ${APP_CONFIG.VILOYATLAR.map(v => `<option value="${esc(v)}">${esc(v)}</option>`).join('')}
+              <option value="">— ${t('common.select')} —</option>
+              ${APP_CONFIG.VILOYATLAR.map(v => `<option value="${esc(v)}">${esc(I18n.translateText(v))}</option>`).join('')}
             </select>
           </div>
           <div>
-            <label class="form-label">Muassasa nomi <span style="color:#dc2626">*</span></label>
+            <label class="form-label">${t('facility.nameLabel')} <span style="color:#dc2626">*</span></label>
             <input id="mi-a-nomi" class="form-input" style="width:100%" autocomplete="off"
-                   placeholder="masalan: Chinoz TTB"/>
+                   placeholder="${t('institution.exampleName')}"/>
             <div id="mi-a-ogoh" style="font-size:11px;color:#b45309;margin-top:4px;display:none"></div>
           </div>
           <div>
-            <label class="form-label">Daraja</label>
+            <label class="form-label">${t('capabilities.levelHeading')}</label>
             <select id="mi-a-daraja" class="form-select" style="width:100%">
-              <option value="">— belgilanmagan —</option>
-              ${this.DARAJALAR.map(([k, n]) => `<option value="${k}">${n}</option>`).join('')}
+              <option value="">${t('capabilities.notSpecified')}</option>
+              ${this.DARAJALAR.map(([k, n]) => `<option value="${k}">${I18n.translateText(n)}</option>`).join('')}
             </select>
           </div>
           <div style="display:flex;gap:20px;padding-top:2px">
             <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:13px">
               <input type="checkbox" id="mi-a-mskt" style="width:17px;height:17px;accent-color:#2563eb">
-              MSKT bor
+              ${t('capabilities.msctAvailable')}
             </label>
             <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:13px">
               <input type="checkbox" id="mi-a-angio" style="width:17px;height:17px;accent-color:#7c3aed">
-              Angiografiya bor
+              ${t('capabilities.angioAvailable')}
             </label>
           </div>
         </div>
         <div style="display:flex;justify-content:flex-end;gap:10px;padding:14px 20px;background:#f8fafc;border-top:1px solid #f1f5f9">
-          <button class="btn btn-secondary" id="mi-a-bekor">Bekor</button>
-          <button class="btn btn-primary" id="mi-a-ok">Qo'shish</button>
+          <button class="btn btn-secondary" id="mi-a-bekor">${t('common.cancel')}</button>
+          <button class="btn btn-primary" id="mi-a-ok">${t('common.add')}</button>
         </div>
       </div>`;
     document.body.appendChild(el);
@@ -310,7 +311,7 @@ const MuassasaImkoniyatPage = {
       const q = nomiEl.value.trim().toLowerCase();
       const bor = q && this.rows.find(r => (r.nomi || '').toLowerCase() === q);
       ogoh.style.display = bor ? '' : 'none';
-      if (bor) ogoh.textContent = `⚠️ Bunday muassasa allaqachon bor: ${bor.viloyat || '—'}`;
+      if (bor) ogoh.textContent = t('institution.duplicate', { region: I18n.translateText(bor.viloyat || '—') });
     };
 
     const yop = () => el.remove();
@@ -321,10 +322,10 @@ const MuassasaImkoniyatPage = {
     document.getElementById('mi-a-ok').onclick = async () => {
       const nomi = nomiEl.value.trim();
       const vil  = document.getElementById('mi-a-vil').value;
-      if (!vil)  { showToast('Viloyatni tanlang', 'error'); return; }
-      if (!nomi) { showToast('Muassasa nomini kiriting', 'error'); return; }
+    if (!vil)  { showToast(t('auth.selectRegion'), 'error'); return; }
+    if (!nomi) { showToast(t('institution.enterName'), 'error'); return; }
       const btn = document.getElementById('mi-a-ok');
-      btn.disabled = true; btn.textContent = 'Qo\'shilmoqda...';
+    btn.disabled = true; btn.textContent = t('institution.adding');
       try {
         await DB.muassasaQosh(
           nomi, vil,
@@ -333,11 +334,11 @@ const MuassasaImkoniyatPage = {
           document.getElementById('mi-a-angio').checked
         );
         yop();
-        showToast(`✅ "${nomi}" qo'shildi`, 'success');
+      showToast(t('institution.added', { name: nomi }), 'success');
         await this.qaytaYukla();
       } catch (e) {
-        showToast('Xatolik: ' + muassasaXatoMatni(e), 'error', 8000);
-        btn.disabled = false; btn.textContent = 'Qo\'shish';
+      showToast(t('common.errorPrefix', { error: muassasaXatoMatni(e) }), 'error', 8000);
+      btn.disabled = false; btn.textContent = t('common.add');
       }
     };
   },
@@ -361,10 +362,7 @@ const MuassasaImkoniyatPage = {
   // galochkalar shunda yo'qoladi. Shuning uchun avval so'raladi.
   _dirtyOgoh() {
     if (!this.dirty.size) return true;
-    return confirm(
-      `Saqlanmagan ${this.dirty.size} ta o'zgarish bor.\n\n` +
-      `Davom etilsa ular yo'qoladi. Avval "Saqlash" tugmasini bosing.\n\nBaribir davom etilsinmi?`
-    );
+    return confirm(t('capabilities.unsavedConfirm', { count: this.dirty.size }));
   },
 
   async qaytaYukla() {
@@ -374,7 +372,7 @@ const MuassasaImkoniyatPage = {
     try { MuassasaDB.applyToConfig(await MuassasaDB.getOverrides()); } catch (e) {}
     this.dirty.clear();
     const btn = document.getElementById('mi-save');
-    if (btn) { btn.disabled = true; btn.style.opacity = '0.5'; btn.innerHTML = `${icon('save', 16)} Saqlash`; }
+    if (btn) { btn.disabled = true; btn.style.opacity = '0.5'; btn.innerHTML = `${icon('save', 16)} ${t('common.save')}`; }
     this.draw();
   },
 
@@ -388,30 +386,30 @@ const MuassasaImkoniyatPage = {
     const y = this.rows.filter(r => this.yashirinmi(r)).length;
     const rq = this.rows.filter(r => r.registrga_kiritadi === false).length;
     el.innerHTML =
-      `Jami ${this.rows.length} muassasa · MSKT: ${m} ta · Angiografiya: ${a} ta · Ko'rsatilmoqda: ${n} ta` +
-      (rq ? ` · <span style="color:#b45309">Registr yuritmaydi: ${rq} ta</span>` : '') +
-      (y ? ` · <span style="color:#64748b">Yashirilgan: ${y} ta</span>` : '') +
-      (this.dirty.size ? ` · <b>Saqlanmagan o'zgarish: ${this.dirty.size} ta</b>` : '') +
-      (d ? ` · <span style="color:#b91c1c;font-weight:600">Daraja belgilanmagan: ${d} ta</span>` : '');
+      t('capabilities.summaryBase', { total: this.rows.length, msct: m, angio: a, shown: n }) +
+      (rq ? ` · <span style="color:#b45309">${t('capabilities.summaryNoRegistry', { count: rq })}</span>` : '') +
+      (y ? ` · <span style="color:#64748b">${t('capabilities.summaryHidden', { count: y })}</span>` : '') +
+      (this.dirty.size ? ` · <b>${t('capabilities.summaryUnsaved', { count: this.dirty.size })}</b>` : '') +
+      (d ? ` · <span style="color:#b91c1c;font-weight:600">${t('capabilities.summaryNoLevel', { count: d })}</span>` : '');
   },
 
   async save() {
     if (!this.dirty.size) return;
     const btn = document.getElementById('mi-save');
     btn.disabled = true;
-    btn.textContent = 'Saqlanmoqda...';
+    btn.textContent = t('common.saving');
     try {
       const n = await DB.setMuassasaImkoniyat([...this.dirty.values()]);
       this.dirty.clear();
-      btn.innerHTML = `${icon('save', 16)} Saqlash`;
+      btn.innerHTML = `${icon('save', 16)} ${t('common.save')}`;
       btn.style.opacity = '0.5';
       initIcons();
-      showToast(`✅ ${n} ta muassasa yangilandi`, 'success');
+      showToast(t('institution.updatedCount', { count: n }), 'success');
       this.drawSummary();
     } catch (e) {
-      showToast('Xatolik: ' + e.message, 'error', 6000);
+      showToast(t('common.errorPrefix', { error: e.message }), 'error', 6000);
       btn.disabled = false;
-      btn.innerHTML = `${icon('save', 16)} Saqlash (${this.dirty.size})`;
+      btn.innerHTML = `${icon('save', 16)} ${t('common.save')} (${this.dirty.size})`;
       initIcons();
     }
   }

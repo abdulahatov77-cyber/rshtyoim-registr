@@ -33,5 +33,6 @@ supabase/functions/.deploy
 dist/
 build/
 .vercel/
+release-localization-preview-20260925/
 
 .vercel

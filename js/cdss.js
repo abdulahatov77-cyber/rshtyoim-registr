@@ -765,77 +765,93 @@
       return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
     });
   }
+  function tr(key, fallback, params) {
+    return global.I18n && global.I18n.t ? global.I18n.t(key, params) : fallback;
+  }
+  function display(s) {
+    var raw = String(s == null ? '' : s);
+    if (!global.I18n || !global.I18n.translateText) return raw;
+    var m = raw.match(/^([\d.,]+) ball$/);
+    if (m) return tr('cdss.points', raw, { count: m[1] });
+    m = raw.match(/^([\d.,]+) soat$/);
+    if (m) return tr('cdss.hours', raw, { count: m[1] });
+    m = raw.match(/^(\d+)-sinf$/);
+    if (m) return tr('cdss.class', raw, { count: m[1] });
+    m = raw.match(/^4,5 soatlik oyna o'tgan \(([\d.,]+) soat\)$/);
+    if (m) return tr('cdss.windowExpired', raw, { hours: m[1] });
+    m = raw.match(/^([\d.,]+) daqiqa$/);
+    if (m) return tr('cdss.minutesTarget', raw, { count: m[1] }).replace(/^≤\s*/, '');
+    return global.I18n.translateText(raw);
+  }
 
   /** Klinik baholash bloki (3-bo'lim oxiriga) */
   function baholashHTML(r) {
     var h = '<div class="cdss"><div class="cdss-card">'
-      + '<div class="cdss-hd">🧠 Klinik baholash</div><div class="cdss-body">';
+      + '<div class="cdss-hd">🧠 ' + esc(tr('cdss.assessment', 'Klinik baholash')) + '</div><div class="cdss-body">';
     h += '<div class="cdss-grid">';
     r.ballar.forEach(function (b) {
       var rang = b.band ? b.band.rang : '#9ca3af';
       h += '<div class="cdss-ball" style="border-left-color:' + rang + '">'
-        + '<b>' + esc(b.nom) + '</b><s style="color:' + rang + '">' + esc(b.qiymat) + '</s>'
-        + (b.izoh ? '<i>' + (b.band ? b.band.emoji + ' ' : '') + esc(b.izoh) + '</i>' : '') + '</div>';
+        + '<b>' + esc(display(b.nom)) + '</b><s style="color:' + rang + '">' + esc(display(b.qiymat)) + '</s>'
+        + (b.izoh ? '<i>' + (b.band ? b.band.emoji + ' ' : '') + esc(display(b.izoh)) + '</i>' : '') + '</div>';
     });
     h += '</div>';
     h += '<div class="cdss-xul" style="border-left-color:' + r.daraja.rang + '">'
-      + '<h4 style="color:' + r.daraja.rang + '">' + r.daraja.emoji + ' Umumiy xulosa</h4>';
-    r.xulosa.forEach(function (x) { h += '<p>' + esc(x) + '</p>'; });
+      + '<h4 style="color:' + r.daraja.rang + '">' + r.daraja.emoji + ' ' + esc(tr('cdss.conclusion', 'Umumiy xulosa')) + '</h4>';
+    r.xulosa.forEach(function (x) { h += '<p>' + esc(display(x)) + '</p>'; });
     h += '</div>';
 
     if (r.tavsiya.length) {
-      h += '<div style="margin-top:14px"><div class="cdss-hd" style="border:0;background:none;padding:0 0 4px">Tavsiya</div><ul class="cdss-list">';
-      r.tavsiya.forEach(function (t) { h += '<li' + (t.muhim ? ' class="m"' : '') + '>' + esc(t.matn) + '</li>'; });
+      h += '<div style="margin-top:14px"><div class="cdss-hd" style="border:0;background:none;padding:0 0 4px">' + esc(tr('cdss.recommendation', 'Tavsiya')) + '</div><ul class="cdss-list">';
+      r.tavsiya.forEach(function (t) { h += '<li' + (t.muhim ? ' class="m"' : '') + '>' + esc(display(t.matn)) + '</li>'; });
       h += '</ul></div>';
     }
     ['tlt', 'trombektomiya'].forEach(function (k) {
       var t = r.tosiq[k];
       if (t && t.length) {
-        h += '<div class="cdss-tosiq"><b>' + (k === 'tlt' ? 'Tromboliz' : 'Trombektomiya') + ' uchun to\'siqlar</b><ul>';
-        t.forEach(function (x) { h += '<li>' + esc(x) + '</li>'; });
+        h += '<div class="cdss-tosiq"><b>' + esc(k === 'tlt' ? tr('cdss.thrombolysisBlocks', 'Tromboliz uchun to\'siqlar') : tr('cdss.thrombectomyBlocks', 'Trombektomiya uchun to\'siqlar')) + '</b><ul>';
+        t.forEach(function (x) { h += '<li>' + esc(display(x)) + '</li>'; });
         h += '</ul></div>';
       }
     });
     if (r.doza) {
-      h += '<div class="cdss-doza"><b>💊 Trombolitik dozasi (vazn ' + r.doza.vazn + ' kg)</b>'
-        + '<div>Alteplaza — jami <b>' + r.doza.alteplaza.jami + ' mg</b>: bolus '
-        + r.doza.alteplaza.bolus + ' mg, infuziya ' + r.doza.alteplaza.infuziya + ' mg. <i>'
-        + esc(r.doza.alteplaza.izoh) + '</i></div>'
-        + '<div>Tenekteplaza — <b>' + r.doza.tenekteplaza.jami + ' mg</b>. <i>'
-        + esc(r.doza.tenekteplaza.izoh) + '</i></div>'
-        + '<div style="margin-top:4px;font-size:12px;color:#6b7280">Dozani berishdan oldin mustaqil ravishda ikkinchi shifokor tekshiradi.</div></div>';
+      h += '<div class="cdss-doza"><b>💊 ' + esc(tr('cdss.doseTitle', 'Trombolitik dozasi (vazn ' + r.doza.vazn + ' kg)', { weight: r.doza.vazn })) + '</b>'
+        + '<div>' + esc(tr('cdss.alteplaseDose', '', { total: r.doza.alteplaza.jami, bolus: r.doza.alteplaza.bolus, infusion: r.doza.alteplaza.infuziya })) + ' <i>'
+        + esc(display(r.doza.alteplaza.izoh)) + '</i></div>'
+        + '<div>' + esc(tr('cdss.tenecteplaseDose', '', { total: r.doza.tenekteplaza.jami })) + ' <i>'
+        + esc(display(r.doza.tenekteplaza.izoh)) + '</i></div>'
+        + '<div style="margin-top:4px;font-size:12px;color:#6b7280">' + esc(tr('cdss.secondCheck', 'Dozani berishdan oldin mustaqil ravishda ikkinchi shifokor tekshiradi.')) + '</div></div>';
     }
     if (r.muddat && r.muddat.length) {
-      h += '<div class="cdss-muddat"><b>⏱ Vaqt me\'yorlari (eshikdan)</b><table>';
+      h += '<div class="cdss-muddat"><b>⏱ ' + esc(tr('cdss.timeTargets', 'Vaqt me\'yorlari (eshikdan)')) + '</b><table>';
       r.muddat.forEach(function (m) {
         var rang = m.holat === 'kechikdi' ? '#b91c1c' : m.holat === 'ulguriladi' ? '#15803d' : '#6b7280';
-        h += '<tr><td>' + esc(m.nom) + '</td><td style="text-align:right">≤ ' + m.maqsad + ' daq</td>'
+        h += '<tr><td>' + esc(display(m.nom)) + '</td><td style="text-align:right">' + esc(tr('cdss.minutesTarget', '≤ ' + m.maqsad + ' daq', { count: m.maqsad })) + '</td>'
           + '<td style="text-align:right;color:' + rang + ';font-weight:600">'
-          + (m.qolgan === null ? '—' : m.qolgan >= 0 ? m.qolgan + ' daq qoldi' : Math.abs(m.qolgan) + ' daq kechikdi')
+          + (m.qolgan === null ? '—' : m.qolgan >= 0 ? esc(tr('cdss.minutesLeft', m.qolgan + ' daq qoldi', { count: m.qolgan })) : esc(tr('cdss.minutesLate', Math.abs(m.qolgan) + ' daq kechikdi', { count: Math.abs(m.qolgan) })))
           + '</td></tr>';
       });
       h += '</table></div>';
     }
     if (r.parvarish && r.parvarish.length) {
       h += '<div style="margin-top:14px"><div class="cdss-hd" style="border:0;background:none;padding:0 0 4px">'
-        + 'Asosiy parvarish — barcha bemorlar uchun</div><ul class="cdss-list cdss-parv">';
-      r.parvarish.forEach(function (p) { h += '<li>' + esc(p) + '</li>'; });
+        + esc(tr('cdss.coreCare', 'Asosiy parvarish — barcha bemorlar uchun')) + '</div><ul class="cdss-list cdss-parv">';
+      r.parvarish.forEach(function (p) { h += '<li>' + esc(display(p)) + '</li>'; });
       h += '</ul></div>';
     }
     if (r.profilaktika && r.profilaktika.length) {
       h += '<div style="margin-top:14px"><div class="cdss-hd" style="border:0;background:none;padding:0 0 4px">'
-        + 'Ikkilamchi profilaktika — xavf omillari asosida</div><ul class="cdss-list cdss-parv">';
-      r.profilaktika.forEach(function (p) { h += '<li>' + esc(p) + '</li>'; });
+        + esc(tr('cdss.secondaryPrevention', 'Ikkilamchi profilaktika — xavf omillari asosida')) + '</div><ul class="cdss-list cdss-parv">';
+      r.profilaktika.forEach(function (p) { h += '<li>' + esc(display(p)) + '</li>'; });
       h += '</ul></div>';
     }
-    if (r.marshrut) h += '<div class="cdss-marsh">🚑 ' + esc(r.marshrut.matn) + '</div>';
+    if (r.marshrut) h += '<div class="cdss-marsh">🚑 ' + esc(display(r.marshrut.matn)) + '</div>';
     if (r.ogohlantirish.length) {
       h += '<div class="cdss-warn">';
-      r.ogohlantirish.forEach(function (x) { h += '<div>⚠️ ' + esc(x) + '</div>'; });
+      r.ogohlantirish.forEach(function (x) { h += '<div>⚠️ ' + esc(display(x)) + '</div>'; });
       h += '</div>';
     }
-    h += '<div style="margin-top:12px;font-size:11px;color:#6b7280">Tavsiyalar milliy klinik protokol asosida avtomatik shakllantirildi (CDSS v'
-      + esc(r.versiya) + '). Yakuniy qarorni davolovchi shifokor qabul qiladi.</div>';
+    h += '<div style="margin-top:12px;font-size:11px;color:#6b7280">' + esc(tr('cdss.disclaimer', 'Tavsiyalar milliy klinik protokol asosida avtomatik shakllantirildi (CDSS v' + r.versiya + '). Yakuniy qarorni davolovchi shifokor qabul qiladi.', { version: r.versiya })) + '</div>';
     h += '</div></div></div>';
     return h;
   }

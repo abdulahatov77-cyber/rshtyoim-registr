@@ -85,7 +85,7 @@ const AgePyramid = {
         <g style="cursor:default">
           <!-- Erkak -->
           <g class="pyramid-bar-m" style="opacity:1;transition:opacity .15s;${mClickable?'cursor:pointer':''}" ${mClick}>
-            <title>Erkak ${group}: ${d.mTotal} ta · vafot ${d.mDeath} (${mDP||0}%)${mClickable?' — bosing, ro\'yxatni ko\'rish':''}</title>
+            <title>${t('pyramid.barTooltip', { gender: t('common.male'), group, count: d.mTotal, deaths: d.mDeath, rate: mDP || 0 })}${mClickable ? t('pyramid.clickHint') : ''}</title>
             <rect x="${mBarX}" y="${barY}" width="${mW}" height="${BAR_H}" rx="4" fill="${this.COLOR_MALE}"/>
             ${mDW > 0 ? `<rect x="${mDeathX}" y="${barY}" width="${mDW}" height="${BAR_H}" rx="4" fill="${this.COLOR_DEATH}"/>` : ''}
           </g>
@@ -93,12 +93,12 @@ const AgePyramid = {
           ${d.mTotal > 0 ? `
             <g style="${mClickable?'cursor:pointer':''}" ${mClick}>
               <text x="${mLabelX}" y="${midY - 3}" text-anchor="end" font-size="11" font-weight="700" fill="${mClickable?'#1d4ed8':'#1e293b'}" ${mClickable?'text-decoration="underline"':''}>${d.mTotal}</text>
-              ${mDP ? `<text x="${mLabelX}" y="${midY + 10}" text-anchor="end" font-size="9" fill="#b91c1c">vafot ${mDP}%</text>` : ''}
+              ${mDP ? `<text x="${mLabelX}" y="${midY + 10}" text-anchor="end" font-size="9" fill="#b91c1c">${t('pyramid.deathRate', { rate: mDP })}</text>` : ''}
             </g>
           ` : ''}
           <!-- Ayol -->
           <g class="pyramid-bar-f" style="opacity:1;transition:opacity .15s;${fClickable?'cursor:pointer':''}" ${fClick}>
-            <title>Ayol ${group}: ${d.fTotal} ta · vafot ${d.fDeath} (${fDP||0}%)${fClickable?' — bosing, ro\'yxatni ko\'rish':''}</title>
+            <title>${t('pyramid.barTooltip', { gender: t('common.female'), group, count: d.fTotal, deaths: d.fDeath, rate: fDP || 0 })}${fClickable ? t('pyramid.clickHint') : ''}</title>
             <rect x="${fBarX}" y="${barY}" width="${fW}" height="${BAR_H}" rx="4" fill="${this.COLOR_FEMALE}"/>
             ${fDW > 0 ? `<rect x="${fDeathX}" y="${barY}" width="${fDW}" height="${BAR_H}" rx="4" fill="${this.COLOR_DEATH}"/>` : ''}
           </g>
@@ -106,7 +106,7 @@ const AgePyramid = {
           ${d.fTotal > 0 ? `
             <g style="${fClickable?'cursor:pointer':''}" ${fClick}>
               <text x="${fLabelX}" y="${midY - 3}" text-anchor="start" font-size="11" font-weight="700" fill="${fClickable?'#b91c1c':'#1e293b'}" ${fClickable?'text-decoration="underline"':''}>${d.fTotal}</text>
-              ${fDP ? `<text x="${fLabelX}" y="${midY + 10}" text-anchor="start" font-size="9" fill="#b91c1c">vafot ${fDP}%</text>` : ''}
+              ${fDP ? `<text x="${fLabelX}" y="${midY + 10}" text-anchor="start" font-size="9" fill="#b91c1c">${t('pyramid.deathRate', { rate: fDP })}</text>` : ''}
             </g>
           ` : ''}
           <!-- Yosh label (markaz) -->
@@ -121,29 +121,29 @@ const AgePyramid = {
     const svgH = legY + 20;
 
     const colHeaders = `
-      <text x="${mStart - barAreaW/2}" y="${TOP_PAD - 12}" text-anchor="middle" font-size="11" font-weight="700" fill="#3B82F6" letter-spacing="0.08em">ERKAK</text>
-      <text x="${cx}" y="${TOP_PAD - 12}" text-anchor="middle" font-size="11" font-weight="700" fill="#64748b" letter-spacing="0.08em">YOSH</text>
-      <text x="${fStart + barAreaW/2}" y="${TOP_PAD - 12}" text-anchor="middle" font-size="11" font-weight="700" fill="#EF4444" letter-spacing="0.08em">AYOL</text>
+      <text x="${mStart - barAreaW/2}" y="${TOP_PAD - 12}" text-anchor="middle" font-size="11" font-weight="700" fill="#3B82F6" letter-spacing="0.08em">${t('common.male')}</text>
+      <text x="${cx}" y="${TOP_PAD - 12}" text-anchor="middle" font-size="11" font-weight="700" fill="#64748b" letter-spacing="0.08em">${t('common.age')}</text>
+      <text x="${fStart + barAreaW/2}" y="${TOP_PAD - 12}" text-anchor="middle" font-size="11" font-weight="700" fill="#EF4444" letter-spacing="0.08em">${t('common.female')}</text>
       <line x1="${cx - CENTER_W/2}" y1="${TOP_PAD - 18}" x2="${cx - CENTER_W/2}" y2="${totalH}" stroke="#e2e8f0" stroke-width="0.5"/>
       <line x1="${cx + CENTER_W/2}" y1="${TOP_PAD - 18}" x2="${cx + CENTER_W/2}" y2="${totalH}" stroke="#e2e8f0" stroke-width="0.5"/>
     `;
 
     const header = `
       <text x="${W/2}" y="16" text-anchor="middle" font-size="13" font-weight="800" fill="#0f172a">
-        <tspan fill="${dotColor}">●</tspan><tspan> ${title} — ${(totalCount || totalAll).toLocaleString()} ta bemor</tspan>
+        <tspan fill="${dotColor}">●</tspan><tspan> ${t(registr === 'infarkt' ? 'glossary.infarction' : 'glossary.stroke')} — ${I18n.plural(totalCount || totalAll)}</tspan>
       </text>
       <text x="${W/2}" y="34" text-anchor="middle" font-size="10.5" fill="#64748b">
-        Erkak: ${totalM} ta (${mPct}%) · Ayol: ${totalF} ta (${fPct}%) · Umumiy vafot: ${dPct}%
+        ${t('pyramid.summary', { male: totalM, female: totalF, maleRate: mPct, femaleRate: fPct, deathRate: dPct })}
       </text>
     `;
 
     const legend = `
       <rect x="${W/2 - 115}" y="${legY - 9}" width="11" height="11" rx="2" fill="${this.COLOR_MALE}"/>
-      <text x="${W/2 - 100}" y="${legY}" font-size="10" fill="#475569">Erkak</text>
+      <text x="${W/2 - 100}" y="${legY}" font-size="10" fill="#475569">${t('common.male')}</text>
       <rect x="${W/2 - 50}" y="${legY - 9}" width="11" height="11" rx="2" fill="${this.COLOR_FEMALE}"/>
-      <text x="${W/2 - 35}" y="${legY}" font-size="10" fill="#475569">Ayol</text>
+      <text x="${W/2 - 35}" y="${legY}" font-size="10" fill="#475569">${t('common.female')}</text>
       <rect x="${W/2 + 20}" y="${legY - 9}" width="11" height="11" rx="2" fill="rgba(0,0,0,0.3)"/>
-      <text x="${W/2 + 35}" y="${legY}" font-size="10" fill="#475569">to'q qism — vafot etgan</text>
+      <text x="${W/2 + 35}" y="${legY}" font-size="10" fill="#475569">${t('pyramid.legend')}</text>
     `;
 
     el.innerHTML = `
@@ -172,9 +172,9 @@ const AgePyramid = {
 
   async onBarClick(registr, jinsKey, group, title) {
     const [ageFrom, ageTo] = AgePyramid._ageRangeFor(group);
-    const jinsLabel = jinsKey === 'male' ? 'Erkak' : 'Ayol';
+    const jinsLabel = t(jinsKey === 'male' ? 'common.male' : 'common.female');
     showModal({
-      title: `${title} — ${jinsLabel}, ${group} yosh`,
+      title: t('pyramid.groupTitle', { title: I18n.translateText(title), gender: jinsLabel, group }),
       body: `<div class="flex items-center justify-center py-10">
         <div class="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
       </div>`
@@ -212,7 +212,7 @@ const AgePyramid = {
         </tr>`).join('');
 
       const body = list.length === 0
-        ? `<p class="text-center text-gray-400 py-8">Bu guruhda bemor topilmadi</p>`
+        ? `<p class="text-center text-gray-400 py-8">${t('pyramid.empty')}</p>`
         : `<div class="overflow-x-auto max-h-[60vh] overflow-y-auto">
             <table class="w-full text-sm">
               <thead><tr class="text-left text-gray-500 text-xs uppercase border-b border-gray-200">
@@ -221,9 +221,9 @@ const AgePyramid = {
               <tbody>${rows}</tbody>
             </table>
           </div>
-          <p class="text-xs text-gray-400 mt-3">${list.length} ta bemor</p>`;
+          <p class="text-xs text-gray-400 mt-3">${I18n.plural(list.length)}</p>`;
 
-      showModal({ title: `${title} — ${jinsLabel}, ${group} yosh (${list.length} ta)`, body });
+      showModal({ title: `${t('pyramid.groupTitle', { title: I18n.translateText(title), gender: jinsLabel, group })} (${I18n.formatNumber(list.length)})`, body });
     } catch (err) {
       showModal({ title: 'Xatolik', body: `<p class="text-red-600">${err.message}</p>` });
     }
