@@ -522,21 +522,12 @@ const BemorlarPage = {
     });
 
     // Vaqt kiritilmagan barcha bemorlarni yuklash
-    const fetchAll = async (table, cols) => {
-      let all = [], offset = 0;
-      const sb = getSupabase();
+    const fetchAll = (table, cols) => DB.fetchAllPages(opts => {
       const p = BemorlarPage._profile;
-      while (true) {
-        let q = sb.from(table).select(cols).range(offset, offset + 999);
-        if (p?.role !== 'super_admin' && p?.viloyat) q = q.eq('viloyat', p.viloyat);
-        const { data, error } = await q;
-        if (error || !data || !data.length) break;
-        all = all.concat(data);
-        if (data.length < 1000) break;
-        offset += 1000;
-      }
-      return all;
-    };
+      let q = getSupabase().from(table).select(cols, opts).order('id');
+      if (p?.role !== 'super_admin' && p?.viloyat) q = q.eq('viloyat', p.viloyat);
+      return q;
+    });
 
     const [infRows, insRows] = await Promise.all([
       fetchAll('infarkt_qabul', 'kt_no,fio,muolaja_turi,qabul_vaqt,ekg_vaqti,ekg_vaqti_ts,tlt_vaqt,pci_vaqt,viloyat,status'),

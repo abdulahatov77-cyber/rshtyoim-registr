@@ -3,17 +3,17 @@
     'js/medical-glossary.js?v=1',
     'js/locales.js?v=20260926-i18n-r72',
     'js/calculator-locales.js?v=2',
-    'js/form-locales.js?v=20260926-i18n-r57',
+    'js/form-locales.js?v=20260927-perf-r2',
     'js/cdss-locales.js?v=20260924-i18n-r15',
     'js/i18n.js?v=20260927-perf-r1'
   ];
   // Preserve the proven core execution order. Page modules are loaded by Router.
   const CORE_SCRIPTS = [
     'js/config.js?v=81',
-    'js/supabase.js?v=169',
+    'js/supabase.js?v=170',
     'js/utils.js?v=84',
     'js/components.js?v=81',
-    'js/router.js?v=20260926-i18n-r72',
+    'js/router.js?v=20260927-perf-r2',
     'js/pages/login.js?v=20260926-i18n-r72',
     'js/app.js?v=71'
   ];

@@ -124,6 +124,30 @@ const UserLog = {
 
 // ==================== DATABASE ====================
 const DB = {
+  // Supabase max-rows=1000 cheklovini aylanib o'tadi: birinchi sahifa jami sonni
+  // beradi, qolgan sahifalar ketma-ket emas, parallel so'raladi.
+  // Ikkinchi sahifa jami sonni kutmasdan birga so'raladi (bo'sh chiqsa zarari yo'q).
+  // build(opts) har chaqiruvda yangi so'rov qaytarishi va barqaror tartib (order) berishi kerak.
+  async fetchAllPages(build, pageSize = 1000) {
+    const [first, second] = await Promise.all([
+      build({ count: 'exact' }).range(0, pageSize - 1),
+      build().range(pageSize, 2 * pageSize - 1)
+    ]);
+    if (first.error) throw first.error;
+    const rows = first.data || [];
+    const total = first.count ?? rows.length;
+    if (rows.length < pageSize || total <= pageSize) return rows;
+    const pages = [Promise.resolve(second)];
+    for (let from = 2 * pageSize; from < total; from += pageSize) {
+      pages.push(build().range(from, from + pageSize - 1));
+    }
+    for (const page of await Promise.all(pages)) {
+      if (page.error) throw page.error;
+      rows.push(...(page.data || []));
+    }
+    return rows;
+  },
+
   // Bemorni VA barcha bog'liq (child) yozuvlarini o'chiradi (orphan qolmasin)
   // Kasallik tarixi (K/T) raqamini o'zgartirish — asosiy va barcha bog'liq jadvallarda.
   // MUHIM: bazada UNIQUE (kt_no, muassasa) — raqam turli muassasalarda takrorlanishi mumkin.
@@ -374,6 +398,23 @@ const DB = {
         .filter(r => manzilMos(r.otkazilgan_muassasa))
         .map(r => ({ ...r, _turi: turi }));
     };
+    const qabulYozuvlari = async (t, turi) => {
+      const { data } = await sb.from(t)
+        .select('kt_no,fio,tugilgan_yil,tugilgan_sana,muassasa,qabul_vaqt')
+        .gte('qabul_vaqt', chegara)
+        .limit(5000);
+      return (data || []).map(r => ({ ...r, _turi: turi }));
+    };
+    // Bir-biriga bog'liq bo'lmagan so'rovlar ketma-ket emas, birga yuboriladi
+    // (har ketma-ket bosqich ~0.4-1 s qo'shardi).
+    const qabulPromise = Promise.all([
+      qabulYozuvlari('infarkt_qabul', 'infarkt'),
+      qabulYozuvlari('insult_qabul', 'insult')
+    ]);
+    const muassasalarPromise = DB.getMuassasalarFiltered(null, null);
+    qabulPromise.catch(() => {});
+    muassasalarPromise.catch(() => {});
+
     const [inf, ins] = await Promise.all([
       olish('infarkt_qabul', 'infarkt'),
       olish('insult_qabul', 'insult')
@@ -435,17 +476,7 @@ const DB = {
     const familiya = (fio) => Utils.cyrToLat(String(fio || ''))
       .toLowerCase().split(/[^a-z0-9]+/).filter(Boolean)[0] || '';
 
-    const qabulYozuvlari = async (t, turi) => {
-      const { data } = await sb.from(t)
-        .select('kt_no,fio,tugilgan_yil,tugilgan_sana,muassasa,qabul_vaqt')
-        .gte('qabul_vaqt', chegara)
-        .limit(5000);
-      return (data || []).map(r => ({ ...r, _turi: turi }));
-    };
-    const [qInf, qIns] = await Promise.all([
-      qabulYozuvlari('infarkt_qabul', 'infarkt'),
-      qabulYozuvlari('insult_qabul', 'insult')
-    ]);
+    const [qInf, qIns] = await qabulPromise;
     // Guruh kaliti: tug'ilgan yil + qabul qilgan muassasa. Guruh ichida
     // F.I.O taxminiy solishtiriladi (guruhlar kichik — bir necha yozuv).
     const qabulMap = new Map();
@@ -470,7 +501,7 @@ const DB = {
     // belgilaymiz, qabul.js uni alohida bo'limda ko'rsatadi.
     let manzilHolat = null;   // nomKalit -> registrga_kiritadi (boolean)
     try {
-      const mlist = await DB.getMuassasalarFiltered(null, null);
+      const mlist = await muassasalarPromise;
       if (mlist && mlist.length) {
         manzilHolat = new Map();
         mlist.forEach(m => manzilHolat.set(nomKalit(m.nomi), m.registrga_kiritadi !== false));
@@ -1325,20 +1356,12 @@ const DB = {
   // Viloyat (yoki Muassasa) distribution — RPC orqali
   async getMuassasaStats(viloyat, dateFrom, dateTo) {
     // Supabase 1000-qator cheklovi — batch loop bilan hammasini olamiz
-    const fetchAll = async (table) => {
-      let all = [], from = 0;
-      while (true) {
-        let q = getSupabase().from(table).select('muassasa').eq('viloyat', viloyat);
-        if (dateFrom) q = q.gte('qabul_vaqt', dateFrom);
-        if (dateTo)   q = q.lte('qabul_vaqt', dateTo);
-        const { data, error } = await q.range(from, from + 999);
-        if (error || !data || !data.length) break;
-        all = all.concat(data);
-        if (data.length < 1000) break;
-        from += 1000;
-      }
-      return all;
-    };
+    const fetchAll = table => DB.fetchAllPages(opts => {
+      let q = getSupabase().from(table).select('muassasa', opts).eq('viloyat', viloyat).order('id');
+      if (dateFrom) q = q.gte('qabul_vaqt', dateFrom);
+      if (dateTo)   q = q.lte('qabul_vaqt', dateTo);
+      return q;
+    });
     const [infData, insData] = await Promise.all([fetchAll('infarkt_qabul'), fetchAll('insult_qabul')]);
     const map = {};
     (infData||[]).forEach(r => { if (!map[r.muassasa]) map[r.muassasa] = {inf:0,ins:0}; map[r.muassasa].inf++; });
@@ -1955,17 +1978,8 @@ const Profile = {
     return p?.role === 'super_admin';
   },
   async listAll() {
-    const sb = getSupabase();
-    let all = [], from = 0;
-    while (true) {
-      const { data, error } = await sb.from('profiles').select('*').order('created_at', { ascending: false }).range(from, from + 999);
-      if (error) throw error;
-      if (!data || data.length === 0) break;
-      all = all.concat(data);
-      if (data.length < 1000) break;
-      from += 1000;
-    }
-    return all;
+    return DB.fetchAllPages(opts => getSupabase().from('profiles').select('*', opts)
+      .order('created_at', { ascending: false }).order('id'));
   },
   async setRole(userId, role) {
     const { data, error } = await getSupabase().from('profiles').update({ role }).eq('id', userId).select().single();
@@ -2063,17 +2077,7 @@ const MuassasaDB = {
   async fetchAllRecords() {
     const sb = getSupabase();
     const cols = 'kt_no,fio,tugilgan_yil,viloyat,muassasa,qabul_vaqt,status,otkazilgan_muassasa';
-    const fetchAll = async (table) => {
-      let all = [], from = 0;
-      while (true) {
-        const { data, error } = await sb.from(table).select(cols).range(from, from + 999);
-        if (error || !data) break;
-        all = all.concat(data);
-        if (data.length < 1000) break;
-        from += 1000;
-      }
-      return all;
-    };
+    const fetchAll = table => DB.fetchAllPages(opts => sb.from(table).select(cols, opts).order('id'));
     const [infs, ins] = await Promise.all([
       fetchAll('infarkt_qabul'),
       fetchAll('insult_qabul')

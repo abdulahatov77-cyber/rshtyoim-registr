@@ -6,8 +6,12 @@ const HarakatPage = {
   _viloyat: '',        // '' = barcha viloyat
   _from: '',           // sana dan (YYYY-MM-DD)
   _to: '',             // sana gacha
+  // Minglab kartani birdan chizish sahifani sekinlashtiradi (~90k DOM element).
+  _pageSize: 200,
+  _limit: 200,
 
   async render() {
+    HarakatPage._limit = HarakatPage._pageSize;
     const user = await Auth.getUser();
     document.getElementById('app').innerHTML = Components.renderLayout(
       'harakat', `🚑 ${t('nav.patientMovement')}`, 'Ko\'p muassasaga o\'tgan bemorlar',
@@ -20,23 +24,13 @@ const HarakatPage = {
 
   async _load() {
     try {
-      // Barcha yozuvlarni 1000-qatorlik batch loop bilan olamiz (cheksiz)
-      const fetchAllTransfers = async (table, cols) => {
-        let all = [], from = 0;
-        while (true) {
-          const { data, error } = await getSupabase()
-            .from(table).select(cols)
-            .not('otkazilgan_muassasa', 'is', null)
-            .neq('otkazilgan_muassasa', '')
-            .order('qabul_vaqt', { ascending: false })
-            .range(from, from + 999);
-          if (error || !data || !data.length) break;
-          all = all.concat(data);
-          if (data.length < 1000) break;
-          from += 1000;
-        }
-        return all;
-      };
+      // Barcha yozuvlar: 1000-qatorlik sahifalar parallel yuklanadi
+      const fetchAllTransfers = (table, cols) => DB.fetchAllPages(opts => getSupabase()
+        .from(table).select(cols, opts)
+        .not('otkazilgan_muassasa', 'is', null)
+        .neq('otkazilgan_muassasa', '')
+        .order('qabul_vaqt', { ascending: false })
+        .order('id'));
       const [infData, insData, logRes, angioList] = await Promise.all([
         fetchAllTransfers('infarkt_qabul', 'kt_no,fio,muassasa,viloyat,otkazilgan_muassasa,otkazish_sababi,qabul_vaqt,muolaja_turi,infarkt_turi'),
         fetchAllTransfers('insult_qabul', 'kt_no,fio,muassasa,viloyat,otkazilgan_muassasa,qabul_vaqt,muolaja_turi,mskt,mskt_angiografiya'),
@@ -371,7 +365,7 @@ const HarakatPage = {
            <div style="font-size:48px;margin-bottom:12px">🔍</div>
            <p style="font-size:15px;font-weight:600">Ko'p muassasaga o'tgan bemor topilmadi</p>
          </div>`
-      : list.map(d => {
+      : list.slice(0, HarakatPage._limit).map(d => {
           const p = d.patient;
           const isInf = d.bemor_turi === 'infarkt';
           const chainHtml = d.fullChain.map((m, i) => `
@@ -409,7 +403,10 @@ const HarakatPage = {
                 </div>
               </div>
             </div>`;
-        }).join('');
+        }).join('') + (list.length > HarakatPage._limit ? `
+          <button onclick="HarakatPage._showMore()" style="display:block;width:100%;padding:12px;background:#f1f5f9;border:none;border-radius:12px;cursor:pointer;font-size:13px;font-weight:700;color:#2563eb">
+            ${t('movement.showMore', { count: Math.min(HarakatPage._pageSize, list.length - HarakatPage._limit), shown: HarakatPage._limit, total: list.length })}
+          </button>` : '');
 
     const wrap = document.getElementById('harakat-content');
     if (!wrap) return;
@@ -457,8 +454,8 @@ const HarakatPage = {
                 ${f==='barchasi'?'Barchasi':f==='infarkt'?'❤️ Infarkt':'🧠 Insult'}
               </button>`).join('')}
           </div>
-          <input type="text" placeholder="${t('search.recordOrName')}"
-            value="${HarakatPage._search}"
+          <input type="text" id="harakat-search" placeholder="${t('search.recordOrName')}"
+            value="${esc(HarakatPage._search)}"
             oninput="HarakatPage._setSearch(this.value)"
             style="flex:1;min-width:200px;border:1px solid #e2e8f0;border-radius:10px;padding:8px 14px;font-size:13px;outline:none">
           <button onclick="HarakatPage._load()" style="padding:8px 14px;background:#f1f5f9;border:none;border-radius:10px;cursor:pointer;font-size:12px;font-weight:700;color:#64748b;display:flex;align-items:center;gap:6px">
@@ -482,29 +479,49 @@ const HarakatPage = {
     initIcons();
   },
 
-  _setFilter(f) {
-    HarakatPage._filter = f;
+  // Filtr o'zgarsa ro'yxat yana birinchi sahifadan boshlanadi.
+  _rerender() {
+    HarakatPage._limit = HarakatPage._pageSize;
     HarakatPage._render();
   },
 
+  _showMore() {
+    const y = window.scrollY;
+    HarakatPage._limit += HarakatPage._pageSize;
+    HarakatPage._render();
+    window.scrollTo(0, y);
+  },
+
+  _setFilter(f) {
+    HarakatPage._filter = f;
+    HarakatPage._rerender();
+  },
+
+  // Har harfda butun sahifani qayta chizmaslik uchun kechiktiriladi;
+  // qayta chizilgandan keyin fokus qidiruv maydoniga qaytariladi.
   _setSearch(v) {
     HarakatPage._search = v;
-    HarakatPage._render();
+    clearTimeout(HarakatPage._searchTimer);
+    HarakatPage._searchTimer = setTimeout(() => {
+      HarakatPage._rerender();
+      const input = document.getElementById('harakat-search');
+      if (input) { input.focus(); input.setSelectionRange(input.value.length, input.value.length); }
+    }, 250);
   },
 
   _setViloyat(v) {
     HarakatPage._viloyat = v;
-    HarakatPage._render();
+    HarakatPage._rerender();
   },
 
   _setPeriod(which, v) {
     if (which === 'from') HarakatPage._from = v;
     else HarakatPage._to = v;
-    HarakatPage._render();
+    HarakatPage._rerender();
   },
 
   _clearFilters() {
     HarakatPage._from = ''; HarakatPage._to = ''; HarakatPage._viloyat = '';
-    HarakatPage._render();
+    HarakatPage._rerender();
   }
 };

@@ -133,6 +133,16 @@ const DashboardPage = {
       const emptyPyramid = () => { const r = {}; AGE_GROUPS.forEach(g => { r[g] = { mTotal:0, fTotal:0, mDeath:0, fDeath:0 }; }); return { groups: AGE_GROUPS, data: r }; };
       const emptyDemo = { infarkt:{male:0,female:0,ages:{}}, insult:{male:0,female:0,ages:{}} };
 
+      // BOSQICH 2 so'rovlari ham darhol yuboriladi (bosqich 1 ni kutmaydi),
+      // lekin natijasi bosqich 1 chizilgandan keyin qo'llanadi.
+      const phase2Promise = Promise.allSettled([
+        DB.getRecentPatients(10, ov, om),
+        DB.getDemographics(ov, om),
+        DB.getRiskFactors(ov, om, df, dt),
+        DB.getLongStayPatients(ov, om),
+        DB.getAgeSexPyramid(ov, om)
+      ]);
+
       // BOSQICH 1: Tez yuklanadigan asosiy ma'lumotlar
       const phase1 = await Promise.allSettled([
         DB.getDashboardStats(ov, om, df, dt),
@@ -166,14 +176,8 @@ const DashboardPage = {
       DashboardPage.renderContent(stats, trend, trend12, recent, viloyat, profile, emptyDemo, [], [], null);
       if (window.performance?.mark) performance.mark('dashboard:usable');
 
-      // BOSQICH 2: Og'ir ma'lumotlar fonda yuklanadi
-      const phase2 = await Promise.allSettled([
-        DB.getRecentPatients(10, ov, om),
-        DB.getDemographics(ov, om),
-        DB.getRiskFactors(ov, om, df, dt),
-        DB.getLongStayPatients(ov, om),
-        DB.getAgeSexPyramid(ov, om)
-      ]);
+      // BOSQICH 2: Og'ir ma'lumotlar (allaqachon fonda yuklanmoqda)
+      const phase2 = await phase2Promise;
       if (seq !== DashboardPage._loadSeq) return;
       const val2 = (i, def) => phase2[i].status === 'fulfilled' ? phase2[i].value : def;
       const recentLoaded = val2(0, []);
