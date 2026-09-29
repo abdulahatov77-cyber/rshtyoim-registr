@@ -12,6 +12,9 @@ from pathlib import Path
 
 import openpyxl
 from shapely.geometry import shape, mapping, Point, box
+from shapely.ops import unary_union
+
+from tuman_nomlari import uz_nom
 
 ROOT = Path(__file__).resolve().parent.parent
 DATA = ROOT / 'xaritalar' / 'data'
@@ -72,7 +75,7 @@ def load_tumanlar(geo):
     d = json.loads((DATA / 'uzbekistan_tumanlar.geojson').read_text(encoding='utf-8'))
     by = {k: [] for k in geo}
     for f in d['features']:
-        g = shape(f['geometry']).simplify(0.002, preserve_topology=True).buffer(0)
+        g = shape(f['geometry']).buffer(0)  # manba allaqachon soddalashtirilgan
         if g.is_empty:
             continue
         pt = g.representative_point()
@@ -83,7 +86,7 @@ def load_tumanlar(geo):
                 or max(geo, key=lambda k: geo[k].intersection(g).area)
             if geo[en].intersection(g).area < g.area * 0.3:
                 continue  # hech bir hududga to'g'ri kelmaydi
-        nom = f['properties']['shapeName'].replace(' city', ' shahri')
+        nom = uz_nom(f['properties']['shapeName'])
         by[en].append((nom, g))
     return by
 
@@ -106,6 +109,13 @@ def load_rows():
 def main():
     geo = load_geo()
     tumanlar = load_tumanlar(geo)
+    osm = dict(geo)
+    # Viloyat chegarasi o'z tumanlaridan yig'iladi — shunda ikkala chegara aniq ustma-ust tushadi.
+    # OSM viloyat konturi faqat tumanni hududga biriktirish uchun ishlatiladi.
+    for en, parts in tumanlar.items():
+        u = unary_union([g for _, g in parts]).buffer(0.0005).buffer(-0.0005)
+        assert u.is_valid and not u.is_empty, en
+        geo[en] = u
     davlat = [(f['properties']['nom'], shape(f['geometry'])) for f in json.loads(
         (DATA / 'qoshni_davlatlar.geojson').read_text(encoding='utf-8'))['features']]
     rows = load_rows()
@@ -128,10 +138,11 @@ def main():
             lat, lng = float(r['Latitude']), float(r['Longitude'])
             p = Point(lng, lat)
             # Kichik chegara xatosi uchun ~1 km bufer (soddalashtirish sababli)
-            if not poly.buffer(0.01).contains(p):
+            # Ikki manba chegarasi farq qiladi: nuqta ikkalasidan birining ichida bo'lsa qabul qilinadi.
+            if not (poly.buffer(0.01).contains(p) or osm[en].buffer(0.01).contains(p)):
                 rad.append((nom, r['Muassasa'], f'viloyat chegarasidan tashqarida ({lat}, {lng})'))
                 continue
-            if nom == 'Toshkent' and geo['Tashkent city'].contains(p):
+            if nom == 'Toshkent' and geo['Tashkent city'].contains(p) and osm['Tashkent city'].contains(p):
                 rad.append((nom, r['Muassasa'], 'nuqta Toshkent shahri ichida'))
                 continue
             items.append({
