@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="uz">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>__TITLE__ — angiograf va MSKT</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.9.0/proj4.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/proj4leaflet/1.0.2/proj4leaflet.min.js"></script>
+<style>
+  :root { --bg:#f7f8fa; --panel:#fff; --text:#1d2433; --muted:#6b7385; --line:#e3e6ec;
+          --ang:#d6336c; --both:#7048e8; --mskt:#1c7ed6; }
+  * { box-sizing:border-box; }
+  html, body { margin:0; height:100%; background:var(--bg); color:var(--text);
+               font:14px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  .wrap { display:flex; height:100%; }
+  #map { flex:1; min-height:55vh; background:#eef1f5; }
+  aside { width:340px; background:var(--panel); border-left:1px solid var(--line);
+          display:flex; flex-direction:column; }
+  header { padding:14px 16px; border-bottom:1px solid var(--line); }
+  h1 { font-size:17px; margin:0 0 4px; }
+  .ver { color:var(--muted); font-size:12px; }
+  .filters { display:flex; gap:6px; flex-wrap:wrap; padding:10px 16px; border-bottom:1px solid var(--line); }
+  .filters label { display:flex; align-items:center; gap:6px; padding:5px 10px; border:1px solid var(--line);
+                   border-radius:16px; cursor:pointer; font-size:13px; user-select:none; }
+  .dot { width:11px; height:11px; border-radius:50%; display:inline-block; border:2px solid #fff;
+         box-shadow:0 0 0 1px rgba(0,0,0,.25); }
+  ul { list-style:none; margin:0; padding:0; overflow:auto; flex:1; }
+  li { padding:10px 16px; border-bottom:1px solid var(--line); cursor:pointer; }
+  li:hover { background:#f1f4f9; }
+  li .n { font-weight:600; }
+  li .t { color:var(--muted); font-size:12px; }
+  .tag { display:inline-block; font-size:11px; font-weight:600; padding:1px 6px; border-radius:4px;
+         margin-right:4px; color:#fff; }
+  .tag.a { background:var(--ang); } .tag.m { background:var(--mskt); } .tag.x { background:#868e96; }
+  .empty { padding:16px; color:var(--muted); }
+  @media (max-width: 760px) {
+    .wrap { flex-direction:column; }
+    #map { flex:none; height:58vh; }
+    aside { width:100%; border-left:0; border-top:1px solid var(--line); flex:1; min-height:0; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div id="map"></div>
+  <aside>
+    <header>
+      <h1>__TITLE__</h1>
+      <div class="ver">Angiograf va MSKT mavjud muassasalar · __VERSION__</div>
+    </header>
+    <div class="filters">
+      <label><input type="checkbox" id="f-ang" checked> <span class="dot" style="background:var(--ang)"></span> Angiograf</label>
+      <label><input type="checkbox" id="f-mskt" checked> <span class="dot" style="background:var(--mskt)"></span> MSKT</label>
+      <span class="ver" style="align-self:center"><span class="dot" style="background:var(--both)"></span> ikkalasi</span>
+    </div>
+    <ul id="list"></ul>
+  </aside>
+</div>
+<script>
+const REGION = __REGION__;
+const OTHERS = __OTHERS__;
+const DATA = __DATA__;
+
+// Yandex plitkalari EPSG:3395 (elliptik Merkator) proyeksiyasida.
+const res = []; for (let z = 0; z <= 19; z++) res.push(2 * 20037508.342789 / 256 / Math.pow(2, z));
+const crs = new L.Proj.CRS('EPSG:3395',
+  '+proj=merc +lon_0=0 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs',
+  { resolutions: res, origin: [-20037508.342789, 20037508.342789] });
+
+const map = L.map('map', { crs, zoomControl: true });
+L.tileLayer('https://core-renderer-tiles.maps.yandex.net/tiles?l=map&x={x}&y={y}&z={z}&scale=1&lang=ru_RU', {
+  maxZoom: 18, attribution: '&copy; <a href="https://yandex.ru/maps">Yandex</a> · chegaralar: OSM'
+}).addTo(map);
+
+L.geoJSON(OTHERS, { style: { color: '#9aa3b2', weight: 1, fillColor: '#ffffff', fillOpacity: .55 },
+  interactive: false }).addTo(map);
+const region = L.geoJSON(REGION, { style: { color: '#1d2433', weight: 2.5, fillOpacity: 0 },
+  interactive: false }).addTo(map);
+map.fitBounds(region.getBounds(), { padding: [12, 12] });
+
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const color = m => m.angiograf && m.mskt ? 'var(--both)' : m.angiograf ? 'var(--ang)' : 'var(--mskt)';
+const hex = { 'var(--both)': '#7048e8', 'var(--ang)': '#d6336c', 'var(--mskt)': '#1c7ed6' };
+const tags = m => (m.angiograf ? '<span class="tag a">ANGIOGRAF</span>' : '') +
+  (m.mskt ? '<span class="tag m">MSKT</span>' : '') +
+  (m.trombektomiya ? '<span class="tag x">trombektomiya</span>' : '');
+const popup = m => `<b>${esc(m.name)}</b>${m.muqobil_nom ? '<br><i>' + esc(m.muqobil_nom) + '</i>' : ''}
+  <br>${esc(m.tuman)}${m.address ? '<br>' + esc(m.address) : ''}<br><div style="margin-top:6px">${tags(m)}</div>`;
+
+const markers = DATA.map(m => {
+  const mk = L.circleMarker([m.lat, m.lng], { radius: m.angiograf ? 9 : 7, color: '#fff', weight: 2,
+    fillColor: hex[color(m)], fillOpacity: .95 }).bindPopup(popup(m)).bindTooltip(m.name);
+  return { m, mk };
+});
+
+function render() {
+  const a = document.getElementById('f-ang').checked, s = document.getElementById('f-mskt').checked;
+  const list = document.getElementById('list');
+  list.innerHTML = '';
+  const shown = markers.filter(({ m }) => (a && m.angiograf) || (s && m.mskt));
+  markers.forEach(({ mk }) => map.removeLayer(mk));
+  shown.sort((x, y) => (y.m.angiograf - x.m.angiograf) || x.m.name.localeCompare(y.m.name));
+  shown.forEach(({ m, mk }) => {
+    mk.addTo(map);
+    const li = document.createElement('li');
+    li.innerHTML = `<div class="n"><span class="dot" style="background:${color(m)}"></span> ${esc(m.name)}</div>
+      <div class="t">${esc(m.tuman)}</div><div style="margin-top:4px">${tags(m)}</div>`;
+    li.onclick = () => { map.setView([m.lat, m.lng], 14); mk.openPopup(); };
+    list.appendChild(li);
+  });
+  if (!shown.length) list.innerHTML = '<li class="empty">Tanlangan turdagi muassasa yo‘q</li>';
+}
+document.getElementById('f-ang').onchange = render;
+document.getElementById('f-mskt').onchange = render;
+render();
+</script>
+</body>
+</html>
