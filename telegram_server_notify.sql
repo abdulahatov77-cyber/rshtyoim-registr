@@ -1,4 +1,13 @@
 -- ============================================================
+-- !!! OGOHLANTIRISH — BU FAYLNI SUPABASE'DA QAYTA ISHGA TUSHIRMANG !!!
+-- Jonli notify_telegram_new_patient() funksiyasi SERVER_KEY ni Vault'dan
+-- oladi (security_hardening_2026_08_telegram_vault.sql). Bu fayl esa eski,
+-- ochiq yozilgan kalitni qaytarib qo'yadi va xavfsizlik tuzatishini bekor qiladi.
+-- Faqat tarixiy namuna. O'zgartirish kerak bo'lsa, jonli funksiyani
+-- pg_get_functiondef() orqali olib, joyida tahrirlang.
+-- ============================================================
+
+-- ============================================================
 -- SERVER TOMONDAN TELEGRAM XABAR (2026-07-21)
 -- Bemor infarkt_qabul / insult_qabul jadvaliga INSERT bo'lishi
 -- bilan Postgres trigger Vercel /api/telegram ga so'rov yuboradi.
