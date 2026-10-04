@@ -124,6 +124,15 @@ const DISPLAY_MONTHS = {
 for (const [language, months] of Object.entries(DISPLAY_MONTHS)) {
   months.forEach((month, index) => { I18N_CATALOG[language][`month.short.${index + 1}`] = month; });
 }
+const DISPLAY_FULL_MONTHS = {
+  uz: ['Yanvar', 'Fevral', 'Mart', 'Aprel', 'May', 'Iyun', 'Iyul', 'Avgust', 'Sentabr', 'Oktabr', 'Noyabr', 'Dekabr'],
+  ru: ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'],
+  en: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
+  kk: ['Yanvar', 'Fevral', 'Mart', 'Aprel', 'May', 'Iyun', 'Iyul', 'Avgust', 'Sentabr', 'Oktabr', 'Noyabr', 'Dekabr']
+};
+for (const [language, months] of Object.entries(DISPLAY_FULL_MONTHS)) {
+  months.forEach((month, index) => { I18N_CATALOG[language][`month.full.${index + 1}`] = month; });
+}
 Object.assign(I18N_CATALOG.uz, { 'registry.byRegion': 'Viloyatlar kesimida', 'registry.regionFacilities': '{region} muassasalari' });
 Object.assign(I18N_CATALOG.ru, { 'registry.byRegion': 'По областям', 'registry.regionFacilities': 'Учреждения: {region}' });
 Object.assign(I18N_CATALOG.en, { 'registry.byRegion': 'By region', 'registry.regionFacilities': 'Facilities: {region}' });

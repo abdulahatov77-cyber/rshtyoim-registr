@@ -3,7 +3,7 @@ const PageLoader = {
   _loaded: new Set(['login']),
   _pending: new Map(),
   _pages: {
-    dashboard:            { src: 'js/pages/dashboard.js?v=20260927-perf-r2', deps: ['pd', 'agePyramid', 'charts'] },
+    dashboard:            { src: 'js/pages/dashboard.js?v=20260927-colors-r1', deps: ['pd', 'agePyramid', 'charts', 'treatmentFlow'] },
     'infarkt-yangi':      { src: 'js/pages/infarkt-yangi.js?v=20260926-i18n-r72', deps: ['calculators'] },
     'insult-yangi':       { src: 'js/pages/insult-yangi.js?v=20260926-i18n-r72', deps: ['calculators', 'cdss'] },
     'infarkt-reyestri':   { src: 'js/pages/infarkt-reyestri.js?v=20260926-i18n-r69' },
@@ -20,6 +20,7 @@ const PageLoader = {
     'keng-hisobot':       { src: 'js/pages/keng-hisobot.js?v=20260926-i18n-r72' }
   },
   _deps: {
+    treatmentFlow: () => AssetLoader.script('js/treatment-flow.js?v=20260927-colors-r1'),
     pd: () => AssetLoader.script('js/pd-mask.js?v=20260924-i18n-r1'),
     cdss: () => AssetLoader.script('js/cdss.js?v=20260924-i18n-r12'),
     calculators: () => AssetLoader.script('js/calculators.js?v=20260924-i18n-r12'),
