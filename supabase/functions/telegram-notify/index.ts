@@ -24,6 +24,11 @@ serve(async (req) => {
     } else {
       if (patient.nihss_qabul >= 15)
         kritik = '\n⚠️ <b>DIQQAT: OG\'IR HOLAT! (NIHSS ≥ 15)</b>';
+      const g = parseInt(patient.gcs_bali ?? patient.gcs_qabul);
+      if (g >= 3 && g <= 9)
+        kritik += `\n🔴 <b>GCS ${g}:</b> intubatsiya va sun'iy nafas olish apparatiga ulash tavsiya etiladi, reanimatsiyaga o'tkazing`;
+      else if (g >= 10 && g <= 12)
+        kritik += `\n🟡 <b>GCS ${g}:</b> nafas va ong holatini uzluksiz kuzating, intubatsiyaga tayyor turing`;
     }
 
     const qabul = patient.qabul_vaqt

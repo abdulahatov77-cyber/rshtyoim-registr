@@ -456,7 +456,7 @@ const Calculators = {
   gcsTavsiya(total) {
     const g = parseInt(total);
     if (isNaN(g) || g < 3 || g > 15) return null;
-    if (g <= 8) return {
+    if (g <= 9) return {
       daraja: "Og'ir (chuqur ong buzilishi)",
       matn: "Nafas yo'llari himoyalanmagan — <b>intubatsiya va sun'iy nafas olish apparatiga ulash</b> tavsiya etiladi. Bemorni reanimatsiya bo'limiga o'tkazing.",
       rang: '#b91c1c', fon: '#fef2f2', chegara: '#fecaca', belgi: '🔴'
@@ -640,7 +640,7 @@ const Calculators = {
       input.classList.add('bg-green-100', 'border-green-500', 'text-green-800');
       setTimeout(() => input.classList.remove('bg-green-100', 'border-green-500', 'text-green-800'), 1000);
 
-      // Klinik tavsiyani ko'rsatamiz (GCS ≤ 8 — intubatsiya va h.k.)
+      // Klinik tavsiyani ko'rsatamiz (GCS ≤ 9 — intubatsiya va h.k.)
       this.tavsiyaniYangilash(id, total);
     }
     this.closeModal();

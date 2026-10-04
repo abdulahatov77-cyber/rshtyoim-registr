@@ -1807,6 +1807,12 @@ ${e.line}${kritik}`;
       if (patient.nihss_qabul != null && patient.nihss_qabul >= 15) {
         kritik = `\n${e.warn} <b>DIQQAT: OG'IR HOLAT! (NIHSS = ${patient.nihss_qabul})</b>`;
       }
+      const gcsN = parseInt(gcs);
+      if (gcsN >= 3 && gcsN <= 9) {
+        kritik += `\n🔴 <b>GCS ${gcsN}:</b> intubatsiya va sun'iy nafas olish apparatiga ulash tavsiya etiladi, reanimatsiyaga o'tkazing`;
+      } else if (gcsN >= 10 && gcsN <= 12) {
+        kritik += `\n🟡 <b>GCS ${gcsN}:</b> nafas va ong holatini uzluksiz kuzating, intubatsiyaga tayyor turing`;
+      }
 
       // MSKT Angiografiya va ASPECTS — faqat Ishemik insult + Angiografiya Ha uchun
       const msktDone = Utils.msktDone(patient.mskt);
