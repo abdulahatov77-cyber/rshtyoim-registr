@@ -33,7 +33,7 @@ test('all application routes have lazy page definitions', () => {
     'keng-hisobot'
   ]) assert.match(router, new RegExp(`['\"]?${route}['\"]?\\s*:`));
   assert.match(router, /deps: \['calculators', 'cdss'\]/);
-  assert.match(router, /deps: \['pd', 'agePyramid', 'charts'\]/);
+  assert.match(router, /deps: \['pd', 'agePyramid', 'charts', 'treatmentFlow'\]/);
 });
 
 test('dashboard recent-patient query is column-scoped, not select star', () => {
