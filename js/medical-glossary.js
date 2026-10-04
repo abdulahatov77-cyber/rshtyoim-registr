@@ -1,7 +1,7 @@
 // Canonical UI terminology. Stored database values and clinical formulas never use this file.
 window.MEDICAL_GLOSSARY = Object.freeze({
   stroke:       { uz: 'Insult', ru: 'Инсульт', en: 'Stroke', kk: 'Insult' },
-  infarction:   { uz: 'Miokard infarkti', ru: 'Инфаркт миокарда', en: 'Myocardial infarction', kk: 'Miokard infarktı' },
+  infarction:   { uz: 'Infarkt', ru: 'Инфаркт миокарда', en: 'Myocardial infarction', kk: 'Miokard infarktı' },
   thrombolysis: { uz: 'Trombolizis', ru: 'Тромболизис', en: 'Thrombolysis', kk: 'Trombolizis' },
   thrombectomy:{ uz: 'Mexanik trombektomiya', ru: 'Механическая тромбэктомия', en: 'Mechanical thrombectomy', kk: 'Mexanikalıq trombektomiya' },
   reperfusion:  { uz: 'Reperfuzion terapiya', ru: 'Реперфузионная терапия', en: 'Reperfusion therapy', kk: 'Reperfuziyalıq terapiya' },

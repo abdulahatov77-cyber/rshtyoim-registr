@@ -1,6 +1,6 @@
 (async function bootstrap() {
   const LOCALE_SCRIPTS = [
-    'js/medical-glossary.js?v=1',
+    'js/medical-glossary.js?v=20261004-infarkt',
     'js/locales.js?v=20260927-dashboard-i18n-r1',
     'js/calculator-locales.js?v=2',
     'js/form-locales.js?v=20261004-flow',
