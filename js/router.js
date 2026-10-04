@@ -21,8 +21,8 @@ const PageLoader = {
   },
   _deps: {
     pd: () => AssetLoader.script('js/pd-mask.js?v=20260924-i18n-r1'),
-    cdss: () => AssetLoader.script('js/cdss.js?v=20260924-i18n-r12'),
-    calculators: () => AssetLoader.script('js/calculators.js?v=20260924-i18n-r12'),
+    cdss: () => AssetLoader.script('js/cdss.js?v=20261004-gcs9'),
+    calculators: () => AssetLoader.script('js/calculators.js?v=20261004-gcs9'),
     agePyramid: () => AssetLoader.script('js/agePyramid.js?v=20260924-i18n-r3'),
     charts: () => AssetLoader.charts()
   },
