@@ -1756,6 +1756,8 @@ ${isOtk ? `<b>O'TKAZISH</b>
     const dash = e.dash;
     const shifokor = tesc(patient.shifokor_fio) || dash;
     const shifokorTel = patient.shifokor_tel ? ` · 📞 ${tesc(patient.shifokor_tel)}` : '';
+    const murojaat = tesc(patient.murojaat_yoli) || dash;
+    const yuborgan = patient.yuborgan_muassasa ? ` (${tesc(patient.yuborgan_muassasa)})` : '';
 
     if (type === 'infarkt') {
       const killip = patient.killip || '';
@@ -1792,6 +1794,7 @@ ${e.hosp} <b>Muassasa:</b> ${tesc(patient.muassasa) || dash}
 ${e.doc} <b>Shifokor:</b> ${shifokor}${shifokorTel}
 ${e.clip} <b>K/T No:</b> <code>${tesc(patient.kt_no) || dash}</code>
 ${genderIcon} <b>Bemor:</b> ${tesc(patient.fio) || dash}, ${age} yosh, ${tesc(patient.jins) || dash}
+🚑 <b>Murojaat yo'li:</b> ${murojaat}${yuborgan}
 ${e.red} <b>${tesc(patient.infarkt_turi) || dash}</b>
 ${e.stetho} <b>Killip:</b> ${tesc(killip) || dash}${graceLine}
 ${e.pill} <b>Muolaja:</b> ${tesc(patient.muolaja_turi) || dash}${kagLine}
@@ -1839,6 +1842,7 @@ ${e.hosp} <b>Muassasa:</b> ${tesc(patient.muassasa) || dash}
 ${e.doc} <b>Shifokor:</b> ${shifokor}${shifokorTel}
 ${e.clip} <b>K/T №:</b> <code>${tesc(patient.kt_no) || dash}</code>
 ${genderIcon} <b>Bemor:</b> ${tesc(patient.fio) || dash}, ${age} yosh, ${tesc(patient.jins) || dash}
+🚑 <b>Murojaat yo'li:</b> ${murojaat}${yuborgan}
 ${e.stetho} <b>Insult turi:</b> ${tesc(patient.insult_turi) || dash}
 ${e.chart} <b>NIHSS/GCS:</b> ${nihss} / ${gcs}
 ${e.clip} <b>AHA:</b> ${patient.aha_bali ?? dash}${msktAngioLine}${aspectsLine}

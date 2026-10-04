@@ -41,6 +41,7 @@ serve(async (req) => {
 🏥 <b>Muassasa:</b> ${esc(patient.muassasa) || '—'}
 📋 <b>K/T No:</b> <code>${esc(patient.kt_no) || '—'}</code>
 👤 <b>Bemor:</b> ${esc(patient.fio) || '—'}, ${age} yosh, ${esc(patient.jins) || '—'}
+🚑 <b>Murojaat yo'li:</b> ${esc(patient.murojaat_yoli) || '—'}${patient.yuborgan_muassasa ? ` (${esc(patient.yuborgan_muassasa)})` : ''}
 ${type === 'infarkt' ? `🔴 <b>${esc(patient.infarkt_turi) || '—'}</b>
 🩺 <b>Killip:</b> ${esc(patient.killip) || '—'}` : `🔵 <b>${esc(patient.insult_turi) || '—'}</b>
 📊 <b>NIHSS:</b> ${esc(patient.nihss_qabul ?? '—')} | <b>GCS:</b> ${esc(patient.gcs_qabul ?? '—')}`}

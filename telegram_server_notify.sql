@@ -203,6 +203,9 @@ BEGIN
       || '📋 <b>K/T No:</b> <code>' || tg_esc(coalesce(nullif(j->>'kt_no', ''), '—')) || '</code>' || nl
       || '👤 <b>Bemor:</b> ' || tg_esc(coalesce(nullif(j->>'fio', ''), '—'))
       || ', ' || age || ' yosh, ' || tg_esc(coalesce(nullif(j->>'jins', ''), '—')) || nl
+      || '🚑 <b>Murojaat yo''li:</b> ' || tg_esc(coalesce(nullif(j->>'murojaat_yoli', ''), '—'))
+      || CASE WHEN nullif(j->>'yuborgan_muassasa', '') IS NOT NULL
+              THEN ' (' || tg_esc(j->>'yuborgan_muassasa') || ')' ELSE '' END || nl
       || detail || nl
       || '💊 <b>Muolaja:</b> ' || tg_esc(coalesce(nullif(j->>'muolaja_turi', ''), '—')) || after_muolaja || nl
       || '⏰ <b>Simptom:</b> '  || tg_esc(coalesce(nullif(j->>'simptom_vaqt', ''), '—')) || nl
