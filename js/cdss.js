@@ -307,7 +307,7 @@
     gcsNihss(gcs, nihss, r, ishemik, gemorragik);
 
     /* --- Ong chuqur buzilgan: nafas yo'llari -> KEYIN vizualizatsiya --- */
-    var chuqurOng = gcs !== null && gcs <= 8;
+    var chuqurOng = gcs !== null && gcs <= 9;
     // Ishemik insultda NIHSS ≥20 bo'lsa angiografiya umuman tavsiya etilmaydi —
     // GCS qanday bo'lishidan qat'i nazar.
     var faqatIntubatsiya = ishemik && nihss !== null && nihss >= 20;
@@ -408,7 +408,7 @@
     }
 
     /* --- Kuzatuv darajasi --- */
-    var icu = (gcs !== null && gcs <= 8) || (nihss !== null && nihss >= 16)
+    var icu = (gcs !== null && gcs <= 9) || (nihss !== null && nihss >= 16)
               || gemorragik || r.kodlar.indexOf('TLT_MOS') > -1
               || r.kodlar.indexOf('TROMBEKTOMIYA_MOS') > -1;
     r.tavsiya.push({ matn: icu ? 'Reanimatsiya / insult blokida kuzatuv (ICU)'

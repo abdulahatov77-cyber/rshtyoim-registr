@@ -126,10 +126,10 @@ BEGIN
     gcs_v := coalesce(j->>'gcs_bali', j->>'gcs_qabul', '');
     IF gcs_v ~ '^\d+$' THEN
       g := gcs_v::int;
-      IF g BETWEEN 3 AND 8 THEN
+      IF g BETWEEN 3 AND 9 THEN
         detail := detail || nl || '🔴 <b>GCS ' || g::text || ':</b> intubatsiya va sun''iy nafas olish apparatiga ulash tavsiya etiladi, reanimatsiyaga o''tkazing';
         rean_aytildi := true;
-      ELSIF g BETWEEN 9 AND 12 THEN
+      ELSIF g BETWEEN 10 AND 12 THEN
         detail := detail || nl || '🟡 <b>GCS ' || g::text || ':</b> nafas va ong holatini uzluksiz kuzating, intubatsiyaga tayyor turing';
       END IF;
     END IF;
