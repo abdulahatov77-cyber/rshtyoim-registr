@@ -22,6 +22,12 @@ const DashboardPage = {
   _regionProfile: null,
   _pollTimer: null,
   _loadSeq: 0, // race condition guard
+  _sourceMode: 'percent',
+  _sourceData: null,
+  _sourceSelection: null,
+  _sourceDetail: null,
+  _sourceDetailSeq: 0,
+  _sourceShowAll: false,
 
   async render() {
     if (DashboardPage._pollTimer) { clearInterval(DashboardPage._pollTimer); DashboardPage._pollTimer = null; }
@@ -30,7 +36,7 @@ const DashboardPage = {
     DashboardPage._profile = profile;
     
     document.getElementById('app').innerHTML = Components.renderLayout(
-      'dashboard', 'Bosh sahifa', 'Real-time statistika va monitoring',
+      'dashboard', t('dashboard.title'), t('dashboard.subtitle'),
       `<div id="dashboard-inner" class="animate-fadein">
         <div class="flex items-center justify-center py-32">
           <div class="text-center">
@@ -63,16 +69,15 @@ const DashboardPage = {
         <div class="flex items-start gap-3 min-w-0">
           <div class="text-amber-600 shrink-0 mt-0.5">${icon('building-2', 22)}</div>
           <div class="min-w-0">
-            <div class="font-bold text-amber-900">Ish joyingiz belgilanmagan</div>
+            <div class="font-bold text-amber-900">${t('dashboard.workplaceUnset')}</div>
             <div class="text-sm text-amber-800">
-              Sozlamalarda muassasangizni bir marta tanlang — shundan keyin sizga
-              yuborilgan bemorlar aniq ko'rinadi.
+              ${t('dashboard.chooseWorkplaceHelp')}
             </div>
           </div>
         </div>
         <button class="btn btn-primary flex items-center gap-2 shrink-0"
                 onclick="Router.go('settings')">
-          ${icon('settings', 16)} Sozlamalarga o'tish
+          ${icon('settings', 16)} ${t('dashboard.openSettings')}
         </button>
       </div>`;
     inner.prepend(div);
@@ -113,7 +118,7 @@ const DashboardPage = {
         </div>
         <button class="btn btn-primary flex items-center gap-2 shrink-0"
                 onclick="Router.go('qabul')">
-          ${icon('log-in', 16)} Ro'yxatni ochish
+          ${icon('log-in', 16)} ${t('dashboard.openList')}
         </button>
       </div>`;
     inner.prepend(div);
@@ -122,6 +127,12 @@ const DashboardPage = {
 
   async loadData() {
     const seq = ++DashboardPage._loadSeq;
+    DashboardPage._sourceData = null;
+    DashboardPage._sourceSelection = null;
+    DashboardPage._sourceDetail = null;
+    ++DashboardPage._sourceDetailSeq;
+    const oldSources = document.getElementById('admission-sources-content');
+    if (oldSources) oldSources.innerHTML = DashboardPage.renderAdmissionSources(null);
     try {
       const profile = await Profile.getCurrent();
       if (seq !== DashboardPage._loadSeq) return;
@@ -137,43 +148,39 @@ const DashboardPage = {
       // lekin natijasi bosqich 1 chizilgandan keyin qo'llanadi.
       const phase2Promise = Promise.allSettled([
         DB.getRecentPatients(10, ov, om),
-        DB.getDemographics(ov, om),
-        DB.getRiskFactors(ov, om, df, dt),
+        Promise.resolve(null),
+        Promise.resolve(null),
         DB.getLongStayPatients(ov, om),
-        DB.getAgeSexPyramid(ov, om)
+        Promise.resolve(null),
+        Promise.resolve(null)
       ]);
 
       // BOSQICH 1: Tez yuklanadigan asosiy ma'lumotlar
       const phase1 = await Promise.allSettled([
-        DB.getDashboardStats(ov, om, df, dt),
+        DB.getDashboardStats(ov, om, df, dt, true),
         DB.getTrend30(ov, om),
         DB.getTrend12Month(ov, om),
-        om ? Promise.resolve([]) : (
-          ov ? DB.getMuassasaStats(ov, df, dt) :
-          (profile?.role !== 'super_admin' && profile?.viloyat) ? DB.getMuassasaStats(profile.viloyat, df, dt) :
-          DB.getViloyatStats(ov, df, dt)
-        ),
-        // Aktiv bemorlar sana filtrisiz — doim joriy holat
-        (df || dt) ? DB.getDashboardStats(ov, om, null, null) : Promise.resolve(null),
       ]);
       const val1 = (i, def) => phase1[i].status === 'fulfilled' ? phase1[i].value : def;
-      const stats     = val1(0, {});
+      if (phase1[0].status !== 'fulfilled') throw phase1[0].reason;
+      const snapshot = phase1[0].value;
+      const stats = snapshot.stats;
       const trend     = val1(1, { labels:[], infData:[], insData:[] });
       const trend12   = val1(2, { labels:[], infData:[], insData:[] });
       const recent    = [];
-      const viloyat   = val1(3, []);
-      const statsNow  = val1(4, null); // sana filtrisiz aktiv bemorlar
-      // Aktiv bemorlarni doim joriy holatdan olamiz
-      if (statsNow) {
-        stats.infarktAktiv = statsNow.infarktAktiv;
-        stats.insultAktiv  = statsNow.insultAktiv;
-      }
+      const viloyat = om ? [] : snapshot.regions;
       DashboardPage._recentPatients = recent;
-      DashboardPage._ageSex = { infarkt: emptyPyramid(), insult: emptyPyramid() };
+      DashboardPage._ageSex = snapshot.ageSex;
 
       if (seq !== DashboardPage._loadSeq) return;
       // Sahifani darhol ko'rsatamiz
-      DashboardPage.renderContent(stats, trend, trend12, recent, viloyat, profile, emptyDemo, [], [], null);
+      DashboardPage.renderContent(stats, trend, trend12, recent, viloyat, profile, snapshot.demographics, snapshot.risks, [], null);
+      if (typeof TreatmentFlow !== 'undefined') TreatmentFlow.mount(profile, snapshot, filters => {
+        DashboardPage._viewViloyat=filters.region||undefined;
+        DashboardPage._viewMuassasa=filters.facility||undefined;
+        DashboardPage.setDateFilter(filters.from ? `${filters.from}T00:00:00+05:00` : null,
+          filters.to ? `${filters.to}T23:59:59.999999+05:00` : null,'custom');
+      });
       if (window.performance?.mark) performance.mark('dashboard:usable');
 
       // BOSQICH 2: Og'ir ma'lumotlar (allaqachon fonda yuklanmoqda)
@@ -181,10 +188,10 @@ const DashboardPage = {
       if (seq !== DashboardPage._loadSeq) return;
       const val2 = (i, def) => phase2[i].status === 'fulfilled' ? phase2[i].value : def;
       const recentLoaded = val2(0, []);
-      const demo      = val2(1, emptyDemo);
-      const riskFactors = val2(2, []);
+      const demo = snapshot.demographics;
+      const riskFactors = snapshot.risks;
       const longStay  = val2(3, []);
-      const ageSex    = val2(4, { infarkt: emptyPyramid(), insult: emptyPyramid() });
+      const ageSex = snapshot.ageSex;
       DashboardPage._recentPatients = recentLoaded;
       DashboardPage._ageSex = ageSex;
 
@@ -193,8 +200,14 @@ const DashboardPage = {
 
       // Faqat grafiklar va pastki qismlarni yangilaymiz
       DashboardPage._updateSecondaryContent(stats, demo, riskFactors, longStay, ageSex);
+      const sources = document.getElementById('admission-sources-content');
+      DashboardPage._sourceData = snapshot.sources;
+      if (sources) sources.innerHTML = DashboardPage.renderAdmissionSources(
+        snapshot.sources, false
+      );
 
     } catch (err) {
+      if (seq !== DashboardPage._loadSeq) return;
       const inner = document.getElementById('dashboard-inner');
       if (inner) {
         inner.innerHTML = `
@@ -202,7 +215,7 @@ const DashboardPage = {
             <div class="w-20 h-20 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">${icon('alert-triangle', 40)}</div>
             <h3 class="text-xl font-bold text-gray-900 mb-2">${t('dashboard.loadError')}</h3>
             <p class="text-gray-500 text-sm mb-6">${err.message}</p>
-            <button class="btn btn-primary" onclick="DashboardPage.loadData()">Qayta urinish</button>
+            <button class="btn btn-primary" onclick="DashboardPage.loadData()">${t('dashboard.retry')}</button>
           </div>`;
           initIcons();
       }
@@ -235,13 +248,151 @@ const DashboardPage = {
               <td class="p-4"><span class="px-2.5 py-1 bg-orange-50 text-orange-700 border border-orange-100 rounded-lg text-xs font-black">${I18n.plural(g.bemorlar.length)}</span></td>
               <td class="p-4"><span class="px-2.5 py-1 bg-red-50 text-red-700 border border-red-100 rounded-lg text-xs font-black">${t('dashboard.daysCount', { count: maxDays })}</span></td>
               <td class="p-4"><div class="flex gap-2">${inf>0?`<span class="px-2 py-0.5 bg-red-50 text-red-600 border border-red-100 rounded text-[10px] font-bold">${t('dashboard.infarctCount', { count: inf })}</span>`:''}${ins>0?`<span class="px-2 py-0.5 bg-blue-50 text-blue-600 border border-blue-100 rounded text-[10px] font-bold">${t('dashboard.strokeCount', { count: ins })}</span>`:''}</div></td>
-              <td class="p-4 text-right"><button class="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-[10px] font-bold text-slate-600 hover:bg-slate-100 transition-all" onclick="DashboardPage.showLongStayDetail(${idx})">Ko'rish</button></td>
+              <td class="p-4 text-right"><button class="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-[10px] font-bold text-slate-600 hover:bg-slate-100 transition-all" onclick="DashboardPage.showLongStayDetail(${idx})">${t('dashboard.view')}</button></td>
             </tr>`;
           }).join('');
       // Jami sonini ham yangilaymiz
       const longStayCount = document.getElementById('longstay-count');
       if (longStayCount) longStayCount.textContent = I18n.plural(longStay.reduce((s,g)=>s+g.bemorlar.length,0));
     }
+  },
+
+  renderAdmissionSources(data, failed = false) {
+    if (failed) return `<div role="alert" class="text-sm text-red-600">${t('dashboard.loadError')} <button class="underline font-semibold" onclick="DashboardPage.loadData()">${t('dashboard.retry')}</button></div>`;
+    if (!data) return `<p role="status" class="text-sm text-slate-500">${t('dashboard.loading')}</p>`;
+    if (!data.total) return `<p class="text-sm text-slate-500">${t('dashboard.noData')}</p>`;
+    const number = n => I18n.formatNumber(n);
+    const percentMode = DashboardPage._sourceMode === 'percent';
+    const scale = percentMode ? 100 : Math.max(1, ...data.rows.flatMap(row => [row.infarkt, row.insult]));
+    return `<div class="source-toolbar"><div class="source-switch" role="group" aria-label="${t('dashboard.sourceScale')}">${['count', 'percent'].map(mode => `<button type="button" data-source-mode="${mode}" aria-pressed="${DashboardPage._sourceMode === mode}" onclick="DashboardPage.setSourceMode('${mode}')">${t(mode === 'count' ? 'dashboard.sourceCount' : 'dashboard.sourcePercent')}</button>`).join('')}</div><p>${t(percentMode ? 'dashboard.sourceDenominator' : 'dashboard.sourceSharedScale')}</p></div>
+      <div class="source-panels">${['infarkt', 'insult'].map(disease => {
+        const total = data.rows.reduce((sum, row) => sum + row[disease], 0);
+        return `<article class="source-panel source-${disease}"><h4><span class="source-dot" aria-hidden="true"></span>${t(disease === 'infarkt' ? 'glossary.infarction' : 'glossary.stroke')}</h4><p class="source-total"><strong>${number(total)}</strong><span>${t('dashboard.sourceRecords')}</span></p>
+          ${!total ? `<p class="source-empty">${t('dashboard.noData')}</p>` : ''}
+          <div class="source-bars">${data.rows.map((row, index) => {
+            const count = row[disease];
+            const percent = total ? count / total * 100 : 0;
+            const width = (percentMode ? percent : count) / scale * 100;
+            const selected = DashboardPage._sourceSelection?.disease === disease && DashboardPage._sourceSelection?.index === index;
+            const label = DashboardPage.sourceLabel(row.source);
+            return `<button type="button" class="source-row" data-source-row="${disease}-${index}" aria-pressed="${selected}" aria-controls="source-detail" ${!count ? 'disabled' : ''} onclick="DashboardPage.selectSource('${disease}',${index})" title="${esc(`${label}: ${number(count)} · ${I18n.formatNumber(percent, { maximumFractionDigits: 1 })}% — ${t('dashboard.sourceExplore')}`)}"><span class="source-row-top"><span>${label}</span><span class="source-values"><b>${number(count)}</b><span>${I18n.formatNumber(percent, { maximumFractionDigits: 1 })}%</span></span></span><span class="source-track" aria-hidden="true"><span style="width:${width}%"></span></span><span class="source-tip">${t('dashboard.sourceExplore')} →</span></button>`;
+          }).join('')}</div><div class="source-axis" aria-hidden="true"><span>0${percentMode ? '%' : ''}</span><span>${number(scale / 2)}${percentMode ? '%' : ''}</span><span>${number(scale)}${percentMode ? '%' : ''}</span></div></article>`;
+      }).join('')}</div><p class="source-hint">${t('dashboard.sourceExplore')} · ${t('dashboard.sourceDenominator')}</p><div id="source-detail" aria-live="polite">${DashboardPage.renderSourceDetail()}</div>`;
+  },
+
+  sourceLabel(source) {
+    const keys = ['option.ambulance', 'option.selfReferral', 'option.polyclinicReferral', 'option.otherFacility'];
+    return t(keys[APP_CONFIG.MUROJAAT_YOLLARI.indexOf(source)] || 'dashboard.admissionSourceUnknown');
+  },
+
+  renderSourceFilters(profile) {
+    if (profile?.role !== 'super_admin') return '';
+    const region = DashboardPage._viewViloyat;
+    const facility = DashboardPage._viewMuassasa;
+    const facilities = [...new Set(region ? (APP_CONFIG.MUASSASALAR[region] || []) : Object.values(APP_CONFIG.MUASSASALAR).flat())];
+    if (facility && !facilities.includes(facility)) facilities.push(facility);
+    const option = (value, label, active) => `<option value="${esc(value)}" ${active ? 'selected' : ''}>${esc(label)}</option>`;
+    const year = new Date(Date.now() + 5 * 3600000).getUTCFullYear();
+    const current = DashboardPage._viewDateFrom ? new Date(new Date(DashboardPage._viewDateFrom).getTime() + 5 * 3600000).toISOString().slice(0, DashboardPage._viewDateMode === 'month' ? 7 : 4) : '';
+    const periods = [];
+    for (let y = year; y >= 2024; y--) {
+      periods.push(option(String(y), String(y), current === String(y)));
+      for (let m = 1; m <= 12; m++) {
+        const value = `${y}-${String(m).padStart(2, '0')}`;
+        periods.push(option(value, `${y} · ${t(`month.full.${m}`)}`, current === value));
+      }
+    }
+    return `<div class="source-filters"><label>${t('common.region')}<select id="source-region" onchange="DashboardPage.setViewViloyat(this.value || undefined)">${option('', t('common.all'), !region)}${APP_CONFIG.VILOYATLAR.map(v => option(v, I18n.translateText(v), region === v)).join('')}</select></label><label>${t('common.institution')}<select id="source-facility" onchange="DashboardPage.setSourceFacility(this.value)">${option('', t('common.all'), !facility)}${facilities.map(f => option(f, I18n.translateText(f), facility === f)).join('')}</select></label><label>${t('common.date')}<select id="source-period" onchange="DashboardPage.setSourcePeriod(this.value)">${option('', t('common.all'), !current)}${periods.join('')}</select></label><button type="button" onclick="DashboardPage.resetSourceFilters()">${t('common.clear')}</button></div>`;
+  },
+
+  setSourceFacility(value) {
+    DashboardPage._viewMuassasa = value || undefined;
+    DashboardPage.loadData();
+  },
+
+  setSourcePeriod(value) {
+    if (!value) return DashboardPage.setDateFilter(null, null, null);
+    if (!/^\d{4}(-\d{2})?$/.test(value)) return;
+    const [year, month] = value.split('-').map(Number);
+    const from = new Date(Date.UTC(year, (month || 1) - 1, 1) - 5 * 3600000).toISOString();
+    const to = new Date(Date.UTC(month ? year : year + 1, month || 0, 1) - 5 * 3600000 - 1).toISOString();
+    DashboardPage._viewSelectedYear = year;
+    DashboardPage.setDateFilter(from, to, month ? 'month' : 'year');
+  },
+
+  resetSourceFilters() {
+    DashboardPage._viewViloyat = undefined;
+    DashboardPage._viewMuassasa = undefined;
+    DashboardPage.setDateFilter(null, null, null);
+  },
+
+  refreshSources() {
+    const el = document.getElementById('admission-sources-content');
+    if (el) el.innerHTML = DashboardPage.renderAdmissionSources(DashboardPage._sourceData);
+  },
+
+  setSourceMode(mode) {
+    if (!['count', 'percent'].includes(mode)) return;
+    DashboardPage._sourceMode = mode;
+    DashboardPage.refreshSources();
+    document.querySelector(`[data-source-mode="${mode}"]`)?.focus({ preventScroll: true });
+  },
+
+  async selectSource(disease, index) {
+    const row = DashboardPage._sourceData?.rows[index];
+    if (!row || !['infarkt', 'insult'].includes(disease) || !row[disease]) return;
+    const seq = ++DashboardPage._sourceDetailSeq;
+    const loadSeq = DashboardPage._loadSeq;
+    DashboardPage._sourceSelection = { disease, index, source: row.source };
+    DashboardPage._sourceDetail = { loading: true };
+    DashboardPage._sourceShowAll = false;
+    DashboardPage.refreshSources();
+    document.querySelector(`[data-source-row="${disease}-${index}"]`)?.focus({ preventScroll: true });
+    try {
+      const data = await DB.getAdmissionSourceRegions(disease, row.source, DashboardPage._viewViloyat, DashboardPage._viewMuassasa, DashboardPage._viewDateFrom, DashboardPage._viewDateTo);
+      if (seq !== DashboardPage._sourceDetailSeq || loadSeq !== DashboardPage._loadSeq) return;
+      DashboardPage._sourceDetail = data;
+    } catch (error) {
+      if (seq !== DashboardPage._sourceDetailSeq || loadSeq !== DashboardPage._loadSeq) return;
+      DashboardPage._sourceDetail = { failed: true };
+    }
+    const detail = document.getElementById('source-detail');
+    if (detail) detail.innerHTML = DashboardPage.renderSourceDetail();
+  },
+
+  closeSourceDetail() {
+    ++DashboardPage._sourceDetailSeq;
+    const selected = DashboardPage._sourceSelection;
+    DashboardPage._sourceSelection = null;
+    DashboardPage._sourceDetail = null;
+    DashboardPage.refreshSources();
+    if (selected) document.querySelector(`[data-source-row="${selected.disease}-${selected.index}"]`)?.focus({ preventScroll: true });
+  },
+
+  toggleSourceRegions() {
+    DashboardPage._sourceShowAll = !DashboardPage._sourceShowAll;
+    const detail = document.getElementById('source-detail');
+    if (detail) detail.innerHTML = DashboardPage.renderSourceDetail();
+    document.getElementById('source-regions-toggle')?.focus({ preventScroll: true });
+  },
+
+  renderSourceDetail() {
+    const selected = DashboardPage._sourceSelection;
+    if (!selected) return '';
+    const data = DashboardPage._sourceDetail;
+    const title = `${DashboardPage.sourceLabel(selected.source)} · ${t(selected.disease === 'infarkt' ? 'glossary.infarction' : 'glossary.stroke')}`;
+    let body;
+    if (data?.loading) body = `<p role="status" class="source-detail-message">${t('dashboard.loading')}</p>`;
+    else if (data?.failed) body = `<p role="alert" class="source-detail-message">${t('dashboard.loadError')} <button type="button" class="underline" onclick="DashboardPage.selectSource('${selected.disease}',${selected.index})">${t('dashboard.retry')}</button></p>`;
+    else if (!data?.total) body = `<p class="source-detail-message">${t('dashboard.noData')}</p>`;
+    else {
+      const rows = DashboardPage._sourceShowAll ? data.rows : data.rows.slice(0, 5);
+      body = `<div class="source-table-wrap"><table class="source-table"><thead><tr><th>${t('dashboard.byRegion')}</th><th>${t('dashboard.sourceCount')}</th><th>${t('dashboard.sourceDetailShare')}</th></tr></thead><tbody>${rows.map(row => {
+        const share = row.count / data.total * 100;
+        return `<tr><td>${esc(row.region ? I18n.translateText(row.region) : t('dashboard.admissionSourceUnknown'))}</td><td>${I18n.formatNumber(row.count)}</td><td><div class="source-share"><span class="source-track" aria-hidden="true"><span style="width:${share}%"></span></span><span>${I18n.formatNumber(share, { maximumFractionDigits: 1 })}%</span></div></td></tr>`;
+      }).join('')}</tbody></table></div><div class="source-detail-footer"><span>${t('dashboard.admissionSourceTotal', { count: I18n.formatNumber(data.total) })}</span>${data.rows.length > 5 ? `<button id="source-regions-toggle" type="button" aria-expanded="${DashboardPage._sourceShowAll}" onclick="DashboardPage.toggleSourceRegions()">${t(DashboardPage._sourceShowAll ? 'dashboard.sourceShowLess' : 'dashboard.sourceShowAll')}</button>` : ''}</div>`;
+    }
+    return `<section class="source-detail source-${selected.disease}" aria-label="${esc(title)}"><header><div><h4>${title}</h4><p>${t('dashboard.sourceRegionDetail')}</p></div><button type="button" class="source-close" aria-label="${t('dashboard.sourceClose')}" onclick="DashboardPage.closeSourceDetail()">×</button></header>${body}</section>`;
   },
 
   renderContent(stats, trend, trend12, recent, viloyat, profile, demo, riskFactors, longStay = [], genderMort = null) {
@@ -330,7 +481,7 @@ const DashboardPage = {
             return `<button onclick="DashboardPage.setViewViloyat('${safeV}')" class="px-3 py-1.5 min-h-[44px] sm:min-h-0 rounded-xl text-[11px] font-bold border transition-all ${cls}">${esc(label)}</button>`;
           }).join('')}
           <button onclick="DashboardPage.setViewMuassasa('Respublika Shoshilinch Tibbiy Yordam Ilmiy Markazi')"
-            class="px-3 py-1.5 min-h-[44px] sm:min-h-0 rounded-xl text-[11px] font-bold border transition-all ${DashboardPage._viewMuassasa ? 'bg-red-600 text-white border-red-600 shadow-md shadow-red-200' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'}">
+            class="px-3 py-1.5 min-h-[44px] sm:min-h-0 rounded-xl text-[11px] font-bold border transition-all ${DashboardPage._viewMuassasa === 'Respublika Shoshilinch Tibbiy Yordam Ilmiy Markazi' ? 'bg-red-600 text-white border-red-600 shadow-md shadow-red-200' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'}">
             RSHTYoIM
           </button>
         </div>
@@ -339,7 +490,7 @@ const DashboardPage = {
         ${(() => {
           const now = new Date(new Date().getTime() + 5*60*60*1000);
           const curY = now.getUTCFullYear();
-          const monthNames = ['Yanvar','Fevral','Mart','Aprel','May','Iyun','Iyul','Avgust','Sentabr','Oktabr','Noyabr','Dekabr'];
+          const monthNames = Array.from({ length: 12 }, (_, index) => t(`month.full.${index + 1}`));
           const activeFrom = DashboardPage._viewDateFrom;
           const activeMode = DashboardPage._viewDateMode;
           const selYear = DashboardPage._viewSelectedYear;
@@ -387,7 +538,7 @@ const DashboardPage = {
               ${yearBtns}
               <button onclick="DashboardPage.setDateFilter(null,null,null)"
                 class="px-3 py-1.5 rounded-xl text-[11px] font-bold border transition-all ml-2 ${!activeFrom ? 'bg-amber-500 text-white border-amber-500' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'}">
-                Barcha davr
+                ${t('dashboard.allTime')}
               </button>
             </div>
             ${monthRow}
@@ -406,8 +557,8 @@ const DashboardPage = {
         <div class="flex items-center justify-between mb-8">
           <h3 class="text-sm font-bold text-slate-800 uppercase tracking-wider">${t('dashboard.dailyAdmissions')}</h3>
           <div class="flex gap-4">
-            <div class="flex items-center gap-1.5"><span class="w-3 h-1 bg-red-500 rounded-full"></span> <span class="text-[10px] font-bold text-slate-500 uppercase">Infarkt</span></div>
-            <div class="flex items-center gap-1.5"><span class="w-3 h-1 bg-blue-500 rounded-full"></span> <span class="text-[10px] font-bold text-slate-500 uppercase">Insult</span></div>
+            <div class="flex items-center gap-1.5"><span class="w-3 h-1 bg-red-500 rounded-full"></span> <span class="text-[10px] font-bold text-slate-500 uppercase">${t('glossary.infarction')}</span></div>
+            <div class="flex items-center gap-1.5"><span class="w-3 h-1 bg-blue-500 rounded-full"></span> <span class="text-[10px] font-bold text-slate-500 uppercase">${t('glossary.stroke')}</span></div>
           </div>
         </div>
         <div class="h-80"><canvas id="dynamicsChart"></canvas></div>
@@ -418,8 +569,8 @@ const DashboardPage = {
         <div class="flex items-center justify-between mb-8">
           <h3 class="text-sm font-bold text-slate-800 uppercase tracking-wider">${t('dashboard.monthlyAdmissions')}</h3>
           <div class="flex gap-4">
-            <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-sm bg-red-500"></span> <span class="text-[10px] font-bold text-slate-500 uppercase">Infarkt</span></div>
-            <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-sm bg-blue-500"></span> <span class="text-[10px] font-bold text-slate-500 uppercase">Insult</span></div>
+            <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-sm bg-red-500"></span> <span class="text-[10px] font-bold text-slate-500 uppercase">${t('glossary.infarction')}</span></div>
+            <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-sm bg-blue-500"></span> <span class="text-[10px] font-bold text-slate-500 uppercase">${t('glossary.stroke')}</span></div>
           </div>
         </div>
         <div class="h-72"><canvas id="monthlyChart"></canvas></div>
@@ -436,13 +587,23 @@ const DashboardPage = {
                <button id="toggle100k30" onclick="DashboardPage.setChartMode('100k30')" class="px-3 py-1.5 bg-white text-slate-500 hover:bg-slate-50 transition-all">/ 100 000 <span class="text-amber-400">30+</span></button>
              </div>
              <div class="flex gap-3">
-               <div class="flex items-center gap-1.5"><span class="w-3 h-3 bg-[#dc2626]"></span> <span class="text-[10px] font-bold text-slate-500 uppercase">Infarkt</span></div>
-               <div class="flex items-center gap-1.5"><span class="w-3 h-3 bg-[#2563eb]"></span> <span class="text-[10px] font-bold text-slate-500 uppercase">Insult</span></div>
+               <div class="flex items-center gap-1.5"><span class="w-3 h-3 bg-[#dc2626]"></span> <span class="text-[10px] font-bold text-slate-500 uppercase">${t('glossary.infarction')}</span></div>
+               <div class="flex items-center gap-1.5"><span class="w-3 h-3 bg-[#2563eb]"></span> <span class="text-[10px] font-bold text-slate-500 uppercase">${t('glossary.stroke')}</span></div>
              </div>
            </div>
         </div>
         <div class="w-full" style="height:480px"><canvas id="regionChart"></canvas></div>
       </div>
+
+      <!-- ADMISSION SOURCES: AFTER REGIONAL DISTRIBUTION -->
+      <section aria-labelledby="admission-sources-title" class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm mb-8">
+        <h3 id="admission-sources-title" class="text-sm font-bold text-slate-800 uppercase tracking-wider">${t('dashboard.admissionSources')}</h3>
+        <p class="text-xs text-slate-500 mt-2 mb-5">${t('dashboard.admissionSourceNote')}</p>
+        ${DashboardPage.renderSourceFilters(profile)}
+        <div id="admission-sources-content">${DashboardPage.renderAdmissionSources(null)}</div>
+      </section>
+
+      ${typeof TreatmentFlow !== 'undefined' ? TreatmentFlow.shell() : ''}
 
       <!-- ROW 5: AGE-SEX PYRAMID -->
       <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-8">
@@ -458,7 +619,7 @@ const DashboardPage = {
       <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
         <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
           <h3 class="text-sm font-bold text-slate-800 uppercase tracking-wider mb-4 flex items-center gap-2">
-            ${icon('heart', 16, 'text-red-500')} Infarkt — xavf omillari
+            ${icon('heart', 16, 'text-red-500')} ${t('dashboard.infarctRisk')}
           </h3>
           <div style="position:relative;height:380px">
             <canvas id="riskInfarktChart"></canvas>
@@ -466,7 +627,7 @@ const DashboardPage = {
         </div>
         <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
           <h3 class="text-sm font-bold text-slate-800 uppercase tracking-wider mb-4 flex items-center gap-2">
-            ${icon('brain', 16, 'text-blue-500')} Insult — xavf omillari
+            ${icon('brain', 16, 'text-blue-500')} ${t('dashboard.strokeRisk')}
           </h3>
           <div style="position:relative;height:380px">
             <canvas id="riskInsultChart"></canvas>
@@ -479,7 +640,7 @@ const DashboardPage = {
         <!-- Infarkt Detail -->
         <div class="bg-white rounded-2xl border-t-4 border-t-red-500 shadow-sm overflow-hidden">
           <div class="p-6 border-b border-slate-100 flex items-center justify-between">
-            <h3 class="font-bold text-slate-800 flex items-center gap-2">${icon('heart-pulse', 20, 'text-red-500')} Infarkt turlari va muolajalar</h3>
+            <h3 class="font-bold text-slate-800 flex items-center gap-2">${icon('heart-pulse', 20, 'text-red-500')} ${t('dashboard.infarctTreatments')}</h3>
             <span class="text-[10px] font-bold text-slate-400">${t('dashboard.treatmentMortality')}</span>
           </div>
           <div class="p-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -495,7 +656,7 @@ const DashboardPage = {
         <!-- Stroke Detail -->
         <div class="bg-white rounded-2xl border-t-4 border-t-blue-500 shadow-sm overflow-hidden">
           <div class="p-6 border-b border-slate-100 flex items-center justify-between">
-            <h3 class="font-bold text-slate-800 flex items-center gap-2">${icon('brain-circuit', 20, 'text-blue-500')} Insult turlari va muolajalar</h3>
+            <h3 class="font-bold text-slate-800 flex items-center gap-2">${icon('brain-circuit', 20, 'text-blue-500')} ${t('dashboard.strokeTreatments')}</h3>
             <span class="text-[10px] font-bold text-slate-400">${t('dashboard.treatmentMortality')}</span>
           </div>
           <div class="p-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -521,16 +682,16 @@ const DashboardPage = {
               <p class="text-[11px] text-slate-400 font-medium">${t('dashboard.longStaySubtitle')}</p>
             </div>
           </div>
-          <span id="longstay-count" class="px-3 py-1.5 bg-orange-100 text-orange-700 text-xs font-black rounded-xl border border-orange-200">yuklanmoqda...</span>
+          <span id="longstay-count" class="px-3 py-1.5 bg-orange-100 text-orange-700 text-xs font-black rounded-xl border border-orange-200">${t('ui.loadingLower')}</span>
         </div>
         <div class="overflow-x-auto">
           <table class="w-full text-left">
             <thead>
               <tr class="bg-slate-50/50">
-                <th class="p-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100">Muassasa</th>
+                <th class="p-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100">${t('wizard.institution')}</th>
                 <th class="p-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100">${t('dashboard.patientCount')}</th>
                 <th class="p-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100">${t('dashboard.longestStay')}</th>
-                <th class="p-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100">Infarkt / Insult</th>
+                <th class="p-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100">${t('dashboard.infarctStroke')}</th>
                 <th class="p-4 border-b border-slate-100"></th>
               </tr>
             </thead>
@@ -561,7 +722,7 @@ const DashboardPage = {
                   </td>
                   <td class="p-4 text-right">
                     <button class="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-[10px] font-bold text-slate-600 hover:bg-slate-100 transition-all" onclick="DashboardPage.showLongStayDetail(${idx})">
-                      Ko'rish
+                      ${t('dashboard.view')}
                     </button>
                   </td>
                 </tr>`;
@@ -577,7 +738,7 @@ const DashboardPage = {
           <h3 class="font-bold text-slate-800">${t('dashboard.recentAdmissions')}</h3>
           <div class="flex gap-2">
             <button class="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-[11px] font-bold text-slate-600 flex items-center gap-1.5 hover:bg-slate-100 transition-all" onclick="Router.go('bemorlar')">
-              ${icon('clipboard-list', 14)} Barchasi
+              ${icon('clipboard-list', 14)} ${t('dashboard.viewAll')}
             </button>
             <button class="px-3 py-1.5 bg-green-50 border border-green-200 rounded-lg text-[11px] font-bold text-green-700 flex items-center gap-1.5 hover:bg-green-100 transition-all" onclick="DashboardPage.exportExcel()">
               ${icon('file-down', 14)} Excel
@@ -588,12 +749,12 @@ const DashboardPage = {
           <table class="w-full text-left">
             <thead>
               <tr class="bg-slate-50/50">
-                <th class="p-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100">K/T No</th>
-                <th class="p-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100">Bemor F.I.Sh</th>
-                <th class="p-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100">Tashxis</th>
-                <th class="p-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100">Qabul vaqti</th>
-                <th class="p-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100">Holat</th>
-                <th class="p-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100">DQ</th>
+                <th class="p-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100">${t('ui.recordNumber')}</th>
+                <th class="p-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100">${t('ui.patientName')}</th>
+                <th class="p-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100">${t('dashboard.diagnosis')}</th>
+                <th class="p-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100">${t('ui.admissionTime')}</th>
+                <th class="p-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100">${t('dashboard.status')}</th>
+                <th class="p-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100">${t('dashboard.dataQualityShort')}</th>
                 <th class="p-4 text-right border-b border-slate-100"></th>
               </tr>
             </thead>
@@ -686,12 +847,12 @@ const DashboardPage = {
         <div class="overflow-x-auto">
           <table class="w-full text-left">
             <thead><tr class="bg-slate-50">
-              <th class="p-3 text-[10px] font-bold text-slate-400 uppercase">K/T No</th>
-              <th class="p-3 text-[10px] font-bold text-slate-400 uppercase">F.I.Sh</th>
-              <th class="p-3 text-[10px] font-bold text-slate-400 uppercase">Yosh</th>
-              <th class="p-3 text-[10px] font-bold text-slate-400 uppercase">Turi</th>
-              <th class="p-3 text-[10px] font-bold text-slate-400 uppercase">Qabul vaqti</th>
-              <th class="p-3 text-[10px] font-bold text-slate-400 uppercase">Kunlar</th>
+              <th class="p-3 text-[10px] font-bold text-slate-400 uppercase">${t('ui.recordNumber')}</th>
+              <th class="p-3 text-[10px] font-bold text-slate-400 uppercase">${t('ui.fullName')}</th>
+              <th class="p-3 text-[10px] font-bold text-slate-400 uppercase">${t('dashboard.age')}</th>
+              <th class="p-3 text-[10px] font-bold text-slate-400 uppercase">${t('ui.typeLabel')}</th>
+              <th class="p-3 text-[10px] font-bold text-slate-400 uppercase">${t('ui.admissionTime')}</th>
+              <th class="p-3 text-[10px] font-bold text-slate-400 uppercase">${t('ui.days')}</th>
             </tr></thead>
             <tbody>${rows}</tbody>
           </table>
@@ -725,9 +886,9 @@ const DashboardPage = {
 
 
   drawNewCharts(trend, trend12, stats, viloyat, demo, profile, riskFactors) {
-    if (window.ChartDataLabels) {
-      Chart.register(window.ChartDataLabels);
-    }
+    // Register datalabels only in each chart's plugins array below.
+    // Phase 2 can create donuts first; late global registration attaches the
+    // plugin to those already-animating charts without its initialized state.
 
     // 1. Dynamics Chart
     const ctxD = document.getElementById('dynamicsChart')?.getContext('2d');
@@ -825,7 +986,7 @@ const DashboardPage = {
         }
         const d = getChartData(mode);
         const is100k = mode === '100k18' || mode === '100k' || mode === '100k30';
-        const titleText = mode === '100k30' ? '100 000 aholiga nisbatan (30+)' : '100 000 aholiga nisbatan (18+)';
+        const titleText = mode === '100k30' ? t('dashboard.rate30') : t('dashboard.rate18');
         DashboardPage._charts.region = new Chart(ctxR, {
           type: 'bar',
           data: {
@@ -851,7 +1012,7 @@ const DashboardPage = {
                     const idx = items[0]?.dataIndex;
                     const v = regionData[idx];
                     const pop = (aholi18 || {})[v?.name];
-                    return pop ? [`Aholi 18+: ${(pop/1000).toFixed(0)} ming`] : [];
+                    return pop ? [t('dashboard.population18', { count: I18n.formatNumber(pop) })] : [];
                   }
                 }
               },
@@ -1075,7 +1236,7 @@ const DashboardPage = {
   },
 
   async showVafotDetail() {
-    showModal({ title: 'Vafot etgan bemorlar', body: `<div class="flex justify-center py-10"><div class="w-8 h-8 border-4 border-rose-500 border-t-transparent rounded-full animate-spin"></div></div>` });
+    showModal({ title: t('dashboard.deaths'), body: `<div class="flex justify-center py-10"><div class="w-8 h-8 border-4 border-rose-500 border-t-transparent rounded-full animate-spin"></div></div>` });
     try {
       const sb = getSupabase();
       const vil = DashboardPage._viewViloyat;
@@ -1092,10 +1253,10 @@ const DashboardPage = {
 
       // Viloyat kesimida hisoblash
       const vilMap = {};
-      all.forEach(p=>{ const v=p.viloyat||'Noma\'lum'; vilMap[v]=(vilMap[v]||0)+1; });
+      all.forEach(p=>{ const v=p.viloyat||t('dashboard.unknown'); vilMap[v]=(vilMap[v]||0)+1; });
       const vilRows = Object.entries(vilMap).sort((a,b)=>b[1]-a[1])
         .map(([v,c])=>`<div class="flex justify-between items-center py-1.5 border-b border-slate-100 last:border-0">
-          <span class="text-sm text-slate-700 font-medium">${esc(v)}</span>
+          <span class="text-sm text-slate-700 font-medium">${esc(I18n.translateText(v))}</span>
           <span class="text-sm font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded-lg">${I18n.formatNumber(c)}</span>
         </div>`).join('');
 
@@ -1103,8 +1264,8 @@ const DashboardPage = {
         <tr class="border-b border-slate-50 hover:bg-rose-50/30 cursor-pointer transition-colors" onclick="closeModal();Router.go('bemor-karta',{kt_no:'${p.kt_no}',type:'${p._type}'})">
           <td class="p-2 text-xs font-mono text-slate-500">${esc(p.kt_no)}</td>
           <td class="p-2 text-sm font-semibold text-slate-800">${esc(p.fio||'—')}</td>
-          <td class="p-2 text-xs">${p._type==='infarkt'?'<span class="text-red-600 font-bold">Infarkt</span>':'<span class="text-blue-600 font-bold">Insult</span>'}</td>
-          <td class="p-2 text-xs text-slate-600">${esc(p.viloyat||'—')}</td>
+          <td class="p-2 text-xs">${p._type==='infarkt'?`<span class="text-red-600 font-bold">${t('glossary.infarction')}</span>`:`<span class="text-blue-600 font-bold">${t('glossary.stroke')}</span>`}</td>
+          <td class="p-2 text-xs text-slate-600">${esc(I18n.translateText(p.viloyat||'—'))}</td>
           <td class="p-2 text-xs text-slate-600">${esc(I18n.facilityName(p.muassasa||'—'))}</td>
           <td class="p-2 text-xs text-slate-500">${Utils.formatDateTime(p.qabul_vaqt)}</td>
           <td class="p-2 text-xs text-slate-600">${esc(p.kasallik)}</td>
@@ -1115,29 +1276,29 @@ const DashboardPage = {
         body: `
           <div class="flex gap-4" style="min-width:min(860px,88vw)">
             <div style="width:210px;flex-shrink:0">
-              <div class="font-bold text-slate-600 mb-2 text-xs uppercase tracking-wide">Viloyat kesimida</div>
-              <div class="bg-slate-50 rounded-xl p-3">${vilRows||'<p class="text-slate-400 text-sm">Ma\'lumot yo\'q</p>'}</div>
+              <div class="font-bold text-slate-600 mb-2 text-xs uppercase tracking-wide">${t('dashboard.byRegion')}</div>
+              <div class="bg-slate-50 rounded-xl p-3">${vilRows||`<p class="text-slate-400 text-sm">${t('ui.noDataShort')}</p>`}</div>
             </div>
             <div class="flex-1 overflow-auto" style="max-height:60vh">
               <table class="w-full text-left">
                 <thead class="bg-rose-50 sticky top-0">
                   <tr>
-                    <th class="p-2 text-xs font-bold text-slate-500">K/T No</th>
-                    <th class="p-2 text-xs font-bold text-slate-500">F.I.O</th>
-                    <th class="p-2 text-xs font-bold text-slate-500">Turi</th>
-                    <th class="p-2 text-xs font-bold text-slate-500">Viloyat</th>
-                    <th class="p-2 text-xs font-bold text-slate-500">Muassasa</th>
-                    <th class="p-2 text-xs font-bold text-slate-500">Qabul vaqti</th>
-                    <th class="p-2 text-xs font-bold text-slate-500">Kasallik</th>
+                    <th class="p-2 text-xs font-bold text-slate-500">${t('ui.recordNumber')}</th>
+                    <th class="p-2 text-xs font-bold text-slate-500">${t('ui.fullName')}</th>
+                    <th class="p-2 text-xs font-bold text-slate-500">${t('ui.typeLabel')}</th>
+                    <th class="p-2 text-xs font-bold text-slate-500">${t('dashboard.region')}</th>
+                    <th class="p-2 text-xs font-bold text-slate-500">${t('wizard.institution')}</th>
+                    <th class="p-2 text-xs font-bold text-slate-500">${t('ui.admissionTime')}</th>
+                    <th class="p-2 text-xs font-bold text-slate-500">${t('ui.disease')}</th>
                   </tr>
                 </thead>
-                <tbody>${tableRows||'<tr><td colspan="7" class="p-4 text-center text-slate-400">Ma\'lumot yo\'q</td></tr>'}</tbody>
+                <tbody>${tableRows||`<tr><td colspan="7" class="p-4 text-center text-slate-400">${t('ui.noDataShort')}</td></tr>`}</tbody>
               </table>
             </div>
           </div>`
       });
     } catch(err) {
-      showModal({ title: 'Xatolik', body: `<p class="text-red-500 p-4">${err.message}</p>` });
+      showModal({ title: t('dashboard.error'), body: `<p class="text-red-500 p-4">${esc(err.message)}</p>` });
     }
   },
 
@@ -1145,15 +1306,15 @@ const DashboardPage = {
     const data = DashboardPage._recentPatients;
     if (!data?.length) { showToast(t('dashboard.dataNotLoaded'), 'warning'); return; }
     Utils.exportCSV(data.map(p => ({
-      Turi: p._type === 'infarkt' ? 'Infarkt' : 'Insult',
-      'K/T No': p.kt_no,
-      'F.I.O': p.fio || '—',
-      Viloyat: p.viloyat || '—',
-      Muassasa: p.muassasa || '—',
-      'Qabul vaqti': Utils.formatDateTime(p.qabul_vaqt),
-      Holat: p.status || '—',
-      'Kasallik turi': p.infarkt_turi || p.insult_turi || '—',
-      Muolaja: p.muolaja_turi || '—'
+      [t('ui.typeLabel')]: p._type === 'infarkt' ? t('glossary.infarction') : t('glossary.stroke'),
+      [t('ui.recordNumber')]: p.kt_no,
+      [t('ui.fullName')]: p.fio || '—',
+      [t('dashboard.region')]: I18n.translateText(p.viloyat || '—'),
+      [t('wizard.institution')]: I18n.facilityName(p.muassasa || '—'),
+      [t('ui.admissionTime')]: Utils.formatDateTime(p.qabul_vaqt),
+      [t('dashboard.status')]: I18n.translateText(p.status || '—'),
+      [t('dashboard.diseaseType')]: I18n.translateText(p.infarkt_turi || p.insult_turi || '—'),
+      [t('ui.treatment')]: I18n.translateText(p.muolaja_turi || '—')
     })), `dashboard_bemorlar_${new Date(Date.now()+5*3600000).toISOString().slice(0,10)}.csv`);
     showToast(t('dashboard.exportStarted'), 'success');
   },
@@ -1267,12 +1428,12 @@ const DashboardPage = {
           </div>` : '<div class="mt-2"></div>'}
           <div class="mt-auto pt-3 flex gap-2 relative z-10">
             <div class="flex-1 bg-red-500/10 border border-red-500/20 rounded-xl px-3 py-2.5">
-              <div class="flex items-center gap-1.5 mb-1"><span class="w-2 h-2 bg-red-400 rounded-full"></span><span class="text-[11px] font-bold text-red-300">Infarkt</span></div>
+              <div class="flex items-center gap-1.5 mb-1"><span class="w-2 h-2 bg-red-400 rounded-full"></span><span class="text-[11px] font-bold text-red-300">${t('glossary.infarction')}</span></div>
               <div class="text-xl font-black text-white">${jamiInfarkt}</div>
               ${jamiAholi18 > 0 ? `<div class="text-[10px] text-red-400 font-semibold mt-0.5">${+((jamiInfarkt/jamiAholi18)*100000).toFixed(1)}/100k <span class="text-slate-500">18+</span>${jamiAholi30>0?' · '+((jamiInfarkt/jamiAholi30)*100000).toFixed(1)+'/100k <span class="text-slate-500">30+</span>':''}</div>` : ''}
             </div>
             <div class="flex-1 bg-blue-500/10 border border-blue-500/20 rounded-xl px-3 py-2.5">
-              <div class="flex items-center gap-1.5 mb-1"><span class="w-2 h-2 bg-blue-400 rounded-full"></span><span class="text-[11px] font-bold text-blue-300">Insult</span></div>
+              <div class="flex items-center gap-1.5 mb-1"><span class="w-2 h-2 bg-blue-400 rounded-full"></span><span class="text-[11px] font-bold text-blue-300">${t('glossary.stroke')}</span></div>
               <div class="text-xl font-black text-white">${jamiInsult}</div>
               ${jamiAholi18 > 0 ? `<div class="text-[10px] text-blue-400 font-semibold mt-0.5">${+((jamiInsult/jamiAholi18)*100000).toFixed(1)}/100k <span class="text-slate-500">18+</span>${jamiAholi30>0?' · '+((jamiInsult/jamiAholi30)*100000).toFixed(1)+'/100k <span class="text-slate-500">30+</span>':''}</div>` : ''}
             </div>
@@ -1294,11 +1455,11 @@ const DashboardPage = {
           </div>
           <div class="mt-auto pt-3 flex flex-col gap-2 relative z-10">
             <div class="flex items-center justify-between h-9 px-3 bg-white/10 rounded-xl border border-white/10">
-              <div class="flex items-center gap-2"><span class="w-2 h-2 bg-white rounded-full"></span><span class="text-[12px] font-bold text-white">Infarkt</span></div>
+              <div class="flex items-center gap-2"><span class="w-2 h-2 bg-white rounded-full"></span><span class="text-[12px] font-bold text-white">${t('glossary.infarction')}</span></div>
               <span class="text-base font-black text-white">${bugunInfarkt}</span>
             </div>
             <div class="flex items-center justify-between h-9 px-3 bg-white/10 rounded-xl border border-white/10">
-              <div class="flex items-center gap-2"><span class="w-2 h-2 bg-white/50 rounded-full"></span><span class="text-[12px] font-bold text-blue-100">Insult</span></div>
+              <div class="flex items-center gap-2"><span class="w-2 h-2 bg-white/50 rounded-full"></span><span class="text-[12px] font-bold text-blue-100">${t('glossary.stroke')}</span></div>
               <span class="text-base font-black text-white">${bugunInsult}</span>
             </div>
           </div>
@@ -1315,11 +1476,11 @@ const DashboardPage = {
           <h3 class="text-5xl font-black text-white relative z-10 tracking-tight">${(chiqarilganInfarkt + chiqarilganInsult).toLocaleString()}</h3>
           <div class="mt-auto pt-3 flex flex-col gap-2 relative z-10">
             <div class="flex items-center justify-between h-9 px-3 bg-emerald-800/50 rounded-xl border border-emerald-700/50">
-              <div class="flex items-center gap-2"><span class="w-2 h-2 bg-red-400 rounded-full"></span><span class="text-[12px] font-bold text-emerald-100">Infarkt</span></div>
+              <div class="flex items-center gap-2"><span class="w-2 h-2 bg-red-400 rounded-full"></span><span class="text-[12px] font-bold text-emerald-100">${t('glossary.infarction')}</span></div>
               <span class="text-base font-black text-white">${chiqarilganInfarkt}</span>
             </div>
             <div class="flex items-center justify-between h-9 px-3 bg-emerald-800/50 rounded-xl border border-emerald-700/50">
-              <div class="flex items-center gap-2"><span class="w-2 h-2 bg-blue-400 rounded-full"></span><span class="text-[12px] font-bold text-emerald-100">Insult</span></div>
+              <div class="flex items-center gap-2"><span class="w-2 h-2 bg-blue-400 rounded-full"></span><span class="text-[12px] font-bold text-emerald-100">${t('glossary.stroke')}</span></div>
               <span class="text-base font-black text-white">${chiqarilganInsult}</span>
             </div>
           </div>
@@ -1336,11 +1497,11 @@ const DashboardPage = {
           <h3 class="text-5xl font-black text-white relative z-10 tracking-tight">${(aktivInfarkt + aktivInsult).toLocaleString()}</h3>
           <div class="mt-auto pt-3 flex flex-col gap-2 relative z-10">
             <div class="flex items-center justify-between h-9 px-3 bg-sky-700/50 rounded-xl border border-sky-600/50">
-              <div class="flex items-center gap-2"><span class="w-2 h-2 bg-red-400 rounded-full"></span><span class="text-[12px] font-bold text-sky-100">Infarkt</span></div>
+              <div class="flex items-center gap-2"><span class="w-2 h-2 bg-red-400 rounded-full"></span><span class="text-[12px] font-bold text-sky-100">${t('glossary.infarction')}</span></div>
               <span class="text-base font-black text-white">${aktivInfarkt}</span>
             </div>
             <div class="flex items-center justify-between h-9 px-3 bg-sky-700/50 rounded-xl border border-sky-600/50">
-              <div class="flex items-center gap-2"><span class="w-2 h-2 bg-blue-300 rounded-full"></span><span class="text-[12px] font-bold text-sky-100">Insult</span></div>
+              <div class="flex items-center gap-2"><span class="w-2 h-2 bg-blue-300 rounded-full"></span><span class="text-[12px] font-bold text-sky-100">${t('glossary.stroke')}</span></div>
               <span class="text-base font-black text-white">${aktivInsult}</span>
             </div>
           </div>
@@ -1359,14 +1520,14 @@ const DashboardPage = {
           <h3 class="text-5xl font-black text-white relative z-10 tracking-tight">${(vafotInfarkt + vafotInsult).toLocaleString()}</h3>
           <div class="mt-auto pt-3 flex flex-col gap-2 relative z-10">
             <div class="flex items-center justify-between h-9 px-3 bg-slate-800/50 rounded-xl border border-slate-700/50">
-              <div class="flex items-center gap-2"><span class="w-2 h-2 bg-red-500 rounded-full"></span><span class="text-[12px] font-bold text-slate-300">Infarkt</span></div>
+              <div class="flex items-center gap-2"><span class="w-2 h-2 bg-red-500 rounded-full"></span><span class="text-[12px] font-bold text-slate-300">${t('glossary.infarction')}</span></div>
               <div class="flex items-center gap-2">
                 <span class="text-[11px] font-bold text-rose-400">${jamiInfarkt > 0 ? (vafotInfarkt/jamiInfarkt*100).toFixed(1) : 0}%</span>
                 <span class="text-base font-black text-white">${vafotInfarkt}</span>
               </div>
             </div>
             <div class="flex items-center justify-between h-9 px-3 bg-slate-800/50 rounded-xl border border-slate-700/50">
-              <div class="flex items-center gap-2"><span class="w-2 h-2 bg-blue-500 rounded-full"></span><span class="text-[12px] font-bold text-slate-300">Insult</span></div>
+              <div class="flex items-center gap-2"><span class="w-2 h-2 bg-blue-500 rounded-full"></span><span class="text-[12px] font-bold text-slate-300">${t('glossary.stroke')}</span></div>
               <div class="flex items-center gap-2">
                 <span class="text-[11px] font-bold text-rose-400">${jamiInsult > 0 ? (vafotInsult/jamiInsult*100).toFixed(1) : 0}%</span>
                 <span class="text-base font-black text-white">${vafotInsult}</span>
@@ -1388,14 +1549,14 @@ const DashboardPage = {
           <h3 class="text-5xl font-black text-white relative z-10 tracking-tight">${(otkazilganInfarkt + otkazilganInsult).toLocaleString()}</h3>
           <div class="mt-auto pt-3 flex flex-col gap-2 relative z-10">
             <div class="flex items-center justify-between h-9 px-3 bg-slate-800/50 rounded-xl border border-slate-700/50">
-              <div class="flex items-center gap-2"><span class="w-2 h-2 bg-red-500 rounded-full"></span><span class="text-[12px] font-bold text-slate-300">Infarkt</span></div>
+              <div class="flex items-center gap-2"><span class="w-2 h-2 bg-red-500 rounded-full"></span><span class="text-[12px] font-bold text-slate-300">${t('glossary.infarction')}</span></div>
               <div class="flex items-center gap-2">
                 <span class="text-[11px] font-bold text-amber-400">${jamiInfarkt > 0 ? (otkazilganInfarkt/jamiInfarkt*100).toFixed(1) : 0}%</span>
                 <span class="text-base font-black text-white">${otkazilganInfarkt}</span>
               </div>
             </div>
             <div class="flex items-center justify-between h-9 px-3 bg-slate-800/50 rounded-xl border border-slate-700/50">
-              <div class="flex items-center gap-2"><span class="w-2 h-2 bg-blue-500 rounded-full"></span><span class="text-[12px] font-bold text-slate-300">Insult</span></div>
+              <div class="flex items-center gap-2"><span class="w-2 h-2 bg-blue-500 rounded-full"></span><span class="text-[12px] font-bold text-slate-300">${t('glossary.stroke')}</span></div>
               <div class="flex items-center gap-2">
                 <span class="text-[11px] font-bold text-amber-400">${jamiInsult > 0 ? (otkazilganInsult/jamiInsult*100).toFixed(1) : 0}%</span>
                 <span class="text-base font-black text-white">${otkazilganInsult}</span>

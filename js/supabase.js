@@ -1102,7 +1102,7 @@ const DB = {
   },
 
   // Dashboard stats
-  async getDashboardStats(overrideViloyat, overrideMuassasa, dateFrom, dateTo) {
+  async getDashboardStats(overrideViloyat, overrideMuassasa, dateFrom, dateTo, snapshot = false) {
     const p = await Profile.getCurrent();
     const viloyat = overrideMuassasa ? null : (overrideViloyat !== undefined ? overrideViloyat : (p?.role === 'super_admin' ? null : p?.viloyat));
     // Bugungi sana: O'zbekiston vaqti (UTC+5) da 00:00 dan 23:59 gacha
@@ -1116,10 +1116,10 @@ const DB = {
     const dd = String(uztDate.getUTCDate()).padStart(2, '0');
     // Bugungi 00:00 UZT = shu kecha UTC 19:00
     const todayISO    = `${yy}-${mm}-${dd}T00:00:00+05:00`;
-    const todayEndISO = `${yy}-${mm}-${dd}T23:59:59+05:00`;
+    const todayEndISO = `${yy}-${mm}-${dd}T23:59:59.999999+05:00`;
 
     // Barcha statistikani bitta RPC chaqiruvida olamiz (14 ta alohida so'rov o'rniga)
-    const { data: rpcData, error: rpcErr } = await getSupabase().rpc('get_dashboard_stats', {
+    const { data: rpcData, error: rpcErr } = await getSupabase().rpc(snapshot ? 'get_dashboard_snapshot' : 'get_dashboard_stats', {
       p_viloyat:     viloyat || null,
       p_muassasa:    overrideMuassasa || null,
       p_today_start: todayISO,
@@ -1128,9 +1128,8 @@ const DB = {
       p_to:          dateTo   || null
     });
     if (rpcErr) throw rpcErr;
-    const s = rpcData || {};
-
-    return {
+    const s = (snapshot ? rpcData?.stats : rpcData) || {};
+    const stats = {
       jamiInfarkt:        s.jami_infarkt        || 0,
       jamiInsult:         s.jami_insult         || 0,
       jami:              (s.jami_infarkt         || 0) + (s.jami_insult         || 0),
@@ -1187,6 +1186,106 @@ const DB = {
       insultMedikamentozDavol:  s.medikamentoz_ins_davol  || 0,
       insultMedikamentozVafot:  s.medikamentoz_ins_vafot  || 0,
     };
+    if (!snapshot) return stats;
+    if (!rpcData?.flows || !Array.isArray(rpcData.regions) || !Array.isArray(rpcData.sources)) throw new Error('Dashboard snapshot unavailable');
+    for (const [d, suffix] of [['infarkt','Infarkt'],['insult','Insult']]) {
+      const flow = TreatmentFlow.validate(rpcData.flows[d]);
+      const count = outcome => flow.rows.filter(r=>r.outcome===outcome).reduce((n,r)=>n+r.n,0);
+      if (flow.total!==stats['jami'+suffix] || count('Vafot etdi')!==stats['vafot'+suffix] ||
+          count('__active__')!==stats[d+'Aktiv'] || count("Boshqa shifoxonaga o'tkazildi")!==stats['otkazilgan'+suffix]) {
+        throw new Error('Dashboard totals do not reconcile');
+      }
+      const released=r=>!['__active__','Vafot etdi',"Boshqa shifoxonaga o'tkazildi"].includes(r.outcome);
+      if(flow.rows.filter(released).reduce((n,r)=>n+r.n,0)!==stats['chiqarilgan'+suffix]) throw new Error('Discharge totals do not reconcile');
+      const categories=d==='infarkt' ? {
+        stemi:r=>r.subtype==='STEMI',nstemi:r=>r.subtype==='NSTEMI',miokard:r=>r.subtype==='AMI',
+        koronar:r=>r.initial.includes('KAG'),trombolizis:r=>r.initial.includes('TLT'),medikamentoz:r=>r.initial==='Medikamentoz davo'
+      } : {ishemik:r=>r.subtype==='Ishemik insult',gemorragik:r=>r.subtype==='Gemorragik insult',tia:r=>r.subtype==='TIA',
+        trombektomiya:r=>/trombektom|tromboekstraksiya|tromboaspiratsiya/i.test(r.initial),insultMedikamentoz:r=>r.initial==='Medikamentoz (konservativ) davo'};
+      for(const [key,predicate] of Object.entries(categories)) {
+        const rows=flow.rows.filter(predicate), sum=rows=>rows.reduce((n,r)=>n+r.n,0);
+        stats[key]=sum(rows);stats[key+'Davol']=sum(rows.filter(released));stats[key+'Vafot']=sum(rows.filter(r=>r.outcome==='Vafot etdi'));
+      }
+    }
+    const rows=APP_CONFIG.MUROJAAT_YOLLARI.map(source=>({source,infarkt:0,insult:0}));
+    const unknown={source:null,infarkt:0,insult:0};
+    for(const row of rpcData.sources) {
+      const target=rows.find(r=>r.source===row.source)||unknown;
+      target.infarkt+=row.infarkt; target.insult+=row.insult;
+    }
+    if(unknown.infarkt||unknown.insult) rows.push(unknown);
+    if(rows.reduce((n,r)=>n+r.infarkt+r.insult,0)!==stats.jami ||
+       rpcData.regions.reduce((n,r)=>n+r.jami,0)!==stats.jami) throw new Error('Dashboard breakdown totals do not reconcile');
+    const groups=['75+','60-74','45-59','30-44','≤29'];
+    const ageSex={},risks={};
+    for(const d of ['infarkt','insult']) {
+      ageSex[d]={groups,data:Object.fromEntries(groups.map(g=>[g,{mTotal:0,fTotal:0,mDeath:0,fDeath:0}]))};
+      for(const row of rpcData.ageSex.filter(r=>r.registr===d)) {
+        const g=ageSex[d].data[row.yosh_guruhi],prefix=row.jins==='male'?'m':row.jins==='female'?'f':null;
+        if(g&&prefix) {g[prefix+'Total']+=row.jami;g[prefix+'Death']+=row.vafot;}
+      }
+      risks[d]=rpcData.risks.filter(r=>r.registr===d).map(r=>[r.omil,r.cnt]);
+    }
+    return {stats,flows:rpcData.flows,generatedAt:rpcData.generatedAt,ageSex,risks,demographics:rpcData.demographics,
+      regions:rpcData.regions.map(r=>[r.nom,r.jami,r.infarkt_count,r.insult_count]),sources:{total:stats.jami,rows},
+      filters:{region:viloyat||'',facility:overrideMuassasa||'',from:dateFrom||'',to:dateTo||''}};
+  },
+
+  // Count admission records, not unique patients. HEAD keeps patient data off the wire.
+  async getAdmissionSources(overrideViloyat, overrideMuassasa, dateFrom, dateTo) {
+    const p = await Profile.getCurrent();
+    if (!p) throw new Error('Profile unavailable');
+    const viloyat = overrideMuassasa ? null : (overrideViloyat !== undefined ? overrideViloyat : (p.role === 'super_admin' ? null : p.viloyat));
+    const sources = APP_CONFIG.MUROJAAT_YOLLARI;
+    const count = async (table, source) => {
+      let q = getSupabase().from(table).select('id', { count: 'exact', head: true });
+      if (overrideMuassasa) q = q.eq('muassasa', overrideMuassasa);
+      else if (viloyat) q = q.eq('viloyat', viloyat);
+      if (dateFrom) q = q.gte('qabul_vaqt', dateFrom);
+      if (dateTo) q = q.lte('qabul_vaqt', dateTo);
+      // Older records used typographic apostrophes; keep them in the same category.
+      if (source !== undefined) q = q.in('murojaat_yoli', [...new Set([source, ...['‘', '’', 'ʻ', 'ʼ'].map(mark => source.replace(/'/g, mark))])]);
+      const result = await q;
+      if (result.error) throw result.error;
+      if (!Number.isSafeInteger(result.count) || result.count < 0) throw new Error('Admission count unavailable');
+      return result.count;
+    };
+    const counts = await Promise.all(['infarkt_qabul', 'insult_qabul'].map(table =>
+      Promise.all([count(table), ...sources.map(source => count(table, source))])
+    ));
+    const rows = sources.map((source, i) => ({ source, infarkt: counts[0][i + 1], insult: counts[1][i + 1] }));
+    const unknown = counts.map(values => values[0] - values.slice(1).reduce((sum, n) => sum + n, 0));
+    if (unknown.some(n => n < 0)) throw new Error('Admission counts changed; retry');
+    if (unknown.some(n => n > 0)) rows.push({ source: null, infarkt: unknown[0], insult: unknown[1] });
+    return { total: counts[0][0] + counts[1][0], rows };
+  },
+
+  // Drilldown fetches only non-identifying dimensions, using the same RLS client.
+  async getAdmissionSourceRegions(disease, source, overrideViloyat, overrideMuassasa, dateFrom, dateTo) {
+    if (!['infarkt', 'insult'].includes(disease)) throw new Error('Invalid disease');
+    if (source !== null && !APP_CONFIG.MUROJAAT_YOLLARI.includes(source)) throw new Error('Invalid source');
+    const p = await Profile.getCurrent();
+    if (!p) throw new Error('Profile unavailable');
+    const viloyat = overrideMuassasa ? null : (overrideViloyat !== undefined ? overrideViloyat : (p.role === 'super_admin' ? null : p.viloyat));
+    const variants = value => [...new Set([value, ...['‘', '’', 'ʻ', 'ʼ'].map(mark => value.replace(/'/g, mark))])];
+    const known = new Set(APP_CONFIG.MUROJAAT_YOLLARI.flatMap(variants));
+    const records = await DB.fetchAllPages(() => {
+      let q = getSupabase().from(`${disease}_qabul`).select('viloyat,murojaat_yoli', { count: 'exact' }).order('id');
+      if (overrideMuassasa) q = q.eq('muassasa', overrideMuassasa);
+      else if (viloyat) q = q.eq('viloyat', viloyat);
+      if (dateFrom) q = q.gte('qabul_vaqt', dateFrom);
+      if (dateTo) q = q.lte('qabul_vaqt', dateTo);
+      if (source !== null) q = q.in('murojaat_yoli', variants(source));
+      return q;
+    });
+    const counts = new Map();
+    for (const row of records) {
+      if (source === null && known.has(row.murojaat_yoli)) continue;
+      const region = row.viloyat || null;
+      counts.set(region, (counts.get(region) || 0) + 1);
+    }
+    const rows = [...counts].map(([region, count]) => ({ region, count })).sort((a, b) => b.count - a.count || String(a.region).localeCompare(String(b.region)));
+    return { total: rows.reduce((sum, row) => sum + row.count, 0), rows };
   },
 
   // Last 30 days trend — RPC orqali (Toshkent UTC+5 da)

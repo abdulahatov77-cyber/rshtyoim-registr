@@ -683,6 +683,22 @@
     ['dashboard.facilityDistribution',"{region} muassasalari bo'yicha",'По учреждениям: {region}','By institution: {region}','{region} mákemeleri boyınsha'],
     ['dashboard.longStayEmpty',"15 kun va undan ko'p davolanayotgan bemorlar yo'q",'Нет пациентов на лечении 15 дней и более','No patients hospitalised for 15 days or more','15 kún hám odan kóp emlenip atırǵan nawqaslar joq'],
     ['dashboard.totalPatients','Jami bemor','Всего пациентов','Total patients','Jámi nawqas'],
+    ['dashboard.sourceScale','Grafik o‘lchovi','Шкала графика','Chart scale','Grafik ólshemi'],
+    ['dashboard.sourceCount','Son','Количество','Count','San'],
+    ['dashboard.sourcePercent','Foiz','Процент','Percent','Payız'],
+    ['dashboard.sourceDenominator','Har bir kasallikning jami qabuli = 100%','Все поступления по каждому заболеванию = 100%','Total admissions for each disease = 100%','Hár bir keselliktiń jámi qabıllawı = 100%'],
+    ['dashboard.sourceSharedScale','Ikkala grafik uchun bir xil son shkalasi','Единая шкала количества для двух графиков','Shared count scale for both charts','Eki grafik ushın birdey san shkalası'],
+    ['dashboard.sourceRecords','qabul yozuvi','записей приёма','admission records','qabıllaw jazıwı'],
+    ['dashboard.sourceExplore','Viloyatlar kesimini ko‘rish uchun yo‘nalishni bosing','Нажмите на источник, чтобы увидеть регионы','Select a source to explore regions','Aymaqlar kesimin kóriw ushın baǵdardı basıń'],
+    ['dashboard.sourceRegionDetail','Tanlangan yo‘nalish bo‘yicha viloyatlar tafsiloti','Регионы по выбранному источнику поступления','Regions for the selected admission source','Tańlanǵan baǵdar boyınsha aymaqlar maǵlıwmatı'],
+    ['dashboard.sourceDetailShare','Tanlangan yo‘nalishdagi ulushi','Доля выбранного источника','Share of selected source','Tańlanǵan baǵdardaǵı úlesi'],
+    ['dashboard.sourceShowAll','Barcha viloyatlarni ko‘rish','Показать все регионы','Show all regions','Barlıq aymaqlardı kóriw'],
+    ['dashboard.sourceShowLess','Eng ko‘p 5 ta viloyat','Топ-5 регионов','Top 5 regions','Eń kóp 5 aymaq'],
+    ['dashboard.sourceClose','Tafsilotlarni yopish','Закрыть подробности','Close details','Maǵlıwmatlardı jabıw'],
+    ['dashboard.admissionSources','Murojaatlar yo‘nalishi','Источники поступления','Admission sources','Múrájat baǵdarları'],
+    ['dashboard.admissionSourceNote','Bemorning kelish yo‘li. Tanlangan hudud, muassasa va davrdagi qabul yozuvlari bo‘yicha.','Путь поступления пациента. Записи приёма за выбранный регион, учреждение и период.','How patients arrived. Admission records for the selected region, facility and period.','Nawqastıń keliw jolı. Tańlanǵan aymaq, mákeme hám dáwirdegi qabıllaw jazıwları boyınsha.'],
+    ['dashboard.admissionSourceTotal','Jami: {count} ta qabul yozuvi','Всего записей приёма: {count}','Total admission records: {count}','Jámi qabıllaw jazıwları: {count}'],
+    ['dashboard.admissionSourceUnknown','Boshqa / kiritilmagan','Другое / не указано','Other / not recorded','Basqa / kiritilmegen'],
     ['dashboard.loading',"Ma'lumotlar yuklanmoqda...",'Загрузка данных...','Loading data...','Maǵlıwmatlar júklenbekte...'],
     ['dashboard.loadError','Yuklashda xatolik','Ошибка загрузки','Loading error','Júklewde qátelik'],
     ['access.readOnlyRole','Rahbar roli faqat ko‘rish huquqiga ega','Роль руководителя имеет доступ только для просмотра','The manager role has view-only access','Basshı roli tek kóriw huqıqına iye'],
@@ -1197,6 +1213,23 @@
     ['pending.admitPatient','Bemorni qabul qilish','Принять пациента','Admit patient','Nawqastı qabıl etiw'],
     ['pending.arrivalTimeHelp','Bu vaqt yangi kartaning «Qabul vaqti» bo‘ladi va marshrut hisobotida ishlatiladi.','Это время станет временем поступления в новой карте и будет использоваться в отчёте по маршрутизации.','This time becomes the admission time on the new record and is used in the routing report.','Bul waqt jańa kartada «Qabıllaw waqtı» boladı hám marshrut esabatında qollanıladı.'],
     ['pending.sqlCheck','qabul_tasdiq.sql ishga tushirilganini tekshiring','Проверьте, выполнен ли qabul_tasdiq.sql','Check whether qabul_tasdiq.sql has been run','qabul_tasdiq.sql iske túsirilgenin tekseriń']
+    ,['dashboard.openSettings',"Sozlamalarga o'tish",'Перейти в настройки','Open settings','Sazlamalarǵa ótiw']
+    ,['dashboard.openList',"Ro'yxatni ochish",'Открыть список','Open list','Dizimdi ashıw']
+    ,['dashboard.retry','Qayta urinish','Повторить','Try again','Qayta urınıw']
+    ,['dashboard.view',"Ko'rish",'Просмотр','View','Kóriw']
+    ,['dashboard.viewAll','Barchasi','Все','View all','Hámmesi']
+    ,['dashboard.diagnosis','Tashxis','Диагноз','Diagnosis','Diagnoz']
+    ,['dashboard.status','Holat','Статус','Status','Jaǵday']
+    ,['dashboard.dataQualityShort','DQ','КД','DQ','MS']
+    ,['dashboard.age','Yosh','Возраст','Age','Jas']
+    ,['dashboard.region','Viloyat','Область','Region','Wálayat']
+    ,['dashboard.byRegion','Viloyat kesimida','По областям','By region','Wálayat boyınsha']
+    ,['dashboard.diseaseType','Kasallik turi','Тип заболевания','Disease type','Kesellik túri']
+    ,['dashboard.rate18','100 000 aholiga nisbatan (18+)','На 100 000 населения (18+)','Per 100,000 population (18+)','100 000 xalıqqa salıstırǵanda (18+)']
+    ,['dashboard.rate30','100 000 aholiga nisbatan (30+)','На 100 000 населения (30+)','Per 100,000 population (30+)','100 000 xalıqqa salıstırǵanda (30+)']
+    ,['dashboard.population18','18+ aholi: {count}','Население 18+: {count}','Population 18+: {count}','18+ xalıq: {count}']
+    ,['dashboard.unknown',"Noma'lum",'Неизвестно','Unknown','Belgisiz']
+    ,['dashboard.error','Xatolik','Ошибка','Error','Qátelik']
   ];
   for (const [key, uz, ru, en, kk] of rows) {
     catalog.uz[key] = uz; catalog.ru[key] = ru; catalog.en[key] = en; catalog.kk[key] = kk;

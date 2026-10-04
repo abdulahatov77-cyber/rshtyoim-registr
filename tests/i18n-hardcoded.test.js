@@ -29,7 +29,7 @@ function audit() {
     const source = fs.readFileSync(path.join(root, file), 'utf8');
     const lines = source.split(/\r?\n/);
     lines.forEach((line, index) => {
-      if (/i18n-audit-allow/.test(line) || /\bt\(['"`]/.test(line)) return;
+      if (/i18n-audit-allow/.test(line) || /\btr?\(['"`]/.test(line)) return;
       for (const [rule, regex] of rules) {
         regex.lastIndex = 0;
         if (regex.test(line)) findings.push({ file: file.replace(/\\/g, '/'), line: index + 1, rule, text: line.trim().slice(0, 180) });
