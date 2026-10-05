@@ -5,10 +5,10 @@ const PageLoader = {
   _pages: {
     dashboard:            { src: 'js/pages/dashboard.js?v=20261005-karta', deps: ['pd', 'agePyramid', 'charts', 'treatmentFlow'] },
     'infarkt-yangi':      { src: 'js/pages/infarkt-yangi.js?v=20261005-kichik', deps: ['calculators'] },
-    'insult-yangi':       { src: 'js/pages/insult-yangi.js?v=20261006-tekshiruv', deps: ['calculators', 'cdss'] },
+    'insult-yangi':       { src: 'js/pages/insult-yangi.js?v=20261006-boy', deps: ['calculators', 'cdss'] },
     'infarkt-reyestri':   { src: 'js/pages/infarkt-reyestri.js?v=20260926-i18n-r69' },
     'insult-reyestri':    { src: 'js/pages/insult-reyestri.js?v=20260926-i18n-r72' },
-    'bemor-karta':        { src: 'js/pages/bemor-karta.js?v=20261006-tekshiruv', deps: ['calculators'] },
+    'bemor-karta':        { src: 'js/pages/bemor-karta.js?v=20261006-boy', deps: ['calculators'] },
     bemorlar:             { src: 'js/pages/bemorlar.js?v=20261005-karta', deps: ['pd'] },
     hisobot:              { src: 'js/pages/hisobot.js?v=20261005-karta' },
     admin:                { src: 'js/pages/admin.js?v=20260926-i18n-r72' },

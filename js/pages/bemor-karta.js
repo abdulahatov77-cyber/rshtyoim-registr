@@ -1830,7 +1830,7 @@ const BemorKartaPage = {
           </div>
           <div class="form-group">
             <label class="form-label">Bo'y uzunligi (sm)</label>
-            <input id="edit-boy" type="number" min="50" max="250" class="form-input" value="${p.boy||''}" placeholder="${t('placeholder.heightExample')}"/>
+            <input id="edit-boy" type="number" min="100" max="230" class="form-input" value="${p.boy||''}" placeholder="${t('placeholder.heightExample')}"/>
             <div class="text-xs text-slate-400 mt-1">Santimetrda, butun son — metrda EMAS</div>
           </div>
           <div class="form-group">
@@ -2088,7 +2088,7 @@ const BemorKartaPage = {
     const boyRawE = g('edit-boy')?.value || '';
     if (boyRawE) {
       const boyVE = parseFloat(boyRawE.replace(',', '.'));
-      if (boyRawE.includes('.') || boyRawE.includes(',') || boyVE < 50 || boyVE > 250) {
+      if (boyRawE.includes('.') || boyRawE.includes(',') || boyVE < 100 || boyVE > 230) {
         g('edit-boy')?.classList.add('border-red-500');
         showToast(t('validation.heightCentimetres'), 'error', 7000);
         return;
