@@ -24,6 +24,8 @@ const BemorlarPage = {
     if (Router._params.muassasa) BemorlarPage._filters.search = Router._params.muassasa;
     if (Router._params.search) BemorlarPage._filters.search = Router._params.search;
     if (Router._params.status) BemorlarPage._filters.status = Router._params.status;
+    // Dashboard eslatmasidan: faqat chiqarilgan va varaqasi yo'q bemorlar
+    if (Router._params.varaqasiz) { BemorlarPage._filters.status = 'chiqarildi'; BemorlarPage._filters.missingExit = true; }
     
     BemorlarPage.renderFilters();
     await BemorlarPage.loadData();
@@ -312,7 +314,7 @@ const BemorlarPage = {
       // Chiqarish varaqasi to'ldirilmagan filtr (client-side)
       if (f.missingExit) {
         combined = combined.filter(p =>
-          (p.status === 'chiqarildi' || p.status === 'vafot') && !p._chiqarish?.chiqish_sana);
+          (p.status === 'chiqarildi' || p.status === 'vafot') && !p._chiqarish);
         totalCount = combined.length;
       }
 

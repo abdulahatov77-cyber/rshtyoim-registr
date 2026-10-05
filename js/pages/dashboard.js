@@ -154,7 +154,7 @@ const DashboardPage = {
             <div class="text-sm text-red-800">${t('dashboard.noDischargeHelp')}</div>
           </div>
         </div>
-        <button class="btn btn-primary flex items-center gap-2 shrink-0" onclick="Router.go('bemorlar')">
+        <button class="btn btn-primary flex items-center gap-2 shrink-0" onclick="Router.go('bemorlar', { varaqasiz: true })">
           ${icon('users', 16)} ${t('dashboard.openPatients')}
         </button>
       </div>`;
