@@ -20,7 +20,7 @@ const PageLoader = {
     'keng-hisobot':       { src: 'js/pages/keng-hisobot.js?v=20260926-i18n-r72' }
   },
   _deps: {
-    treatmentFlow: () => AssetLoader.script('js/treatment-flow.js?v=20260927-colors-r1'),
+    treatmentFlow: () => AssetLoader.script('js/treatment-flow.js?v=20261005-route'),
     pd: () => AssetLoader.script('js/pd-mask.js?v=20260924-i18n-r1'),
     cdss: () => AssetLoader.script('js/cdss.js?v=20261004-gcs9'),
     calculators: () => AssetLoader.script('js/calculators.js?v=20261004-gcs9'),
