@@ -827,7 +827,7 @@ const DashboardPage = {
     const group = (DashboardPage._longStayData || [])[idx];
     if (!group) return;
     const rows = group.bemorlar.sort((a, b) => b.kunlar - a.kunlar).map(b => `
-      <tr class="border-b border-slate-50 hover:bg-slate-50/50 cursor-pointer" onclick="closeModal(); Router.go('bemor-karta',{kt_no:'${b.kt_no}', type:'${b._type}'})">
+      <tr class="border-b border-slate-50 hover:bg-slate-50/50 cursor-pointer" onclick="closeModal(); Router.go('bemor-karta',{kt_no:'${b.kt_no}', type:'${b._type}', id:'${b.id || ''}'})">
         <td class="p-3 font-mono text-[11px] text-slate-500">${esc(b.kt_no)}</td>
         <td class="p-3 font-bold text-slate-700">${esc(b.fio || '—')}</td>
         <td class="p-3 text-slate-500 text-xs">${t('dashboard.ageYears', { age: Utils.calculateAge(b.tugilgan_yil) || '—' })}</td>
@@ -1261,7 +1261,7 @@ const DashboardPage = {
         </div>`).join('');
 
       const tableRows = all.map(p=>`
-        <tr class="border-b border-slate-50 hover:bg-rose-50/30 cursor-pointer transition-colors" onclick="closeModal();Router.go('bemor-karta',{kt_no:'${p.kt_no}',type:'${p._type}'})">
+        <tr class="border-b border-slate-50 hover:bg-rose-50/30 cursor-pointer transition-colors" onclick="closeModal();Router.go('bemor-karta',{kt_no:'${p.kt_no}',type:'${p._type}',id:'${p.id || ''}'})">
           <td class="p-2 text-xs font-mono text-slate-500">${esc(p.kt_no)}</td>
           <td class="p-2 text-sm font-semibold text-slate-800">${esc(p.fio||'—')}</td>
           <td class="p-2 text-xs">${p._type==='infarkt'?`<span class="text-red-600 font-bold">${t('glossary.infarction')}</span>`:`<span class="text-blue-600 font-bold">${t('glossary.stroke')}</span>`}</td>
@@ -1336,7 +1336,7 @@ const DashboardPage = {
       else if (diagnosis.includes('GEMORRAGIK')) fDiag = t('stroke.hemorrhagic');
       else if (diagnosis.includes('ISHEMIK')) fDiag = t('stroke.ischemic');
       return `
-      <tr class="border-b border-slate-50 hover:bg-slate-50/50 cursor-pointer transition-colors" onclick="Router.go('bemor-karta',{kt_no:'${esc(p.kt_no)}', type:'${esc(p._type)}'})">
+      <tr class="border-b border-slate-50 hover:bg-slate-50/50 cursor-pointer transition-colors" onclick="Router.go('bemor-karta',{kt_no:'${esc(p.kt_no)}', type:'${esc(p._type)}', id:'${esc(p.id || '')}'})">
         <td class="p-4 text-slate-500 font-mono text-[11px]">${p.kt_no}</td>
         <td class="p-4">
           <div class="font-bold text-slate-800">${p.fio || '—'}</div>

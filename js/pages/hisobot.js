@@ -626,7 +626,7 @@ const HisobotPage = {
                   <td class="p-2.5 border-b border-slate-200">
                     <div class="flex flex-wrap gap-1.5">
                       ${royxat.map(b => `
-                        <button onclick="Router.go('bemor-karta',{kt_no:'${esc(b.kt_no)}',type:'${b._type}'})"
+                        <button onclick="Router.go('bemor-karta',{kt_no:'${esc(b.kt_no)}',type:'${b._type}',id:'${esc(b.id || '')}'})"
                     title="${esc(b.kt_no)} · ${b._type}" data-i18n-skip data-i18n-audit="i18n-audit-allow: escaped record number and technical registry type"
                           style="border:1px solid #e2e8f0;background:#fff;border-radius:8px;padding:3px 8px;
                                  font-size:11px;cursor:pointer;white-space:nowrap">
@@ -2216,7 +2216,7 @@ const HisobotPage = {
       const age = Utils.calculateAge(p.tugilgan_sana || p.tugilgan_yil) || '—';
       const statusColors = { active: '#16a34a', vafot: '#dc2626', chiqarildi: '#2563eb', otkazildi: '#d97706' };
       const sc = statusColors[p.status] || '#64748b';
-      return `<tr style="border-bottom:1px solid #f1f5f9;cursor:pointer" onclick="document.getElementById('h-modal')?.remove();Router.go('bemor-karta',{kt_no:'${esc(p.kt_no)}',type:'${esc(type)}'})"  >
+      return `<tr style="border-bottom:1px solid #f1f5f9;cursor:pointer" onclick="document.getElementById('h-modal')?.remove();Router.go('bemor-karta',{kt_no:'${esc(p.kt_no)}',type:'${esc(type)}',id:'${esc(p.id || '')}'})"  >
         <td style="padding:10px 14px;font-family:monospace;font-size:12px;color:#64748b">${esc(p.kt_no)}</td>
         <td style="padding:10px 14px;font-weight:700;color:#0f172a">${esc(p.fio) || '—'}</td>
         <td style="padding:10px 14px;color:#475569">${esc(t('dashboard.ageYears', { age }))} · ${esc(I18n.translateText(p.jins || '—'))}</td>

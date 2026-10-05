@@ -296,14 +296,15 @@ const BemorlarPage = {
         const insKts = needsExit.filter(p => p._type === 'insult').map(p => p.kt_no);
         const sb = getSupabase();
         const [infChiq, insChiq] = await Promise.all([
-          infKts.length ? sb.from('infarkt_chiqarish').select('kt_no,chiqish_sana,chiqish_holat').in('kt_no', infKts) : Promise.resolve({ data: [] }),
-          insKts.length ? sb.from('insult_chiqarish').select('kt_no,chiqish_sana,natija').in('kt_no', insKts) : Promise.resolve({ data: [] })
+          infKts.length ? sb.from('infarkt_chiqarish').select('kt_no,infarkt_qabul_id,chiqish_sana,chiqish_holat').in('kt_no', infKts) : Promise.resolve({ data: [] }),
+          insKts.length ? sb.from('insult_chiqarish').select('kt_no,insult_qabul_id,chiqish_sana,natija').in('kt_no', insKts) : Promise.resolve({ data: [] })
         ]);
         const exitMap = {};
-        (infChiq.data || []).forEach(r => { exitMap['infarkt:' + r.kt_no] = { kt_no: r.kt_no, chiqish_sana: r.chiqish_sana, natija: r.chiqish_holat }; });
-        (insChiq.data || []).forEach(r => { exitMap['insult:' + r.kt_no] = r; });
+        // Varaqa aniq qabulga bog'langan bo'lsa id bo'yicha, eski (bog'lanmagan) yozuv — K/T bo'yicha
+        (infChiq.data || []).forEach(r => { exitMap[r.infarkt_qabul_id ? 'id:' + r.infarkt_qabul_id : 'infarkt:' + r.kt_no] = { kt_no: r.kt_no, chiqish_sana: r.chiqish_sana, natija: r.chiqish_holat }; });
+        (insChiq.data || []).forEach(r => { exitMap[r.insult_qabul_id ? 'id:' + r.insult_qabul_id : 'insult:' + r.kt_no] = r; });
         combined.forEach(p => {
-          const ex = exitMap[p._type + ':' + p.kt_no];
+          const ex = exitMap['id:' + p.id] || exitMap[p._type + ':' + p.kt_no];
           if (ex) p._chiqarish = ex;
         });
       }
@@ -377,7 +378,7 @@ const BemorlarPage = {
             const age = Utils.calculateAge(p.tugilgan_sana || p.tugilgan_yil) || '—';
             const key = p.kt_no + ':' + p._type;
             return `
-              <tr class="group bl-row" data-kt="${esc(p.kt_no)}" data-type="${esc(p._type)}" style="cursor:pointer">
+              <tr class="group bl-row" data-kt="${esc(p.kt_no)}" data-type="${esc(p._type)}" data-id="${esc(p.id || '')}" style="cursor:pointer">
                 ${isSuperAdmin ? `
                 <td onclick="event.stopPropagation()">
                   <input type="checkbox" class="bl-cb" data-key="${esc(key)}" style="width:16px;height:16px;cursor:pointer"
@@ -457,7 +458,7 @@ const BemorlarPage = {
     document.querySelectorAll('.bl-row').forEach(tr => {
       tr.addEventListener('click', function(e) {
         if (e.target.closest('.bl-cb') || e.target.type === 'checkbox') return;
-        Router.go('bemor-karta', { kt_no: this.dataset.kt, type: this.dataset.type });
+        Router.go('bemor-karta', { kt_no: this.dataset.kt, type: this.dataset.type, id: this.dataset.id || undefined });
       });
     });
   },

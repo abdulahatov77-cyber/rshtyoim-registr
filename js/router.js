@@ -3,14 +3,14 @@ const PageLoader = {
   _loaded: new Set(['login']),
   _pending: new Map(),
   _pages: {
-    dashboard:            { src: 'js/pages/dashboard.js?v=20260927-colors-r1', deps: ['pd', 'agePyramid', 'charts', 'treatmentFlow'] },
+    dashboard:            { src: 'js/pages/dashboard.js?v=20261005-karta', deps: ['pd', 'agePyramid', 'charts', 'treatmentFlow'] },
     'infarkt-yangi':      { src: 'js/pages/infarkt-yangi.js?v=20260926-i18n-r72', deps: ['calculators'] },
     'insult-yangi':       { src: 'js/pages/insult-yangi.js?v=20260926-i18n-r72', deps: ['calculators', 'cdss'] },
     'infarkt-reyestri':   { src: 'js/pages/infarkt-reyestri.js?v=20260926-i18n-r69' },
     'insult-reyestri':    { src: 'js/pages/insult-reyestri.js?v=20260926-i18n-r72' },
-    'bemor-karta':        { src: 'js/pages/bemor-karta.js?v=20261005-qabulid', deps: ['calculators'] },
-    bemorlar:             { src: 'js/pages/bemorlar.js?v=20260927-perf-r2', deps: ['pd'] },
-    hisobot:              { src: 'js/pages/hisobot.js?v=20260926-i18n-r72' },
+    'bemor-karta':        { src: 'js/pages/bemor-karta.js?v=20261005-karta', deps: ['calculators'] },
+    bemorlar:             { src: 'js/pages/bemorlar.js?v=20261005-karta', deps: ['pd'] },
+    hisobot:              { src: 'js/pages/hisobot.js?v=20261005-karta' },
     admin:                { src: 'js/pages/admin.js?v=20260926-i18n-r72' },
     'muassasa-imkoniyat': { src: 'js/pages/muassasa-imkoniyat.js?v=20260926-i18n-r72' },
     settings:             { src: 'js/pages/settings.js?v=20260926-i18n-r72' },
@@ -24,7 +24,7 @@ const PageLoader = {
     pd: () => AssetLoader.script('js/pd-mask.js?v=20260924-i18n-r1'),
     cdss: () => AssetLoader.script('js/cdss.js?v=20261004-gcs9'),
     calculators: () => AssetLoader.script('js/calculators.js?v=20261004-gcs9'),
-    agePyramid: () => AssetLoader.script('js/agePyramid.js?v=20260924-i18n-r3'),
+    agePyramid: () => AssetLoader.script('js/agePyramid.js?v=20261005-karta'),
     charts: () => AssetLoader.charts()
   },
 
