@@ -189,10 +189,23 @@ const DB = {
     return newKt;
   },
 
-  async deletePatientCascade(kt_no, type) {
+  async deletePatientCascade(kt_no, type, patientId) {
     const sb = getSupabase();
     const mainTable = type === 'infarkt' ? 'infarkt_qabul' : 'insult_qabul';
     const chiqarishTable = type === 'infarkt' ? 'infarkt_chiqarish' : 'insult_chiqarish';
+    // K/T raqami turli muassasalarda takrorlanishi mumkin. Shunday bo'lsa kt_no bo'yicha
+    // o'chirish boshqa bemorni ham o'chirib yuboradi — faqat shu qabul (id) va unga
+    // aniq bog'langan yozuvlar o'chiriladi; id berilmagan bo'lsa rad etiladi.
+    const { data: sameKt } = await sb.from(mainTable).select('id').eq('kt_no', kt_no);
+    if (sameKt && sameKt.length > 1) {
+      if (!patientId) throw new Error(`"${kt_no}" raqami ${sameKt.length} ta bemorda bir xil — bemor kartasidan alohida o'chiring.`);
+      const fk = type === 'infarkt' ? 'infarkt_qabul_id' : 'insult_qabul_id';
+      await sb.from(chiqarishTable).delete().eq(fk, patientId);
+      await sb.from('dinamika_muolajalar').delete().eq('qabul_id', patientId);
+      const { error } = await sb.from(mainTable).delete().eq('id', patientId);
+      if (error) throw error;
+      return;
+    }
     // Barcha child jadvallar kt_no orqali bog'langan
     const childTables = [chiqarishTable, 'holat_dinamikasi', 'navbatchi_jurnal',
       'dinamika_muolajalar', 'holat_baxolash', 'kuzatuv', 'davolash',
@@ -1033,12 +1046,14 @@ const DB = {
     return data || [];
   },
 
-  async getDinamikaMuolajalar(kt_no) {
-    const { data, error } = await getSupabase()
+  // qabulId berilsa — faqat shu qabulga bog'langan (yoki hali bog'lanmagan eski) yozuvlar.
+  async getDinamikaMuolajalar(kt_no, qabulId) {
+    let q = getSupabase()
       .from('dinamika_muolajalar')
       .select('*')
-      .eq('kt_no', kt_no)
-      .order('created_at', { ascending: true });
+      .eq('kt_no', kt_no);
+    if (qabulId) q = q.or(`qabul_id.eq.${qabulId},qabul_id.is.null`);
+    const { data, error } = await q.order('created_at', { ascending: true });
     if (error) throw error;
     return data || [];
   },
