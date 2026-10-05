@@ -950,11 +950,13 @@ const DB = {
     const yoq = error.code === 'PGRST202' || /does not exist|not find the function/i.test(error.message || '');
     if (!yoq) throw error;
     if (turi === 'infarkt') {
-      await DB.infarktUpdate(kt_no, { status, otkazilgan_muassasa: otkazilganMuassasa || null });
-      if (chiqarish) await DB.infarktChiqarish({ ...chiqarish, kt_no });
+      await DB.infarktUpdate(kt_no, { status, otkazilgan_muassasa: otkazilganMuassasa || null,
+        ...(chiqarish?.otkazish_sababi ? { otkazish_sababi: chiqarish.otkazish_sababi } : {}) });
+      if (chiqarish) { const { otkazish_sababi, ...varaqa } = chiqarish; await DB.infarktChiqarish({ ...varaqa, kt_no }); }
     } else {
-      await DB.insultUpdate(kt_no, { status, otkazilgan_muassasa: otkazilganMuassasa || null });
-      if (chiqarish) await DB.insultChiqarish({ ...chiqarish, kt_no });
+      await DB.insultUpdate(kt_no, { status, otkazilgan_muassasa: otkazilganMuassasa || null,
+        ...(chiqarish?.otkazish_sababi ? { otkazish_sababi: chiqarish.otkazish_sababi } : {}) });
+      if (chiqarish) { const { otkazish_sababi, ...varaqa } = chiqarish; await DB.insultChiqarish({ ...varaqa, kt_no }); }
     }
     return null;
   },
