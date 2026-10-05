@@ -265,6 +265,40 @@ const BemorlarPage = {
     try {
       let combined = [];
       let totalCount = 0;
+      // Chiqarish varaqasi yo'q bemorlar: ro'yxatni bazadan to'liq olamiz (sahifalab emas),
+      // aks holda faqat birinchi sahifadagi 50 tasi ichidan qidirilib, ko'pi topilmay qolardi
+      if (f.missingExit) {
+        const sb0 = getSupabase();
+        const { data: idRows, error: idErr } = await sb0.rpc('varaqasiz_bemorlar_idlari', { p_muassasa: null });
+        if (idErr) throw idErr;
+        const byType = { infarkt: [], insult: [] };
+        (idRows || []).forEach(r => { if (byType[r.tur]) byType[r.tur].push(r.id); });
+        const loadType = async (tur) => {
+          if (f.type !== 'all' && f.type !== tur) return [];
+          const ids = byType[tur];
+          const cols = tur === 'infarkt' ? DB._LIST_COLS_INF : DB._LIST_COLS_INS;
+          const parts = [];
+          for (let i = 0; i < ids.length; i += 50) parts.push(ids.slice(i, i + 50));
+          const res = await Promise.all(parts.map(part => sb0.from(tur + '_qabul').select(cols).in('id', part)));
+          const bad = res.find(r => r.error);
+          if (bad) throw bad.error;
+          return res.flatMap(r => r.data || []).map(x => ({ ...x, _type: tur }));
+        };
+        let rows = (await Promise.all([loadType('infarkt'), loadType('insult')])).flat();
+        if (f.viloyat)  rows = rows.filter(p => p.viloyat === f.viloyat);
+        if (f.muassasa) rows = rows.filter(p => p.muassasa === f.muassasa);
+        if (f.search) {
+          const q = f.search.trim().toLowerCase();
+          rows = rows.filter(p => String(p.fio || '').toLowerCase().includes(q) || String(p.kt_no || '').toLowerCase().includes(q));
+        }
+        rows.sort((x, y) => new Date(y.created_at) - new Date(x.created_at));
+        const per = BemorlarPage._perPage || 20;
+        const from = ((BemorlarPage._currentPage || 1) - 1) * per;
+        BemorlarPage._allData = rows.slice(from, from + per);
+        BemorlarPage._totalCount = rows.length;
+        BemorlarPage.renderTable();
+        return;
+      }
       const fetches = [];
       const fetchObj = f.missingTime ? { ...fObj, allCols: true } : fObj;
       if (f.type !== 'insult') fetches.push(DB.infarktList(fetchObj).then(r => ({ rows: r.data.map(x=>({...x,_type:'infarkt'})), count: r.count })));
