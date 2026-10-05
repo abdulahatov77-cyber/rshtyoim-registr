@@ -67,7 +67,12 @@ const BemorKartaPage = {
           ? await getSupabase().from(tbl).select(cols).eq(fk, patient.id).order('chiqish_sana', { ascending: false }).limit(1)
           : { data: [] };
         if (!chiq || chiq.length === 0) {
-          ({ data: chiq } = await getSupabase().from(tbl).select(cols).eq('kt_no', kt_no).is(fk, null).order('chiqish_sana', { ascending: false }).limit(1));
+          // K/T muassasalar orasida takrorlanadi: bog'lanmagan eski varaqani faqat shu K/T da
+          // bitta qabul bo'lsa shu bemorga tegishli deb olamiz (aks holda boshqa bemorning varaqasi chiqib qoladi)
+          const { count: ktSoni } = await getSupabase().from(type + '_qabul').select('id', { count: 'exact', head: true }).eq('kt_no', kt_no);
+          if ((ktSoni || 0) <= 1) {
+            ({ data: chiq } = await getSupabase().from(tbl).select(cols).eq('kt_no', kt_no).is(fk, null).order('chiqish_sana', { ascending: false }).limit(1));
+          }
         }
         if (chiq && chiq.length > 0) {
           // infarkt da chiqish_holat, insult da natija — ikkalasini natija ga normalize qil
