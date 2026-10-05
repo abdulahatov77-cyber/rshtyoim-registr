@@ -1600,6 +1600,7 @@ const InsultYangiPage = {
       if (isOtk && otkSana) {
         const tRec = {
           kt_no: payload.kt_no,
+          qabul_id: saved?.id || null,
           muassasa_dan: payload.muassasa,
           muassasa_ga: payload.otkazilgan_muassasa,
           sana: otkSana,

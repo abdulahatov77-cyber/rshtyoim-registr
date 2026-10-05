@@ -202,6 +202,9 @@ const DB = {
       const fk = type === 'infarkt' ? 'infarkt_qabul_id' : 'insult_qabul_id';
       await sb.from(chiqarishTable).delete().eq(fk, patientId);
       await sb.from('dinamika_muolajalar').delete().eq('qabul_id', patientId);
+      for (const t of ['holat_dinamikasi', 'navbatchi_jurnal', 'holat_baxolash', 'kuzatuv', 'davolash', 'transfer_log', 'bemor_fayllari']) {
+        try { await sb.from(t).delete().eq('qabul_id', patientId); } catch (e) { /* jadval yo'q bo'lsa o'tkazamiz */ }
+      }
       const { error } = await sb.from(mainTable).delete().eq('id', patientId);
       if (error) throw error;
       return;
@@ -600,12 +603,13 @@ const DB = {
   async marshrutQabulYoz(oldRow, yangiMuassasa, qabulVaqtIso) {
     if (!oldRow?.kt_no || !yangiMuassasa || !qabulVaqtIso) return;
     try {
-      const mavjud = await TransferLog.getByKtNo(oldRow.kt_no).catch(() => []);
+      const mavjud = await TransferLog.getByKtNo(oldRow.kt_no, oldRow.id).catch(() => []);
       // Yuboruvchi tomon allaqachon yozgan bo'lsa — takrorlamaymiz
       if (mavjud.some(r => (r.muassasa_ga || '') === yangiMuassasa)) return;
       const d = new Date(new Date(qabulVaqtIso).getTime() + 5 * 3600000);
       const rec = {
         kt_no: oldRow.kt_no,
+        ...(oldRow.id ? { qabul_id: oldRow.id } : {}),
         muassasa_dan: oldRow.muassasa || '',
         muassasa_ga: yangiMuassasa,
         sana: d.toISOString().slice(0, 10),
@@ -1041,12 +1045,13 @@ const DB = {
     return result;
   },
 
-  async getKuzatuv(kt_no) {
-    const { data, error } = await getSupabase()
+  async getKuzatuv(kt_no, qabulId) {
+    let q = getSupabase()
       .from('kuzatuv')
       .select('*')
-      .eq('kt_no', kt_no)
-      .order('created_at', { ascending: false });
+      .eq('kt_no', kt_no);
+    if (qabulId) q = q.or(`qabul_id.eq.${qabulId},qabul_id.is.null`);
+    const { data, error } = await q.order('created_at', { ascending: false });
     if (error) throw error;
     return data || [];
   },
@@ -1093,10 +1098,11 @@ const DB = {
     if (error) throw error;
   },
 
-  async getHolatDinamikasi(kt_no) {
-    const { data, error } = await getSupabase()
-      .from('holat_dinamikasi').select('*').eq('kt_no', kt_no)
-      .order('created_at', { ascending: true });
+  async getHolatDinamikasi(kt_no, qabulId) {
+    let q = getSupabase()
+      .from('holat_dinamikasi').select('*').eq('kt_no', kt_no);
+    if (qabulId) q = q.or(`qabul_id.eq.${qabulId},qabul_id.is.null`);
+    const { data, error } = await q.order('created_at', { ascending: true });
     if (error) throw error;
     return data || [];
   },
@@ -1108,10 +1114,11 @@ const DB = {
     return result;
   },
 
-  async getNavbatchiJurnal(kt_no) {
-    const { data, error } = await getSupabase()
-      .from('navbatchi_jurnal').select('*').eq('kt_no', kt_no)
-      .order('created_at', { ascending: false });
+  async getNavbatchiJurnal(kt_no, qabulId) {
+    let q = getSupabase()
+      .from('navbatchi_jurnal').select('*').eq('kt_no', kt_no);
+    if (qabulId) q = q.or(`qabul_id.eq.${qabulId},qabul_id.is.null`);
+    const { data, error } = await q.order('created_at', { ascending: false });
     if (error) throw error;
     return data || [];
   },
@@ -1701,12 +1708,14 @@ const DB = {
 
 // ==================== TRANSFER LOG ====================
 const TransferLog = {
-  async getByKtNo(kt_no) {
-    const { data, error } = await getSupabase()
+  // qabulId berilsa — faqat shu qabulga bog'langan (yoki eski bog'lanmagan) yozuvlar
+  async getByKtNo(kt_no, qabulId) {
+    let q = getSupabase()
       .from('transfer_log')
       .select('*')
-      .eq('kt_no', kt_no)
-      .order('sana', { ascending: true });
+      .eq('kt_no', kt_no);
+    if (qabulId) q = q.or(`qabul_id.eq.${qabulId},qabul_id.is.null`);
+    const { data, error } = await q.order('sana', { ascending: true });
     if (error) throw error;
     return data || [];
   },
