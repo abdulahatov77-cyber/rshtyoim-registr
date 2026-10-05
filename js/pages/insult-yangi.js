@@ -280,7 +280,7 @@ const InsultYangiPage = {
           `,true)}
         </div>
         ${this.field('vazn','Tana vazni (kg)',`<input id="vazn" type="number" min="2" max="350" step="0.1" class="form-input" placeholder="${t('placeholder.weightExample')}" value="${d.vazn||''}" oninput="this.value=this.value.replace(/[^0-9.]/g,'')"/>`,true,'Kilogrammda')}
-        ${this.field('boy','Bo\'y uzunligi (sm)',`<input id="boy" type="number" min="50" max="250" class="form-input" placeholder="${t('placeholder.heightExample')}" value="${d.boy||''}"/>`,true,"Santimetrda, butun son (masalan 172) — metrda EMAS")}
+        ${this.field('boy','Bo\'y uzunligi (sm)',`<input id="boy" type="number" min="100" max="230" class="form-input" placeholder="${t('placeholder.heightExample')}" value="${d.boy||''}"/>`,true,"Santimetrda, butun son (masalan 172) — metrda EMAS")}
 
         <!-- Doimiy yashash manzili -->
         <div class="col-span-1 sm:col-span-2 mt-2 pt-4 border-t border-dashed border-gray-200">
@@ -1050,7 +1050,7 @@ const InsultYangiPage = {
     const d = InsultYangiPage._data;
     const LABEL = 'Semizlik';
     const vazn = parseFloat(d.vazn), boy = parseFloat(d.boy);
-    if (!(vazn > 0) || !(boy >= 50)) return;
+    if (!(vazn > 0) || !(boy >= 100)) return;
     const bmi = vazn / Math.pow(boy / 100, 2);
     let arr = Array.isArray(d.xavf_omil) ? [...d.xavf_omil] : [];
     const has = arr.includes(LABEL);
@@ -1221,11 +1221,11 @@ const InsultYangiPage = {
       const boyRaw = String(this._data.boy || '');
       if (boyRaw) {
         const boyV = parseFloat(boyRaw.replace(',', '.'));
-        if (boyRaw.includes('.') || boyRaw.includes(',') || boyV < 50) {
+        if (boyRaw.includes('.') || boyRaw.includes(',') || boyV < 100) {
           valid = false;
           document.getElementById('boy')?.classList.add('border-red-500', 'err-red');
           showToast(t('validation.heightCentimetres'), 'error', 7000);
-        } else if (boyV > 250) {
+        } else if (boyV > 230) {
           valid = false;
           document.getElementById('boy')?.classList.add('border-red-500', 'err-red');
           showToast(t('validation.heightRange'), 'error', 6000);
