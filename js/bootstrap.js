@@ -10,10 +10,10 @@
   // Preserve the proven core execution order. Page modules are loaded by Router.
   const CORE_SCRIPTS = [
     'js/config.js?v=81',
-    'js/supabase.js?v=20261005-qabulid',
+    'js/supabase.js?v=20261005-karta',
     'js/utils.js?v=84',
-    'js/components.js?v=81',
-    'js/router.js?v=20261005-qabulid',
+    'js/components.js?v=20261005-karta',
+    'js/router.js?v=20261005-karta',
     'js/pages/login.js?v=20260926-i18n-r72',
     'js/app.js?v=71'
   ];

@@ -7,7 +7,7 @@ const BemorKartaPage = {
   _navIndex: -1,
 
   async render(params) {
-    const { kt_no } = params || {};
+    const { kt_no, id } = params || {};
     let type = params?.type;
     if (!kt_no || !type) { Router.go('bemorlar'); return; }
     // Clean up previous keyboard listener from any prior karta render
@@ -49,7 +49,7 @@ const BemorKartaPage = {
       BemorKartaPage._profile = profile;
       let patient;
       try {
-        patient = type === 'infarkt' ? await DB.infarktByKtNo(kt_no) : await DB.insultByKtNo(kt_no);
+        patient = type === 'infarkt' ? await DB.infarktByKtNo(kt_no, id) : await DB.insultByKtNo(kt_no, id);
       } catch (eFirst) {
         // Noto'g'ri registr bilan ochilgan bo'lishi mumkin — ikkinchisidan qidiramiz
         const otherType = type === 'infarkt' ? 'insult' : 'infarkt';
@@ -61,7 +61,14 @@ const BemorKartaPage = {
       try {
         const tbl = type === 'infarkt' ? 'infarkt_chiqarish' : 'insult_chiqarish';
         const cols = type === 'infarkt' ? 'chiqish_sana,chiqish_holat' : 'chiqish_sana,natija';
-        const { data: chiq } = await getSupabase().from(tbl).select(cols).eq('kt_no', kt_no).order('chiqish_sana', { ascending: false }).limit(1);
+        // Avval aniq shu qabulga bog'langan varaqa, bo'lmasa (eski yozuv) K/T bo'yicha
+        const fk = type === 'infarkt' ? 'infarkt_qabul_id' : 'insult_qabul_id';
+        let { data: chiq } = patient.id
+          ? await getSupabase().from(tbl).select(cols).eq(fk, patient.id).order('chiqish_sana', { ascending: false }).limit(1)
+          : { data: [] };
+        if (!chiq || chiq.length === 0) {
+          ({ data: chiq } = await getSupabase().from(tbl).select(cols).eq('kt_no', kt_no).is(fk, null).order('chiqish_sana', { ascending: false }).limit(1));
+        }
         if (chiq && chiq.length > 0) {
           // infarkt da chiqish_holat, insult da natija — ikkalasini natija ga normalize qil
           const row = chiq[0];
@@ -2135,12 +2142,18 @@ const BemorKartaPage = {
       if (chiqishIso && newStatus !== 'active') {
         const tbl = isInf ? 'infarkt_chiqarish' : 'insult_chiqarish';
         const sb = getSupabase();
-        const { data: exRows } = await sb.from(tbl).select('id').eq('kt_no', ktNo)
-          .order('created_at', { ascending: false }).limit(1);
+        const fk = isInf ? 'infarkt_qabul_id' : 'insult_qabul_id';
+        let { data: exRows } = p.id
+          ? await sb.from(tbl).select('id').eq(fk, p.id).order('created_at', { ascending: false }).limit(1)
+          : { data: [] };
+        if (!exRows || exRows.length === 0) {
+          ({ data: exRows } = await sb.from(tbl).select('id').eq('kt_no', ktNo).is(fk, null)
+            .order('created_at', { ascending: false }).limit(1));
+        }
         if (exRows && exRows.length > 0) {
           await sb.from(tbl).update({ chiqish_sana: chiqishIso }).eq('id', exRows[0].id);
         } else {
-          const rec = { kt_no: ktNo, chiqish_sana: chiqishIso };
+          const rec = { kt_no: ktNo, chiqish_sana: chiqishIso, ...(p.id ? { [fk]: p.id } : {}) };
           if (isInf) rec.chiqish_holat = newStatus === 'vafot' ? 'Vafot etdi' : null;
           else { rec.natija = newStatus === 'vafot' ? 'Vafot etdi' : null; rec.viloyat = updates.viloyat || p.viloyat || null; }
           await sb.from(tbl).insert(rec);
@@ -2153,7 +2166,7 @@ const BemorKartaPage = {
       if (ktChanged) {
         showToast(t('patientCard.ktChanged', { kt: ktNo }), 'success', 5000);
         // URL va sahifani yangi raqam bilan qayta ochamiz
-        Router.go('bemor-karta', { kt_no: ktNo, type });
+        Router.go('bemor-karta', { kt_no: ktNo, type, id: p.id });
         return;
       }
       showToast(t('patientCard.updated'), 'success');
@@ -2191,8 +2204,8 @@ const BemorKartaPage = {
     const p = BemorKartaPage._navList[idx];
     // Update router params silently, then render directly (no full page reload)
     Router._current = 'bemor-karta';
-    Router._params = { kt_no: p.kt_no, type: p._type };
-    BemorKartaPage.render({ kt_no: p.kt_no, type: p._type });
+    Router._params = { kt_no: p.kt_no, type: p._type, id: p.id };
+    BemorKartaPage.render({ kt_no: p.kt_no, type: p._type, id: p.id });
   },
 
   navNext() {
@@ -2201,8 +2214,8 @@ const BemorKartaPage = {
     const p = BemorKartaPage._navList[idx];
     // Update router params silently, then render directly (no full page reload)
     Router._current = 'bemor-karta';
-    Router._params = { kt_no: p.kt_no, type: p._type };
-    BemorKartaPage.render({ kt_no: p.kt_no, type: p._type });
+    Router._params = { kt_no: p.kt_no, type: p._type, id: p.id };
+    BemorKartaPage.render({ kt_no: p.kt_no, type: p._type, id: p.id });
   },
 
   async chiqarishSave() {

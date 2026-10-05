@@ -719,7 +719,8 @@ const DB = {
   },
 
   // kt_no bo'yicha qidirish: avval aniq mos, topilmasa bo'shliq/belgi farqlariga chidamli qidiruv
-  async _byKtNo(table, kt_no) {
+  // id berilsa — aniq qabul yozuvi (K/T raqami muassasalar orasida takrorlanadi).
+  async _byKtNo(table, kt_no, id) {
     const p = await Profile.getCurrent();
     const sb = getSupabase();
     const run = async (build) => {
@@ -729,6 +730,10 @@ const DB = {
       if (error) throw error;
       return data || [];
     };
+    if (id) {
+      const byId = await run(q => q.eq('id', id));
+      if (byId.length) return byId[0];
+    }
     let data = await run(q => q.eq('kt_no', kt_no));
     if (data.length === 0) {
       // Bo'shliq/ko'rinmas belgi farqi bo'lsa ham topamiz
@@ -740,8 +745,8 @@ const DB = {
     return data[0];
   },
 
-  async infarktByKtNo(kt_no) {
-    return DB._byKtNo('infarkt_qabul', kt_no);
+  async infarktByKtNo(kt_no, id) {
+    return DB._byKtNo('infarkt_qabul', kt_no, id);
   },
 
   async infarktUpdate(kt_no, updates) {
@@ -860,8 +865,8 @@ const DB = {
     return { data: data || [], count: count || 0 };
   },
 
-  async insultByKtNo(kt_no) {
-    return DB._byKtNo('insult_qabul', kt_no);
+  async insultByKtNo(kt_no, id) {
+    return DB._byKtNo('insult_qabul', kt_no, id);
   },
 
   async insultUpdate(kt_no, updates) {

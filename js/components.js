@@ -571,7 +571,7 @@ const Components = {
     const jins = p.jins || p.jinsi || '—';
 
     return `
-      <tr onclick="Router.go('bemor-karta', {kt_no:'${p.kt_no}', type:'${type}'})">
+      <tr onclick="Router.go('bemor-karta', {kt_no:'${p.kt_no}', type:'${type}', id:'${p.id || ''}'})">
         <td>
           <span class="badge ${bColor} flex items-center gap-1.5 w-fit">
             ${icon(typeIcon, 14)} ${typeLabel}

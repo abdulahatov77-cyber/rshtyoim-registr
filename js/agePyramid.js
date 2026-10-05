@@ -202,7 +202,7 @@ const AgePyramid = {
       }).sort((a,b) => new Date(b.qabul_vaqt) - new Date(a.qabul_vaqt));
 
       const rows = list.map(p => `
-        <tr class="border-b border-gray-100 hover:bg-gray-50 cursor-pointer" onclick="closeModal();Router.go('bemor-karta',{kt_no:'${p.kt_no}',type:'${registr}'})">
+        <tr class="border-b border-gray-100 hover:bg-gray-50 cursor-pointer" onclick="closeModal();Router.go('bemor-karta',{kt_no:'${p.kt_no}',type:'${registr}',id:'${p.id || ''}'})">
           <td class="py-2 px-2 font-semibold text-gray-900">${esc(p.fio)}</td>
           <td class="py-2 px-2 text-gray-600">${esc(p.muassasa)}</td>
           <td class="py-2 px-2 text-gray-600">${Utils.formatDate(p.qabul_vaqt)}</td>
