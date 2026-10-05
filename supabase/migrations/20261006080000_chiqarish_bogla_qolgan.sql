@@ -1,0 +1,6 @@
+-- Ma'lumot tuzatish (2026-10-06, bazaga qo'llangan): qabul id ga bog'lanmagan 16 ta chiqarish varaqasi
+-- (infarkt 4, insult 12) bog'landi: faqat K/T bo'yicha chiqish sanasigacha qabul qilingan, hali varaqasi yo'q va
+-- holati chiqarildi/vafot bo'lgan qabul YAGONA bo'lganda (o'tkazilgan qabul varaqa egasi emas).
+-- Qolgan 35 tasi noaniq yoki qabul yozuvi yo'q — tegilmadi. Eski holat: chiqarish_bogla_backup_20261006 (bog'langan id lar).
+-- Qaytarish: UPDATE public.infarkt_chiqarish SET infarkt_qabul_id=NULL WHERE id IN (SELECT cid FROM public.chiqarish_bogla_backup_20261006 WHERE t='infarkt');
+--            (insult uchun ham xuddi shunday)
