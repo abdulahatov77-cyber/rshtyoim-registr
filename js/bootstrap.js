@@ -3,7 +3,7 @@
     'js/medical-glossary.js?v=20261004-infarkt',
     'js/locales.js?v=20260927-dashboard-i18n-r1',
     'js/calculator-locales.js?v=2',
-    'js/form-locales.js?v=20261005-sabab',
+    'js/form-locales.js?v=20261006-tekshiruv',
     'js/cdss-locales.js?v=20261004-gcs9',
     'js/i18n.js?v=20260927-perf-r1'
   ];
@@ -13,7 +13,7 @@
     'js/supabase.js?v=20261005-kichik',
     'js/utils.js?v=84',
     'js/components.js?v=20261005-karta',
-    'js/router.js?v=20261005-kichik',
+    'js/router.js?v=20261006-tekshiruv',
     'js/pages/login.js?v=20260926-i18n-r72',
     'js/app.js?v=71'
   ];
