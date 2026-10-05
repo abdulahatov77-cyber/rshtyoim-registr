@@ -51,6 +51,7 @@ const DashboardPage = {
     await DashboardPage.loadData();
     DashboardPage.muassasaBanner();
     DashboardPage.qabulBanner();
+    DashboardPage.varaqaBanner();
     DashboardPage.subscribeRealtime();
   },
 
@@ -119,6 +120,42 @@ const DashboardPage = {
         <button class="btn btn-primary flex items-center gap-2 shrink-0"
                 onclick="Router.go('qabul')">
           ${icon('log-in', 16)} ${t('dashboard.openList')}
+        </button>
+      </div>`;
+    inner.prepend(div);
+    initIcons();
+  },
+
+  // Chiqarilgan, lekin chiqarish varaqasi (natija) kiritilmagan bemorlar haqida eslatma.
+  // Bemorlar RLS bo'yicha filtrlanadi: foydalanuvchi — o'z muassasasi, admin — viloyati.
+  async varaqaBanner() {
+    const p = DashboardPage._profile;
+    if (!p || p.role === 'super_admin' || p.role === 'rahbar' || p.real_role === 'rahbar') return;
+    const mua = p.role === 'admin' ? null : (p.muassasa || '').trim();
+    if (p.role !== 'admin' && !mua) return;
+    let n = 0;
+    try {
+      const { data, error } = await getSupabase().rpc('varaqasiz_bemorlar_soni', { p_muassasa: mua });
+      if (error) return;
+      const r = Array.isArray(data) ? data[0] : data;
+      n = Number(r?.infarkt || 0) + Number(r?.insult || 0);
+    } catch (e) { return; }
+    if (!n) return;
+    const inner = document.getElementById('dashboard-inner');
+    if (!inner) return;
+    const div = document.createElement('div');
+    div.className = 'card mb-4 border-l-4 border-l-red-500 bg-red-50 border-red-200';
+    div.innerHTML = `
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <div class="flex items-start gap-3 min-w-0">
+          <div class="text-red-600 shrink-0 mt-0.5">${icon('file-x', 22)}</div>
+          <div class="min-w-0">
+            <div class="font-bold text-red-900">${t('dashboard.noDischargeTitle', { count: n })}</div>
+            <div class="text-sm text-red-800">${t('dashboard.noDischargeHelp')}</div>
+          </div>
+        </div>
+        <button class="btn btn-primary flex items-center gap-2 shrink-0" onclick="Router.go('bemorlar')">
+          ${icon('users', 16)} ${t('dashboard.openPatients')}
         </button>
       </div>`;
     inner.prepend(div);
