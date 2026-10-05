@@ -3,7 +3,7 @@ const PageLoader = {
   _loaded: new Set(['login']),
   _pending: new Map(),
   _pages: {
-    dashboard:            { src: 'js/pages/dashboard.js?v=20261005-karta', deps: ['pd', 'agePyramid', 'charts', 'treatmentFlow'] },
+    dashboard:            { src: 'js/pages/dashboard.js?v=20261006-varaqa', deps: ['pd', 'agePyramid', 'charts', 'treatmentFlow'] },
     'infarkt-yangi':      { src: 'js/pages/infarkt-yangi.js?v=20261005-kichik', deps: ['calculators'] },
     'insult-yangi':       { src: 'js/pages/insult-yangi.js?v=20261006-varaqa', deps: ['calculators', 'cdss'] },
     'infarkt-reyestri':   { src: 'js/pages/infarkt-reyestri.js?v=20260926-i18n-r69' },
