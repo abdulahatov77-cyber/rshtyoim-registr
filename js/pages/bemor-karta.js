@@ -1676,6 +1676,11 @@ const BemorKartaPage = {
                 <option value="__boshqa__">${t('institution.otherManualShort')}</option>
               </select>
               <input type="text" id="ch-boshqa-qolda" class="form-input mt-2" placeholder="${t('institution.enterName')}" style="display:none"/>
+              <label class="form-label required text-blue-900 mt-3">${t('discharge.transferReason')}</label>
+              <select id="ch-otkaz-sabab" class="form-select mt-1">
+                <option value="">${t('discharge.transferReasonChoose')}</option>
+                ${BemorKartaPage.otkazSabablar(type).map(([v, key]) => `<option value="${esc(v)}">${t(key)}</option>`).join('')}
+              </select>
             </div>
 
             <div id="ch-reabil-div" class="form-group mt-4" style="display:none">
@@ -1723,6 +1728,19 @@ const BemorKartaPage = {
       qolda.style.display = 'none';
       qolda.value = '';
     }
+  },
+
+  // O'tkazish sababi — qabul jadvalidagi otkazish_sababi ga yoziladi
+  // (davolash oqimi diagrammasi "Marshrutizatsiya bo'yicha" shu qiymatdan oladi).
+  otkazSabablar(type) {
+    return type === 'insult'
+      ? [["MSKT (tekshiruv) uchun", 'discharge.reasonCt'],
+         ["angiografiya va endovaskulyar muolaja uchun", 'discharge.reasonAngioStroke'],
+         ["stabillashgandan so'ng davolash uchun", 'discharge.reasonStable'],
+         ["boshqa sabab", 'discharge.reasonOther']]
+      : [["KAG/angiografiya uchun", 'discharge.reasonCoronary'],
+         ["stabillashgandan so'ng davolash uchun", 'discharge.reasonStable'],
+         ["boshqa sabab", 'discharge.reasonOther']];
   },
 
   getChiqarishMuassasa() {
@@ -2207,6 +2225,8 @@ const BemorKartaPage = {
     if (type === 'insult' && !nihssChiqarish) return showToast(t('discharge.nihssRequired'), 'warning');
     if (type === 'insult' && !mrsDaraja) return showToast(t('discharge.mrsRequired'), 'warning');
     if (natija === "Boshqa shifoxonaga o'tkazildi" && !boshqaShifoxona.trim()) return showToast(t('discharge.otherHospital'), 'warning');
+    const otkazSabab = document.getElementById('ch-otkaz-sabab')?.value || '';
+    if (natija === "Boshqa shifoxonaga o'tkazildi" && !otkazSabab) return showToast(t('discharge.transferReasonRequired'), 'warning');
     if (natija === 'Reabilitatsiyaga yuborildi' && !reabilMarkaz.trim()) return showToast(t('discharge.rehabCentre'), 'warning');
 
     // Chiqish vaqti kelajakda bo'lmasligi kerak
@@ -2259,6 +2279,7 @@ const BemorKartaPage = {
           asoratlar: asoratlar,
           boshqa_shifoxona: boshqaShifoxona,
           reabil_markaz: reabilMarkaz,
+          otkazish_sababi: status === 'otkazildi' ? otkazSabab : null,
           olim_sababi: natija === 'Vafot etdi' ? 'Vafot etdi' : null
         });
       } else {
@@ -2268,7 +2289,8 @@ const BemorKartaPage = {
           nihss_chiqarish: nihssChiqarish,
           mrs_daraja: mrsDaraja,
           boshqa_shifoxona: boshqaShifoxona,
-          reabil_markaz: reabilMarkaz
+          reabil_markaz: reabilMarkaz,
+          otkazish_sababi: status === 'otkazildi' ? otkazSabab : null
         });
       }
 
