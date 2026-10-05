@@ -13,7 +13,7 @@
     'js/supabase.js?v=20261004-flow',
     'js/utils.js?v=84',
     'js/components.js?v=81',
-    'js/router.js?v=20261004-flow',
+    'js/router.js?v=20261005-route',
     'js/pages/login.js?v=20260926-i18n-r72',
     'js/app.js?v=71'
   ];

@@ -209,8 +209,6 @@ const TreatmentFlow = {
           for(const key of available.keys()) if(!counts.has(key)) counts.set(key,0);
           const detail=document.createElement('details');detail.className='tf-transfer-routes';detail.style.top=y+'px';detail.open=!!s.routeOpen;
           detail.innerHTML=`<summary>${this.text('Marshrutizatsiya bo‘yicha')}</summary><div>${[...counts].map(([key,n])=>`<button type="button" data-route="${key}" aria-pressed="${s.selection?.column==='route'&&s.selection?.key===key}" ${available.get(key)?'':'disabled'}><span>${esc(this.label(key))}</span><strong>${this.number(n)}</strong></button>`).join('')}</div>`;
-          const events=m.supplementary.routes;
-          if(events.size) detail.insertAdjacentHTML('beforeend',`<div class="tf-route-events"><p>${this.text('Yo‘naltirish qaydlari — yakuniy natijadan mustaqil')}</p>${[...events].map(([key,n])=>`<p><span>${esc(this.label(key))}</span><strong>${this.number(n)}</strong></p>`).join('')}</div>`);
           detail.querySelectorAll('[data-route]').forEach(button=>button.onclick=()=>this.select(d,'route',button.dataset.route));
           detail.ontoggle=()=>{if(detail.isConnected && s.routeOpen!==detail.open){s.routeOpen=detail.open;this.render(d);}};
           section.appendChild(detail);y+=detail.getBoundingClientRect().height+10;
