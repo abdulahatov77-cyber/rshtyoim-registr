@@ -649,7 +649,7 @@ const BemorKartaPage = {
         </div>
       </div>`;
     try {
-      const records = await DB.getHolatDinamikasi(p.kt_no);
+      const records = await DB.getHolatDinamikasi(p.kt_no, p.id);
       const el2 = document.getElementById('holat-history');
       if (!el2) return;
       if (records.length === 0) {
@@ -700,6 +700,7 @@ const BemorKartaPage = {
       const profile = await Profile.getCurrent();
       await DB.addHolatDinamikasi({
         kt_no: BemorKartaPage._patient.kt_no,
+        qabul_id: BemorKartaPage._patient.id || null,
         registr_turi: BemorKartaPage._type,
         created_at: vaqt,
         holat,
@@ -1066,13 +1067,14 @@ const BemorKartaPage = {
       });
       if (isOtk) {
         // Bemorning joriy (oxirgi) muassasasi — undan yangi muassasaga o'tkaziladi
-        const oldTransfers = await TransferLog.getByKtNo(p.kt_no).catch(() => []);
+        const oldTransfers = await TransferLog.getByKtNo(p.kt_no, p.id).catch(() => []);
         const currentMuassasa = oldTransfers.length
           ? oldTransfers[oldTransfers.length - 1].muassasa_ga
           : (p.otkazilgan_muassasa || p.muassasa);
         // transfer_log ga yozamiz — marshrutizatsiya (harakat) sahifasida ko'rinadi
         const tRec = {
           kt_no: p.kt_no,
+          qabul_id: p.id || null,
           muassasa_dan: currentMuassasa,
           muassasa_ga: otkazilganMuassasa,
           sana: vaqtVal ? vaqtVal.slice(0,10) : new Date(Date.now() + 5*3600000).toISOString().slice(0,10),
@@ -1217,7 +1219,7 @@ const BemorKartaPage = {
     el.innerHTML = `<div class="flex justify-center p-10"><div class="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div></div>`;
     
     try {
-      const records = await DB.getKuzatuv(p.kt_no);
+      const records = await DB.getKuzatuv(p.kt_no, p.id);
       
       let recordsHtml = records.length === 0 
         ? `<div class="text-center py-10 text-gray-400">${t('card.noFollowup')}</div>`
@@ -1314,6 +1316,7 @@ const BemorKartaPage = {
 
     setLoading(btn, true);
     try {
+      data.qabul_id = BemorKartaPage._patient?.id || null;
       await DB.addKuzatuv(data);
       showToast(t('patientCard.followupSaved'), 'success');
       BemorKartaPage.loadTab(6); // Reload tab
@@ -1367,7 +1370,7 @@ const BemorKartaPage = {
         </div>
       </div>`;
     try {
-      const records = await DB.getNavbatchiJurnal(p.kt_no);
+      const records = await DB.getNavbatchiJurnal(p.kt_no, p.id);
       const el2 = document.getElementById('shift-history');
       if (!el2) return;
       if (records.length === 0) {
@@ -1405,6 +1408,7 @@ const BemorKartaPage = {
       const profile = await Profile.getCurrent();
       await DB.addNavbatchiJurnal({
         kt_no: BemorKartaPage._patient.kt_no,
+        qabul_id: BemorKartaPage._patient.id || null,
         registr_turi: BemorKartaPage._type,
         created_at: vaqt,
         holat_baholash: holat,
@@ -1479,7 +1483,9 @@ const BemorKartaPage = {
     if (!el) return;
     try {
       const sb = getSupabase();
-      const { data, error } = await sb.from('bemor_fayllari').select('*').eq('kt_no', BemorKartaPage._patient.kt_no);
+      let fq = sb.from('bemor_fayllari').select('*').eq('kt_no', BemorKartaPage._patient.kt_no);
+      if (BemorKartaPage._patient.id) fq = fq.or(`qabul_id.eq.${BemorKartaPage._patient.id},qabul_id.is.null`);
+      const { data, error } = await fq;
       if (error || !data || data.length === 0) {
         return; // Default bo'sh holat qoladi
       }
@@ -1544,6 +1550,7 @@ const BemorKartaPage = {
       // 2. Metadata bazaga yoziladi; ko'rishda signed URL yaratiladi.
       const { error: dbErr } = await sb.from('bemor_fayllari').insert({
         kt_no: kt_no,
+        qabul_id: BemorKartaPage._patient?.id || null,
         registr_turi: BemorKartaPage._type,
         tur: type,
         nomi: file.name,
@@ -2322,7 +2329,7 @@ const BemorKartaPage = {
   async renderHarakat(el, p, type) {
     el.innerHTML = `<div class="flex justify-center py-12"><div class="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div></div>`;
     try {
-      const logs = await TransferLog.getByKtNo(p.kt_no);
+      const logs = await TransferLog.getByKtNo(p.kt_no, p.id);
       BemorKartaPage._transferLogs = logs;
       BemorKartaPage._buildHarakatUI(el, p, type, logs);
     } catch(e) {
@@ -2474,6 +2481,7 @@ const BemorKartaPage = {
     try {
       await TransferLog.add({
         kt_no: p.kt_no,
+        qabul_id: p.id || null,
         bemor_turi: type,
         muassasa_dan: prev || '',
         viloyat_dan: p.viloyat || '',
