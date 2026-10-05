@@ -2074,6 +2074,16 @@ const BemorKartaPage = {
       if (qv && cd < qv) { showToast(t('discharge.beforeAdmission'), 'error', 5000); return; }
       chiqishIso = cd.toISOString();
     }
+    // Insult: GCS ≤8 (koma) bo'lsa NIHSS kamida 7 bo'lishi kerak
+    if (!isInf) {
+      const gE = parseInt(g('edit-gcs')?.value), nE = parseInt(g('edit-nihss')?.value);
+      if (gE >= 3 && gE <= 8 && nE >= 0 && nE < 7) {
+        g('edit-gcs')?.classList.add('border-red-500');
+        g('edit-nihss')?.classList.add('border-red-500');
+        showToast(t('validation.gcsNihssMismatch'), 'error', 8000);
+        return;
+      }
+    }
     // Bo'y — faqat santimetrda, butun son (metrda kiritilsa xato)
     const boyRawE = g('edit-boy')?.value || '';
     if (boyRawE) {
@@ -2244,6 +2254,12 @@ const BemorKartaPage = {
     if (!sana) return showToast(t('discharge.dateRequired'), 'warning');
     if (!vaqt) return showToast(t('discharge.timeRequired'), 'warning');
     if (!natija) return showToast(t('discharge.selectOutcome'), 'warning');
+    // Insult: vafotda mRS = 6, mRS 6 faqat vafotda
+    if (type === 'insult' && mrsDaraja) {
+      const vafotMrs = String(mrsDaraja).trim().startsWith('6');
+      if (natija === 'Vafot etdi' && !vafotMrs) return showToast(t('validation.mrsDeath'), 'error', 7000);
+      if (natija !== 'Vafot etdi' && vafotMrs) return showToast(t('validation.mrsNotDeath'), 'error', 7000);
+    }
     if (type === 'infarkt' && asoratlar.length === 0) return showToast(t('discharge.selectComplications'), 'warning');
     if (type === 'insult' && !nihssChiqarish) return showToast(t('discharge.nihssRequired'), 'warning');
     if (type === 'insult' && !mrsDaraja) return showToast(t('discharge.mrsRequired'), 'warning');

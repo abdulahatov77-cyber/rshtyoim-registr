@@ -1190,6 +1190,13 @@ const InsultYangiPage = {
         if (el) el.classList.add('border-red-500');
         showToast(t('validation.gcsRequired'), 'error', 6000);
       }
+      // GCS ≤8 (koma) bo'lsa NIHSS ong bandlari o'zi kamida 7 ball beradi
+      if (gcs >= 3 && gcs <= 8 && nihss >= 1 && nihss < 7) {
+        valid = false;
+        document.getElementById('nihss_qabul')?.classList.add('border-red-500');
+        document.getElementById('gcs_bali')?.classList.add('border-red-500');
+        showToast(t('validation.gcsNihssMismatch'), 'error', 8000);
+      }
       if ((this._data.simptom_vaqt || '') === '0 soat') {
         valid = false;
         const el = document.getElementById('simptom_soat_raw');
