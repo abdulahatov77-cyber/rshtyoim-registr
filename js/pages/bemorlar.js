@@ -297,9 +297,18 @@ const BemorlarPage = {
         const infKts = needsExit.filter(p => p._type === 'infarkt').map(p => p.kt_no);
         const insKts = needsExit.filter(p => p._type === 'insult').map(p => p.kt_no);
         const sb = getSupabase();
+        // Ko'p bemorda .in() URL juda uzun bo'lib so'rov xato qaytaradi (varaqalar "yo'q" bo'lib ko'rinadi) — bo'laklab yuklaymiz
+        const chunked = async (table, cols, kts) => {
+          const parts = [];
+          for (let i = 0; i < kts.length; i += 50) parts.push(kts.slice(i, i + 50));
+          const res = await Promise.all(parts.map(part => sb.from(table).select(cols).in('kt_no', part)));
+          const bad = res.find(r => r.error);
+          if (bad) throw bad.error;
+          return { data: res.flatMap(r => r.data || []) };
+        };
         const [infChiq, insChiq] = await Promise.all([
-          infKts.length ? sb.from('infarkt_chiqarish').select('kt_no,infarkt_qabul_id,chiqish_sana,chiqish_holat').in('kt_no', infKts) : Promise.resolve({ data: [] }),
-          insKts.length ? sb.from('insult_chiqarish').select('kt_no,insult_qabul_id,chiqish_sana,natija').in('kt_no', insKts) : Promise.resolve({ data: [] })
+          infKts.length ? chunked('infarkt_chiqarish', 'kt_no,infarkt_qabul_id,chiqish_sana,chiqish_holat', infKts) : Promise.resolve({ data: [] }),
+          insKts.length ? chunked('insult_chiqarish', 'kt_no,insult_qabul_id,chiqish_sana,natija', insKts) : Promise.resolve({ data: [] })
         ]);
         const exitMap = {};
         // Varaqa aniq qabulga bog'langan bo'lsa id bo'yicha, eski (bog'lanmagan) yozuv — K/T bo'yicha
