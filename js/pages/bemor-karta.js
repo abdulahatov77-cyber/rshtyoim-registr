@@ -71,10 +71,12 @@ const BemorKartaPage = {
           };
         } else if (patient.otkazilgan_muassasa) {
           // Dinamika jadvalidan o'tkazilgan yozuvni topamiz
-          const { data: din } = await getSupabase()
+          let dinQ = getSupabase()
             .from('dinamika_muolajalar')
             .select('created_at,muolaja_turi')
-            .eq('kt_no', kt_no)
+            .eq('kt_no', kt_no);
+          if (patient.id) dinQ = dinQ.or(`qabul_id.eq.${patient.id},qabul_id.is.null`);
+          const { data: din } = await dinQ
             .ilike('muolaja_turi', "%o'tkazildi%")
             .order('created_at', { ascending: false })
             .limit(1);
@@ -827,7 +829,7 @@ const BemorKartaPage = {
 
     // Tarixni yuklash
     try {
-      const records = await DB.getDinamikaMuolajalar(p.kt_no);
+      const records = await DB.getDinamikaMuolajalar(p.kt_no, p.id);
       const histEl = document.getElementById('din-history');
       if (!histEl) return;
       if (records.length === 0 && !p.muolaja_turi) {
@@ -1048,6 +1050,7 @@ const BemorKartaPage = {
             : (izoh || null));
       await DB.addDinamikaMuolaja({
         kt_no: p.kt_no,
+        qabul_id: p.id || null,
         registr_turi: BemorKartaPage._type,
         muolaja_turi: saqlanMuolaja,
         izoh: finalIzoh,
@@ -2170,7 +2173,7 @@ const BemorKartaPage = {
     try {
       const kt = BemorKartaPage._patient.kt_no;
       // Bemor va barcha bog'liq yozuvlarni o'chiradi (davolash, transfer, fayllar ham)
-      await DB.deletePatientCascade(kt, BemorKartaPage._type);
+      await DB.deletePatientCascade(kt, BemorKartaPage._type, BemorKartaPage._patient.id);
       showToast(t('patientCard.deleted'), 'success');
       // Keshlarni tozalash — hisobot va bemorlar ro'yxati yangilansin
       if (window.HisobotPage) { HisobotPage._lastData = null; HisobotPage._lastListType = null; }
