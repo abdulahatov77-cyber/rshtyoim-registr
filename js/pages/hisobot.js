@@ -196,6 +196,41 @@ const HisobotPage = {
         </div>
       </div>
 
+      <!-- Yosh guruhlari bo'yicha hisobot -->
+      <div class="h-card">
+        <div class="mb-3">
+          <h3 class="h-title !mb-1">${icon('users', 18)} Yosh guruhlari bo'yicha hisobot</h3>
+          <p class="text-sm text-slate-500">Qabul kunidagi yosh: 30 yoshgacha, 30–39, 40–49, 50–59, 60 va katta — infarkt va insult alohida</p>
+        </div>
+        <div class="flex flex-wrap items-end gap-2">
+          ${HisobotPage._yoshBarchasi(user) ? `
+          <select id="yg-viloyat" class="form-select bg-slate-50 text-blue-900 border-blue-200 font-medium" style="max-width:200px" onchange="HisobotPage.onYoshViloyatChange(this.value)">
+            <option value="">${t('filter.allRegions')}</option>
+            ${Object.keys(APP_CONFIG.MUASSASALAR).map(v => `<option value="${esc(v)}">${esc(v)}</option>`).join('')}
+          </select>` : `<input id="yg-viloyat" type="hidden" value="${esc(myViloyat)}"/>`}
+          ${isShifokor ? `<input id="yg-muassasa" type="hidden" value=""/>` : `
+          <select id="yg-muassasa" class="form-select bg-slate-50 text-blue-900 border-blue-200 font-medium" style="max-width:230px">
+            <option value="">${t('filter.allInstitutions')}</option>
+            ${HisobotPage._yoshBarchasi(user) ? '' : (APP_CONFIG.MUASSASALAR[myViloyat] || []).map(m => `<option value="${esc(m)}">${esc(I18n.facilityName(m))}</option>`).join('')}
+          </select>`}
+          ${isShifokor ? `<input id="yg-kesim" type="hidden" value="muassasa"/>` : `
+          <select id="yg-kesim" class="form-select bg-slate-50 text-blue-900 border-blue-200 font-medium" style="max-width:190px">
+            <option value="viloyat">${t('reports.byRegions')}</option>
+            <option value="muassasa">${t('reports.byInstitutions')}</option>
+          </select>`}
+          <input id="yg-from" type="date" class="form-input bg-slate-50 text-blue-900 border-blue-200 font-medium" style="max-width:150px" value="${today.slice(0,4)}-01-01"/>
+          <span class="text-slate-400 self-center">—</span>
+          <input id="yg-to" type="date" class="form-input bg-slate-50 text-blue-900 border-blue-200 font-medium" style="max-width:150px" value="${today}"/>
+          <button class="btn btn-primary shadow-md hover:shadow-lg flex items-center gap-2 px-4 rounded-xl" onclick="HisobotPage.loadYoshReport()">
+            ${icon('bar-chart-2', 16)} Shakllantirish
+          </button>
+          <button id="yg-export-btn" class="btn btn-success shadow-md hover:shadow-lg flex items-center gap-2 px-4 rounded-xl" onclick="HisobotPage.exportYoshReport()" disabled style="opacity:0.5">
+            ${icon('download', 16)} Excel
+          </button>
+        </div>
+        <div id="yg-results" class="mt-4"></div>
+      </div>
+
       ${isSuperAdmin ? `
       <div class="h-card">
         <div class="flex flex-wrap items-center justify-between gap-3 mb-2">
@@ -966,6 +1001,106 @@ const HisobotPage = {
   _dmy(iso) {
     const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(iso || ''));
     return m ? `${m[3]}.${m[2]}.${m[1]}` : String(iso || '');
+  },
+
+  // ── Yosh guruhlari hisoboti ──────────────────────────────────────────────
+  _yoshBarchasi(user) { return user?.role === 'super_admin' || user?.role === 'rahbar'; },
+  _YOSH_COLS: [['y30', '30 yoshgacha'], ['y39', '30–39'], ['y49', '40–49'], ['y59', '50–59'], ['y60', '60 va katta'], ['nomalum', "Noma'lum"], ['jami', 'Jami']],
+
+  onYoshViloyatChange(vil) {
+    const sel = document.getElementById('yg-muassasa');
+    if (!sel || sel.tagName !== 'SELECT') return;
+    sel.innerHTML = `<option value="">${t('filter.allInstitutions')}</option>` +
+      (vil ? (APP_CONFIG.MUASSASALAR[vil] || []).map(m => `<option value="${esc(m)}">${esc(I18n.facilityName(m))}</option>`).join('') : '');
+  },
+
+  async loadYoshReport() {
+    const box = document.getElementById('yg-results');
+    if (!box) return;
+    const from = document.getElementById('yg-from')?.value;
+    const to = document.getElementById('yg-to')?.value;
+    if (!from || !to || from > to) { showToast(t('reports.invalidDateRange'), 'warning'); return; }
+    const vil = document.getElementById('yg-viloyat')?.value || null;
+    const mua = document.getElementById('yg-muassasa')?.value || null;
+    const kesim = document.getElementById('yg-kesim')?.value || 'viloyat';
+    box.innerHTML = `<p class="text-sm text-slate-500">${t('dashboard.loading')}</p>`;
+    const { data, error } = await getSupabase().rpc('get_hisobot_yosh', {
+      p_from: from, p_to: to, p_viloyat: vil, p_muassasa: mua, p_kesim: kesim
+    });
+    if (error) { box.innerHTML = `<p class="text-sm text-red-600">${esc(error.message)}</p>`; return; }
+    // Har bir guruh (viloyat yoki muassasa) uchun bitta qator: infarkt + insult
+    const groups = new Map();
+    const tot = { infarkt: {}, insult: {} };
+    (data || []).forEach(r => {
+      const key = kesim === 'muassasa' ? `${r.viloyat}||${r.muassasa}` : r.viloyat;
+      if (!groups.has(key)) groups.set(key, { viloyat: r.viloyat, muassasa: r.muassasa, infarkt: {}, insult: {} });
+      const g = groups.get(key);
+      HisobotPage._YOSH_COLS.forEach(([k]) => {
+        g[r.tur][k] = (g[r.tur][k] || 0) + (r[k] || 0);
+        tot[r.tur][k] = (tot[r.tur][k] || 0) + (r[k] || 0);
+      });
+    });
+    const rows = [...groups.values()];
+    HisobotPage._lastYosh = { rows, tot, kesim, from, to, vil, mua };
+    const btn = document.getElementById('yg-export-btn');
+    if (btn) { btn.disabled = !rows.length; btn.style.opacity = rows.length ? '' : '0.5'; }
+    if (!rows.length) { box.innerHTML = `<p class="text-sm text-slate-500">Tanlangan davrda ma'lumot yo'q</p>`; return; }
+
+    const C = HisobotPage._YOSH_COLS;
+    const pct = (v, j) => j ? ` <span class="text-slate-400 text-xs">${(v / j * 100).toFixed(1)}%</span>` : '';
+    const cells = (o, withPct) => C.map(([k]) => `<td class="p-2 text-right font-semibold">${o[k] || 0}${withPct && k !== 'jami' ? pct(o[k] || 0, o.jami || 0) : ''}</td>`).join('');
+    const nameCols = kesim === 'muassasa' ? 2 : 1;
+    const head = `<tr class="bg-slate-800 text-white text-xs">
+        <th class="p-2 text-left">Viloyat</th>${kesim === 'muassasa' ? '<th class="p-2 text-left">Muassasa</th>' : ''}
+        <th class="p-2 text-left">Kasallik</th>${C.map(([, l]) => `<th class="p-2 text-right">${l}</th>`).join('')}</tr>`;
+    const body = rows.map(g => ['infarkt', 'insult'].map((tt, i) => `<tr class="border-b border-slate-100 ${i ? '' : 'border-t border-slate-200'}">
+        ${i === 0 ? `<td class="p-2 font-semibold text-blue-900" rowspan="2">${esc(g.viloyat)}</td>${kesim === 'muassasa' ? `<td class="p-2 text-slate-700" rowspan="2">${esc(I18n.facilityName(g.muassasa))}</td>` : ''}` : ''}
+        <td class="p-2 ${tt === 'infarkt' ? 'text-red-600' : 'text-purple-600'} font-semibold">${tt === 'infarkt' ? 'Infarkt' : 'Insult'}</td>${cells(g[tt], false)}</tr>`).join('')).join('');
+    const foot = ['infarkt', 'insult'].map((tt, i) => `<tr class="bg-blue-50 font-bold">
+        ${i === 0 ? `<td class="p-2" colspan="${nameCols}" rowspan="2">JAMI</td>` : ''}
+        <td class="p-2">${tt === 'infarkt' ? 'Infarkt' : 'Insult'}</td>${cells(tot[tt], true)}</tr>`).join('');
+    box.innerHTML = `<div class="overflow-x-auto"><table class="w-full text-sm">
+        <thead>${head}</thead><tbody>${body}</tbody><tfoot>${foot}</tfoot></table></div>
+      <p class="text-xs text-slate-500 mt-2">Yosh qabul kunida hisoblangan (tug'ilgan sana bo'lmasa — tug'ilgan yildan). Davr: ${esc(from)} — ${esc(to)}.</p>`;
+  },
+
+  async exportYoshReport() {
+    const d = HisobotPage._lastYosh;
+    if (!d) { showToast(t('reports.generateFirst'), 'warning'); return; }
+    await HisobotPage._ensureExcelJS();
+    const wb = new ExcelJS.Workbook();
+    const ws = wb.addWorksheet('Yosh guruhlari');
+    const C = HisobotPage._YOSH_COLS;
+    const isM = d.kesim === 'muassasa';
+    ws.addRow([`Yosh guruhlari bo'yicha infarkt va insult (${d.from} — ${d.to})`]).font = { bold: true, size: 13 };
+    ws.addRow([]);
+    const hdr = ws.addRow(['Viloyat', ...(isM ? ['Muassasa'] : []), 'Kasallik', ...C.map(c => c[1])]);
+    hdr.eachCell(c => { c.font = { bold: true, color: { argb: 'FFFFFFFF' } }; c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E3A8A' } }; c.alignment = { horizontal: 'center', wrapText: true }; });
+    d.rows.forEach(g => ['infarkt', 'insult'].forEach(tt => {
+      ws.addRow([g.viloyat, ...(isM ? [I18n.facilityName(g.muassasa)] : []), tt === 'infarkt' ? 'Infarkt' : 'Insult', ...C.map(([k]) => g[tt][k] || 0)]);
+    }));
+    ['infarkt', 'insult'].forEach(tt => {
+      const r = ws.addRow(['JAMI', ...(isM ? [''] : []), tt === 'infarkt' ? 'Infarkt' : 'Insult', ...C.map(([k]) => d.tot[tt][k] || 0)]);
+      r.font = { bold: true };
+      r.eachCell(c => { c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFDBEAFE' } }; });
+    });
+    ws.addRow([]);
+    ws.addRow(['Foizda (jami)']).font = { bold: true };
+    ['infarkt', 'insult'].forEach(tt => {
+      const j = d.tot[tt].jami || 0;
+      ws.addRow(['', ...(isM ? [''] : []), tt === 'infarkt' ? 'Infarkt' : 'Insult', ...C.map(([k]) => j ? `${((d.tot[tt][k] || 0) / j * 100).toFixed(1)}%` : '—')]);
+    });
+    ws.getColumn(1).width = 30;
+    if (isM) ws.getColumn(2).width = 36;
+    for (let i = isM ? 3 : 2; i <= C.length + (isM ? 3 : 2); i++) ws.getColumn(i).width = 13;
+    const buf = await wb.xlsx.writeBuffer();
+    const blob = new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `yosh_guruhlari_${d.from}_${d.to}.xlsx`;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    showToast(t('export.excelDownloaded'), 'success');
   },
 
   async exportViloyatReport() {
