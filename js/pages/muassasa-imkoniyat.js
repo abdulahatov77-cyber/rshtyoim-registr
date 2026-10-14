@@ -233,7 +233,7 @@ const MuassasaImkoniyatPage = {
             <td style="text-align:center;white-space:nowrap">
               <button data-act="yashir" data-id="${r.id}" data-yashir="${y ? '0' : '1'}"
                       title="${y ? t('institution.restoreTitle') : t('institution.hideTitle')}"
-                      style="border:none;background:none;cursor:pointer;padding:4px;color:${y ? '#0891b2' : '#94a3b8'}">
+                      style="border:none;background:none;cursor:pointer;padding:4px;color:${y ? '#0891b2' : '#687588'}">
                 ${icon(y ? 'eye' : 'eye-off', 16)}
               </button>
               <button data-act="ochir" data-id="${r.id}"

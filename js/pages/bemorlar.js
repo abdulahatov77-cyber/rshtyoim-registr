@@ -153,7 +153,7 @@ const BemorlarPage = {
             <button class="btn btn-secondary flex items-center gap-2" onclick="BemorlarPage.resetFilters()">
               ${icon('refresh-cw', 16)} Tozalash
             </button>
-            <button class="btn flex items-center gap-2" style="background:#f59e0b;color:#fff;border:none" onclick="BemorlarPage.openBulkTimeModal()">
+            <button class="btn flex items-center gap-2" style="background:var(--color-warning-dark);color:#fff;border:none" onclick="BemorlarPage.openBulkTimeModal()">
               ${icon('clock', 16)} ${t('patients.fillTime')}
             </button>
             <button class="btn btn-primary flex items-center gap-2" onclick="BemorlarPage.exportData()">

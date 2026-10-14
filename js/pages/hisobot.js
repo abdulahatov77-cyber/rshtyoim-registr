@@ -858,7 +858,7 @@ const HisobotPage = {
       const letallik = (olgan, jami) => jami > 0 ? (Math.round(olgan / jami * 1000) / 10) : null;
       const letallikKatak = (olgan, jami, bold) => {
         const f = letallik(olgan, jami);
-        const rang = f === null ? '#94a3b8' : f >= 20 ? '#b91c1c' : f >= 10 ? '#c2410c' : '#334155';
+        const rang = f === null ? '#687588' : f >= 20 ? '#b91c1c' : f >= 10 ? '#c2410c' : '#334155';
         return `<td class="p-2.5 text-center border-b border-slate-200" style="color:${rang};${bold?'font-weight:700':''}">
           ${olgan}${f === null ? '' : ` <span style="font-size:12px;opacity:.85">(${f}%)</span>`}
         </td>`;
@@ -1472,7 +1472,7 @@ const HisobotPage = {
     const n = v => v == null ? 0 : +v;
     const cell = (v, extra = '') => {
       const val = n(v);
-      return `<td class="p-1.5 text-center border border-slate-200 text-xs ${extra}" style="color:${val === 0 ? '#94a3b8' : '#334155'}">${val}</td>`;
+      return `<td class="p-1.5 text-center border border-slate-200 text-xs ${extra}" style="color:${val === 0 ? '#687588' : '#334155'}">${val}</td>`;
     };
     const th = (txt, attrs = '') => `<th class="p-1.5 text-center text-white font-bold text-xs border border-blue-800" style="background:#1e3a8a" ${attrs}>${txt}</th>`;
     return `
@@ -1505,7 +1505,7 @@ const HisobotPage = {
                 ${cell(r.bemorlar)}
                 ${cell(r.amaliyot)}
                 ${cell(r.olgan)}
-                <td class="p-1.5 text-center border border-slate-200 text-xs font-semibold" style="color:${n(r.letallik) === 0 ? '#94a3b8' : '#b91c1c'}">${Number(r.letallik || 0).toFixed(1)}</td>
+                <td class="p-1.5 text-center border border-slate-200 text-xs font-semibold" style="color:${n(r.letallik) === 0 ? '#687588' : '#b91c1c'}">${Number(r.letallik || 0).toFixed(1)}</td>
                 ${groups.map(g => cell(r[g[1]]) + cell(r[g[1] + '_olgan'])).join('')}
               </tr>`;
             }).join('')}
@@ -2540,7 +2540,7 @@ const HisobotPage = {
   .stat{border:1px solid #e2e8f0;border-radius:10px;padding:12px 18px;text-align:center;min-width:120px}
   .stat-num{font-size:26px;font-weight:900;color:#1e3a8a}
   .stat-lbl{font-size:12px;color:#64748b;margin-top:2px}
-  .footer{margin-top:20px;font-size:12px;color:#94a3b8;border-top:1px solid #e2e8f0;padding-top:10px}
+  .footer{margin-top:20px;font-size:12px;color:#687588;border-top:1px solid #e2e8f0;padding-top:10px}
   @media print{body{margin:10px}}
 </style></head><body>
 <h1>Statistik Hisobot</h1>

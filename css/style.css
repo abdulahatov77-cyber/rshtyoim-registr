@@ -72,7 +72,7 @@ html[data-locale="ru"] #sidebar, html[data-locale="en"] #sidebar { width:17.5rem
   --text-dark: #0F172A;
   --text-body: #334155;
   --text-gray: #64748B;
-  --text-light: #94A3B8;
+  --text-light: #687588;
   --color-primary: #2563EB;
   --color-secondary: #F1F5F9;
 
@@ -237,7 +237,10 @@ h2, .section-title { font-size: var(--h2-size); font-weight: var(--h2-weight); c
 .btn-primary:hover:not(:disabled) { background:var(--primary-dark); box-shadow:0 4px 12px rgba(37,99,235,0.35); transform:translateY(-1px); }
 .btn-infarkt { background:var(--color-infarkt); color:#fff; }
 .btn-insult { background:var(--color-insult); color:#fff; }
-.btn-success { background:var(--color-green); color:#fff; }
+.btn-success { background:#047857; color:#fff; }
+.btn-success:hover { background:#065f46; }
+.btn-warning { background:var(--color-warning-dark); color:#fff; }
+.btn-warning:hover { background:#92400e; }
 .btn-secondary { background:#fff; color:var(--text-body); border:1px solid var(--border); }
 .btn-secondary:hover:not(:disabled) { background:var(--bg-main); }
 .btn-full { width:100%; }
@@ -515,3 +518,19 @@ tr.kbd-click:focus-visible { outline-offset:-2px; }
 /* Emoji o'rnidagi ikonkalar (components.js → Emoji) — matn o'lchamiga moslashadi */
 svg.emo-ico, i.emo-ico { width:1.1em; height:1.1em; vertical-align:-0.17em; display:inline-block; flex-shrink:0; }
 .emo-dot { display:inline-block; width:.65em; height:.65em; border-radius:50%; vertical-align:.05em; flex-shrink:0; }
+
+/* Xira yordamchi yozuvlar: Tailwind slate-400/gray-400 (#687588, 2.6:1) oq fonda
+   WCAG AA dan past edi. --text-light (4.7:1) ga bog'laymiz. style.css
+   tailwind.generated.css dan keyin yuklanadi, shuning uchun shu qoida ustun. */
+.text-slate-400, .text-gray-400 { color: var(--text-light); }
+/* Qorong'i kartalarda (bg-slate-700…900) xira matn aksincha ochroq bo'lishi kerak */
+:is(.bg-slate-700, .bg-slate-800, .bg-slate-900, .bg-gray-900) :is(.text-slate-400, .text-gray-400) { color:#cbd5e1; }
+/* Oq fonda juda och Tailwind matn ranglari (amber/indigo-400, slate-300) — to'qroq
+   variant. Qorong'i kartalarda asl ochiq rang saqlanadi (pastdagi qoida). */
+.text-slate-300 { color: var(--text-light); }
+.text-amber-400 { color: #b45309; }
+.text-indigo-400 { color: #4f46e5; }
+:is(.bg-slate-700, .bg-slate-800, .bg-slate-900, .bg-gray-900) .text-slate-300 { color:#cbd5e1; }
+:is(.bg-slate-700, .bg-slate-800, .bg-slate-900, .bg-gray-900) .text-slate-500 { color:#cbd5e1; }
+:is(.bg-slate-700, .bg-slate-800, .bg-slate-900, .bg-gray-900) .text-amber-400 { color:#fbbf24; }
+:is(.bg-slate-700, .bg-slate-800, .bg-slate-900, .bg-gray-900) .text-indigo-400 { color:#a5b4fc; }

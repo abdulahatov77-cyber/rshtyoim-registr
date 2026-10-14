@@ -577,7 +577,7 @@ const DashboardPage = {
             const to   = new Date(`${y}-12-31T23:59:59+05:00`).toISOString();
             const isActive = (activeMode === 'year' && activeFrom === from) || (selYear === y && activeMode === 'month');
             return `<button onclick="DashboardPage.setDateFilter('${from}','${to}','year')"
-              class="px-3 py-1.5 rounded-xl text-xs font-bold border transition-all ${isActive ? 'bg-amber-500 text-white border-amber-500' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'}">${y}</button>`;
+              class="px-3 py-1.5 rounded-xl text-xs font-bold border transition-all ${isActive ? 'bg-amber-700 text-white border-amber-700' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'}">${y}</button>`;
           }).join('');
 
           // Faqat yil tanlanganda o'sha yilning oylarini ko'rsat
@@ -592,7 +592,7 @@ const DashboardPage = {
               const to   = new Date(`${selYear}-${pad(m+1)}-${pad(lastDay)}T23:59:59+05:00`).toISOString();
               const isActive = activeMode === 'month' && activeFrom === from;
               mos.push(`<button onclick="DashboardPage.setDateFilter('${from}','${to}','month')"
-                class="px-2.5 py-1 rounded-lg text-xs font-bold border transition-all ${isActive ? 'bg-amber-500 text-white border-amber-500' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'}">${monthNames[m]}</button>`);
+                class="px-2.5 py-1 rounded-lg text-xs font-bold border transition-all ${isActive ? 'bg-amber-700 text-white border-amber-700' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'}">${monthNames[m]}</button>`);
             }
             monthRow = `
               <div class="flex flex-wrap items-center gap-2 pt-2">
@@ -610,7 +610,7 @@ const DashboardPage = {
               </div>
               ${yearBtns}
               <button onclick="DashboardPage.setDateFilter(null,null,null)"
-                class="px-3 py-1.5 rounded-xl text-xs font-bold border transition-all ml-2 ${!activeFrom ? 'bg-amber-500 text-white border-amber-500' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'}">
+                class="px-3 py-1.5 rounded-xl text-xs font-bold border transition-all ml-2 ${!activeFrom ? 'bg-amber-700 text-white border-amber-700' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'}">
                 ${t('dashboard.allTime')}
               </button>
             </div>
@@ -1164,7 +1164,7 @@ const DashboardPage = {
 
     const COLORS = [
       '#3b82f6','#ef4444','#10b981','#f59e0b','#8b5cf6',
-      '#06b6d4','#f97316','#ec4899','#94a3b8'
+      '#06b6d4','#f97316','#ec4899','#687588'
     ];
 
     // Faqat TOP 8, qolganlarini "Boshqalar" ga birlashtirish
@@ -1267,7 +1267,7 @@ const DashboardPage = {
         c.save();
         c.textAlign = 'center';
         c.textBaseline = 'middle';
-        c.fillStyle = '#94a3b8';
+        c.fillStyle = '#687588';
         c.font = '500 11px Inter, system-ui, sans-serif';
         c.fillText(t('dashboard.totalPatients'), cx, cy - 11);
         c.fillStyle = '#0f172a';

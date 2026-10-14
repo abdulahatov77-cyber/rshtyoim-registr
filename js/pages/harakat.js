@@ -320,7 +320,7 @@ const HarakatPage = {
     const audit = HarakatPage._routeAudit();
     const auditIssues = audit.issues;
     // Foiz ko'rsatkич kartasi
-    const pctColor = audit.pct === null ? '#94a3b8' : audit.pct >= 80 ? '#16a34a' : audit.pct >= 50 ? '#d97706' : '#dc2626';
+    const pctColor = audit.pct === null ? '#687588' : audit.pct >= 80 ? '#16a34a' : audit.pct >= 50 ? '#d97706' : '#dc2626';
     const auditSummaryHtml = `
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px">
         <div style="background:white;border:1px solid var(--border);border-radius:14px;padding:16px;text-align:center">

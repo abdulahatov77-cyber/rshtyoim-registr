@@ -32,7 +32,7 @@ const Emoji = {
     '🧪':'flask-conical', '🩸':'droplet', '⚙':'settings', '🔧':'wrench', '🏠':'home', '🚨':'siren',
     '🔴':'●danger', '🟢':'●success', '🟡':'●warning', '🟠':'●warning', '🔵':'●info', '⚪':'●muted'
   },
-  DOT: { danger:'#dc2626', success:'#16a34a', warning:'#d97706', info:'#2563eb', muted:'#94a3b8' },
+  DOT: { danger:'#dc2626', success:'#16a34a', warning:'#d97706', info:'#2563eb', muted:'#687588' },
   RE: /(\p{Extended_Pictographic})️?(?:‍\p{Extended_Pictographic}️?)*\s?/u,
   _pending: false,
   _icon(ch) {
