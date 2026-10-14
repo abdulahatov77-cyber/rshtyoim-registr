@@ -52,6 +52,7 @@ const DashboardPage = {
     DashboardPage.muassasaBanner();
     DashboardPage.qabulBanner();
     DashboardPage.varaqaBanner();
+    DashboardPage.uzoqFaolBanner();
     DashboardPage.subscribeRealtime();
   },
 
@@ -155,6 +156,40 @@ const DashboardPage = {
           </div>
         </div>
         <button class="btn btn-primary flex items-center gap-2 shrink-0" onclick="Router.go('bemorlar', { varaqasiz: true })">
+          ${icon('users', 16)} ${t('dashboard.openPatients')}
+        </button>
+      </div>`;
+    inner.prepend(div);
+    initIcons();
+  },
+
+  // 30 kundan ortiq "faol" turgan bemorlar — chiqarilgan, lekin holati yangilanmagan bo'lishi mumkin.
+  async uzoqFaolBanner() {
+    const p = DashboardPage._profile;
+    if (!p || p.role === 'super_admin' || p.role === 'rahbar' || p.real_role === 'rahbar') return;
+    const mua = p.role === 'admin' ? null : (p.muassasa || '').trim();
+    if (p.role !== 'admin' && !mua) return;
+    let n = 0;
+    try {
+      const { data, error } = await getSupabase().rpc('uzoq_faol_bemorlar_idlari', { p_muassasa: mua, p_kun: 30 });
+      if (error) return;
+      n = (data || []).length;
+    } catch (e) { return; }
+    if (!n) return;
+    const inner = document.getElementById('dashboard-inner');
+    if (!inner) return;
+    const div = document.createElement('div');
+    div.className = 'card mb-4 border-l-4 border-l-violet-500 bg-violet-50 border-violet-200';
+    div.innerHTML = `
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <div class="flex items-start gap-3 min-w-0">
+          <div class="text-violet-600 shrink-0 mt-0.5">${icon('bed', 22)}</div>
+          <div class="min-w-0">
+            <div class="font-bold text-violet-900">${t('dashboard.longActiveTitle', { count: n })}</div>
+            <div class="text-sm text-violet-800">${t('dashboard.longActiveHelp')}</div>
+          </div>
+        </div>
+        <button class="btn btn-primary flex items-center gap-2 shrink-0" onclick="Router.go('bemorlar', { uzoqFaol: true })">
           ${icon('users', 16)} ${t('dashboard.openPatients')}
         </button>
       </div>`;
