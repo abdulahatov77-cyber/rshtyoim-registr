@@ -11,8 +11,8 @@
 .source-switch button[aria-pressed=true]{background:#0e7490;color:#fff}
 .source-panels{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
 .source-panel{padding:22px;border:1px solid #e2e8f0;border-radius:16px;min-width:0;background:#fff}
-.source-infarkt{--source-color:#e11d48;--source-tint:#fff1f2}
-.source-insult{--source-color:#2563eb;--source-tint:#eff6ff}
+.source-infarkt{--source-color:var(--color-infarkt);--source-tint:var(--color-infarkt-bg)}
+.source-insult{--source-color:var(--color-insult);--source-tint:var(--color-insult-bg)}
 .source-panel h4{display:flex;align-items:center;gap:10px;color:#172b4d;font-size:16px;font-weight:750}
 .source-dot{width:12px;height:12px;border-radius:50%;background:var(--source-color);flex-shrink:0}
 .source-total{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin:6px 0 22px;color:#64748b;font-size:12px}

@@ -2344,7 +2344,7 @@ const HisobotPage = {
       BemorKartaPage._navList = patients.map(p => ({ ...p, _type: type }));
       BemorKartaPage._navIndex = -1;
     }
-    const color = type === 'infarkt' ? '#dc2626' : '#7c3aed';
+    const color = Utils.diseaseColor(type);
     const title = type === 'infarkt' ? 'Infarkt' : 'Insult';
 
     const rows = patients.map(p => {

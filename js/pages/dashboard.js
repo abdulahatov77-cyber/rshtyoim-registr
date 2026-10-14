@@ -298,13 +298,13 @@ const DashboardPage = {
   _updateSecondaryContent(stats, demo, riskFactors, longStay, ageSex) {
     // Risk factors donut chartlarini yangilaymiz
     if (riskFactors) {
-      DashboardPage._drawDonut('riskInfarktChart', 'riskInfarktLegend', riskFactors.infarkt, '#ef4444', stats?.jamiInfarkt);
-      DashboardPage._drawDonut('riskInsultChart',  'riskInsultLegend',  riskFactors.insult,  '#3b82f6', stats?.jamiInsult);
+      DashboardPage._drawDonut('riskInfarktChart', 'riskInfarktLegend', riskFactors.infarkt, Utils.diseaseColor('infarkt'), stats?.jamiInfarkt);
+      DashboardPage._drawDonut('riskInsultChart',  'riskInsultLegend',  riskFactors.insult,  Utils.diseaseColor('insult'), stats?.jamiInsult);
     }
     // Age-Sex pyramidlarni yangilaymiz
     if (ageSex && typeof AgePyramid !== 'undefined') {
-      AgePyramid.render('pyramid-infarkt', ageSex.infarkt, 'INFARKT', '#dc2626', stats?.jamiInfarkt, 'infarkt');
-      AgePyramid.render('pyramid-insult',  ageSex.insult,  'INSULT',  '#2563eb', stats?.jamiInsult, 'insult');
+      AgePyramid.render('pyramid-infarkt', ageSex.infarkt, 'INFARKT', Utils.diseaseColor('infarkt'), stats?.jamiInfarkt, 'infarkt');
+      AgePyramid.render('pyramid-insult',  ageSex.insult,  'INSULT',  Utils.diseaseColor('insult'), stats?.jamiInsult, 'insult');
     }
     // 15+ kun jadvalini yangilaymiz
     DashboardPage._longStayData = longStay;
@@ -660,8 +660,8 @@ const DashboardPage = {
                <button id="toggle100k30" onclick="DashboardPage.setChartMode('100k30')" class="px-3 py-1.5 bg-white text-slate-500 hover:bg-slate-50 transition-all">/ 100 000 <span class="text-amber-400">30+</span></button>
              </div>
              <div class="flex gap-3">
-               <div class="flex items-center gap-1.5"><span class="w-3 h-3 bg-[#dc2626]"></span> <span class="text-[10px] font-bold text-slate-500 uppercase">${t('glossary.infarction')}</span></div>
-               <div class="flex items-center gap-1.5"><span class="w-3 h-3 bg-[#2563eb]"></span> <span class="text-[10px] font-bold text-slate-500 uppercase">${t('glossary.stroke')}</span></div>
+               <div class="flex items-center gap-1.5"><span class="w-3 h-3" style="background:var(--color-infarkt)"></span> <span class="text-[10px] font-bold text-slate-500 uppercase">${t('glossary.infarction')}</span></div>
+               <div class="flex items-center gap-1.5"><span class="w-3 h-3" style="background:var(--color-insult)"></span> <span class="text-[10px] font-bold text-slate-500 uppercase">${t('glossary.stroke')}</span></div>
              </div>
            </div>
         </div>
@@ -849,8 +849,8 @@ const DashboardPage = {
         // Age-Sex Pyramids
         const ageSex = DashboardPage._ageSex;
         if (ageSex && typeof AgePyramid !== 'undefined') {
-          AgePyramid.render('pyramid-infarkt', ageSex.infarkt, 'INFARKT', '#dc2626', stats.jamiInfarkt, 'infarkt');
-          AgePyramid.render('pyramid-insult',  ageSex.insult,  'INSULT',  '#2563eb', stats.jamiInsult, 'insult');
+          AgePyramid.render('pyramid-infarkt', ageSex.infarkt, 'INFARKT', Utils.diseaseColor('infarkt'), stats.jamiInfarkt, 'infarkt');
+          AgePyramid.render('pyramid-insult',  ageSex.insult,  'INSULT',  Utils.diseaseColor('insult'), stats.jamiInsult, 'insult');
         }
       }, 300);
     });
@@ -972,8 +972,8 @@ const DashboardPage = {
         data: {
           labels: trend.labels,
           datasets: [
-            { label: t('glossary.infarction'), data: trend.infData, borderColor: '#ef4444', backgroundColor: 'rgba(239,68,68,0.05)', fill: true, tension: 0.4, pointRadius: 3, borderWidth: 3 },
-            { label: t('glossary.stroke'),  data: trend.insData, borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.05)', fill: true, tension: 0.4, pointRadius: 3, borderWidth: 3 }
+            { label: t('glossary.infarction'), data: trend.infData, borderColor: Utils.diseaseColor('infarkt'), backgroundColor: Utils.diseaseColor('infarkt', 0.05), fill: true, tension: 0.4, pointRadius: 3, borderWidth: 3 },
+            { label: t('glossary.stroke'),  data: trend.insData, borderColor: Utils.diseaseColor('insult'), backgroundColor: Utils.diseaseColor('insult', 0.05), fill: true, tension: 0.4, pointRadius: 3, borderWidth: 3 }
           ]
         },
         plugins: window.ChartDataLabels ? [window.ChartDataLabels] : [],
@@ -985,7 +985,7 @@ const DashboardPage = {
               display: ctx => ctx.dataset.data[ctx.dataIndex] > 0,
               align: 'top',
               anchor: 'end',
-              color: ctx => ctx.datasetIndex === 0 ? '#ef4444' : '#3b82f6',
+              color: ctx => ctx.datasetIndex === 0 ? Utils.diseaseColor('infarkt') : Utils.diseaseColor('insult'),
               font: { weight: 'bold', size: 11 },
               formatter: v => v > 0 ? v : ''
             } : { display: false }
@@ -1065,8 +1065,8 @@ const DashboardPage = {
           data: {
             labels: regionData.map(v => isSuperAdminView ? I18n.translateText(v.name) : I18n.facilityName(v.name)),
             datasets: [
-              { label: t('glossary.infarction'), data: d.map(v => v.inf), backgroundColor: '#dc2626', borderRadius: 4, borderSkipped: false },
-              { label: t('glossary.stroke'),  data: d.map(v => v.ins), backgroundColor: '#2563eb', borderRadius: 4, borderSkipped: false }
+              { label: t('glossary.infarction'), data: d.map(v => v.inf), backgroundColor: Utils.diseaseColor('infarkt'), borderRadius: 4, borderSkipped: false },
+              { label: t('glossary.stroke'),  data: d.map(v => v.ins), backgroundColor: Utils.diseaseColor('insult'), borderRadius: 4, borderSkipped: false }
             ]
           },
           plugins: window.ChartDataLabels ? [window.ChartDataLabels] : [],
@@ -1092,7 +1092,7 @@ const DashboardPage = {
               datalabels: window.ChartDataLabels ? {
                 anchor: 'end', align: 'top',
                 display: ctx => ctx.dataset.data[ctx.dataIndex] > 0,
-                color: ctx => ctx.datasetIndex === 0 ? '#dc2626' : '#2563eb',
+                color: ctx => ctx.datasetIndex === 0 ? Utils.diseaseColor('infarkt') : Utils.diseaseColor('insult'),
                 font: { weight: 'bold', size: 11 },
                 formatter: v => v > 0 ? v : ''
               } : { display: false }
@@ -1126,8 +1126,8 @@ const DashboardPage = {
         data: {
           labels: trend12.labels.map(label => I18n.monthLabel(label)),
           datasets: [
-            { label: t('glossary.infarction'), data: trend12.infData, backgroundColor: 'rgba(239,68,68,0.85)', borderRadius: 5, borderSkipped: false },
-            { label: t('glossary.stroke'),  data: trend12.insData, backgroundColor: 'rgba(59,130,246,0.85)', borderRadius: 5, borderSkipped: false }
+            { label: t('glossary.infarction'), data: trend12.infData, backgroundColor: Utils.diseaseColor('infarkt', 0.85), borderRadius: 5, borderSkipped: false },
+            { label: t('glossary.stroke'),  data: trend12.insData, backgroundColor: Utils.diseaseColor('insult', 0.85), borderRadius: 5, borderSkipped: false }
           ]
         },
         plugins: window.ChartDataLabels ? [window.ChartDataLabels] : [],
@@ -1140,7 +1140,7 @@ const DashboardPage = {
               anchor: 'end', align: 'top',
               clamp: true,
               display: ctx => ctx.dataset.data[ctx.dataIndex] > 0,
-              color: ctx => ctx.datasetIndex === 0 ? '#dc2626' : '#2563eb',
+              color: ctx => ctx.datasetIndex === 0 ? Utils.diseaseColor('infarkt') : Utils.diseaseColor('insult'),
               font: { weight: 'bold', size: 11 },
               formatter: v => v > 0 ? v : ''
             } : { display: false }

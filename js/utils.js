@@ -88,6 +88,18 @@ const Utils = {
     return typeof v === 'string' && v.trim().toLowerCase().startsWith('ha');
   },
 
+  // Kasallik rangi — yagona manba css/style.css dagi --color-infarkt / --color-insult.
+  // Canvas (Chart.js) CSS o'zgaruvchini tushunmaydi, shuning uchun hex qaytariladi.
+  // alpha berilsa rgba(...) qaytadi (grafik foni uchun).
+  diseaseColor(type, alpha) {
+    const name = type === 'insult' ? '--color-insult' : '--color-infarkt';
+    const hex = getComputedStyle(document.documentElement).getPropertyValue(name).trim()
+      || (type === 'insult' ? '#7C3AED' : '#DC2626');
+    if (alpha == null) return hex;
+    const n = parseInt(hex.slice(1), 16);
+    return `rgba(${n >> 16},${(n >> 8) & 255},${n & 255},${alpha})`;
+  },
+
   relativeTime(dt) {
     if (!dt) return '—';
     const d = new Date(dt);
