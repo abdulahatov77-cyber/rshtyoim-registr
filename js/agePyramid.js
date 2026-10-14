@@ -9,16 +9,31 @@ const AgePyramid = {
   COLOR_FEMALE: '#EF4444',  // yorqin qizil
   COLOR_DEATH: 'rgba(0,0,0,0.38)',
 
+  _last: {},
+  _resizeBound: false,
+
   render(containerId, pyramidData, title, dotColor, totalCount, registr) {
     const el = document.getElementById(containerId);
     if (!el || !pyramidData) return;
+    // Konteyner kengligida chizamiz: 700 px li rasm telefonda ~330 px ga
+    // siqilganda yozuvlar ham ikki baravar kichrayib, o'qib bo'lmay qolardi.
+    this._last[containerId] = [...arguments];
+    if (!this._resizeBound) {
+      this._resizeBound = true;
+      let tmr;
+      window.addEventListener('resize', () => {
+        clearTimeout(tmr);
+        tmr = setTimeout(() => Object.values(AgePyramid._last).forEach(a => AgePyramid.render(...a)), 200);
+      });
+    }
 
     const { groups, data } = pyramidData;
-    const W = this.W, H = this.H;
-    const ROW_H = this.ROW_H, BAR_H = this.BAR_H, CENTER_W = this.CENTER_W;
-    const LABEL_AREA = this.LABEL_AREA;
+    const W = Math.max(260, Math.min(this.W, Math.round(el.clientWidth || this.W))), H = this.H;
+    const narrow = W < 480;
+    const ROW_H = this.ROW_H, BAR_H = this.BAR_H, CENTER_W = narrow ? 52 : this.CENTER_W;
+    const LABEL_AREA = narrow ? 74 : this.LABEL_AREA;
     const cx = W / 2;
-    const TOP_PAD = 62;
+    const TOP_PAD = 26;
 
     // Bar uchun mavjud kenglik (label area ni chegirib)
     const barAreaW = (W - CENTER_W) / 2 - LABEL_AREA;
@@ -92,8 +107,8 @@ const AgePyramid = {
           <!-- Erkak label -->
           ${d.mTotal > 0 ? `
             <g style="${mClickable?'cursor:pointer':''}" ${mClick}>
-              <text x="${mLabelX}" y="${midY - 3}" text-anchor="end" font-size="11" font-weight="700" fill="${mClickable?'#1d4ed8':'#1e293b'}" ${mClickable?'text-decoration="underline"':''}>${d.mTotal}</text>
-              ${mDP ? `<text x="${mLabelX}" y="${midY + 10}" text-anchor="end" font-size="9" fill="#b91c1c">${t('pyramid.deathRate', { rate: mDP })}</text>` : ''}
+              <text x="${mLabelX}" y="${midY - 3}" text-anchor="end" font-size="12" font-weight="700" fill="${mClickable?'#1d4ed8':'#1e293b'}" ${mClickable?'text-decoration="underline"':''}>${d.mTotal}</text>
+              ${mDP ? `<text x="${mLabelX}" y="${midY + 10}" text-anchor="end" font-size="12" fill="#b91c1c">${t('pyramid.deathRate', { rate: mDP })}</text>` : ''}
             </g>
           ` : ''}
           <!-- Ayol -->
@@ -105,8 +120,8 @@ const AgePyramid = {
           <!-- Ayol label -->
           ${d.fTotal > 0 ? `
             <g style="${fClickable?'cursor:pointer':''}" ${fClick}>
-              <text x="${fLabelX}" y="${midY - 3}" text-anchor="start" font-size="11" font-weight="700" fill="${fClickable?'#b91c1c':'#1e293b'}" ${fClickable?'text-decoration="underline"':''}>${d.fTotal}</text>
-              ${fDP ? `<text x="${fLabelX}" y="${midY + 10}" text-anchor="start" font-size="9" fill="#b91c1c">${t('pyramid.deathRate', { rate: fDP })}</text>` : ''}
+              <text x="${fLabelX}" y="${midY - 3}" text-anchor="start" font-size="12" font-weight="700" fill="${fClickable?'#b91c1c':'#1e293b'}" ${fClickable?'text-decoration="underline"':''}>${d.fTotal}</text>
+              ${fDP ? `<text x="${fLabelX}" y="${midY + 10}" text-anchor="start" font-size="12" fill="#b91c1c">${t('pyramid.deathRate', { rate: fDP })}</text>` : ''}
             </g>
           ` : ''}
           <!-- Yosh label (markaz) -->
@@ -117,43 +132,42 @@ const AgePyramid = {
     }).join('');
 
     const totalH = TOP_PAD + groups.length * ROW_H;
-    const legY = totalH + 22;
-    const svgH = legY + 20;
+    const svgH = totalH + 6;
 
     const colHeaders = `
-      <text x="${mStart - barAreaW/2}" y="${TOP_PAD - 12}" text-anchor="middle" font-size="11" font-weight="700" fill="#3B82F6" letter-spacing="0.08em">${t('common.male')}</text>
-      <text x="${cx}" y="${TOP_PAD - 12}" text-anchor="middle" font-size="11" font-weight="700" fill="#64748b" letter-spacing="0.08em">${t('common.age')}</text>
-      <text x="${fStart + barAreaW/2}" y="${TOP_PAD - 12}" text-anchor="middle" font-size="11" font-weight="700" fill="#EF4444" letter-spacing="0.08em">${t('common.female')}</text>
+      <text x="${mStart - barAreaW/2}" y="${TOP_PAD - 12}" text-anchor="middle" font-size="12" font-weight="700" fill="#3B82F6" letter-spacing="0.08em">${t('common.male')}</text>
+      <text x="${cx}" y="${TOP_PAD - 12}" text-anchor="middle" font-size="12" font-weight="700" fill="#64748b" letter-spacing="0.08em">${t('common.age')}</text>
+      <text x="${fStart + barAreaW/2}" y="${TOP_PAD - 12}" text-anchor="middle" font-size="12" font-weight="700" fill="#EF4444" letter-spacing="0.08em">${t('common.female')}</text>
       <line x1="${cx - CENTER_W/2}" y1="${TOP_PAD - 18}" x2="${cx - CENTER_W/2}" y2="${totalH}" stroke="#e2e8f0" stroke-width="0.5"/>
       <line x1="${cx + CENTER_W/2}" y1="${TOP_PAD - 18}" x2="${cx + CENTER_W/2}" y2="${totalH}" stroke="#e2e8f0" stroke-width="0.5"/>
     `;
 
     const header = `
-      <text x="${W/2}" y="16" text-anchor="middle" font-size="13" font-weight="800" fill="#0f172a">
-        <tspan fill="${dotColor}">●</tspan><tspan> ${t(registr === 'infarkt' ? 'glossary.infarction' : 'glossary.stroke')} — ${I18n.plural(totalCount || totalAll)}</tspan>
-      </text>
-      <text x="${W/2}" y="34" text-anchor="middle" font-size="10.5" fill="#64748b">
+      <div style="text-align:center;font-size:13px;font-weight:800;color:var(--text-dark)">
+        <span style="color:${dotColor}">●</span> ${t(registr === 'infarkt' ? 'glossary.infarction' : 'glossary.stroke')} — ${I18n.plural(totalCount || totalAll)}
+      </div>
+      <div style="text-align:center;font-size:12px;color:var(--text-gray);margin:4px 0 6px">
         ${t('pyramid.summary', { male: totalM, female: totalF, maleRate: mPct, femaleRate: fPct, deathRate: dPct })}
-      </text>
+      </div>
     `;
 
+    const sw = c => `<span style="display:inline-block;width:11px;height:11px;border-radius:2px;background:${c};vertical-align:-1px;margin-right:5px"></span>`;
     const legend = `
-      <rect x="${W/2 - 115}" y="${legY - 9}" width="11" height="11" rx="2" fill="${this.COLOR_MALE}"/>
-      <text x="${W/2 - 100}" y="${legY}" font-size="10" fill="#475569">${t('common.male')}</text>
-      <rect x="${W/2 - 50}" y="${legY - 9}" width="11" height="11" rx="2" fill="${this.COLOR_FEMALE}"/>
-      <text x="${W/2 - 35}" y="${legY}" font-size="10" fill="#475569">${t('common.female')}</text>
-      <rect x="${W/2 + 20}" y="${legY - 9}" width="11" height="11" rx="2" fill="rgba(0,0,0,0.3)"/>
-      <text x="${W/2 + 35}" y="${legY}" font-size="10" fill="#475569">${t('pyramid.legend')}</text>
+      <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:6px 16px;font-size:12px;color:var(--slate-600);margin-top:6px">
+        <span>${sw(this.COLOR_MALE)}${t('common.male')}</span>
+        <span>${sw(this.COLOR_FEMALE)}${t('common.female')}</span>
+        <span>${sw('rgba(0,0,0,0.3)')}${t('pyramid.legend')}</span>
+      </div>
     `;
 
     el.innerHTML = `
+      ${header}
       <svg viewBox="0 0 ${W} ${svgH}" width="100%" xmlns="http://www.w3.org/2000/svg"
            style="font-family:Inter,system-ui,sans-serif;display:block">
-        ${header}
         ${colHeaders}
         ${rows}
-        ${legend}
       </svg>
+      ${legend}
     `;
 
     el.querySelectorAll('.pyramid-bar-m, .pyramid-bar-f').forEach(g => {

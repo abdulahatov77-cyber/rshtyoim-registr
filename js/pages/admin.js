@@ -55,8 +55,8 @@ const AdminPage = {
     const katak = (rol, amal) => {
       const bor = AdminPage._ruxsatBor(rol, amal);
       if (!AdminPage._isSuperAdmin) {
-        return bor ? '<span style="color:#15803d;font-size:16px">✓</span>'
-                   : '<span style="color:#475569">—</span>';
+        return bor ? '<span style="color:var(--color-success-dark);font-size:16px">✓</span>'
+                   : '<span style="color:var(--slate-600)">—</span>';
       }
       return `<input type="checkbox" ${bor ? 'checked' : ''}
                 onchange="AdminPage.ruxsatSaqla('${rol}','${amal}',this.checked,this)"
@@ -64,7 +64,7 @@ const AdminPage = {
     };
     return AdminPage._AMALLAR.map(([amal, nom]) => `
       <tr>
-        <td style="color:#0f172a">${t(AdminPage._actionKey(amal))}</td>
+        <td style="color:var(--text-dark)">${t(AdminPage._actionKey(amal))}</td>
         <td style="text-align:center">${katak('user', amal)}</td>
         <td style="text-align:center">${katak('admin', amal)}</td>
         <td style="text-align:center"><span style="color:#6d28d9;font-size:16px">✓</span></td>
@@ -103,8 +103,8 @@ const AdminPage = {
         <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:#ffffff">
           <div style="text-align:center">
             <div style="font-size:64px;margin-bottom:16px">🚫</div>
-            <h2 style="color:#b91c1c;font-size:22px;font-weight:700;margin-bottom:8px">Ruxsat yo'q</h2>
-            <p style="color:#64748b;margin:8px 0 24px">Bu sahifa faqat Administrator uchun</p>
+            <h2 style="color:var(--color-danger);font-size:22px;font-weight:700;margin-bottom:8px">Ruxsat yo'q</h2>
+            <p style="color:var(--text-gray);margin:8px 0 24px">Bu sahifa faqat Administrator uchun</p>
             <button class="btn btn-ghost" onclick="Router.go('dashboard')">← Bosh sahifaga</button>
           </div>
         </div>`;
@@ -143,7 +143,7 @@ const AdminPage = {
       AdminPage.renderContent();
     } catch (err) {
       const inner = document.getElementById('admin-content');
-      if (inner) inner.innerHTML = `<div class="empty-state"><div class="empty-state-title" style="color:#b91c1c">❌ ${esc(err.message)}</div></div>`;
+      if (inner) inner.innerHTML = `<div class="empty-state"><div class="empty-state-title" style="color:var(--color-danger)">❌ ${esc(err.message)}</div></div>`;
     }
   },
 
@@ -188,14 +188,14 @@ const AdminPage = {
     if (AdminPage._isViloyatAdmin) AdminPage._activeTab = 'duplikat';
     inner.innerHTML = `
       <div class="animate-fadein">
-        ${AdminPage._isViloyatAdmin ? `<div style="padding:10px 16px;background:rgba(37,99,235,0.1);border:1px solid rgba(37,99,235,0.2);border-radius:12px;margin-bottom:20px;font-size:13px;color:#1d4ed8;font-weight:600">
+        ${AdminPage._isViloyatAdmin ? `<div style="padding:10px 16px;background:rgba(37,99,235,0.1);border:1px solid rgba(37,99,235,0.2);border-radius:12px;margin-bottom:20px;font-size:13px;color:var(--primary-dark);font-weight:600">
           🛡 ${t('admin.regionalDuplicateManagement', {region: I18n.translateText(AdminPage._myViloyat || '')})}
         </div>` : ''}
-        <div style="display:flex;gap:3px;margin-bottom:24px;background:#f1f5f9;border-radius:14px;padding:5px;width:fit-content;max-width:100%;overflow-x:auto;border:1px solid #e2e8f0">
+        <div style="display:flex;gap:3px;margin-bottom:24px;background:var(--border-light);border-radius:14px;padding:5px;width:fit-content;max-width:100%;overflow-x:auto;border:1px solid var(--border)">
           ${visibleTabs.map(([t, label]) => `
             <button onclick="AdminPage.switchTab('${t}')" id="tab-btn-${t}"
               style="padding:9px 20px;border-radius:10px;border:none;cursor:pointer;font-size:13px;font-weight:700;transition:all 0.2s;display:flex;align-items:center;gap:6px;
-              ${AdminPage._activeTab === t ? 'background:#ffffff;box-shadow:0 1px 3px rgba(15,23,42,0.08);color:#1d4ed8' : 'background:transparent;color:#64748b;'}">
+              ${AdminPage._activeTab === t ? 'background:#ffffff;box-shadow:0 1px 3px rgba(15,23,42,0.08);color:var(--primary-dark)' : 'background:transparent;color:var(--text-gray);'}">
               ${label}${t === 'xabarlar' ? ' <span id="tab-unread-badge" style="display:none;background:#ef4444;color:white;font-size:12px;font-weight:800;border-radius:999px;padding:1px 6px;line-height:16px"></span>' : ''}
             </button>`).join('')}
         </div>
@@ -243,8 +243,8 @@ const AdminPage = {
     else if (AdminPage._activeTab === 'aholi') el.innerHTML = AdminPage._buildAholiTab();
     else if (AdminPage._activeTab === 'audit') el.innerHTML = AdminPage._buildAuditTab();
     else if (AdminPage._activeTab === 'duplikat') el.innerHTML = AdminPage._buildDupTab();
-    else if (AdminPage._activeTab === 'logs') { el.innerHTML = '<div style="color:#64748b;padding:32px;text-align:center">Yuklanmoqda...</div>'; AdminPage._loadLogs(); }
-    else if (AdminPage._activeTab === 'xabarlar') { el.innerHTML = '<div style="color:#64748b;padding:32px;text-align:center">Yuklanmoqda...</div>'; AdminPage._loadFeedback(); }
+    else if (AdminPage._activeTab === 'logs') { el.innerHTML = '<div style="color:var(--text-gray);padding:32px;text-align:center">Yuklanmoqda...</div>'; AdminPage._loadLogs(); }
+    else if (AdminPage._activeTab === 'xabarlar') { el.innerHTML = '<div style="color:var(--text-gray);padding:32px;text-align:center">Yuklanmoqda...</div>'; AdminPage._loadFeedback(); }
     initIcons();
   },
 
@@ -336,7 +336,7 @@ const AdminPage = {
     return `
       <div class="stat-grid" style="margin-bottom:20px;grid-template-columns:repeat(4,1fr)">
         <div class="stat-card">
-          <div class="stat-icon" style="background:rgba(59,130,246,0.15);color:#1d4ed8">${icon('users',24)}</div>
+          <div class="stat-icon" style="background:rgba(59,130,246,0.15);color:var(--primary-dark)">${icon('users',24)}</div>
           <div><div class="stat-value">${AdminPage._totalCount ?? all.length}</div><div class="stat-label">${t('admin.totalUsers')}</div></div>
         </div>
         <div class="stat-card">
@@ -348,7 +348,7 @@ const AdminPage = {
           <div><div class="stat-value">${adminCnt}</div><div class="stat-label">${t('admin.regionalAdmins')}</div></div>
         </div>
         <div class="stat-card">
-          <div class="stat-icon" style="background:rgba(16,185,129,0.15);color:#15803d">${icon('user-check',24)}</div>
+          <div class="stat-icon" style="background:rgba(16,185,129,0.15);color:var(--color-success-dark)">${icon('user-check',24)}</div>
           <div><div class="stat-value">${userCnt}</div><div class="stat-label">${t('admin.doctors')}</div></div>
         </div>
       </div>
@@ -371,10 +371,10 @@ const AdminPage = {
                 [t('admin.manageUsers'), false, false, true],
                 [t('admin.manageFacilities'), false, false, true],
               ].map(([label, u, a, s]) => `<tr>
-                <td style="color:#64748b">${label}</td>
-                <td style="text-align:center">${u?'<span style="color:#15803d;font-size:16px">✓</span>':'<span style="color:#475569">—</span>'}</td>
-                <td style="text-align:center">${a?'<span style="color:#0369a1;font-size:16px">✓</span>':'<span style="color:#475569">—</span>'}</td>
-                <td style="text-align:center">${s?'<span style="color:#6d28d9;font-size:16px">✓</span>':'<span style="color:#475569">—</span>'}</td>
+                <td style="color:var(--text-gray)">${label}</td>
+                <td style="text-align:center">${u?'<span style="color:var(--color-success-dark);font-size:16px">✓</span>':'<span style="color:var(--slate-600)">—</span>'}</td>
+                <td style="text-align:center">${a?'<span style="color:#0369a1;font-size:16px">✓</span>':'<span style="color:var(--slate-600)">—</span>'}</td>
+                <td style="text-align:center">${s?'<span style="color:#6d28d9;font-size:16px">✓</span>':'<span style="color:var(--slate-600)">—</span>'}</td>
               </tr>`).join('')}
             </tbody>
           </table>
@@ -404,7 +404,7 @@ const AdminPage = {
                 class="form-input" style="width:210px;padding:6px 10px;font-size:12px"
                 title="${t('admin.institutionFilter')}">${AdminPage._muassasaOptions()}</select>
               <button class="btn btn-ghost btn-sm" onclick="AdminPage._filtrTozala()"
-                style="color:#b91c1c">${icon('x',14)} ${t('common.clear')}</button>
+                style="color:var(--color-danger)">${icon('x',14)} ${t('common.clear')}</button>
               <button class="btn btn-ghost btn-sm" onclick="AdminPage._loadProfiles()">${icon('refresh-cw',14)} ${t('common.refresh')}</button>
             </div>
           </div>
@@ -417,11 +417,11 @@ const AdminPage = {
             <div class="card-header"><span class="card-title">${icon('map',14)} ${t('admin.byRegion')}</span></div>
             <div style="padding:4px 0;max-height:35vh;overflow-y:auto">
               ${topVil.length ? topVil.map(([v,cnt]) => `
-                <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;border-bottom:1px solid #e2e8f0">
-                  <span style="font-size:12px;color:#0f172a;font-weight:600;flex:1;margin-right:8px">${v}</span>
-                  <span style="font-size:12px;font-weight:700;color:#2563eb;background:rgba(37,99,235,0.1);padding:2px 8px;border-radius:20px;white-space:nowrap">${cnt}</span>
+                <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;border-bottom:1px solid var(--border)">
+                  <span style="font-size:12px;color:var(--text-dark);font-weight:600;flex:1;margin-right:8px">${v}</span>
+                  <span style="font-size:12px;font-weight:700;color:var(--primary);background:rgba(37,99,235,0.1);padding:2px 8px;border-radius:20px;white-space:nowrap">${cnt}</span>
                 </div>`).join('')
-              : `<p style="color:#64748b;font-size:12px;text-align:center;padding:16px">${t('admin.noRegions')}</p>`}
+              : `<p style="color:var(--text-gray);font-size:12px;text-align:center;padding:16px">${t('admin.noRegions')}</p>`}
             </div>
           </div>
 
@@ -429,13 +429,13 @@ const AdminPage = {
           <div class="card">
             <div class="card-header">
               <span class="card-title">${icon('building-2',14)} ${t('admin.facilitiesByRegion')}</span>
-              <span style="font-size:12px;color:#64748b">${t('common.total')} ${topMuassasa.reduce((s,[,c])=>s+c,0)}</span>
+              <span style="font-size:12px;color:var(--text-gray)">${t('common.total')} ${topMuassasa.reduce((s,[,c])=>s+c,0)}</span>
             </div>
             <div style="padding:4px 0;max-height:35vh;overflow-y:auto">
               ${topMuassasa.map(([vil, cnt]) => `
-                <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 12px;border-bottom:1px solid #e2e8f0">
-                  <span style="font-size:12px;color:#0f172a;font-weight:600;flex:1;margin-right:8px">${vil}</span>
-                  <span style="font-size:12px;font-weight:700;color:#16a34a;background:rgba(22,163,74,0.1);padding:2px 8px;border-radius:20px;white-space:nowrap;flex-shrink:0">${cnt}</span>
+                <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 12px;border-bottom:1px solid var(--border)">
+                  <span style="font-size:12px;color:var(--text-dark);font-weight:600;flex:1;margin-right:8px">${vil}</span>
+                  <span style="font-size:12px;font-weight:700;color:var(--color-success);background:rgba(22,163,74,0.1);padding:2px 8px;border-radius:20px;white-space:nowrap;flex-shrink:0">${cnt}</span>
                 </div>`).join('')}
             </div>
           </div>
@@ -455,8 +455,8 @@ const AdminPage = {
 
     const paginationHtml = totalPages > 1 ? `
       <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-top:1px solid rgba(99,118,158,0.15);flex-wrap:wrap;gap:8px">
-        <span style="font-size:12px;color:#64748b">
-          <b style="color:#0f172a">${from+1}–${Math.min(from+perPage,total)}</b> / ${t('common.total').toLowerCase()} <b style="color:#0f172a">${total}</b>
+        <span style="font-size:12px;color:var(--text-gray)">
+          <b style="color:var(--text-dark)">${from+1}–${Math.min(from+perPage,total)}</b> / ${t('common.total').toLowerCase()} <b style="color:var(--text-dark)">${total}</b>
         </span>
         <div style="display:flex;gap:4px;flex-wrap:wrap">
           <button onclick="AdminPage._goUsersPage(1)" ${page===1?'disabled':''} style="padding:4px 10px;border-radius:7px;border:1px solid rgba(99,118,158,0.2);background:${page===1?'transparent':'rgba(37,99,235,0.15)'};color:${page===1?'#475569':'#1d4ed8'};font-size:12px;cursor:${page===1?'default':'pointer'}">«</button>
@@ -481,10 +481,10 @@ const AdminPage = {
       AdminPage._search && `qidiruv: "${AdminPage._search}"`
     ].filter(Boolean);
     const jamiChiziq = `
-      <div style="padding:8px 16px;font-size:12px;color:#64748b;border-bottom:1px solid #e2e8f0;
+      <div style="padding:8px 16px;font-size:12px;color:var(--text-gray);border-bottom:1px solid var(--border);
                   background:${faol.length ? '#eff6ff' : 'transparent'}">
-        ${t('admin.foundUsers').replace('{count}', `<b style="color:#0f172a">${total}</b>`)}
-        ${faol.length ? `<span style="color:#1d4ed8"> · ${esc(faol.join(' · '))}</span>` : ''}
+        ${t('admin.foundUsers').replace('{count}', `<b style="color:var(--text-dark)">${total}</b>`)}
+        ${faol.length ? `<span style="color:var(--primary-dark)"> · ${esc(faol.join(' · '))}</span>` : ''}
       </div>`;
 
     return `${jamiChiziq}<table class="data-table">
@@ -495,7 +495,7 @@ const AdminPage = {
       <tbody>
         ${pageList.length
           ? pageList.map((p,i) => AdminPage.renderRow(p, from+i+1)).join('')
-          : `<tr><td colspan="7" style="text-align:center;padding:40px;color:#64748b">${icon('inbox',24)}<br><span style="font-size:13px">${t('admin.noUsers')}</span></td></tr>`}
+          : `<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--text-gray)">${icon('inbox',24)}<br><span style="font-size:13px">${t('admin.noUsers')}</span></td></tr>`}
       </tbody>
     </table>${paginationHtml}`;
   },
@@ -520,7 +520,7 @@ const AdminPage = {
     const roleBadge = isSA
       ? `<span class="badge" style="background:rgba(139,92,246,0.2);color:#6d28d9;border:1px solid rgba(139,92,246,0.3)">${icon('crown',12)} Super Admin</span>`
       : isPending
-      ? `<span class="badge" style="background:rgba(245,158,11,0.15);color:#b45309;border:1px solid rgba(245,158,11,0.3)">${icon('clock',12)} Tasdiq kutilmoqda</span>`
+      ? `<span class="badge" style="background:rgba(245,158,11,0.15);color:var(--color-warning-dark);border:1px solid rgba(245,158,11,0.3)">${icon('clock',12)} Tasdiq kutilmoqda</span>`
       : p.role === 'admin'
       ? `<span class="badge" style="background:rgba(14,165,233,0.15);color:#0369a1;border:1px solid rgba(14,165,233,0.3)">${icon('shield',12)} Viloyat Admin</span>`
       : p.role === 'rahbar'
@@ -533,21 +533,21 @@ const AdminPage = {
     const muaOpts = ['', ...muaList]
       .map(m => `<option value="${esc(m)}" ${p.muassasa===m?'selected':''}>${esc(I18n.facilityName(m))||'— Muassasa —'}</option>`).join('');
     return `<tr>
-      <td style="color:#64748b;font-size:12px">${num}</td>
-      <td style="font-weight:600;font-size:12px;color:#0f172a">${p.email||'—'}${isMain?'<span style="font-size:12px;background:rgba(139,92,246,0.15);color:#6d28d9;padding:1px 6px;border-radius:10px;margin-left:4px">Asosiy</span>':''}</td>
-      <td style="font-size:12px;color:#0f172a;font-weight:600">${p.fio||p.full_name||'—'}</td>
+      <td style="color:var(--text-gray);font-size:12px">${num}</td>
+      <td style="font-weight:600;font-size:12px;color:var(--text-dark)">${p.email||'—'}${isMain?'<span style="font-size:12px;background:rgba(139,92,246,0.15);color:#6d28d9;padding:1px 6px;border-radius:10px;margin-left:4px">Asosiy</span>':''}</td>
+      <td style="font-size:12px;color:var(--text-dark);font-weight:600">${p.fio||p.full_name||'—'}</td>
       <td>${roleBadge}</td>
-      <td style="font-size:12px;color:#1e293b;font-weight:600">
-        ${p.viloyat||'<span style="color:#64748b">Belgilanmagan</span>'}
+      <td style="font-size:12px;color:var(--slate-800);font-weight:600">
+        ${p.viloyat||'<span style="color:var(--text-gray)">Belgilanmagan</span>'}
         <div style="font-size:12px;font-weight:500;color:${p.muassasa?'#475569':'#f59e0b'};margin-top:2px">
           ${p.muassasa ? esc(I18n.facilityName(p.muassasa)) : '⚠ muassasa yo\'q'}
         </div>
       </td>
-      <td style="font-size:12px;color:#475569">${p.created_at?new Date(p.created_at).toLocaleDateString('uz-UZ',{timeZone:'Asia/Tashkent',day:'2-digit',month:'2-digit',year:'numeric'}):'—'}</td>
+      <td style="font-size:12px;color:var(--slate-600)">${p.created_at?new Date(p.created_at).toLocaleDateString('uz-UZ',{timeZone:'Asia/Tashkent',day:'2-digit',month:'2-digit',year:'numeric'}):'—'}</td>
       <td>
         <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
           <select id="role-${p.id}" onchange="AdminPage.changeRole('${p.id}',this.value)"
-            style="background:#ffffff;border:1px solid rgba(99,118,158,0.2);border-radius:8px;padding:5px 8px;color:#0f172a;font-size:12px;cursor:pointer"
+            style="background:#ffffff;border:1px solid rgba(99,118,158,0.2);border-radius:8px;padding:5px 8px;color:var(--text-dark);font-size:12px;cursor:pointer"
             ${canManageRole ? '' : `disabled title="${t('admin.roleChangeRestricted')}"`}>
             <option value="pending" ${p.role==='pending'?'selected':''} disabled>${t('admin.pendingApproval')}</option>
             <option value="user" ${p.role==='user'?'selected':''}>👤 ${t('roles.doctor')}</option>
@@ -556,24 +556,24 @@ const AdminPage = {
             <option value="super_admin" ${p.role==='super_admin'?'selected':''}>👑 ${t('roles.super_admin')}</option>
           </select>
           <select id="vil-${p.id}" onchange="AdminPage.changeViloyat('${p.id}',this.value)"
-            style="background:#ffffff;border:1px solid rgba(99,118,158,0.2);border-radius:8px;padding:5px 8px;color:#0f172a;font-size:12px;cursor:pointer"
+            style="background:#ffffff;border:1px solid rgba(99,118,158,0.2);border-radius:8px;padding:5px 8px;color:var(--text-dark);font-size:12px;cursor:pointer"
             ${isSA?'disabled':''}>
             ${vilOpts}
           </select>
           <select id="mua-${p.id}" onchange="AdminPage.changeMuassasa('${p.id}',this.value)"
             title="${t('admin.institutionPendingTitle')}"
-            style="background:#ffffff;border:1px solid rgba(99,118,158,0.2);border-radius:8px;padding:5px 8px;color:#0f172a;font-size:12px;cursor:pointer;max-width:190px"
+            style="background:#ffffff;border:1px solid rgba(99,118,158,0.2);border-radius:8px;padding:5px 8px;color:var(--text-dark);font-size:12px;cursor:pointer;max-width:190px"
             ${(isSA || !p.viloyat) ? 'disabled' : ''}>
             ${muaOpts}
           </select>
           ${isPending ? `<button onclick="AdminPage.approveUser('${p.id}')"
             title="${t('admin.approveDoctorTitle')}"
-            style="background:rgba(34,197,94,0.12);border:1px solid rgba(34,197,94,0.3);border-radius:8px;padding:5px 9px;color:#16a34a;font-size:12px;font-weight:700;cursor:pointer">${icon('check',13)} Tasdiqlash</button>` : ''}
+            style="background:rgba(34,197,94,0.12);border:1px solid rgba(34,197,94,0.3);border-radius:8px;padding:5px 9px;color:var(--color-success);font-size:12px;font-weight:700;cursor:pointer">${icon('check',13)} Tasdiqlash</button>` : ''}
           <button onclick="AdminPage.sendPasswordReset('${(p.email||'').replace(/'/g,"\\'")}')"
             title="${t('admin.sendResetTitle')}"
-            style="background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.2);border-radius:8px;padding:5px 8px;color:#1d4ed8;font-size:12px;cursor:pointer">${icon('key',13)}</button>
+            style="background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.2);border-radius:8px;padding:5px 8px;color:var(--primary-dark);font-size:12px;cursor:pointer">${icon('key',13)}</button>
           <button onclick="AdminPage.deleteUser('${p.id}','${(p.email||'').replace(/'/g,"\\'")}','${p.role||''}')"
-            style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.2);border-radius:8px;padding:5px 8px;color:#b91c1c;font-size:12px;cursor:pointer"
+            style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.2);border-radius:8px;padding:5px 8px;color:var(--color-danger);font-size:12px;cursor:pointer"
             ${isMain?'disabled':''}>${icon('trash-2',13)}</button>
         </div>
       </td>
@@ -673,9 +673,9 @@ const AdminPage = {
     const sel = AdminPage._selViloyat || viloyatlar[0] || '';
 
     if (AdminPage._muassasaXato) {
-      return `<div class="card" style="padding:24px;text-align:center;color:#b91c1c">
+      return `<div class="card" style="padding:24px;text-align:center;color:var(--color-danger)">
         ${t('admin.facilityLoadError', { error: esc(AdminPage._muassasaXato) })}<br>
-        <span style="font-size:12px;color:#64748b">${t('admin.facilitySetupHelp')}</span></div>`;
+        <span style="font-size:12px;color:var(--text-gray)">${t('admin.facilitySetupHelp')}</span></div>`;
     }
 
     const yashirin = AdminPage._yashiringanSet();
@@ -696,7 +696,7 @@ const AdminPage = {
         border:1px solid ${isYashirin ? 'rgba(148,163,184,0.3)' : '#dbe3ee'}">
         <span style="font-size:13px;color:${isYashirin ? '#64748b' : '#334155'};
           ${isYashirin ? 'text-decoration:line-through' : ''}">${esc(I18n.facilityName(m.nomi))}</span>
-              ${m.mskt_bor ? `<span title="${t('capabilities.msctAvailable')}" style="font-size:12px;font-weight:700;color:#1d4ed8">KT</span>` : ''}
+              ${m.mskt_bor ? `<span title="${t('capabilities.msctAvailable')}" style="font-size:12px;font-weight:700;color:var(--primary-dark)">KT</span>` : ''}
               ${m.angiografiya_bor ? `<span title="${t('capabilities.angioAvailable')}" style="font-size:12px;font-weight:700;color:#6d28d9">AG</span>` : ''}
         <button onclick="AdminPage.muassasaYashir(${m.id}, ${isYashirin ? 'false' : 'true'})"
                     title="${isYashirin ? t('institution.restoreTitle') : t('institution.hideTitle')}"
@@ -711,7 +711,7 @@ const AdminPage = {
 
         <!-- Viloyat list -->
         <div class="card" style="padding:8px">
-          <div style="padding:10px 12px;font-size:12px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.05em">
+          <div style="padding:10px 12px;font-size:12px;font-weight:700;color:var(--text-gray);text-transform:uppercase;letter-spacing:0.05em">
             ${t('admin.selectRegion')}
           </div>
           ${viloyatlar.map(v => {
@@ -719,9 +719,9 @@ const AdminPage = {
             const hasChanges = AdminPage._overrides.some(o => o.viloyat === v);
             return `<button onclick="AdminPage.selectViloyat(this.dataset.v)" data-v="${v.replace(/"/g,'&quot;')}"
               style="display:flex;justify-content:space-between;align-items:center;gap:6px;width:100%;padding:9px 12px;border:none;border-radius:8px;cursor:pointer;text-align:left;font-size:13px;transition:background 0.15s;
-              ${sel === v ? 'background:#eff6ff;color:#0f172a;font-weight:700' : 'background:transparent;color:#64748b'}">
+              ${sel === v ? 'background:#eff6ff;color:var(--text-dark);font-weight:700' : 'background:transparent;color:var(--text-gray)'}">
               <span style="flex:1">${AdminPage._regionLabel(v)}</span>
-              <span style="font-size:12px;color:#64748b">${n}</span>
+              <span style="font-size:12px;color:var(--text-gray)">${n}</span>
               ${hasChanges ? '<span style="width:7px;height:7px;background:#f59e0b;border-radius:50%;flex-shrink:0"></span>' : ''}
             </button>`;
           }).join('')}
@@ -733,10 +733,10 @@ const AdminPage = {
             <div class="card-header" style="flex-wrap:wrap;gap:8px">
               <span class="card-title">${icon('building-2',16)} ${t('admin.facilitiesListFor', { region: AdminPage._regionLabel(sel) })}</span>
               <div style="display:flex;gap:8px;align-items:center">
-                <span style="font-size:12px;color:#64748b">${t('admin.activeCount', { count: faol.length })}</span>
-                ${berkit.length ? `<span style="font-size:12px;color:#64748b">${t('admin.hiddenCount', { count: berkit.length })}</span>` : ''}
+                <span style="font-size:12px;color:var(--text-gray)">${t('admin.activeCount', { count: faol.length })}</span>
+                ${berkit.length ? `<span style="font-size:12px;color:var(--text-gray)">${t('admin.hiddenCount', { count: berkit.length })}</span>` : ''}
                 <button onclick="Router.go('muassasa-imkoniyat')"
-                  style="background:none;border:none;cursor:pointer;font-size:12px;color:#2563eb;font-weight:600;padding:0">
+                  style="background:none;border:none;cursor:pointer;font-size:12px;color:var(--primary);font-weight:600;padding:0">
                   ${t('admin.editCapabilities')} →</button>
               </div>
             </div>
@@ -745,13 +745,13 @@ const AdminPage = {
               <!-- Faol muassasalar -->
               <div style="display:flex;flex-wrap:wrap;gap:8px;padding:12px 0">
                 ${faol.map(m => chip(m, false)).join('')
-                  || `<p style="color:#64748b;font-size:13px;padding:8px 0">${t('admin.noFacilities')}</p>`}
+                  || `<p style="color:var(--text-gray);font-size:13px;padding:8px 0">${t('admin.noFacilities')}</p>`}
               </div>
 
               <!-- Yashirilganlar -->
               ${berkit.length ? `
                 <div style="border-top:1px solid rgba(99,118,158,0.1);padding-top:12px;margin-top:4px">
-                  <div style="font-size:12px;color:#64748b;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px">
+                  <div style="font-size:12px;color:var(--text-gray);font-weight:700;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px">
                     ${t('admin.hiddenFacilitiesHelp')}
                   </div>
                   <div style="display:flex;flex-wrap:wrap;gap:8px">
@@ -772,7 +772,7 @@ const AdminPage = {
             <option value="markaz">${t('capabilities.levelNational')}</option>
                 </select>
                 <button onclick="AdminPage.addMuassasa()"
-                  style="padding:8px 18px;background:#2563eb;border:none;border-radius:10px;color:#fff;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap">
+                  style="padding:8px 18px;background:var(--primary);border:none;border-radius:10px;color:#fff;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap">
                   + ${t('common.add')}
                 </button>
               </div>
@@ -782,7 +782,7 @@ const AdminPage = {
           ${yetishmagan.length ? `
             <div class="card" style="border:1px solid rgba(245,158,11,0.35)">
               <div style="padding:12px 16px">
-                <div style="font-size:13px;color:#b45309;font-weight:700;margin-bottom:6px">
+                <div style="font-size:13px;color:var(--color-warning-dark);font-weight:700;margin-bottom:6px">
                   ${icon('alert-circle',14)} ${t('admin.missingFacilitiesCount', { count: yetishmagan.length })}
                 </div>
                 <div style="font-size:12px;color:#78350f;margin-bottom:10px">
@@ -793,7 +793,7 @@ const AdminPage = {
                     border-radius:12px;padding:3px 10px">${esc(I18n.facilityName(n))}</span>`).join('')}
                 </div>
                 <button onclick="AdminPage.yetishmaganQosh()"
-                  style="padding:7px 16px;background:#b45309;border:none;border-radius:9px;color:#fff;font-size:12px;font-weight:700;cursor:pointer">
+                  style="padding:7px 16px;background:var(--color-warning-dark);border:none;border-radius:9px;color:#fff;font-size:12px;font-weight:700;cursor:pointer">
                   ${t('admin.addAllMissing')}
                 </button>
               </div>
@@ -872,15 +872,15 @@ const AdminPage = {
       const vEsc = v.replace(/'/g,"\\'");
       return `
         <tr style="border-bottom:1px solid rgba(99,118,158,0.1)">
-          <td style="padding:12px 16px;color:#0f172a;font-weight:600">${v}</td>
+          <td style="padding:12px 16px;color:var(--text-dark);font-weight:600">${v}</td>
           <td style="padding:12px 16px;text-align:right">
             <input type="number" id="aholi18-${key}" value="${v18}"
-              style="width:130px;background:#eff6ff;border:1px solid #dbe3ee;border-radius:8px;padding:6px 10px;color:#6d28d9;font-size:14px;font-weight:700;text-align:right"
+              style="width:130px;background:var(--primary-50);border:1px solid #dbe3ee;border-radius:8px;padding:6px 10px;color:#6d28d9;font-size:14px;font-weight:700;text-align:right"
               onchange="AdminPage._aholiChanged18('${vEsc}', this.value)"/>
           </td>
           <td style="padding:12px 16px;text-align:right">
             <input type="number" id="aholi30-${key}" value="${v30}"
-              style="width:130px;background:#eff6ff;border:1px solid #dbe3ee;border-radius:8px;padding:6px 10px;color:#b45309;font-size:14px;font-weight:700;text-align:right"
+              style="width:130px;background:var(--primary-50);border:1px solid #dbe3ee;border-radius:8px;padding:6px 10px;color:var(--color-warning-dark);font-size:14px;font-weight:700;text-align:right"
               onchange="AdminPage._aholiChanged30('${vEsc}', this.value)"/>
           </td>
         </tr>`;
@@ -888,21 +888,21 @@ const AdminPage = {
 
     return `
       <div style="max-width:780px">
-        <div style="background:#eff6ff;border-radius:16px;padding:20px 24px;margin-bottom:20px;border:1px solid #dbe3ee">
+        <div style="background:var(--primary-50);border-radius:16px;padding:20px 24px;margin-bottom:20px;border:1px solid #dbe3ee">
           <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
             <span style="font-size:20px">👨‍👩‍👧</span>
-            <h3 style="color:#0f172a;font-size:16px;font-weight:700;margin:0">Viloyatlar bo'yicha aholi soni</h3>
+            <h3 style="color:var(--text-dark);font-size:16px;font-weight:700;margin:0">Viloyatlar bo'yicha aholi soni</h3>
           </div>
-          <p style="color:#64748b;font-size:13px;margin:0">Bu ma'lumotlar "/ 100 000 aholi" hisobida ishlatiladi. Har yili yangilab turing.</p>
+          <p style="color:var(--text-gray);font-size:13px;margin:0">Bu ma'lumotlar "/ 100 000 aholi" hisobida ishlatiladi. Har yili yangilab turing.</p>
         </div>
 
-        <div style="background:#ffffff;border-radius:16px;border:1px solid #1e293b;overflow:hidden;margin-bottom:16px">
+        <div style="background:#ffffff;border-radius:16px;border:1px solid var(--slate-800);overflow:hidden;margin-bottom:16px">
           <table style="width:100%;border-collapse:collapse">
             <thead>
-              <tr style="background:#eff6ff">
-                <th style="padding:10px 16px;text-align:left;color:#64748b;font-size:12px;font-weight:700;text-transform:uppercase">Viloyat</th>
+              <tr style="background:var(--primary-50)">
+                <th style="padding:10px 16px;text-align:left;color:var(--text-gray);font-size:12px;font-weight:700;text-transform:uppercase">Viloyat</th>
                 <th style="padding:10px 16px;text-align:right;color:#6d28d9;font-size:12px;font-weight:700;text-transform:uppercase">18+ aholi soni</th>
-                <th style="padding:10px 16px;text-align:right;color:#b45309;font-size:12px;font-weight:700;text-transform:uppercase">30+ aholi soni</th>
+                <th style="padding:10px 16px;text-align:right;color:var(--color-warning-dark);font-size:12px;font-weight:700;text-transform:uppercase">30+ aholi soni</th>
               </tr>
             </thead>
             <tbody>${rows}</tbody>
@@ -911,10 +911,10 @@ const AdminPage = {
 
         <div style="display:flex;gap:12px;align-items:center">
           <button onclick="AdminPage._saveAholi()"
-            style="background:#2563eb;color:#fff;border:none;padding:10px 24px;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">
+            style="background:var(--primary);color:#fff;border:none;padding:10px 24px;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">
             💾 ${t('common.save')}
           </button>
-          <span id="aholi-save-status" style="color:#64748b;font-size:13px"></span>
+          <span id="aholi-save-status" style="color:var(--text-gray);font-size:13px"></span>
         </div>
       </div>`;
   },
@@ -960,18 +960,18 @@ const AdminPage = {
     if (loading) return `
       <div class="card" style="text-align:center;padding:60px">
         <div class="spinner" style="width:36px;height:36px;margin:0 auto 16px"></div>
-        <p style="color:#64748b;font-size:14px">Barcha bemorlar tekshirilmoqda...</p>
+        <p style="color:var(--text-gray);font-size:14px">Barcha bemorlar tekshirilmoqda...</p>
       </div>`;
 
     if (!d) return `
       <div class="card" style="text-align:center;padding:60px">
         <div style="font-size:48px;margin-bottom:16px">🔍</div>
-        <h3 style="color:#0f172a;font-size:18px;font-weight:700;margin-bottom:8px">${t('admin.qualityCheck')}</h3>
-        <p style="color:#64748b;font-size:14px;margin-bottom:24px;max-width:440px;margin-left:auto;margin-right:auto">
+        <h3 style="color:var(--text-dark);font-size:18px;font-weight:700;margin-bottom:8px">${t('admin.qualityCheck')}</h3>
+        <p style="color:var(--text-gray);font-size:14px;margin-bottom:24px;max-width:440px;margin-left:auto;margin-right:auto">
           ${t('admin.qualityHelp')}
         </p>
         <button onclick="AdminPage.runAudit()"
-          style="padding:12px 32px;background:#2563eb;border:none;border-radius:12px;color:#fff;font-size:14px;font-weight:700;cursor:pointer">
+          style="padding:12px 32px;background:var(--primary);border:none;border-radius:12px;color:#fff;font-size:14px;font-weight:700;cursor:pointer">
           ${t('admin.startCheck')}
         </button>
       </div>`;
@@ -984,15 +984,15 @@ const AdminPage = {
     return `
       <div class="stat-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:16px">
         <div class="stat-card">
-          <div class="stat-icon" style="background:rgba(59,130,246,0.15);color:#1d4ed8">${icon('database',24)}</div>
+          <div class="stat-icon" style="background:rgba(59,130,246,0.15);color:var(--primary-dark)">${icon('database',24)}</div>
           <div><div class="stat-value">${total}</div><div class="stat-label">Jami tekshirildi</div></div>
         </div>
         <div class="stat-card">
-          <div class="stat-icon" style="background:rgba(245,158,11,0.15);color:#b45309">${icon('alert-triangle',24)}</div>
+          <div class="stat-icon" style="background:rgba(245,158,11,0.15);color:var(--color-warning-dark)">${icon('alert-triangle',24)}</div>
           <div><div class="stat-value">${mismatch.length}</div><div class="stat-label">Mos kelmaydigan muassasa</div></div>
         </div>
         <div class="stat-card">
-          <div class="stat-icon" style="background:rgba(239,68,68,0.15);color:#b91c1c">${icon('x-circle',24)}</div>
+          <div class="stat-icon" style="background:rgba(239,68,68,0.15);color:var(--color-danger)">${icon('x-circle',24)}</div>
           <div><div class="stat-value">${empty.length}</div><div class="stat-label">Bo'sh viloyat/muassasa</div></div>
         </div>
       </div>
@@ -1000,10 +1000,10 @@ const AdminPage = {
       ${all.length === 0 ? `
         <div class="card" style="text-align:center;padding:40px">
           <div style="font-size:40px;margin-bottom:12px">✅</div>
-          <h3 style="color:#15803d;font-size:16px;font-weight:700">Barcha rekordlar to'g'ri!</h3>
-          <p style="color:#64748b;font-size:13px;margin-top:8px">Noto'g'ri muassasa/viloyat kombinatsiyasi topilmadi.</p>
+          <h3 style="color:var(--color-success-dark);font-size:16px;font-weight:700">Barcha rekordlar to'g'ri!</h3>
+          <p style="color:var(--text-gray);font-size:13px;margin-top:8px">Noto'g'ri muassasa/viloyat kombinatsiyasi topilmadi.</p>
           <button onclick="AdminPage._auditData=null;AdminPage._renderTabContent()"
-            style="margin-top:20px;padding:8px 20px;background:rgba(99,118,158,0.15);border:1px solid rgba(99,118,158,0.2);border-radius:10px;color:#64748b;font-size:13px;cursor:pointer">
+            style="margin-top:20px;padding:8px 20px;background:rgba(99,118,158,0.15);border:1px solid rgba(99,118,158,0.2);border-radius:10px;color:var(--text-gray);font-size:13px;cursor:pointer">
             Qayta tekshirish
           </button>
         </div>` : `
@@ -1025,23 +1025,23 @@ const AdminPage = {
               <tbody>
                 ${all.map(r => `<tr>
                   <td>${r._type === 'infarkt'
-                    ? '<span style="background:rgba(220,38,38,0.15);color:#b91c1c;font-size:12px;font-weight:700;padding:2px 8px;border-radius:10px">Infarkt</span>'
+                    ? '<span style="background:rgba(220,38,38,0.15);color:var(--color-danger);font-size:12px;font-weight:700;padding:2px 8px;border-radius:10px">Infarkt</span>'
                     : '<span style="background:rgba(124,58,237,0.15);color:#6d28d9;font-size:12px;font-weight:700;padding:2px 8px;border-radius:10px">Insult</span>'}</td>
-                  <td style="font-family:monospace;font-size:12px;color:#64748b">${esc(r.kt_no)}</td>
+                  <td style="font-family:monospace;font-size:12px;color:var(--text-gray)">${esc(r.kt_no)}</td>
                   <td style="font-weight:600;font-size:13px">${esc(r.fio)||'—'}</td>
-                  <td style="font-size:12px;color:#64748b">${esc(r.viloyat)||'<span style="color:#b91c1c">Bo\'sh</span>'}</td>
-                  <td style="font-size:12px;color:#64748b">${esc(I18n.facilityName(r.muassasa))||'<span style="color:#b91c1c">Bo\'sh</span>'}</td>
+                  <td style="font-size:12px;color:var(--text-gray)">${esc(r.viloyat)||'<span style="color:var(--color-danger)">Bo\'sh</span>'}</td>
+                  <td style="font-size:12px;color:var(--text-gray)">${esc(I18n.facilityName(r.muassasa))||'<span style="color:var(--color-danger)">Bo\'sh</span>'}</td>
                   <td>${r._issue === 'mismatch'
-                    ? '<span style="color:#b45309;font-size:12px">Viloyatga mos kelmaydi</span>'
-                    : '<span style="color:#b91c1c;font-size:12px">Bo\'sh maydon</span>'}</td>
+                    ? '<span style="color:var(--color-warning-dark);font-size:12px">Viloyatga mos kelmaydi</span>'
+                    : '<span style="color:var(--color-danger);font-size:12px">Bo\'sh maydon</span>'}</td>
                   <td style="display:flex;gap:6px;flex-wrap:wrap">
                     ${r._issue === 'mismatch' && r._suggested ? `
                     <button onclick="AdminPage.fixAuditRecord('${r.kt_no}','${r._type}','${r._suggested.replace(/'/g,"\\'")}','${(r.muassasa||'').replace(/'/g,"\\'")}')"
-                      style="background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.2);border-radius:8px;padding:5px 10px;color:#15803d;font-size:12px;cursor:pointer;white-space:nowrap">
+                      style="background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.2);border-radius:8px;padding:5px 10px;color:var(--color-success-dark);font-size:12px;cursor:pointer;white-space:nowrap">
                       ✓ ${r._suggested}
                     </button>` : ''}
                     <button onclick="AdminPage.deleteAuditRecord('${r.kt_no}','${r._type}')"
-                      style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.2);border-radius:8px;padding:5px 10px;color:#b91c1c;font-size:12px;cursor:pointer">
+                      style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.2);border-radius:8px;padding:5px 10px;color:var(--color-danger);font-size:12px;cursor:pointer">
                       O'chirish
                     </button>
                   </td>
@@ -1194,7 +1194,7 @@ const AdminPage = {
     if (loading) return `
       <div class="card" style="text-align:center;padding:60px">
         <div class="spinner" style="width:36px;height:36px;margin:0 auto 16px"></div>
-        <p style="color:#64748b;font-size:14px">Duplikat bemorlar qidirilmoqda...</p>
+        <p style="color:var(--text-gray);font-size:14px">Duplikat bemorlar qidirilmoqda...</p>
       </div>`;
 
     const modeBtn = (mode, label) => `
@@ -1208,8 +1208,8 @@ const AdminPage = {
     if (!groups) return `
       <div class="card" style="text-align:center;padding:60px">
         <div style="font-size:48px;margin-bottom:16px">👥</div>
-        <h3 style="color:#0f172a;font-size:18px;font-weight:700;margin-bottom:8px">${t('admin.duplicateCheck')}</h3>
-        <p style="color:#64748b;font-size:14px;margin-bottom:20px;max-width:480px;margin-left:auto;margin-right:auto">
+        <h3 style="color:var(--text-dark);font-size:18px;font-weight:700;margin-bottom:8px">${t('admin.duplicateCheck')}</h3>
+        <p style="color:var(--text-gray);font-size:14px;margin-bottom:20px;max-width:480px;margin-left:auto;margin-right:auto">
           ${t('admin.duplicateHelp')}
         </p>
         <div style="display:flex;gap:10px;justify-content:center;margin-bottom:24px">
@@ -1217,7 +1217,7 @@ const AdminPage = {
           ${modeBtn('all',t('admin.duplicateModeAll'))}
         </div>
         <button onclick="AdminPage.runDupCheck()"
-          style="padding:12px 32px;background:#2563eb;border:none;border-radius:12px;color:#fff;font-size:14px;font-weight:700;cursor:pointer">
+          style="padding:12px 32px;background:var(--primary);border:none;border-radius:12px;color:#fff;font-size:14px;font-weight:700;cursor:pointer">
           ${t('admin.startCheck')}
         </button>
       </div>`;
@@ -1231,10 +1231,10 @@ const AdminPage = {
     if (normalizedGroups.length === 0) return `
       <div class="card" style="text-align:center;padding:40px">
         <div style="font-size:40px;margin-bottom:12px">✅</div>
-        <h3 style="color:#15803d;font-size:16px;font-weight:700">Duplikat topilmadi!</h3>
-        <p style="color:#64748b;font-size:13px;margin-top:8px">${isAllMode?'Kirill/Lotin normalize qilingan F.I.O + tug\'ilgan yili bo\'yicha duplikat topilmadi.':'Bir xil F.I.O + tug\'ilgan yil + qabul sanasiga ega yozuvlar yo\'q.'}</p>
+        <h3 style="color:var(--color-success-dark);font-size:16px;font-weight:700">Duplikat topilmadi!</h3>
+        <p style="color:var(--text-gray);font-size:13px;margin-top:8px">${isAllMode?'Kirill/Lotin normalize qilingan F.I.O + tug\'ilgan yili bo\'yicha duplikat topilmadi.':'Bir xil F.I.O + tug\'ilgan yil + qabul sanasiga ega yozuvlar yo\'q.'}</p>
         <button onclick="AdminPage._dupData=null;AdminPage._renderTabContent()"
-          style="margin-top:20px;padding:8px 20px;background:rgba(99,118,158,0.15);border:1px solid rgba(99,118,158,0.2);border-radius:10px;color:#64748b;font-size:13px;cursor:pointer">
+          style="margin-top:20px;padding:8px 20px;background:rgba(99,118,158,0.15);border:1px solid rgba(99,118,158,0.2);border-radius:10px;color:var(--text-gray);font-size:13px;cursor:pointer">
           Qayta tekshirish
         </button>
       </div>`;
@@ -1260,14 +1260,14 @@ const AdminPage = {
           </tr></thead>
           <tbody>
             ${visibleRecords.map(r => `<tr>
-              <td style="font-family:monospace;font-size:12px;color:#64748b">${esc(r.kt_no)}</td>
+              <td style="font-family:monospace;font-size:12px;color:var(--text-gray)">${esc(r.kt_no)}</td>
               <td style="font-weight:600;font-size:13px">${esc(r.fio)||'—'}</td>
-              <td style="font-size:12px;color:#64748b">${r._type==='infarkt'?'Infarkt':'Insult'}</td>
-              <td style="font-size:12px;color:#64748b">${esc(I18n.facilityName(r.muassasa))||'—'}</td>
-              <td style="font-size:12px;color:#64748b">${r.qabul_vaqt ? new Date(r.qabul_vaqt).toLocaleString('uz-UZ',{timeZone:'Asia/Tashkent',day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '—'}</td>
+              <td style="font-size:12px;color:var(--text-gray)">${r._type==='infarkt'?'Infarkt':'Insult'}</td>
+              <td style="font-size:12px;color:var(--text-gray)">${esc(I18n.facilityName(r.muassasa))||'—'}</td>
+              <td style="font-size:12px;color:var(--text-gray)">${r.qabul_vaqt ? new Date(r.qabul_vaqt).toLocaleString('uz-UZ',{timeZone:'Asia/Tashkent',day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '—'}</td>
               ${showDelete?`<td>
                 <button onclick="AdminPage.deleteDupRecord('${r.kt_no}','${r._type}')"
-                  style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.2);border-radius:8px;padding:5px 10px;color:#b91c1c;font-size:12px;cursor:pointer">
+                  style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.2);border-radius:8px;padding:5px 10px;color:var(--color-danger);font-size:12px;cursor:pointer">
                   O'chirish
                 </button>
               </td>`:''}
@@ -1280,15 +1280,15 @@ const AdminPage = {
     return `
       <div class="stat-grid" style="grid-template-columns:repeat(${isAllMode?3:2},1fr);margin-bottom:16px">
         <div class="stat-card">
-          <div class="stat-icon" style="background:rgba(239,68,68,0.15);color:#b91c1c">${icon('alert-triangle',24)}</div>
+          <div class="stat-icon" style="background:rgba(239,68,68,0.15);color:var(--color-danger)">${icon('alert-triangle',24)}</div>
           <div><div class="stat-value">${dupGroups.length}</div><div class="stat-label">Duplikat guruh</div></div>
         </div>
         ${isAllMode?`<div class="stat-card">
-          <div class="stat-icon" style="background:rgba(99,118,158,0.15);color:#64748b">${icon('refresh-cw',24)}</div>
+          <div class="stat-icon" style="background:rgba(99,118,158,0.15);color:var(--text-gray)">${icon('refresh-cw',24)}</div>
           <div><div class="stat-value">${qaytaGroups.length}</div><div class="stat-label">Qayta murojaat</div></div>
         </div>`:''}
         <div class="stat-card">
-          <div class="stat-icon" style="background:rgba(245,158,11,0.15);color:#b45309">${icon('copy',24)}</div>
+          <div class="stat-icon" style="background:rgba(245,158,11,0.15);color:var(--color-warning-dark)">${icon('copy',24)}</div>
           <div><div class="stat-value">${totalRecords}</div><div class="stat-label">Jami yozuvlar</div></div>
         </div>
       </div>
@@ -1297,16 +1297,16 @@ const AdminPage = {
         <div class="card-header" style="flex-wrap:wrap;gap:8px">
           <span class="card-title">${icon('alert-triangle',16)} ${t('admin.duplicateCount', {count: dupGroups.length})}${isAllMode && qaytaGroups.length ? t('admin.repeatCountSuffix', {count: qaytaGroups.length}) : ''} — ${t(isAllMode ? 'admin.duplicateModeAll' : 'admin.duplicateModeDay')}</span>
           <div style="display:flex;gap:8px;flex-wrap:wrap">
-            <button onclick="AdminPage._dupMode='day';AdminPage._dupData=null;AdminPage.runDupCheck()" class="btn btn-ghost btn-sm" ${AdminPage._dupMode==='day'?'style="color:#1d4ed8"':''}>Bir kunda</button>
-            <button onclick="AdminPage._dupMode='all';AdminPage._dupData=null;AdminPage.runDupCheck()" class="btn btn-ghost btn-sm" ${AdminPage._dupMode==='all'?'style="color:#1d4ed8"':''}>Barcha vaqt</button>
+            <button onclick="AdminPage._dupMode='day';AdminPage._dupData=null;AdminPage.runDupCheck()" class="btn btn-ghost btn-sm" ${AdminPage._dupMode==='day'?'style="color:var(--primary-dark)"':''}>Bir kunda</button>
+            <button onclick="AdminPage._dupMode='all';AdminPage._dupData=null;AdminPage.runDupCheck()" class="btn btn-ghost btn-sm" ${AdminPage._dupMode==='all'?'style="color:var(--primary-dark)"':''}>Barcha vaqt</button>
             <button onclick="AdminPage.runDupCheck()" class="btn btn-ghost btn-sm">${icon('refresh-cw',14)} Yangilash</button>
             <button onclick="AdminPage._dupData=null;AdminPage._renderTabContent()" class="btn btn-ghost btn-sm">Yopish</button>
           </div>
         </div>
         <div style="display:flex;flex-direction:column;gap:4px;padding:16px">
-          ${dupGroups.length ? `<div style="font-size:12px;font-weight:700;color:#b91c1c;margin-bottom:8px">⚠️ DUPLIKATLAR (o'chirish tavsiya etiladi)</div>
+          ${dupGroups.length ? `<div style="font-size:12px;font-weight:700;color:var(--color-danger);margin-bottom:8px">⚠️ DUPLIKATLAR (o'chirish tavsiya etiladi)</div>
           ${dupGroups.map((g, gi) => renderGroup(g, gi, true)).join('')}` : ''}
-          ${isAllMode && qaytaGroups.length ? `<div style="font-size:12px;font-weight:700;color:#64748b;margin-top:16px;margin-bottom:8px">🔄 QAYTA MUROJAATLAR (o'chirish shart emas)</div>
+          ${isAllMode && qaytaGroups.length ? `<div style="font-size:12px;font-weight:700;color:var(--text-gray);margin-top:16px;margin-bottom:8px">🔄 QAYTA MUROJAATLAR (o'chirish shart emas)</div>
           ${qaytaGroups.map((g, gi) => renderGroup(g, gi, false)).join('')}` : ''}
         </div>
       </div>`;
@@ -1384,7 +1384,7 @@ const AdminPage = {
       if (el) { el.innerHTML = AdminPage._buildLogsTab(logs); initIcons(); }
     } catch(err) {
       const el = document.getElementById('admin-tab-content');
-      if (el) el.innerHTML = `<div class="card" style="color:#b91c1c;padding:32px;text-align:center">❌ ${esc(err.message)}</div>`;
+      if (el) el.innerHTML = `<div class="card" style="color:var(--color-danger);padding:32px;text-align:center">❌ ${esc(err.message)}</div>`;
     }
   },
 
@@ -1392,8 +1392,8 @@ const AdminPage = {
     if (!logs.length) return `
       <div class="card" style="text-align:center;padding:60px">
         <div style="font-size:48px;margin-bottom:16px">📋</div>
-        <h3 style="color:#0f172a;font-size:18px;font-weight:700">Kirish tarixi bo'sh</h3>
-        <p style="color:#64748b;font-size:14px;margin-top:8px">Hali hech kim tizimga kirmagan</p>
+        <h3 style="color:var(--text-dark);font-size:18px;font-weight:700">Kirish tarixi bo'sh</h3>
+        <p style="color:var(--text-gray);font-size:14px;margin-top:8px">Hali hech kim tizimga kirmagan</p>
       </div>`;
 
     const actionBadge = a => a === 'login'
@@ -1402,8 +1402,8 @@ const AdminPage = {
 
     const roleBadge = r => {
       if (r === 'super_admin') return `<span style="background:#ede9fe;color:#6d28d9;padding:2px 8px;border-radius:20px;font-size:12px;font-weight:700">Super Admin</span>`;
-      if (r === 'admin') return `<span style="background:#dbeafe;color:#1e40af;padding:2px 8px;border-radius:20px;font-size:12px;font-weight:700">Admin</span>`;
-      return `<span style="background:#f1f5f9;color:#475569;padding:2px 8px;border-radius:20px;font-size:12px;font-weight:700">Foydalanuvchi</span>`;
+      if (r === 'admin') return `<span style="background:var(--primary-100);color:#1e40af;padding:2px 8px;border-radius:20px;font-size:12px;font-weight:700">Admin</span>`;
+      return `<span style="background:var(--border-light);color:var(--slate-600);padding:2px 8px;border-radius:20px;font-size:12px;font-weight:700">Foydalanuvchi</span>`;
     };
 
     const fmtDate = dt => {
@@ -1429,22 +1429,22 @@ const AdminPage = {
             ['🚪', t('admin.signOuts'), logouts, '#ef4444'],
             ['👤', t('admin.activeUsers'), uniqueUsers, '#8b5cf6']
           ].map(([ic,lbl,val,clr]) => `
-            <div style="background:#ffffff;border:1px solid #1e293b;border-radius:12px;padding:16px;text-align:center">
+            <div style="background:#ffffff;border:1px solid var(--slate-800);border-radius:12px;padding:16px;text-align:center">
               <div style="font-size:24px">${ic}</div>
               <div style="font-size:22px;font-weight:800;color:${clr};margin:4px 0">${val}</div>
-              <div style="font-size:12px;color:#64748b;font-weight:600">${lbl}</div>
+              <div style="font-size:12px;color:var(--text-gray);font-weight:600">${lbl}</div>
             </div>`).join('')}
         </div>
       </div>
       <div class="card" style="padding:0;overflow:hidden">
-        <div style="padding:16px 20px;border-bottom:1px solid #1e293b;display:flex;justify-content:space-between;align-items:center">
-          <h3 style="color:#0f172a;font-weight:700;font-size:15px">${t('admin.loginHistory')}</h3>
-          <span style="color:#64748b;font-size:12px">${t('admin.latestRecords', { count: logs.length })}</span>
+        <div style="padding:16px 20px;border-bottom:1px solid var(--slate-800);display:flex;justify-content:space-between;align-items:center">
+          <h3 style="color:var(--text-dark);font-weight:700;font-size:15px">${t('admin.loginHistory')}</h3>
+          <span style="color:var(--text-gray);font-size:12px">${t('admin.latestRecords', { count: logs.length })}</span>
         </div>
         <div style="overflow-x:auto">
           <table style="width:100%;border-collapse:collapse;font-size:13px">
             <thead>
-              <tr style="background:#ffffff;color:#64748b;font-size:12px;text-transform:uppercase;letter-spacing:0.05em">
+              <tr style="background:#ffffff;color:var(--text-gray);font-size:12px;text-transform:uppercase;letter-spacing:0.05em">
                 <th style="padding:10px 16px;text-align:left;font-weight:600">Sana/Vaqt</th>
                 <th style="padding:10px 16px;text-align:left;font-weight:600">F.I.O</th>
                 <th style="padding:10px 16px;text-align:left;font-weight:600">Email</th>
@@ -1455,11 +1455,11 @@ const AdminPage = {
             </thead>
             <tbody>
               ${logs.map((l,i) => `
-                <tr style="border-top:1px solid #1e293b;${i%2===0?'background:rgba(30,41,59,0.3)':''}">
-                  <td style="padding:10px 16px;color:#64748b;white-space:nowrap">${fmtDate(l.created_at)}</td>
-                  <td style="padding:10px 16px;color:#0f172a;font-weight:600">${esc(l.full_name||'—')}</td>
-                  <td style="padding:10px 16px;color:#64748b">${esc(l.email||'—')}</td>
-                  <td style="padding:10px 16px;color:#64748b">${esc(l.viloyat||'—')}</td>
+                <tr style="border-top:1px solid var(--slate-800);${i%2===0?'background:rgba(30,41,59,0.3)':''}">
+                  <td style="padding:10px 16px;color:var(--text-gray);white-space:nowrap">${fmtDate(l.created_at)}</td>
+                  <td style="padding:10px 16px;color:var(--text-dark);font-weight:600">${esc(l.full_name||'—')}</td>
+                  <td style="padding:10px 16px;color:var(--text-gray)">${esc(l.email||'—')}</td>
+                  <td style="padding:10px 16px;color:var(--text-gray)">${esc(l.viloyat||'—')}</td>
                   <td style="padding:10px 16px">${roleBadge(l.role)}</td>
                   <td style="padding:10px 16px">${actionBadge(l.action)}</td>
                 </tr>`).join('')}
@@ -1481,7 +1481,7 @@ const AdminPage = {
       if (el) { el.innerHTML = AdminPage._buildFeedbackTab(data || []); initIcons(); }
     } catch(err) {
       const el = document.getElementById('admin-tab-content');
-      if (el) el.innerHTML = `<div class="card" style="color:#b91c1c;padding:32px;text-align:center">❌ ${esc(err.message)}</div>`;
+      if (el) el.innerHTML = `<div class="card" style="color:var(--color-danger);padding:32px;text-align:center">❌ ${esc(err.message)}</div>`;
     }
   },
 
@@ -1494,31 +1494,31 @@ const AdminPage = {
       return `${pad(tz.getUTCDate())}.${pad(tz.getUTCMonth()+1)}.${tz.getUTCFullYear()} ${pad(tz.getUTCHours())}:${pad(tz.getUTCMinutes())}`;
     };
     const turBadge = t => {
-      if (t === 'Muammo') return `<span style="background:#fee2e2;color:#b91c1c;padding:2px 10px;border-radius:20px;font-size:12px;font-weight:700">🔴 Muammo</span>`;
+      if (t === 'Muammo') return `<span style="background:#fee2e2;color:var(--color-danger);padding:2px 10px;border-radius:20px;font-size:12px;font-weight:700">🔴 Muammo</span>`;
       if (t === 'Taklif') return `<span style="background:#fefce8;color:#92400e;padding:2px 10px;border-radius:20px;font-size:12px;font-weight:700">💡 Taklif</span>`;
-      return `<span style="background:#eff6ff;color:#1e40af;padding:2px 10px;border-radius:20px;font-size:12px;font-weight:700">❓ Savol</span>`;
+      return `<span style="background:var(--primary-50);color:#1e40af;padding:2px 10px;border-radius:20px;font-size:12px;font-weight:700">❓ Savol</span>`;
     };
     const yangi = items.filter(i => !i.o_qildi).length;
     if (!items.length) return `
       <div class="card" style="text-align:center;padding:60px">
         <div style="font-size:48px;margin-bottom:16px">💬</div>
-        <h3 style="color:#0f172a;font-size:18px;font-weight:700">Xabarlar yo'q</h3>
-        <p style="color:#64748b;font-size:14px;margin-top:8px">Hali hech kim xabar yubormagan</p>
+        <h3 style="color:var(--text-dark);font-size:18px;font-weight:700">Xabarlar yo'q</h3>
+        <p style="color:var(--text-gray);font-size:14px;margin-top:8px">Hali hech kim xabar yubormagan</p>
       </div>`;
     return `
       <div class="card" style="margin-bottom:16px;padding:16px 20px;display:flex;align-items:center;gap:16px">
         <div style="display:flex;gap:16px">
           <div style="text-align:center">
             <div style="font-size:22px;font-weight:800;color:#3b82f6">${items.length}</div>
-            <div style="font-size:12px;color:#64748b;font-weight:600">Jami</div>
+            <div style="font-size:12px;color:var(--text-gray);font-weight:600">Jami</div>
           </div>
           <div style="text-align:center">
             <div style="font-size:22px;font-weight:800;color:#f59e0b">${yangi}</div>
-            <div style="font-size:12px;color:#64748b;font-weight:600">Yangi</div>
+            <div style="font-size:12px;color:var(--text-gray);font-weight:600">Yangi</div>
           </div>
           <div style="text-align:center">
             <div style="font-size:22px;font-weight:800;color:#22c55e">${items.length - yangi}</div>
-            <div style="font-size:12px;color:#64748b;font-weight:600">Javob berilgan</div>
+            <div style="font-size:12px;color:var(--text-gray);font-weight:600">Javob berilgan</div>
           </div>
         </div>
         <button onclick="AdminPage._loadFeedback()" class="btn btn-ghost btn-sm" style="margin-left:auto">${icon('refresh-cw',14)} Yangilash</button>
@@ -1526,21 +1526,21 @@ const AdminPage = {
       <div style="display:flex;flex-direction:column;gap:12px">
         ${items.map(item => `
           <div style="background:white;border:1px solid ${!item.o_qildi ? '#fcd34d' : '#e2e8f0'};border-radius:16px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.06)">
-            <div style="padding:16px 20px;display:flex;align-items:flex-start;gap:12px;border-bottom:1px solid #f1f5f9">
-              <div style="width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#0ea5e9,#2563eb);color:white;font-weight:700;font-size:15px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+            <div style="padding:16px 20px;display:flex;align-items:flex-start;gap:12px;border-bottom:1px solid var(--border-light)">
+              <div style="width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#0ea5e9,var(--primary));color:white;font-weight:700;font-size:15px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
                 ${(item.sender_name||'?').charAt(0).toUpperCase()}
               </div>
               <div style="flex:1;min-width:0">
                 <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px">
-                  <span style="font-weight:700;font-size:14px;color:#1e293b">${esc(item.sender_name||'Noma\'lum')}</span>
+                  <span style="font-weight:700;font-size:14px;color:var(--slate-800)">${esc(item.sender_name||'Noma\'lum')}</span>
                   ${turBadge(item.tur)}
                   ${!item.o_qildi ? `<span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:20px;font-size:12px;font-weight:700">YANGI</span>` : ''}
                 </div>
-                <div style="font-size:12px;color:#64748b">${esc(item.viloyat||'—')} · ${esc(item.rol||'—')} · ${fmtDate(item.created_at)}</div>
+                <div style="font-size:12px;color:var(--text-gray)">${esc(item.viloyat||'—')} · ${esc(item.rol||'—')} · ${fmtDate(item.created_at)}</div>
               </div>
             </div>
-            <div style="padding:16px 20px;background:#f8fafc">
-              <p style="font-size:14px;color:#334155;line-height:1.6;white-space:pre-wrap">${esc(item.xabar||'')}</p>
+            <div style="padding:16px 20px;background:var(--bg-main)">
+              <p style="font-size:14px;color:var(--text-body);line-height:1.6;white-space:pre-wrap">${esc(item.xabar||'')}</p>
             </div>
             ${item.javob ? `
               <div style="padding:14px 20px;background:#f0fdf4;border-top:1px solid #bbf7d0;display:flex;gap:10px">
@@ -1550,11 +1550,11 @@ const AdminPage = {
                   <p style="font-size:13px;color:#166534;line-height:1.5;white-space:pre-wrap">${esc(item.javob)}</p>
                 </div>
               </div>` : ''}
-            <div style="padding:12px 20px;border-top:1px solid #f1f5f9;display:flex;gap:8px;align-items:flex-end">
+            <div style="padding:12px 20px;border-top:1px solid var(--border-light);display:flex;gap:8px;align-items:flex-end">
           <textarea id="javob-${item.id}" rows="2" placeholder="${t('feedback.replyPlaceholder')}"
-                style="flex:1;border:1px solid #e2e8f0;border-radius:10px;padding:8px 12px;font-size:13px;resize:none;outline:none;font-family:inherit;color:#1e293b;background:#fff">${item.javob ? esc(item.javob) : ''}</textarea>
+                style="flex:1;border:1px solid var(--border);border-radius:10px;padding:8px 12px;font-size:13px;resize:none;outline:none;font-family:inherit;color:var(--slate-800);background:#fff">${item.javob ? esc(item.javob) : ''}</textarea>
               <button onclick="AdminPage._sendJavob('${item.id}')"
-                style="padding:8px 16px;background:#2563eb;color:white;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:6px">
+                style="padding:8px 16px;background:var(--primary);color:white;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:6px">
                 ${icon('send',14)} ${t(item.javob ? 'admin.updateReply' : 'admin.writeReply')}
               </button>
             </div>

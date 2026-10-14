@@ -267,49 +267,49 @@ const HarakatPage = {
     const rs = HarakatPage._routeStats();
     const maxRoute = rs.routes.length ? rs.routes[0][1] : 1;
     const routesHtml = rs.routes.length === 0
-      ? `<div style="color:#94a3b8;font-size:13px;padding:16px;text-align:center">Marshrut ma'lumoti yo'q</div>`
+      ? `<div style="color:var(--text-light);font-size:13px;padding:16px;text-align:center">Marshrut ma'lumoti yo'q</div>`
       : rs.routes.slice(0, 12).map(([route, cnt]) => {
           const pct = Math.round(cnt / maxRoute * 100);
           const [from, to] = route.split(' → ');
           return `<div style="margin-bottom:10px">
             <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:3px">
-              <span style="font-size:12px;color:#334155;font-weight:600;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
-                ${esc(from)} <span style="color:#94a3b8">→</span> <span style="font-weight:700">${esc(to)}</span>
+              <span style="font-size:12px;color:var(--text-body);font-weight:600;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+                ${esc(from)} <span style="color:var(--text-light)">→</span> <span style="font-weight:700">${esc(to)}</span>
               </span>
-              <span style="font-size:12px;font-weight:800;color:#2563eb;flex-shrink:0">${cnt}</span>
+              <span style="font-size:12px;font-weight:800;color:var(--primary);flex-shrink:0">${cnt}</span>
             </div>
-            <div style="height:6px;background:#f1f5f9;border-radius:3px;overflow:hidden">
-              <div style="height:100%;width:${pct}%;background:linear-gradient(90deg,#3b82f6,#2563eb);border-radius:3px"></div>
+            <div style="height:6px;background:var(--border-light);border-radius:3px;overflow:hidden">
+              <div style="height:100%;width:${pct}%;background:linear-gradient(90deg,#3b82f6,var(--primary));border-radius:3px"></div>
             </div>
           </div>`;
         }).join('');
 
     const chipList = (arr, color) => arr.length === 0
-      ? `<span style="color:#94a3b8;font-size:12px">—</span>`
+      ? `<span style="color:var(--text-light);font-size:12px">—</span>`
       : arr.map(([nom, cnt]) => `
-          <div style="display:flex;justify-content:space-between;gap:8px;padding:6px 10px;background:#f8fafc;border:1px solid #f1f5f9;border-radius:8px;margin-bottom:5px">
-            <span style="font-size:12px;color:#334155;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(nom)}</span>
+          <div style="display:flex;justify-content:space-between;gap:8px;padding:6px 10px;background:var(--bg-main);border:1px solid var(--border-light);border-radius:8px;margin-bottom:5px">
+            <span style="font-size:12px;color:var(--text-body);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(nom)}</span>
             <span style="font-size:12px;font-weight:800;color:${color};flex-shrink:0">${cnt}</span>
           </div>`).join('');
 
     const statsBlockHtml = `
-      <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:#1e40af">
+      <div style="background:var(--primary-50);border:1px solid #bfdbfe;border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:#1e40af">
         ℹ️ Faqat <b>marshrutизация</b> (pastдан yuqорига: TTB → Politravma → Angiografiya) ko'rsatilган. Yuqоридан pastга o'tkazish (stabillashuvдан keyin) hisobga olinmaydi${rs.downCount ? ` — <b>${rs.downCount}</b> ta shunday o'tkazish chiqarib tashlanди` : ''}.
       </div>
       <div style="display:grid;grid-template-columns:1.4fr 1fr;gap:14px;margin-bottom:20px" class="route-stats-grid">
-        <div style="background:white;border:1px solid #e2e8f0;border-radius:14px;padding:18px">
-          <div style="font-size:13px;font-weight:800;color:#0f172a;margin-bottom:14px;display:flex;align-items:center;gap:8px">
+        <div style="background:white;border:1px solid var(--border);border-radius:14px;padding:18px">
+          <div style="font-size:13px;font-weight:800;color:var(--text-dark);margin-bottom:14px;display:flex;align-items:center;gap:8px">
             ${icon('git-branch',16)} Eng ko'p marshrutlar (yuqорига)
           </div>
           ${routesHtml}
         </div>
         <div style="display:flex;flex-direction:column;gap:14px">
-          <div style="background:white;border:1px solid #e2e8f0;border-radius:14px;padding:16px">
-            <div style="font-size:12px;font-weight:800;color:#64748b;margin-bottom:10px;text-transform:uppercase;letter-spacing:.03em">📤 Ko'p yuborgan</div>
+          <div style="background:white;border:1px solid var(--border);border-radius:14px;padding:16px">
+            <div style="font-size:12px;font-weight:800;color:var(--text-gray);margin-bottom:10px;text-transform:uppercase;letter-spacing:.03em">📤 Ko'p yuborgan</div>
             ${chipList(rs.topFrom, '#ea580c')}
           </div>
-          <div style="background:white;border:1px solid #e2e8f0;border-radius:14px;padding:16px">
-            <div style="font-size:12px;font-weight:800;color:#64748b;margin-bottom:10px;text-transform:uppercase;letter-spacing:.03em">📥 Ko'p qabul qilgan</div>
+          <div style="background:white;border:1px solid var(--border);border-radius:14px;padding:16px">
+            <div style="font-size:12px;font-weight:800;color:var(--text-gray);margin-bottom:10px;text-transform:uppercase;letter-spacing:.03em">📥 Ko'p qabul qilgan</div>
             ${chipList(rs.topTo, '#16a34a')}
           </div>
         </div>
@@ -323,27 +323,27 @@ const HarakatPage = {
     const pctColor = audit.pct === null ? '#94a3b8' : audit.pct >= 80 ? '#16a34a' : audit.pct >= 50 ? '#d97706' : '#dc2626';
     const auditSummaryHtml = `
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px">
-        <div style="background:white;border:1px solid #e2e8f0;border-radius:14px;padding:16px;text-align:center">
-          <div style="font-size:28px;font-weight:800;color:#0f172a">${audit.needed}</div>
-          <div style="font-size:12px;color:#64748b;font-weight:600;text-transform:uppercase">Marshrутизацияга muhtoj</div>
+        <div style="background:white;border:1px solid var(--border);border-radius:14px;padding:16px;text-align:center">
+          <div style="font-size:28px;font-weight:800;color:var(--text-dark)">${audit.needed}</div>
+          <div style="font-size:12px;color:var(--text-gray);font-weight:600;text-transform:uppercase">Marshrутизацияга muhtoj</div>
         </div>
-        <div style="background:white;border:1px solid #e2e8f0;border-radius:14px;padding:16px;text-align:center">
-          <div style="font-size:28px;font-weight:800;color:#16a34a">${audit.correct}</div>
-          <div style="font-size:12px;color:#64748b;font-weight:600;text-transform:uppercase">To'g'ri marshrut</div>
+        <div style="background:white;border:1px solid var(--border);border-radius:14px;padding:16px;text-align:center">
+          <div style="font-size:28px;font-weight:800;color:var(--color-success)">${audit.correct}</div>
+          <div style="font-size:12px;color:var(--text-gray);font-weight:600;text-transform:uppercase">To'g'ri marshrut</div>
         </div>
-        <div style="background:white;border:1px solid #e2e8f0;border-radius:14px;padding:16px;text-align:center;border-color:${pctColor}33">
+        <div style="background:white;border:1px solid var(--border);border-radius:14px;padding:16px;text-align:center;border-color:${pctColor}33">
           <div style="font-size:28px;font-weight:800;color:${pctColor}">${audit.pct === null ? '—' : audit.pct + '%'}</div>
-          <div style="font-size:12px;color:#64748b;font-weight:600;text-transform:uppercase">To'g'rilik darajasi</div>
+          <div style="font-size:12px;color:var(--text-gray);font-weight:600;text-transform:uppercase">To'g'rilik darajasi</div>
         </div>
       </div>`;
     const auditHtml = auditSummaryHtml + (auditIssues.length === 0
       ? `<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:14px;padding:16px 18px;margin-bottom:20px;display:flex;align-items:center;gap:12px">
-           <div style="width:32px;height:32px;border-radius:8px;background:#16a34a;color:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0">${icon('check',18)}</div>
-           <div><div style="font-size:13px;font-weight:700;color:#16a34a">${t('movement.routingAllCorrect')}</div>
-           <div style="font-size:12px;color:#64748b">${t('movement.routingReachedCentre')}</div></div>
+           <div style="width:32px;height:32px;border-radius:8px;background:var(--color-success);color:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0">${icon('check',18)}</div>
+           <div><div style="font-size:13px;font-weight:700;color:var(--color-success)">${t('movement.routingAllCorrect')}</div>
+           <div style="font-size:12px;color:var(--text-gray)">${t('movement.routingReachedCentre')}</div></div>
          </div>`
       : `<div style="background:#fffbeb;border:1px solid #fde68a;border-radius:14px;padding:16px 18px;margin-bottom:20px">
-           <div style="font-size:13px;font-weight:800;color:#d97706;margin-bottom:12px;display:flex;align-items:center;gap:8px">
+           <div style="font-size:13px;font-weight:800;color:var(--color-warning);margin-bottom:12px;display:flex;align-items:center;gap:8px">
              ${icon('alert-triangle',16)} ${t('movement.routingIssueCount', { count: auditIssues.length })}
            </div>
            ${auditIssues.slice(0, 20).map(iss => `
@@ -351,17 +351,17 @@ const HarakatPage = {
                style="background:white;border:1px solid #fde68a;border-radius:10px;padding:11px 14px;margin-bottom:8px;cursor:pointer">
                <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap">
                  <div style="min-width:0;flex:1">
-                   <div style="font-size:13px;font-weight:700;color:#334155">${esc(iss.patient?.fio || '—')} <span style="font-size:12px;color:#94a3b8;font-family:monospace">${esc(iss.kt_no)}</span></div>
-                   <div style="font-size:12px;color:#64748b;margin-top:2px">${esc(iss.chainStr.split(' → ').map(name => I18n.facilityName(name)).join(' → '))}</div>
+                   <div style="font-size:13px;font-weight:700;color:var(--text-body)">${esc(iss.patient?.fio || '—')} <span style="font-size:12px;color:var(--text-light);font-family:monospace">${esc(iss.kt_no)}</span></div>
+                   <div style="font-size:12px;color:var(--text-gray);margin-top:2px">${esc(iss.chainStr.split(' → ').map(name => I18n.facilityName(name)).join(' → '))}</div>
                  </div>
-                 <div style="font-size:12px;font-weight:700;color:#d97706;background:#fffbeb;border:1px solid #fde68a;border-radius:6px;padding:3px 8px;align-self:flex-start;max-width:280px">⚠️ ${esc(I18n.translateText(iss.issue))}</div>
+                 <div style="font-size:12px;font-weight:700;color:var(--color-warning);background:#fffbeb;border:1px solid #fde68a;border-radius:6px;padding:3px 8px;align-self:flex-start;max-width:280px">⚠️ ${esc(I18n.translateText(iss.issue))}</div>
                </div>
              </div>`).join('')}
-           ${auditIssues.length > 20 ? `<div style="font-size:12px;color:#94a3b8;text-align:center;padding-top:6px">${t('movement.routingMoreCount', { count: auditIssues.length - 20 })}</div>` : ''}
+           ${auditIssues.length > 20 ? `<div style="font-size:12px;color:var(--text-light);text-align:center;padding-top:6px">${t('movement.routingMoreCount', { count: auditIssues.length - 20 })}</div>` : ''}
          </div>`);
 
     const rows = list.length === 0
-      ? `<div style="text-align:center;padding:60px;color:#94a3b8">
+      ? `<div style="text-align:center;padding:60px;color:var(--text-light)">
            <div style="font-size:48px;margin-bottom:12px">🔍</div>
            <p style="font-size:15px;font-weight:600">Ko'p muassasaga o'tgan bemor topilmadi</p>
          </div>`
@@ -369,13 +369,13 @@ const HarakatPage = {
           const p = d.patient;
           const isInf = d.bemor_turi === 'infarkt';
           const chainHtml = d.fullChain.map((m, i) => `
-            <span style="font-size:12px;color:#334155;font-weight:${i===d.fullChain.length-1?'700':'500'}">${esc(I18n.facilityName(m||'—'))}</span>
-            ${i < d.fullChain.length-1 ? '<span style="color:#94a3b8;margin:0 4px">→</span>' : ''}
+            <span style="font-size:12px;color:var(--text-body);font-weight:${i===d.fullChain.length-1?'700':'500'}">${esc(I18n.facilityName(m||'—'))}</span>
+            ${i < d.fullChain.length-1 ? '<span style="color:var(--text-light);margin:0 4px">→</span>' : ''}
           `).join('');
 
           return `
             <div onclick="Router.go('bemor-karta',{kt_no:'${esc(String(d.kt_no||'')).replace(/'/g,'&#39;')}',type:'${esc(String(d.bemor_turi||''))}'})"
-              style="background:white;border:1px solid #e2e8f0;border-radius:14px;padding:16px 18px;cursor:pointer;transition:box-shadow 0.15s;margin-bottom:10px"
+              style="background:white;border:1px solid var(--border);border-radius:14px;padding:16px 18px;cursor:pointer;transition:box-shadow 0.15s;margin-bottom:10px"
               onmouseover="this.style.boxShadow='0 4px 16px rgba(0,0,0,0.08)'"
               onmouseout="this.style.boxShadow='none'">
               <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
@@ -386,25 +386,25 @@ const HarakatPage = {
                       color:${isInf?'#dc2626':'#2563eb'}">
                       ${isInf?'❤️ Infarkt':'🧠 Insult'}
                     </span>
-                    <span style="font-size:12px;font-weight:700;color:#64748b">${d.kt_no}</span>
-                    <span style="font-size:12px;background:#f1f5f9;color:#475569;padding:2px 8px;border-radius:20px;font-weight:700">
+                    <span style="font-size:12px;font-weight:700;color:var(--text-gray)">${d.kt_no}</span>
+                    <span style="font-size:12px;background:var(--border-light);color:var(--slate-600);padding:2px 8px;border-radius:20px;font-weight:700">
                       ${d.stopsCount + 1} muassasa
                     </span>
                   </div>
-                  <div style="font-size:14px;font-weight:700;color:#1e293b;margin-bottom:8px">${esc(p?.fio||'—')}</div>
+                  <div style="font-size:14px;font-weight:700;color:var(--slate-800);margin-bottom:8px">${esc(p?.fio||'—')}</div>
                   <div style="display:flex;flex-wrap:wrap;align-items:center;gap:2px">
                     ${chainHtml}
                   </div>
                 </div>
                 <div style="text-align:right;flex-shrink:0">
-                  <div style="font-size:12px;color:#94a3b8;margin-bottom:4px">So'nggi harakat</div>
-                  <div style="font-size:13px;font-weight:700;color:#334155">${fmtDate(d.lastSana)}</div>
-                  <div style="margin-top:8px;font-size:12px;color:#2563eb;font-weight:700">Kartani ochish →</div>
+                  <div style="font-size:12px;color:var(--text-light);margin-bottom:4px">So'nggi harakat</div>
+                  <div style="font-size:13px;font-weight:700;color:var(--text-body)">${fmtDate(d.lastSana)}</div>
+                  <div style="margin-top:8px;font-size:12px;color:var(--primary);font-weight:700">Kartani ochish →</div>
                 </div>
               </div>
             </div>`;
         }).join('') + (list.length > HarakatPage._limit ? `
-          <button onclick="HarakatPage._showMore()" style="display:block;width:100%;padding:12px;background:#f1f5f9;border:none;border-radius:12px;cursor:pointer;font-size:13px;font-weight:700;color:#2563eb">
+          <button onclick="HarakatPage._showMore()" style="display:block;width:100%;padding:12px;background:var(--border-light);border:none;border-radius:12px;cursor:pointer;font-size:13px;font-weight:700;color:var(--primary)">
             ${t('movement.showMore', { count: Math.min(HarakatPage._pageSize, list.length - HarakatPage._limit), shown: HarakatPage._limit, total: list.length })}
           </button>` : '');
 
@@ -429,15 +429,15 @@ const HarakatPage = {
         </div>
 
         <!-- Davr + viloyat filtri -->
-        <div style="background:white;border:1px solid #e2e8f0;border-radius:12px;padding:12px 14px;margin-bottom:14px;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
-          <span style="font-size:12px;font-weight:700;color:#64748b;text-transform:uppercase">Davr:</span>
+        <div style="background:white;border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:14px;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+          <span style="font-size:12px;font-weight:700;color:var(--text-gray);text-transform:uppercase">Davr:</span>
           <input type="date" value="${HarakatPage._from}" onchange="HarakatPage._setPeriod('from',this.value)"
-            style="border:1px solid #e2e8f0;border-radius:8px;padding:6px 10px;font-size:12px;outline:none">
-          <span style="color:#94a3b8">—</span>
+            style="border:1px solid var(--border);border-radius:8px;padding:6px 10px;font-size:12px;outline:none">
+          <span style="color:var(--text-light)">—</span>
           <input type="date" value="${HarakatPage._to}" onchange="HarakatPage._setPeriod('to',this.value)"
-            style="border:1px solid #e2e8f0;border-radius:8px;padding:6px 10px;font-size:12px;outline:none">
-          <span style="font-size:12px;font-weight:700;color:#64748b;text-transform:uppercase;margin-left:8px">Viloyat:</span>
-          <select onchange="HarakatPage._setViloyat(this.value)" style="border:1px solid #e2e8f0;border-radius:8px;padding:6px 10px;font-size:12px;outline:none;min-width:160px">
+            style="border:1px solid var(--border);border-radius:8px;padding:6px 10px;font-size:12px;outline:none">
+          <span style="font-size:12px;font-weight:700;color:var(--text-gray);text-transform:uppercase;margin-left:8px">Viloyat:</span>
+          <select onchange="HarakatPage._setViloyat(this.value)" style="border:1px solid var(--border);border-radius:8px;padding:6px 10px;font-size:12px;outline:none;min-width:160px">
               <option value="">${t('filter.allRegions')}</option>
             ${(APP_CONFIG.VILOYATLAR||[]).map(v => `<option value="${esc(v)}" ${HarakatPage._viloyat===v?'selected':''}>${esc(v)}</option>`).join('')}
           </select>
@@ -457,8 +457,8 @@ const HarakatPage = {
           <input type="text" id="harakat-search" placeholder="${t('search.recordOrName')}"
             value="${esc(HarakatPage._search)}"
             oninput="HarakatPage._setSearch(this.value)"
-            style="flex:1;min-width:200px;border:1px solid #e2e8f0;border-radius:10px;padding:8px 14px;font-size:13px;outline:none">
-          <button onclick="HarakatPage._load()" style="padding:8px 14px;background:#f1f5f9;border:none;border-radius:10px;cursor:pointer;font-size:12px;font-weight:700;color:#64748b;display:flex;align-items:center;gap:6px">
+            style="flex:1;min-width:200px;border:1px solid var(--border);border-radius:10px;padding:8px 14px;font-size:13px;outline:none">
+          <button onclick="HarakatPage._load()" style="padding:8px 14px;background:var(--border-light);border:none;border-radius:10px;cursor:pointer;font-size:12px;font-weight:700;color:var(--text-gray);display:flex;align-items:center;gap:6px">
             ${icon('refresh-cw',13)} Yangilash
           </button>
         </div>
@@ -470,7 +470,7 @@ const HarakatPage = {
         ${statsBlockHtml}
 
         <!-- Bemorlar ro'yxati sarlavhasi -->
-        <div style="font-size:13px;font-weight:800;color:#0f172a;margin-bottom:12px;display:flex;align-items:center;gap:8px">
+        <div style="font-size:13px;font-weight:800;color:var(--text-dark);margin-bottom:12px;display:flex;align-items:center;gap:8px">
           ${icon('users',16)} O'tkazilgan bemorlar (${list.length})
         </div>
         <!-- Ro'yxat -->

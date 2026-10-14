@@ -46,6 +46,13 @@ html[data-locale="ru"] #sidebar, html[data-locale="en"] #sidebar { width:17.5rem
   --color-insult-bg: #F5F3FF;
   --color-danger: #B91C1C;
   --color-danger-bg: #FEF2F2;
+  --color-success: #16A34A;
+  --color-success-dark: #15803D;
+  --color-warning: #D97706;
+  --color-warning-dark: #B45309;
+  --slate-300: #CBD5E1;
+  --slate-600: #475569;
+  --slate-800: #1E293B;
   --color-green: #10B981;
   --color-green-bg: #ECFDF5;
   --color-amber: #F59E0B;

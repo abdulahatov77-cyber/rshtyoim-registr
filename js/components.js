@@ -197,7 +197,7 @@ function reperfuziyaSababSora(nomi, oyna) {
     el.innerHTML = `
       <div style="background:#fff;border-radius:18px;max-width:480px;width:100%;box-shadow:0 24px 60px rgba(0,0,0,.28);overflow:hidden">
         <div style="padding:16px 20px;background:#fef2f2;border-bottom:1px solid #fecaca">
-          <div style="font-weight:800;color:#b91c1c;font-size:15px">❗ ${esc(nomi)} bajarilmagan</div>
+          <div style="font-weight:800;color:var(--color-danger);font-size:15px">❗ ${esc(nomi)} bajarilmagan</div>
           <div style="font-size:12px;color:#7f1d1d;margin-top:3px">
             Bemor simptom boshlanganidan <b>${esc(oyna)}</b> keyin kelgan — muolaja oynasi ichida.
             Nima uchun bajarilmadi?
@@ -208,12 +208,12 @@ function reperfuziyaSababSora(nomi, oyna) {
             <option value="">— ${t('form.selectReason')} —</option>
             ${DB.REPERFUZIYA_SABABLARI.map(s => `<option value="${esc(s)}">${esc(s)}</option>`).join('')}
           </select>
-          <p style="font-size:12px;color:#94a3b8;margin-top:8px">
+          <p style="font-size:12px;color:var(--text-light);margin-top:8px">
             Bu ma'lumot respublika bo'yicha jamlanadi va reperfuziya qamrovini
             oshirish choralarini belgilashda ishlatiladi.
           </p>
         </div>
-        <div style="display:flex;justify-content:flex-end;gap:10px;padding:14px 20px;background:#f8fafc;border-top:1px solid #f1f5f9">
+        <div style="display:flex;justify-content:flex-end;gap:10px;padding:14px 20px;background:var(--bg-main);border-top:1px solid var(--border-light)">
           <button class="btn btn-secondary" id="rs-bekor">${t('common.cancel')}</button>
           <button class="btn btn-primary" id="rs-ok">${t('form.continueSaving')}</button>
         </div>
@@ -397,7 +397,7 @@ const Components = {
             <span class="w-6 h-6 bg-amber-100 group-hover:bg-amber-200 rounded-lg flex items-center justify-center flex-shrink-0">${icon('message-circle', 14)}</span>
             <span>${t('nav.feedback')}</span>
             <span id="sidebar-unread-badge" style="display:none;background:#ef4444;color:white;font-size:12px;font-weight:800;border-radius:999px;padding:1px 6px;margin-left:auto;line-height:16px"></span>
-            <span id="sidebar-reply-badge" style="display:none;background:#16a34a;color:white;font-size:12px;font-weight:800;border-radius:999px;padding:1px 7px;margin-left:auto;line-height:16px">Javob ✓</span>
+            <span id="sidebar-reply-badge" style="display:none;background:var(--color-success);color:white;font-size:12px;font-weight:800;border-radius:999px;padding:1px 7px;margin-left:auto;line-height:16px">Javob ✓</span>
             ${icon('chevron-right', 14, 'ml-auto opacity-50')}
           </button>
           <div class="bg-slate-50 rounded-xl p-3 flex items-center gap-3 border border-slate-100">
@@ -504,18 +504,18 @@ const Components = {
             const fmtDate = dt => dt ? I18n.formatDateTime(dt, { timeZone:'Asia/Tashkent' }) : '';
             const esc = s => (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
             historyHtml = `
-              <div style="border-top:1px solid #e2e8f0;padding-top:16px;margin-top:4px">
+              <div style="border-top:1px solid var(--border);padding-top:16px;margin-top:4px">
                 <p class="text-xs font-bold text-slate-500 uppercase tracking-wide mb-3">Mening xabarlarim</p>
                 <div style="display:flex;flex-direction:column;gap:10px">
                   ${data.map(r => `
                     <div style="border:1px solid ${r.javob ? '#bbf7d0' : '#e2e8f0'};border-radius:12px;padding:12px;background:${r.javob ? '#f0fdf4' : '#f8fafc'}">
                       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-                        <span style="font-size:12px;font-weight:700;color:#64748b">${r.tur} · ${fmtDate(r.created_at)}</span>
-                        ${r.javob ? '<span style="font-size:12px;font-weight:800;background:#16a34a;color:white;border-radius:999px;padding:2px 8px">Javob keldi ✓</span>' : '<span style="font-size:12px;font-weight:700;color:#94a3b8">Kutilmoqda...</span>'}
+                        <span style="font-size:12px;font-weight:700;color:var(--text-gray)">${r.tur} · ${fmtDate(r.created_at)}</span>
+                        ${r.javob ? '<span style="font-size:12px;font-weight:800;background:var(--color-success);color:white;border-radius:999px;padding:2px 8px">Javob keldi ✓</span>' : '<span style="font-size:12px;font-weight:700;color:var(--text-light)">Kutilmoqda...</span>'}
                       </div>
-                      <p style="font-size:13px;color:#334155;margin:0 0 8px">${esc(r.xabar)}</p>
+                      <p style="font-size:13px;color:var(--text-body);margin:0 0 8px">${esc(r.xabar)}</p>
                       ${r.javob ? `<div style="background:#dcfce7;border-radius:8px;padding:8px 10px;margin-top:4px">
-                        <p style="font-size:12px;font-weight:700;color:#15803d;margin:0 0 4px">Admin javobi · ${fmtDate(r.javob_vaqt)}</p>
+                        <p style="font-size:12px;font-weight:700;color:var(--color-success-dark);margin:0 0 4px">Admin javobi · ${fmtDate(r.javob_vaqt)}</p>
                         <p style="font-size:13px;color:#166534;margin:0">${esc(r.javob)}</p>
                       </div>` : ''}
                     </div>

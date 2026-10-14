@@ -94,13 +94,13 @@ const HisobotPage = {
           margin-bottom: 20px;
         }
         .h-stat {
-          background: #f8fafc;
+          background: var(--bg-main);
           border-radius: 16px;
           padding: 20px;
           display: flex;
           align-items: center;
           gap: 16px;
-          border: 1px solid #e2e8f0;
+          border: 1px solid var(--border);
           transition: transform 0.2s;
         }
         .h-stat:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
@@ -113,10 +113,10 @@ const HisobotPage = {
         .h-row {
           display: flex; justify-content: space-between; align-items: center;
           padding: 12px 16px;
-          border-bottom: 1px dashed #cbd5e1;
+          border-bottom: 1px dashed var(--slate-300);
           transition: background 0.1s;
         }
-        .h-row:hover { background: #f1f5f9; border-radius: 8px; }
+        .h-row:hover { background: var(--border-light); border-radius: 8px; }
         .h-row:last-child { border-bottom: none; }
         .h-label { color: #1e3a8a; font-weight: 600; font-size: 14px; }
         .h-val { font-weight: 800; font-size: 15px; }
@@ -169,7 +169,7 @@ const HisobotPage = {
               ${Object.keys(APP_CONFIG.MUASSASALAR).map(v => `<option value="${v}">${v}</option>`).join('')}
             </select>` : `
             <input id="h-viloyat" type="hidden" value="${myViloyat}"/>
-            <div class="form-input bg-slate-100 text-blue-900 border-blue-200 font-semibold cursor-not-allowed opacity-80">${myViloyat || '—'} <span style="font-size:12px;color:#64748b">(qullangan)</span></div>`}
+            <div class="form-input bg-slate-100 text-blue-900 border-blue-200 font-semibold cursor-not-allowed opacity-80">${myViloyat || '—'} <span style="font-size:12px;color:var(--text-gray)">(qullangan)</span></div>`}
           </div>
           <div>
             <label class="form-label !text-blue-900 font-semibold mb-1 block">${icon('building-2', 14)} Muassasa (ixtiyoriy)</label>
@@ -663,7 +663,7 @@ const HisobotPage = {
                       ${royxat.map(b => `
                         <button onclick="Router.go('bemor-karta',{kt_no:'${esc(b.kt_no)}',type:'${b._type}',id:'${esc(b.id || '')}'})"
                     title="${esc(b.kt_no)} · ${b._type}" data-i18n-skip data-i18n-audit="i18n-audit-allow: escaped record number and technical registry type"
-                          style="border:1px solid #e2e8f0;background:#fff;border-radius:8px;padding:3px 8px;
+                          style="border:1px solid var(--border);background:#fff;border-radius:8px;padding:3px 8px;
                                  font-size:12px;cursor:pointer;white-space:nowrap">
                           ${esc(b.fio || '—')}
                           <span style="color:${rang(b.kunlar)};font-weight:700">${b.kunlar}k</span>
@@ -873,12 +873,12 @@ const HisobotPage = {
                 <th class="p-2.5 text-center text-white font-bold">STEMI</th>
                 <th class="p-2.5 text-center text-white font-bold">NSTEMI</th>
                 <th class="p-2.5 text-center text-white font-bold">AMI</th>
-                <th class="p-2.5 text-center text-white font-bold" style="background:#1d4ed8">Jami infarkt</th>
+                <th class="p-2.5 text-center text-white font-bold" style="background:var(--primary-dark)">Jami infarkt</th>
                 <th class="p-2.5 text-center text-white font-bold" style="background:#991b1b" title="${t('reports.infarctMortalityTitle')}">O'lim (infarkt)</th>
                 <th class="p-2.5 text-center text-white font-bold">Ishemik</th>
                 <th class="p-2.5 text-center text-white font-bold">Gemorragik</th>
                 <th class="p-2.5 text-center text-white font-bold">TIA</th>
-                <th class="p-2.5 text-center text-white font-bold" style="background:#1d4ed8">Jami insult</th>
+                <th class="p-2.5 text-center text-white font-bold" style="background:var(--primary-dark)">Jami insult</th>
                 <th class="p-2.5 text-center text-white font-bold rounded-tr-lg" style="background:#991b1b" title="${t('reports.strokeMortalityTitle')}">O'lim (insult)</th>
               </tr>
             </thead>
@@ -897,7 +897,7 @@ const HisobotPage = {
                   <td class="p-2.5 text-center font-bold text-blue-700 border-b border-slate-200">${r.jamiInsult}</td>
                   ${letallikKatak(r.vafotIns, r.jamiInsult)}
                 </tr>`).join('')}
-              <tr style="background:#dbeafe">
+              <tr style="background:var(--primary-100)">
                 <td class="p-2.5 font-bold text-blue-900">JAMI</td>
                 <td class="p-2.5 text-center font-bold text-blue-900">${totals.stemi}</td>
                 <td class="p-2.5 text-center font-bold text-blue-900">${totals.nstemi}</td>
@@ -934,7 +934,7 @@ const HisobotPage = {
                   <div class="overflow-x-auto">
                     <table class="w-full text-sm border-collapse">
                       <thead>
-                        <tr style="background:#f1f5f9">
+                        <tr style="background:var(--border-light)">
                           <th class="p-2 text-left font-bold text-slate-600">F.I.O</th>
                           <th class="p-2 text-left font-bold text-slate-600">Bosqichlar</th>
                           <th class="p-2 text-center font-bold text-slate-600">Soni</th>
@@ -1984,7 +1984,7 @@ const HisobotPage = {
         </div>
         <!-- Timing Analytics -->
         <div class="h-card !p-0 overflow-hidden lg:col-span-2">
-          <div class="p-5" style="background:linear-gradient(135deg,#1e3a8a,#1d4ed8)">
+          <div class="p-5" style="background:linear-gradient(135deg,#1e3a8a,var(--primary-dark))">
             <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap">
               <div>
                 <h3 style="color:#ffffff;font-weight:800;font-size:18px;margin:0;display:flex;align-items:center;gap:8px">${icon('clock', 20)} Vaqt mezonlari — Median ko'rsatkichlar</h3>
@@ -2005,27 +2005,27 @@ const HisobotPage = {
                 ${icon('activity',14)} NSTEMI — invaziv strategiya oynasi (GRACE: yuqori xavf &lt;24 soat, o'rta &lt;72 soat)
               </div>
               <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
-                <div style="text-align:center"><div style="font-size:26px;font-weight:800;color:#0f172a">${nstemiWindowNeeded}</div><div style="font-size:12px;color:#78716c;font-weight:600">PCI qilingan NSTEMI</div></div>
-                <div style="text-align:center"><div style="font-size:26px;font-weight:800;color:#16a34a">${nstemiWindowOk}</div><div style="font-size:12px;color:#78716c;font-weight:600">Muddatда bajarildi</div></div>
+                <div style="text-align:center"><div style="font-size:26px;font-weight:800;color:var(--text-dark)">${nstemiWindowNeeded}</div><div style="font-size:12px;color:#78716c;font-weight:600">PCI qilingan NSTEMI</div></div>
+                <div style="text-align:center"><div style="font-size:26px;font-weight:800;color:var(--color-success)">${nstemiWindowOk}</div><div style="font-size:12px;color:#78716c;font-weight:600">Muddatда bajarildi</div></div>
                 <div style="text-align:center"><div style="font-size:26px;font-weight:800;color:${nstemiWindowPct>=80?'#16a34a':nstemiWindowPct>=50?'#d97706':'#dc2626'}">${nstemiWindowPct}%</div><div style="font-size:12px;color:#78716c;font-weight:600">Oynaga ulgurish</div></div>
               </div>
             </div>` : ''}
             <!-- Vaqt kiritilganlik darajasi -->
-            <div class="mb-5" style="background:#f8fafc;border-radius:14px;border:1px solid #e2e8f0;padding:14px">
-              <div style="font-size:12px;font-weight:900;color:#0f172a;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:10px">
+            <div class="mb-5" style="background:var(--bg-main);border-radius:14px;border:1px solid var(--border);padding:14px">
+              <div style="font-size:12px;font-weight:900;color:var(--text-dark);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:10px">
                 📋 Vaqt mezonlari to'ldirilganlik darajasi
               </div>
               ${(() => {
                 const pctBar = (filled, total) => {
-                  if (total === 0) return '<span style="color:#94a3b8;font-size:12px">—</span>';
+                  if (total === 0) return '<span style="color:var(--text-light);font-size:12px">—</span>';
                   const p = Math.round((filled/total)*100);
                   const clr = p>=80?'#16a34a':p>=50?'#d97706':'#dc2626';
                   return `<div style="display:flex;align-items:center;gap:6px">
-                    <div style="flex:1;background:#e2e8f0;border-radius:99px;height:7px;overflow:hidden">
+                    <div style="flex:1;background:var(--border);border-radius:99px;height:7px;overflow:hidden">
                       <div style="height:100%;width:${p}%;background:${clr};border-radius:99px"></div>
                     </div>
                     <span style="font-size:12px;font-weight:700;color:${clr};min-width:32px">${filled}/${total}</span>
-                    <span style="font-size:12px;color:#64748b">(${p}%)</span>
+                    <span style="font-size:12px;color:var(--text-gray)">(${p}%)</span>
                   </div>`;
                 };
                 const rows = [
@@ -2037,16 +2037,16 @@ const HisobotPage = {
                   ['◎ Insult — Trombektomiya vaqti',nTromb_filled,   nTromb_total],
                 ];
                 return `<table style="width:100%;border-collapse:collapse;font-size:12px">
-                  <thead><tr style="background:#e2e8f0">
-                    <th style="padding:6px 10px;text-align:left;font-weight:700;color:#475569;border-radius:6px 0 0 0">Mezon</th>
-                    <th style="padding:6px 10px;text-align:center;font-weight:700;color:#475569">To'ldirilgan</th>
-                    <th style="padding:6px 10px;text-align:left;font-weight:700;color:#475569;border-radius:0 6px 0 0">Daraja</th>
+                  <thead><tr style="background:var(--border)">
+                    <th style="padding:6px 10px;text-align:left;font-weight:700;color:var(--slate-600);border-radius:6px 0 0 0">Mezon</th>
+                    <th style="padding:6px 10px;text-align:center;font-weight:700;color:var(--slate-600)">To'ldirilgan</th>
+                    <th style="padding:6px 10px;text-align:left;font-weight:700;color:var(--slate-600);border-radius:0 6px 0 0">Daraja</th>
                   </tr></thead>
                   <tbody>
                     ${rows.map(([label, filled, total], i) => `
-                      <tr style="background:${i%2===0?'#fff':'#f8fafc'};border-bottom:1px solid #f1f5f9">
-                        <td style="padding:7px 10px;font-weight:600;color:#334155">${label}</td>
-                        <td style="padding:7px 10px;text-align:center;color:#64748b">${filled} / ${total}</td>
+                      <tr style="background:${i%2===0?'#fff':'#f8fafc'};border-bottom:1px solid var(--border-light)">
+                        <td style="padding:7px 10px;font-weight:600;color:var(--text-body)">${label}</td>
+                        <td style="padding:7px 10px;text-align:center;color:var(--text-gray)">${filled} / ${total}</td>
                         <td style="padding:7px 10px">${pctBar(filled, total)}</td>
                       </tr>`).join('')}
                   </tbody>
@@ -2055,7 +2055,7 @@ const HisobotPage = {
             </div>
             <!-- Infarkt mezonlari -->
             <div class="mb-4">
-              <div style="font-size:12px;font-weight:900;color:#b91c1c;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:10px;display:flex;align-items:center;gap:4px">
+              <div style="font-size:12px;font-weight:900;color:var(--color-danger);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:10px;display:flex;align-items:center;gap:4px">
                 ♥ Infarkt vaqt mezonlari
               </div>
               <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -2066,13 +2066,13 @@ const HisobotPage = {
                 ].map(([label, stats, target, nTotal]) => {
                   if (!stats) {
                     const badge = nTotal === 0
-                      ? `<span style="display:inline-block;padding:2px 8px;border-radius:20px;font-size:12px;font-weight:700;background:#f1f5f9;color:#94a3b8">N/A</span>`
+                      ? `<span style="display:inline-block;padding:2px 8px;border-radius:20px;font-size:12px;font-weight:700;background:var(--border-light);color:var(--text-light)">N/A</span>`
                       : `<span style="display:inline-block;padding:2px 8px;border-radius:20px;font-size:12px;font-weight:700;background:#fef3c7;color:#92400e">MA'LUMOT YETARLI EMAS</span>`;
-                    return `<div style="padding:12px;background:#f8fafc;border-radius:14px;border:1px solid #e2e8f0;text-align:center">
-                      <div style="font-size:12px;font-weight:700;color:#64748b;text-transform:uppercase;margin-bottom:6px">${label}</div>
-                      <div style="font-size:22px;font-weight:900;color:#cbd5e1;margin:4px 0">—</div>
+                    return `<div style="padding:12px;background:var(--bg-main);border-radius:14px;border:1px solid var(--border);text-align:center">
+                      <div style="font-size:12px;font-weight:700;color:var(--text-gray);text-transform:uppercase;margin-bottom:6px">${label}</div>
+                      <div style="font-size:22px;font-weight:900;color:var(--slate-300);margin:4px 0">—</div>
                       <div style="margin:6px 0">${badge}</div>
-                      <div style="font-size:12px;color:#94a3b8">${nTotal > 0 ? t('report.treatmentTimeMissing', {count: nTotal}) : t('report.treatmentNotPerformed')}</div>
+                      <div style="font-size:12px;color:var(--text-light)">${nTotal > 0 ? t('report.treatmentTimeMissing', {count: nTotal}) : t('report.treatmentNotPerformed')}</div>
                     </div>`;
                   }
                   const pct = Math.min(100, Math.round((stats.median / target) * 100));
@@ -2081,19 +2081,19 @@ const HisobotPage = {
                   const bgClr = ok ? '#f0fdf4' : (stats.median <= target * 1.5 ? '#fffbeb' : '#fef2f2');
                   const borderClr = ok ? '#bbf7d0' : (stats.median <= target * 1.5 ? '#fde68a' : '#fecaca');
                   const badge = ok
-                    ? `<span style="display:inline-block;padding:2px 8px;border-radius:20px;font-size:12px;font-weight:700;background:#dcfce7;color:#15803d">✓ MAQSADDA</span>`
-                    : `<span style="display:inline-block;padding:2px 8px;border-radius:20px;font-size:12px;font-weight:700;background:#fee2e2;color:#b91c1c">✗ KRITIK</span>`;
+                    ? `<span style="display:inline-block;padding:2px 8px;border-radius:20px;font-size:12px;font-weight:700;background:#dcfce7;color:var(--color-success-dark)">✓ MAQSADDA</span>`
+                    : `<span style="display:inline-block;padding:2px 8px;border-radius:20px;font-size:12px;font-weight:700;background:#fee2e2;color:var(--color-danger)">✗ KRITIK</span>`;
                   const barFill = ok ? '#22c55e' : (stats.median <= target * 1.5 ? '#f59e0b' : '#ef4444');
                   return `<div style="padding:12px;background:${bgClr};border-radius:14px;border:1px solid ${borderClr};text-align:center">
-                    <div style="font-size:12px;font-weight:700;color:#64748b;text-transform:uppercase;margin-bottom:4px">${label}</div>
-                    <div style="font-size:24px;font-weight:900;color:${clr};line-height:1.1">${stats.median}<span style="font-size:12px;font-weight:500;color:#94a3b8"> min</span></div>
-                    <div style="font-size:12px;color:#94a3b8;margin:2px 0">IQR: ${stats.q1}–${stats.q3} min · n=${stats.n}</div>
-                    <div style="margin:6px 0;background:#e2e8f0;border-radius:99px;height:6px;overflow:hidden">
+                    <div style="font-size:12px;font-weight:700;color:var(--text-gray);text-transform:uppercase;margin-bottom:4px">${label}</div>
+                    <div style="font-size:24px;font-weight:900;color:${clr};line-height:1.1">${stats.median}<span style="font-size:12px;font-weight:500;color:var(--text-light)"> min</span></div>
+                    <div style="font-size:12px;color:var(--text-light);margin:2px 0">IQR: ${stats.q1}–${stats.q3} min · n=${stats.n}</div>
+                    <div style="margin:6px 0;background:var(--border);border-radius:99px;height:6px;overflow:hidden">
                       <div style="height:100%;width:${pct}%;background:${barFill};border-radius:99px;transition:width 0.5s"></div>
                     </div>
                     <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px">
                       ${badge}
-                      <span style="font-size:12px;color:#94a3b8">Maqsad ≤${target} min</span>
+                      <span style="font-size:12px;color:var(--text-light)">Maqsad ≤${target} min</span>
                     </div>
                   </div>`;
                 }).join('')}
@@ -2101,7 +2101,7 @@ const HisobotPage = {
             </div>
             <!-- Insult mezonlari -->
             <div>
-              <div style="font-size:12px;font-weight:900;color:#1d4ed8;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:10px;display:flex;align-items:center;gap:4px">
+              <div style="font-size:12px;font-weight:900;color:var(--primary-dark);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:10px;display:flex;align-items:center;gap:4px">
                 ◎ Insult vaqt mezonlari
               </div>
               <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -2112,13 +2112,13 @@ const HisobotPage = {
                 ].map(([label, stats, target, nTotal]) => {
                   if (!stats) {
                     const badge = nTotal === 0
-                      ? `<span style="display:inline-block;padding:2px 8px;border-radius:20px;font-size:12px;font-weight:700;background:#f1f5f9;color:#94a3b8">N/A</span>`
+                      ? `<span style="display:inline-block;padding:2px 8px;border-radius:20px;font-size:12px;font-weight:700;background:var(--border-light);color:var(--text-light)">N/A</span>`
                       : `<span style="display:inline-block;padding:2px 8px;border-radius:20px;font-size:12px;font-weight:700;background:#fef3c7;color:#92400e">MA'LUMOT YETARLI EMAS</span>`;
-                    return `<div style="padding:12px;background:#f8fafc;border-radius:14px;border:1px solid #e2e8f0;text-align:center">
-                      <div style="font-size:12px;font-weight:700;color:#64748b;text-transform:uppercase;margin-bottom:6px">${label}</div>
-                      <div style="font-size:22px;font-weight:900;color:#cbd5e1;margin:4px 0">—</div>
+                    return `<div style="padding:12px;background:var(--bg-main);border-radius:14px;border:1px solid var(--border);text-align:center">
+                      <div style="font-size:12px;font-weight:700;color:var(--text-gray);text-transform:uppercase;margin-bottom:6px">${label}</div>
+                      <div style="font-size:22px;font-weight:900;color:var(--slate-300);margin:4px 0">—</div>
                       <div style="margin:6px 0">${badge}</div>
-                      <div style="font-size:12px;color:#94a3b8">${nTotal > 0 ? t('report.treatmentTimeMissing', {count: nTotal}) : t('report.treatmentNotPerformed')}</div>
+                      <div style="font-size:12px;color:var(--text-light)">${nTotal > 0 ? t('report.treatmentTimeMissing', {count: nTotal}) : t('report.treatmentNotPerformed')}</div>
                     </div>`;
                   }
                   const pct = Math.min(100, Math.round((stats.median / target) * 100));
@@ -2127,19 +2127,19 @@ const HisobotPage = {
                   const bgClr = ok ? '#f0fdf4' : (stats.median <= target * 1.5 ? '#fffbeb' : '#fef2f2');
                   const borderClr = ok ? '#bbf7d0' : (stats.median <= target * 1.5 ? '#fde68a' : '#fecaca');
                   const badge = ok
-                    ? `<span style="display:inline-block;padding:2px 8px;border-radius:20px;font-size:12px;font-weight:700;background:#dcfce7;color:#15803d">✓ MAQSADDA</span>`
-                    : `<span style="display:inline-block;padding:2px 8px;border-radius:20px;font-size:12px;font-weight:700;background:#fee2e2;color:#b91c1c">✗ KRITIK</span>`;
+                    ? `<span style="display:inline-block;padding:2px 8px;border-radius:20px;font-size:12px;font-weight:700;background:#dcfce7;color:var(--color-success-dark)">✓ MAQSADDA</span>`
+                    : `<span style="display:inline-block;padding:2px 8px;border-radius:20px;font-size:12px;font-weight:700;background:#fee2e2;color:var(--color-danger)">✗ KRITIK</span>`;
                   const barFill = ok ? '#22c55e' : (stats.median <= target * 1.5 ? '#f59e0b' : '#ef4444');
                   return `<div style="padding:12px;background:${bgClr};border-radius:14px;border:1px solid ${borderClr};text-align:center">
-                    <div style="font-size:12px;font-weight:700;color:#64748b;text-transform:uppercase;margin-bottom:4px">${label}</div>
-                    <div style="font-size:24px;font-weight:900;color:${clr};line-height:1.1">${stats.median}<span style="font-size:12px;font-weight:500;color:#94a3b8"> min</span></div>
-                    <div style="font-size:12px;color:#94a3b8;margin:2px 0">IQR: ${stats.q1}–${stats.q3} min · n=${stats.n}</div>
-                    <div style="margin:6px 0;background:#e2e8f0;border-radius:99px;height:6px;overflow:hidden">
+                    <div style="font-size:12px;font-weight:700;color:var(--text-gray);text-transform:uppercase;margin-bottom:4px">${label}</div>
+                    <div style="font-size:24px;font-weight:900;color:${clr};line-height:1.1">${stats.median}<span style="font-size:12px;font-weight:500;color:var(--text-light)"> min</span></div>
+                    <div style="font-size:12px;color:var(--text-light);margin:2px 0">IQR: ${stats.q1}–${stats.q3} min · n=${stats.n}</div>
+                    <div style="margin:6px 0;background:var(--border);border-radius:99px;height:6px;overflow:hidden">
                       <div style="height:100%;width:${pct}%;background:${barFill};border-radius:99px;transition:width 0.5s"></div>
                     </div>
                     <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px">
                       ${badge}
-                      <span style="font-size:12px;color:#94a3b8">Maqsad ≤${target} min</span>
+                      <span style="font-size:12px;color:var(--text-light)">Maqsad ≤${target} min</span>
                     </div>
                   </div>`;
                 }).join('')}
@@ -2351,12 +2351,12 @@ const HisobotPage = {
       const age = Utils.calculateAge(p.tugilgan_sana || p.tugilgan_yil) || '—';
       const statusColors = { active: '#16a34a', vafot: '#dc2626', chiqarildi: '#2563eb', otkazildi: '#d97706' };
       const sc = statusColors[p.status] || '#64748b';
-      return `<tr style="border-bottom:1px solid #f1f5f9;cursor:pointer" onclick="document.getElementById('h-modal')?.remove();Router.go('bemor-karta',{kt_no:'${esc(p.kt_no)}',type:'${esc(type)}',id:'${esc(p.id || '')}'})"  >
-        <td style="padding:10px 14px;font-family:monospace;font-size:12px;color:#64748b">${esc(p.kt_no)}</td>
-        <td style="padding:10px 14px;font-weight:700;color:#0f172a">${esc(p.fio) || '—'}</td>
-        <td style="padding:10px 14px;color:#475569">${esc(t('dashboard.ageYears', { age }))} · ${esc(I18n.translateText(p.jins || '—'))}</td>
-        <td style="padding:10px 14px;color:#475569;font-size:12px">${esc(I18n.translateText(p.viloyat || '—'))}</td>
-        <td style="padding:10px 14px;font-size:12px;color:#475569">${Utils.formatDate(p.qabul_vaqt)}</td>
+      return `<tr style="border-bottom:1px solid var(--border-light);cursor:pointer" onclick="document.getElementById('h-modal')?.remove();Router.go('bemor-karta',{kt_no:'${esc(p.kt_no)}',type:'${esc(type)}',id:'${esc(p.id || '')}'})"  >
+        <td style="padding:10px 14px;font-family:monospace;font-size:12px;color:var(--text-gray)">${esc(p.kt_no)}</td>
+        <td style="padding:10px 14px;font-weight:700;color:var(--text-dark)">${esc(p.fio) || '—'}</td>
+        <td style="padding:10px 14px;color:var(--slate-600)">${esc(t('dashboard.ageYears', { age }))} · ${esc(I18n.translateText(p.jins || '—'))}</td>
+        <td style="padding:10px 14px;color:var(--slate-600);font-size:12px">${esc(I18n.translateText(p.viloyat || '—'))}</td>
+        <td style="padding:10px 14px;font-size:12px;color:var(--slate-600)">${Utils.formatDate(p.qabul_vaqt)}</td>
         <td style="padding:10px 14px"><span style="background:${sc}20;color:${sc};font-size:12px;font-weight:800;padding:3px 10px;border-radius:8px;text-transform:uppercase">${esc(({ active: t('status.active'), chiqarildi: t('status.discharged'), vafot: t('status.dead'), otkazildi: t('status.transferred') })[p.status] || p.status || '—')}</span></td>
       </tr>`;
     }).join('');
@@ -2375,22 +2375,22 @@ const HisobotPage = {
         </div>
         <div style="overflow-x:auto;max-height:60vh;overflow-y:auto">
           <table style="width:100%;border-collapse:collapse">
-            <thead style="position:sticky;top:0;background:#f8fafc">
-              <tr style="border-bottom:2px solid #e2e8f0">
-                <th style="padding:12px 14px;text-align:left;font-size:12px;color:#64748b;text-transform:uppercase;font-weight:800">K/T No</th>
-                <th style="padding:12px 14px;text-align:left;font-size:12px;color:#64748b;text-transform:uppercase;font-weight:800">F.I.O</th>
-                <th style="padding:12px 14px;text-align:left;font-size:12px;color:#64748b;text-transform:uppercase;font-weight:800">Yosh / Jins</th>
-                <th style="padding:12px 14px;text-align:left;font-size:12px;color:#64748b;text-transform:uppercase;font-weight:800">Viloyat</th>
-                <th style="padding:12px 14px;text-align:left;font-size:12px;color:#64748b;text-transform:uppercase;font-weight:800">Qabul</th>
-                <th style="padding:12px 14px;text-align:left;font-size:12px;color:#64748b;text-transform:uppercase;font-weight:800">Holat</th>
+            <thead style="position:sticky;top:0;background:var(--bg-main)">
+              <tr style="border-bottom:2px solid var(--border)">
+                <th style="padding:12px 14px;text-align:left;font-size:12px;color:var(--text-gray);text-transform:uppercase;font-weight:800">K/T No</th>
+                <th style="padding:12px 14px;text-align:left;font-size:12px;color:var(--text-gray);text-transform:uppercase;font-weight:800">F.I.O</th>
+                <th style="padding:12px 14px;text-align:left;font-size:12px;color:var(--text-gray);text-transform:uppercase;font-weight:800">Yosh / Jins</th>
+                <th style="padding:12px 14px;text-align:left;font-size:12px;color:var(--text-gray);text-transform:uppercase;font-weight:800">Viloyat</th>
+                <th style="padding:12px 14px;text-align:left;font-size:12px;color:var(--text-gray);text-transform:uppercase;font-weight:800">Qabul</th>
+                <th style="padding:12px 14px;text-align:left;font-size:12px;color:var(--text-gray);text-transform:uppercase;font-weight:800">Holat</th>
               </tr>
             </thead>
-            <tbody>${rows || '<tr><td colspan="6" style="padding:40px;text-align:center;color:#94a3b8">Bemor topilmadi</td></tr>'}</tbody>
+            <tbody>${rows || '<tr><td colspan="6" style="padding:40px;text-align:center;color:var(--text-light)">Bemor topilmadi</td></tr>'}</tbody>
           </table>
         </div>
-        <div style="padding:16px 24px;background:#f8fafc;border-top:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center">
-          <span style="font-size:13px;color:#64748b">Qatorga bosing — bemor kartasini ochish</span>
-          <button onclick="HisobotPage._lastListType=null;document.getElementById('h-modal').remove()" style="padding:8px 20px;background:#e2e8f0;border:none;border-radius:10px;font-weight:700;cursor:pointer;font-size:13px">Yopish</button>
+        <div style="padding:16px 24px;background:var(--bg-main);border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+          <span style="font-size:13px;color:var(--text-gray)">Qatorga bosing — bemor kartasini ochish</span>
+          <button onclick="HisobotPage._lastListType=null;document.getElementById('h-modal').remove()" style="padding:8px 20px;background:var(--border);border:none;border-radius:10px;font-weight:700;cursor:pointer;font-size:13px">Yopish</button>
         </div>
       </div>`;
     modal.addEventListener('click', e => { if (e.target === modal) { HisobotPage._lastListType = null; modal.remove(); } });

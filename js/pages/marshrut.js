@@ -164,7 +164,7 @@ const MarshrutPage = {
         <div>
           <div class="stat-value" style="color:${color}">${value}</div>
           <div class="stat-label">${esc(label)}</div>
-          <div style="font-size:12px;color:#94a3b8;margin-top:2px">${esc(hint)}</div>
+          <div style="font-size:12px;color:var(--text-light);margin-top:2px">${esc(hint)}</div>
         </div>
       </div>`;
   },
@@ -235,7 +235,7 @@ const MarshrutPage = {
                     : `<span class="text-xs text-gray-300">—</span>`}</td>
               <td>
                 <div class="flex items-center gap-2">
-                  <div style="flex:1;height:8px;background:#f1f5f9;border-radius:99px;overflow:hidden">
+                  <div style="flex:1;height:8px;background:var(--border-light);border-radius:99px;overflow:hidden">
                     <div style="height:100%;width:${Math.round(n / max * 100)}%;background:#3b82f6"></div>
                   </div>
                   <span class="text-sm font-bold text-gray-900" style="min-width:38px;text-align:right">${n}</span>
@@ -250,7 +250,7 @@ const MarshrutPage = {
 
   darajaBadge(d) {
     const map = { markaz: '4·markaz', filial: '3·filial', politravma: '2·politravma', ttb: '1·TTB/ShTB' };
-    return d ? `<span style="color:#64748b">${map[d] || d}</span>` : `<span style="color:#cbd5e1">daraja yo'q</span>`;
+    return d ? `<span style="color:var(--text-gray)">${map[d] || d}</span>` : `<span style="color:var(--slate-300)">daraja yo'q</span>`;
   },
 
   imkBadge(mskt, angio) {

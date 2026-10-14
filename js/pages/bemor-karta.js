@@ -375,7 +375,7 @@ const BemorKartaPage = {
         const onTime = pciDt <= deadline;
         const diffH = ((pciDt - new Date(p.qabul_vaqt)) / 3600000).toFixed(1);
         statusHtml = onTime
-          ? `<span style="color:#16a34a;font-weight:700">✓ ${t('card.pciOnTime', { hours: diffH })}</span>`
+          ? `<span style="color:var(--color-success);font-weight:700">✓ ${t('card.pciOnTime', { hours: diffH })}</span>`
           : `<span style="color:#dc2626;font-weight:700">✗ ${t('card.pciLate', { hours: diffH })}</span>`;
       } else {
         const now = new Date();
@@ -383,7 +383,7 @@ const BemorKartaPage = {
         const leftH = ((deadline - now) / 3600000).toFixed(1);
         statusHtml = overdue
           ? `<span style="color:#dc2626;font-weight:700">⚠️ ${t('card.pciOverdue')}</span>`
-          : `<span style="color:#d97706;font-weight:700">⏳ ${t('card.pciRemaining', { hours: leftH })}</span>`;
+          : `<span style="color:var(--color-warning);font-weight:700">⏳ ${t('card.pciRemaining', { hours: leftH })}</span>`;
       }
       const riskLabel = grace > 140 ? t('card.highRisk') : t('card.mediumRisk');
       return `
@@ -2386,25 +2386,25 @@ const BemorKartaPage = {
               background:${isFirst ? '#dbeafe' : '#f0fdf4'};border:2px solid ${isFirst ? '#3b82f6' : '#16a34a'}">
               ${isFirst ? '🏥' : '🚑'}
             </div>
-            ${!isLast ? `<div style="width:2px;flex:1;min-height:24px;background:#e2e8f0;margin:4px 0"></div>` : ''}
+            ${!isLast ? `<div style="width:2px;flex:1;min-height:24px;background:var(--border);margin:4px 0"></div>` : ''}
           </div>
           <!-- Karta -->
-          <div style="flex:1;background:white;border:1px solid #e2e8f0;border-radius:14px;padding:14px 16px;margin-bottom:${isLast?'0':'8px'}">
+          <div style="flex:1;background:white;border:1px solid var(--border);border-radius:14px;padding:14px 16px;margin-bottom:${isLast?'0':'8px'}">
             <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
               <div>
-                <div style="font-size:12px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px">
+                <div style="font-size:12px;font-weight:700;color:var(--text-gray);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px">
                   ${isFirst ? 'Dastlabki qabul' : `${idx}-o'tkazish`}
                   ${log.sabab && !isFirst ? `· <span style="color:#059669">${esc(log.sabab)}</span>` : ''}
                 </div>
-                <div style="font-size:15px;font-weight:700;color:#1e293b">${esc(I18n.facilityName(log.muassasa_ga))}</div>
-                ${log.viloyat_ga ? `<div style="font-size:12px;color:#64748b;margin-top:2px">${esc(log.viloyat_ga)}</div>` : ''}
+                <div style="font-size:15px;font-weight:700;color:var(--slate-800)">${esc(I18n.facilityName(log.muassasa_ga))}</div>
+                ${log.viloyat_ga ? `<div style="font-size:12px;color:var(--text-gray);margin-top:2px">${esc(log.viloyat_ga)}</div>` : ''}
               </div>
               <div style="text-align:right;flex-shrink:0">
-                <div style="font-size:12px;font-weight:600;color:#334155">${fmtDate(log.sana)}</div>
+                <div style="font-size:12px;font-weight:600;color:var(--text-body)">${fmtDate(log.sana)}</div>
                 ${!isFirst && canEdit ? `<button onclick="BemorKartaPage._deleteTransfer('${log.id}')" style="margin-top:6px;font-size:12px;color:#ef4444;background:none;border:none;cursor:pointer;padding:0">O'chirish</button>` : ''}
               </div>
             </div>
-            ${log.izoh ? `<div style="margin-top:8px;font-size:12px;color:#475569;background:#f8fafc;border-radius:8px;padding:6px 10px">${esc(log.izoh)}</div>` : ''}
+            ${log.izoh ? `<div style="margin-top:8px;font-size:12px;color:var(--slate-600);background:var(--bg-main);border-radius:8px;padding:6px 10px">${esc(log.izoh)}</div>` : ''}
           </div>
         </div>`;
     }).join('');
@@ -2417,10 +2417,10 @@ const BemorKartaPage = {
       <div class="space-y-2">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
           <div>
-            <h3 style="font-size:16px;font-weight:800;color:#1e293b;margin:0">Bemor harakati tarixi</h3>
-            <p style="font-size:12px;color:#64748b;margin:4px 0 0">${allLogs.length} ta nuqta</p>
+            <h3 style="font-size:16px;font-weight:800;color:var(--slate-800);margin:0">Bemor harakati tarixi</h3>
+            <p style="font-size:12px;color:var(--text-gray);margin:4px 0 0">${allLogs.length} ta nuqta</p>
           </div>
-          ${canEdit ? `<button onclick="BemorKartaPage._showAddTransferForm()" style="background:#2563eb;color:white;border:none;border-radius:10px;padding:8px 16px;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px">
+          ${canEdit ? `<button onclick="BemorKartaPage._showAddTransferForm()" style="background:var(--primary);color:white;border:none;border-radius:10px;padding:8px 16px;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px">
             + O'tkazish qo'shish
           </button>` : ''}
         </div>
@@ -2430,24 +2430,24 @@ const BemorKartaPage = {
           <p style="font-size:13px;font-weight:700;color:#0369a1;margin:0 0 12px">Yangi o'tkazish yozuvi</p>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
             <div>
-              <label style="font-size:12px;font-weight:700;color:#64748b;display:block;margin-bottom:4px">VILOYAT</label>
+              <label style="font-size:12px;font-weight:700;color:var(--text-gray);display:block;margin-bottom:4px">VILOYAT</label>
               <select id="tr-viloyat" onchange="BemorKartaPage._onTrViloyat(this.value)" class="form-select" style="font-size:13px;padding:7px 10px">
                 <option value="">${t('select.placeholder')}</option>
                 ${viloyatOpts}
               </select>
             </div>
             <div>
-              <label style="font-size:12px;font-weight:700;color:#64748b;display:block;margin-bottom:4px">MUASSASA</label>
+              <label style="font-size:12px;font-weight:700;color:var(--text-gray);display:block;margin-bottom:4px">MUASSASA</label>
               <select id="tr-muassasa" class="form-select" style="font-size:13px;padding:7px 10px">
                 <option value="">${t('select.regionFirst')}</option>
               </select>
             </div>
             <div>
-              <label style="font-size:12px;font-weight:700;color:#64748b;display:block;margin-bottom:4px">SANA</label>
+              <label style="font-size:12px;font-weight:700;color:var(--text-gray);display:block;margin-bottom:4px">SANA</label>
               <input id="tr-sana" type="date" class="form-input" style="font-size:13px;padding:7px 10px" value="${new Date(Date.now()+5*3600000).toISOString().slice(0,10)}">
             </div>
             <div>
-              <label style="font-size:12px;font-weight:700;color:#64748b;display:block;margin-bottom:4px">SABAB</label>
+              <label style="font-size:12px;font-weight:700;color:var(--text-gray);display:block;margin-bottom:4px">SABAB</label>
               <select id="tr-sabab" class="form-select" style="font-size:13px;padding:7px 10px">
                 <option value="Angiografiya uchun">${t('transfer.angiography')}</option>
                 <option value="Endovaskulyar muolaja">${t('transfer.endovascular')}</option>
@@ -2458,13 +2458,13 @@ const BemorKartaPage = {
               </select>
             </div>
             <div style="grid-column:1/-1">
-              <label style="font-size:12px;font-weight:700;color:#64748b;display:block;margin-bottom:4px">IZOH (ixtiyoriy)</label>
+              <label style="font-size:12px;font-weight:700;color:var(--text-gray);display:block;margin-bottom:4px">IZOH (ixtiyoriy)</label>
               <input id="tr-izoh" type="text" class="form-input" placeholder="${t('transfer.notesPlaceholder')}" style="font-size:13px;padding:7px 10px">
             </div>
           </div>
           <div style="display:flex;gap:8px;margin-top:12px">
-            <button onclick="BemorKartaPage._saveTransfer()" style="background:#2563eb;color:white;border:none;border-radius:8px;padding:8px 20px;font-size:13px;font-weight:700;cursor:pointer">Saqlash</button>
-            <button onclick="document.getElementById('transfer-form').style.display='none'" style="background:#f1f5f9;color:#64748b;border:none;border-radius:8px;padding:8px 16px;font-size:13px;cursor:pointer">Bekor</button>
+            <button onclick="BemorKartaPage._saveTransfer()" style="background:var(--primary);color:white;border:none;border-radius:8px;padding:8px 20px;font-size:13px;font-weight:700;cursor:pointer">Saqlash</button>
+            <button onclick="document.getElementById('transfer-form').style.display='none'" style="background:var(--border-light);color:var(--text-gray);border:none;border-radius:8px;padding:8px 16px;font-size:13px;cursor:pointer">Bekor</button>
           </div>
         </div>
 

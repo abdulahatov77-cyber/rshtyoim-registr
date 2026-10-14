@@ -599,7 +599,7 @@ const Calculators = {
           <div style="color:${t.rang};font-weight:800;font-size:12px;text-transform:uppercase;letter-spacing:.03em">
             ${label} ${ball} — ${level}
           </div>
-          <div style="color:#334155;font-size:13px;margin-top:2px;line-height:1.45">${I18n.translateText(t.matn)}</div>
+          <div style="color:var(--text-body);font-size:13px;margin-top:2px;line-height:1.45">${I18n.translateText(t.matn)}</div>
         </div>
       </div>
     </div>`;

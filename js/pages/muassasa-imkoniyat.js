@@ -203,7 +203,7 @@ const MuassasaImkoniyatPage = {
             <td class="text-xs text-gray-400">${i + 1}</td>
             <td class="text-sm text-gray-600">${esc(I18n.translateText(r.viloyat || '—'))}</td>
             <td class="text-sm font-semibold text-gray-800">${esc(I18n.facilityName(r.nomi))}
-              ${y ? `<span class="badge" style="background:#f1f5f9;color:#64748b;margin-left:6px;font-size:12px">${t('facility.hidden')}</span>` : ''}
+              ${y ? `<span class="badge" style="background:var(--border-light);color:var(--text-gray);margin-left:6px;font-size:12px">${t('facility.hidden')}</span>` : ''}
             </td>
             <td>
               <select data-id="${r.id}" data-field="daraja"
@@ -258,8 +258,8 @@ const MuassasaImkoniyatPage = {
     el.style.cssText = 'position:fixed;inset:0;z-index:9500;background:rgba(15,23,42,.55);display:flex;align-items:center;justify-content:center;padding:16px';
     el.innerHTML = `
       <div style="background:#fff;border-radius:18px;max-width:520px;width:100%;box-shadow:0 24px 60px rgba(0,0,0,.28);overflow:hidden">
-        <div style="padding:16px 20px;background:#eff6ff;border-bottom:1px solid #bfdbfe">
-          <div style="font-weight:800;color:#1d4ed8;font-size:15px">${t('facility.addHeading')}</div>
+        <div style="padding:16px 20px;background:var(--primary-50);border-bottom:1px solid #bfdbfe">
+          <div style="font-weight:800;color:var(--primary-dark);font-size:15px">${t('facility.addHeading')}</div>
           <div style="font-size:12px;color:#1e3a8a;margin-top:3px">
             ${t('capabilities.addHelp')}
           </div>
@@ -276,7 +276,7 @@ const MuassasaImkoniyatPage = {
             <label class="form-label">${t('facility.nameLabel')} <span style="color:#dc2626">*</span></label>
             <input id="mi-a-nomi" class="form-input" style="width:100%" autocomplete="off"
                    placeholder="${t('institution.exampleName')}"/>
-            <div id="mi-a-ogoh" style="font-size:12px;color:#b45309;margin-top:4px;display:none"></div>
+            <div id="mi-a-ogoh" style="font-size:12px;color:var(--color-warning-dark);margin-top:4px;display:none"></div>
           </div>
           <div>
             <label class="form-label">${t('capabilities.levelHeading')}</label>
@@ -296,7 +296,7 @@ const MuassasaImkoniyatPage = {
             </label>
           </div>
         </div>
-        <div style="display:flex;justify-content:flex-end;gap:10px;padding:14px 20px;background:#f8fafc;border-top:1px solid #f1f5f9">
+        <div style="display:flex;justify-content:flex-end;gap:10px;padding:14px 20px;background:var(--bg-main);border-top:1px solid var(--border-light)">
           <button class="btn btn-secondary" id="mi-a-bekor">${t('common.cancel')}</button>
           <button class="btn btn-primary" id="mi-a-ok">${t('common.add')}</button>
         </div>
@@ -387,10 +387,10 @@ const MuassasaImkoniyatPage = {
     const rq = this.rows.filter(r => r.registrga_kiritadi === false).length;
     el.innerHTML =
       t('capabilities.summaryBase', { total: this.rows.length, msct: m, angio: a, shown: n }) +
-      (rq ? ` · <span style="color:#b45309">${t('capabilities.summaryNoRegistry', { count: rq })}</span>` : '') +
-      (y ? ` · <span style="color:#64748b">${t('capabilities.summaryHidden', { count: y })}</span>` : '') +
+      (rq ? ` · <span style="color:var(--color-warning-dark)">${t('capabilities.summaryNoRegistry', { count: rq })}</span>` : '') +
+      (y ? ` · <span style="color:var(--text-gray)">${t('capabilities.summaryHidden', { count: y })}</span>` : '') +
       (this.dirty.size ? ` · <b>${t('capabilities.summaryUnsaved', { count: this.dirty.size })}</b>` : '') +
-      (d ? ` · <span style="color:#b91c1c;font-weight:600">${t('capabilities.summaryNoLevel', { count: d })}</span>` : '');
+      (d ? ` · <span style="color:var(--color-danger);font-weight:600">${t('capabilities.summaryNoLevel', { count: d })}</span>` : '');
   },
 
   async save() {

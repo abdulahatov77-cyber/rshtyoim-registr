@@ -187,7 +187,7 @@ const QabulPage = {
         ? t('pending.totalRecords', {count: `<b>${jami}</b>`})
         : t('pending.filteredRecords', {shown: `<b>${rows.length}</b>`, total: jami});
       info.innerHTML = boshi + (kuzatuv.length
-        ? t('pending.splitRecords', {main: `<b>${asosiy.length}</b>`, watch: `<span style="color:#b45309">${kuzatuv.length}</span>`})
+        ? t('pending.splitRecords', {main: `<b>${asosiy.length}</b>`, watch: `<span style="color:var(--color-warning-dark)">${kuzatuv.length}</span>`})
         : '');
     }
 
@@ -314,7 +314,7 @@ const QabulPage = {
               ${kechikkan ? `
               <button onclick="QabulPage.kelmadiModal(${i})"
               title="${t('pending.closeTitle')}"
-                      style="border:1px solid #e2e8f0;background:#f8fafc;color:#64748b;
+                      style="border:1px solid var(--border);background:var(--bg-main);color:var(--text-gray);
                              border-radius:8px;padding:5px 9px;font-size:12px;font-weight:700;
                              cursor:pointer;display:flex;align-items:center;gap:5px;white-space:nowrap">
                 ${icon('user-x', 13)} ${t('pending.didNotArrive')}
@@ -365,7 +365,7 @@ const QabulPage = {
     if (!m) return;
     const qator = (nom, chap, ong) => `
       <tr>
-        <td style="padding:6px 8px;color:#64748b;font-size:12px;white-space:nowrap">${nom}</td>
+        <td style="padding:6px 8px;color:var(--text-gray);font-size:12px;white-space:nowrap">${nom}</td>
         <td style="padding:6px 8px;font-size:13px;font-weight:600">${chap}</td>
         <td style="padding:6px 8px;font-size:13px;font-weight:600">${ong}</td>
       </tr>`;
@@ -374,10 +374,10 @@ const QabulPage = {
       body: `
         <table style="width:100%;border-collapse:collapse">
           <thead>
-            <tr style="background:#f1f5f9">
+            <tr style="background:var(--border-light)">
               <th></th>
-              <th style="padding:6px 8px;font-size:12px;color:#475569;text-align:left">${t('pending.sent')}</th>
-              <th style="padding:6px 8px;font-size:12px;color:#475569;text-align:left">${t('pending.atYourFacility')}</th>
+              <th style="padding:6px 8px;font-size:12px;color:var(--slate-600);text-align:left">${t('pending.sent')}</th>
+              <th style="padding:6px 8px;font-size:12px;color:var(--slate-600);text-align:left">${t('pending.atYourFacility')}</th>
             </tr>
           </thead>
           <tbody>

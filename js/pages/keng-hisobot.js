@@ -363,17 +363,17 @@ const KengHisobotPage = {
     const foiz = (n, jami) => jami > 0 ? (n / jami * 100).toFixed(1).replace('.', ',') : '0,0';
 
     const katak = (r, oraliqlar) => {
-      if (!r || !N(r.jami)) return `<td style="text-align:center;color:#cbd5e1;padding:8px">—</td>`;
+      if (!r || !N(r.jami)) return `<td style="text-align:center;color:var(--slate-300);padding:8px">—</td>`;
       const b = KengHisobotPage._oynaBolak(r);
       return `<td style="padding:8px 10px;vertical-align:top;white-space:nowrap">
-        <div style="font-size:15px;font-weight:800;color:#1e293b;margin-bottom:3px">${b.jami}</div>
+        <div style="font-size:15px;font-weight:800;color:var(--slate-800);margin-bottom:3px">${b.jami}</div>
         ${oraliqlar.map(([k, nom], idx) => {
           const n = b[k];
           const p = b.aniq > 0 ? n / b.aniq * 100 : 0;
           const c = k === 'i24p'  ? (p >= 20 ? '#b91c1c' : '#a16207')      // kech kelish — yomon
                   : idx === 0     ? (p >= 40 ? '#15803d' : p < 20 ? '#b91c1c' : '#0891b2')
                   : '#475569';                                            // oraliq — neytral
-          return `<div style="font-size:12px;color:#64748b">${nom}:
+          return `<div style="font-size:12px;color:var(--text-gray)">${nom}:
             <span style="color:${c};font-weight:700">${n} (${foiz(n, b.aniq)}%)</span></div>`;
         }).join('')}
         ${b.vaqtsiz ? `<div style="font-size:12px;color:#a16207;margin-top:3px">vaqti aniqmas ${b.vaqtsiz}</div>` : ''}
@@ -398,19 +398,19 @@ const KengHisobotPage = {
         <div class="overflow-x-auto" style="max-height:70vh">
           <table class="w-full text-xs border-collapse" style="min-width:640px">
             <thead style="position:sticky;top:0;z-index:1"><tr>
-              <th style="background:#1e293b;color:#e2e8f0;padding:8px;text-align:left;font-size:12px">Viloyat</th>
-              <th style="background:#1e293b;color:#e2e8f0;padding:8px;text-align:left;font-size:12px">Muassasa</th>
+              <th style="background:var(--slate-800);color:var(--border);padding:8px;text-align:left;font-size:12px">Viloyat</th>
+              <th style="background:var(--slate-800);color:var(--border);padding:8px;text-align:left;font-size:12px">Muassasa</th>
               ${ustunlar.map(([, nom]) => `<th style="background:${rang};color:#fff;padding:8px;
                 font-size:12px;border-left:2px solid rgba(255,255,255,.25)">${nom}</th>`).join('')}
             </tr></thead>
             <tbody>
               ${list.map((x, i) => `
                 <tr style="background:${i % 2 ? '#fff' : '#f8fafc'}" class="hover:bg-blue-50">
-                  <td style="padding:8px;color:#475569;vertical-align:top">${esc(x.viloyat ? I18n.translateText(x.viloyat) : '—')}</td>
-                  <td style="padding:8px;font-weight:600;color:#1e293b;vertical-align:top">${esc(I18n.facilityName(x.muassasa || '—'))}</td>
+                  <td style="padding:8px;color:var(--slate-600);vertical-align:top">${esc(x.viloyat ? I18n.translateText(x.viloyat) : '—')}</td>
+                  <td style="padding:8px;font-weight:600;color:var(--slate-800);vertical-align:top">${esc(I18n.facilityName(x.muassasa || '—'))}</td>
                   ${ustunlar.map(([k, , ch]) => katak(x.noz[k], ch)).join('')}
                 </tr>`).join('')}
-              <tr style="background:#dbeafe">
+              <tr style="background:var(--primary-100)">
                 <td style="padding:8px;font-weight:800;color:#1e3a8a;vertical-align:top">JAMI</td>
                 <td style="padding:8px;font-weight:700;color:#1e3a8a;vertical-align:top">${t('report.facilityCount', {count: list.length})}</td>
                 ${ustunlar.map(([k]) => jamiKatak(k)).join('')}
@@ -506,7 +506,7 @@ const KengHisobotPage = {
         </div>
         <div class="overflow-x-auto">
           <table class="w-full text-xs border-collapse">
-            <thead><tr>${cols.map(c => `<th style="background:#1e293b;color:#e2e8f0;padding:7px;
+            <thead><tr>${cols.map(c => `<th style="background:var(--slate-800);color:var(--border);padding:7px;
               font-size:12px;text-align:${c === 'Viloyat' ? 'left' : 'center'}">${esc(c)}</th>`).join('')}</tr></thead>
             <tbody>
               ${rows.map((r, i) => `<tr style="background:${i % 2 ? '#fff' : '#f8fafc'}">
@@ -581,7 +581,7 @@ const KengHisobotPage = {
         return `<td style="text-align:center;color:#0891b2;font-weight:600">${jamiQator ? '' : KengHisobotPage._foiz(r[k])}</td>`;
       }
       const v = KengHisobotPage._n(r[k]);
-      return `<td style="text-align:center;${tur === 'b' ? 'font-weight:700;color:#1d4ed8' : ''}">${v || ''}</td>`;
+      return `<td style="text-align:center;${tur === 'b' ? 'font-weight:700;color:var(--primary-dark)' : ''}">${v || ''}</td>`;
     };
 
     return `
@@ -599,7 +599,7 @@ const KengHisobotPage = {
                          border-right:2px solid rgba(255,255,255,.3)">${esc(g[0])}</th>`).join('')}
               </tr>
               <tr>
-                ${ustunlar.map((u, i) => `<th style="background:#1e293b;color:#e2e8f0;padding:6px 6px;
+                ${ustunlar.map((u, i) => `<th style="background:var(--slate-800);color:var(--border);padding:6px 6px;
                   font-size:12px;font-weight:600;text-align:${u[2] === 't' ? 'left' : 'center'};
                   ${i === 1 ? 'position:sticky;left:0;z-index:1' : ''}">${esc(u[1])}</th>`).join('')}
               </tr>
@@ -609,7 +609,7 @@ const KengHisobotPage = {
                 <tr style="background:${i % 2 ? '#fff' : '#f8fafc'}" class="hover:bg-blue-50">
                   ${ustunlar.map(u => katak(r, u, false)).join('')}
                 </tr>`).join('')}
-              <tr style="background:#dbeafe;font-weight:700">
+              <tr style="background:var(--primary-100);font-weight:700">
                 <td class="text-blue-900">JAMI</td>
                 <td class="text-blue-900">${t('report.facilityCount', {count: rows.length})}</td>
                 <td></td>
@@ -667,7 +667,7 @@ const KengHisobotPage = {
         </div>
         <div class="overflow-x-auto">
           <table class="w-full text-xs border-collapse">
-            <thead><tr>${cols.map(c => `<th style="background:#1e293b;color:#e2e8f0;padding:7px;
+            <thead><tr>${cols.map(c => `<th style="background:var(--slate-800);color:var(--border);padding:7px;
               font-size:12px;text-align:${c === 'Viloyat' ? 'left' : 'center'}">${esc(c)}</th>`).join('')}</tr></thead>
             <tbody>
               ${rows.map((r, i) => `<tr style="background:${i % 2 ? '#fff' : '#f8fafc'}">
@@ -713,15 +713,15 @@ const KengHisobotPage = {
         <div class="overflow-x-auto">
           <table class="w-full text-xs border-collapse">
             <thead><tr>
-              <th style="background:#1e293b;color:#e2e8f0;padding:6px;text-align:left;position:sticky;left:0">Yuborgan \\ Qabul</th>
-              ${qabul.map(q => `<th style="background:#1e293b;color:#e2e8f0;padding:6px;font-size:12px">${esc(qisqa(q))}</th>`).join('')}
-              <th style="background:#1d4ed8;color:#fff;padding:6px">JAMI</th>
+              <th style="background:var(--slate-800);color:var(--border);padding:6px;text-align:left;position:sticky;left:0">Yuborgan \\ Qabul</th>
+              ${qabul.map(q => `<th style="background:var(--slate-800);color:var(--border);padding:6px;font-size:12px">${esc(qisqa(q))}</th>`).join('')}
+              <th style="background:var(--primary-dark);color:#fff;padding:6px">JAMI</th>
             </tr></thead>
             <tbody>
               ${yubor.map(y => {
                 const jami = qabul.reduce((s, q) => s + (map[y + '|' + q] || 0), 0);
                 return `<tr>
-                  <td style="padding:6px;font-weight:600;background:#f8fafc;position:sticky;left:0">${esc(qisqa(y))}</td>
+                  <td style="padding:6px;font-weight:600;background:var(--bg-main);position:sticky;left:0">${esc(qisqa(y))}</td>
                   ${qabul.map(q => {
                     const v = map[y + '|' + q] || 0;
                     const diag = y === q;
@@ -730,7 +730,7 @@ const KengHisobotPage = {
                     return `<td style="padding:6px;text-align:center;background:${bg};
                       ${v && alfa > 0.45 ? 'color:#fff;font-weight:700' : ''}">${v || ''}</td>`;
                   }).join('')}
-                  <td style="padding:6px;text-align:center;font-weight:700;background:#dbeafe;color:#1e3a8a">${jami}</td>
+                  <td style="padding:6px;text-align:center;font-weight:700;background:var(--primary-100);color:#1e3a8a">${jami}</td>
                 </tr>`;
               }).join('')}
             </tbody>
@@ -767,7 +767,7 @@ const KengHisobotPage = {
       }
       if (tur === '%') return `<td style="text-align:center;color:#0891b2;font-weight:600">${jamiQator ? '' : KengHisobotPage._foiz(r[k])}</td>`;
       const v = KengHisobotPage._n(r[k]);
-      return `<td style="text-align:center;${tur === 'b' ? 'font-weight:700;color:#1d4ed8' : ''}">${v || ''}</td>`;
+      return `<td style="text-align:center;${tur === 'b' ? 'font-weight:700;color:var(--primary-dark)' : ''}">${v || ''}</td>`;
     };
     return `
       <div class="card !p-0 overflow-hidden mb-4">
@@ -778,13 +778,13 @@ const KengHisobotPage = {
         <div class="overflow-x-auto" style="max-height:60vh">
           <table class="w-full text-xs border-collapse">
             <thead style="position:sticky;top:0;z-index:1"><tr>
-              ${cols.map(c => `<th style="background:#1e293b;color:#e2e8f0;padding:6px;font-size:12px;
+              ${cols.map(c => `<th style="background:var(--slate-800);color:var(--border);padding:6px;font-size:12px;
                 text-align:${c[2] === 't' ? 'left' : 'center'}">${esc(c[1])}</th>`).join('')}
             </tr></thead>
             <tbody>
               ${rows.map((r, i) => `<tr style="background:${i % 2 ? '#fff' : '#f8fafc'}" class="hover:bg-blue-50">
                 ${cols.map(c => katak(r, c, false)).join('')}</tr>`).join('')}
-              <tr style="background:#dbeafe;font-weight:700">
+              <tr style="background:var(--primary-100);font-weight:700">
                 <td class="text-blue-900">JAMI</td><td class="text-blue-900">${rows.length}</td><td></td>
                 ${cols.slice(3).map(c => katak(t, c, true)).join('')}
               </tr>
@@ -837,7 +837,7 @@ const KengHisobotPage = {
                   ${k !== null ? `<span style="color:${yomon ? '#b91c1c' : '#64748b'};font-weight:600;margin-left:8px">
                     ${oq[i - 1]} ${k}%${yomon ? ' · eng katta yo\'qotish' : ''}</span>` : ''}</span>
               </div>
-              <div style="height:22px;background:#f1f5f9;border-radius:6px;overflow:hidden">
+              <div style="height:22px;background:var(--border-light);border-radius:6px;overflow:hidden">
                 <div style="height:100%;width:${w}%;border-radius:6px;
                      background:${yomon ? 'linear-gradient(90deg,#dc2626,#f87171)' : 'linear-gradient(90deg,#1d4ed8,#60a5fa)'}"></div>
               </div>
@@ -859,12 +859,12 @@ const KengHisobotPage = {
           <div class="overflow-x-auto mt-2">
             <table class="w-full text-xs border-collapse">
               <thead><tr>
-                <th style="background:#1e293b;color:#e2e8f0;padding:6px;text-align:left">Viloyat</th>
-                <th style="background:#1e293b;color:#e2e8f0;padding:6px;text-align:left">Muassasa</th>
-                ${bosqichNomlari.map((n, i) => `<th style="background:#1e293b;color:#e2e8f0;padding:6px">${i + 1}</th>`).join('')}
-                <th style="background:#1e293b;color:#e2e8f0;padding:6px">Yakuniy %</th>
-                <th style="background:#1e293b;color:#e2e8f0;padding:6px">Eng katta yo'qotish</th>
-                <th style="background:#1e293b;color:#e2e8f0;padding:6px">Nazorat</th>
+                <th style="background:var(--slate-800);color:var(--border);padding:6px;text-align:left">Viloyat</th>
+                <th style="background:var(--slate-800);color:var(--border);padding:6px;text-align:left">Muassasa</th>
+                ${bosqichNomlari.map((n, i) => `<th style="background:var(--slate-800);color:var(--border);padding:6px">${i + 1}</th>`).join('')}
+                <th style="background:var(--slate-800);color:var(--border);padding:6px">Yakuniy %</th>
+                <th style="background:var(--slate-800);color:var(--border);padding:6px">Eng katta yo'qotish</th>
+                <th style="background:var(--slate-800);color:var(--border);padding:6px">Nazorat</th>
               </tr></thead>
               <tbody>
                 ${rows.map((r, i) => `<tr style="background:${r.nazorat !== 'OK' ? '#fef2f2' : (i % 2 ? '#fff' : '#f8fafc')}">
@@ -872,7 +872,7 @@ const KengHisobotPage = {
                   <td style="padding:5px;font-weight:600">${esc(I18n.facilityName(r.muassasa || '—'))}</td>
                   ${['b1','b2','b3','b4','b5','b6'].map(k => `<td style="padding:5px;text-align:center">${N(r[k])}</td>`).join('')}
                   <td style="padding:5px;text-align:center;color:#0891b2;font-weight:600">${KengHisobotPage._foiz(r.yakuniy_foiz)}</td>
-                  <td style="padding:5px;text-align:center;color:#b91c1c">${esc(r.eng_katta_yoqotish || '—')}</td>
+                  <td style="padding:5px;text-align:center;color:var(--color-danger)">${esc(r.eng_katta_yoqotish || '—')}</td>
                   <td style="padding:5px;text-align:center;font-weight:700;color:${r.nazorat === 'OK' ? '#15803d' : '#b91c1c'}">${esc(r.nazorat || '')}</td>
                 </tr>`).join('')}
               </tbody>

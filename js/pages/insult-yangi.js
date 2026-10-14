@@ -705,7 +705,7 @@ const InsultYangiPage = {
           onchange="InsultYangiPage.onAspectsChange('${r.key}',this.checked)"
           style="width:18px;height:18px;margin-top:1px;accent-color:#7c3aed;flex-shrink:0"/>
         <div>
-          <div style="font-size:14px;font-weight:700;color:#1e293b">${r.label} <span style="font-size:12px;font-weight:500;color:#64748b">— ${t(r.nameKey)}</span></div>
+          <div style="font-size:14px;font-weight:700;color:var(--slate-800)">${r.label} <span style="font-size:12px;font-weight:500;color:var(--text-gray)">— ${t(r.nameKey)}</span></div>
         </div>
       </label>`;
 
@@ -721,7 +721,7 @@ const InsultYangiPage = {
           </div>
         </div>
 
-        <p style="font-size:12px;color:#64748b;margin:-4px 0 12px">${t('aspects.instruction')}</p>
+        <p style="font-size:12px;color:var(--text-gray);margin:-4px 0 12px">${t('aspects.instruction')}</p>
         <div style="margin-bottom:12px">
           <div style="font-size:12px;font-weight:800;color:#7c3aed;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px">${t('aspects.ganglionic')}</div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
