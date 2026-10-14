@@ -68,6 +68,7 @@ const AssetLoader = (() => {
         'https://unpkg.com/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js'
       ], 'ChartDataLabels')).then(result => {
         if (window.I18n) I18n.installChartAdapter();
+        if (typeof Theme !== 'undefined') Theme.installChartPlugin();
         return result;
       });
     }

@@ -5,8 +5,9 @@
   "main": "replace.js",
   "scripts": {
     "test": "node --test tests/*.test.js",
+    "build:dark": "node scripts/gen-dark-css.mjs",
     "build:css": "tailwindcss -c tailwind.config.cjs -i css/tailwind.input.css -o css/tailwind.generated.css --minify",
-    "build": "npm run build:css && node scripts/build-static.mjs",
+    "build": "npm run build:dark && npm run build:css && node scripts/build-static.mjs",
     "dev": "npm run build:css && vite --host 127.0.0.1"
   },
   "repository": {

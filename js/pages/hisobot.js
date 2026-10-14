@@ -86,7 +86,7 @@ const HisobotPage = {
     inner.innerHTML = `
       <style>
         .h-card {
-          background: #ffffff;
+          background: var(--bg-card);
           border-radius: 20px;
           padding: 24px;
           box-shadow: 0 4px 20px -2px rgba(0,0,0,0.05);
@@ -120,7 +120,7 @@ const HisobotPage = {
         .h-row:last-child { border-bottom: none; }
         .h-label { color: #1e3a8a; font-weight: 600; font-size: 14px; }
         .h-val { font-weight: 800; font-size: 15px; }
-        .h-title { color: #1e3a8a; font-weight: 800; font-size: 18px; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+        .h-title { color: var(--h-title, #1e3a8a); font-weight: 800; font-size: 18px; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
         
         .dark-blue-text { color: #1e3a8a; }
       </style>

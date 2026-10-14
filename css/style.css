@@ -12,7 +12,7 @@
 .language-switcher { display:inline-flex; align-items:center; flex:0 0 auto; }
 .language-switcher select {
   min-width:72px; height:36px; padding:0 28px 0 10px; border:1px solid #e2e8f0;
-  border-radius:10px; background:#fff; color:#334155; font-size:12px; font-weight:800;
+  border-radius:10px; background:var(--bg-card); color:#334155; font-size:12px; font-weight:800;
   cursor:pointer; outline:none;
 }
 .language-switcher select:focus { border-color:#3b82f6; box-shadow:0 0 0 3px rgba(59,130,246,.14); }
@@ -68,6 +68,9 @@ html[data-locale="ru"] #sidebar, html[data-locale="en"] #sidebar { width:17.5rem
   --bg-card: #FFFFFF;
   --border: #E2E8F0;
   --border-light: #F1F5F9;
+  --border-strong: #CBD5E1;
+  --bg-subtle: #F8FAFC;
+  --bg-subtle-2: #F1F5F9;
 
   --text-dark: #0F172A;
   --text-body: #334155;
@@ -241,7 +244,7 @@ h2, .section-title { font-size: var(--h2-size); font-weight: var(--h2-weight); c
 .btn-success:hover { background:#065f46; }
 .btn-warning { background:var(--color-warning-dark); color:#fff; }
 .btn-warning:hover { background:#92400e; }
-.btn-secondary { background:#fff; color:var(--text-body); border:1px solid var(--border); }
+.btn-secondary { background:var(--bg-card); color:var(--text-body); border:1px solid var(--border); }
 .btn-secondary:hover:not(:disabled) { background:var(--bg-main); }
 .btn-full { width:100%; }
 .btn-lg { padding:12px 24px; font-size:15px; border-radius:var(--radius-md); }
@@ -254,7 +257,7 @@ h2, .section-title { font-size: var(--h2-size); font-weight: var(--h2-weight); c
 .form-label.required::after { content:' *'; color:var(--color-danger); font-weight:400; }
 
 .form-input, .form-select, .form-textarea {
-  width:100%; background:#fff; border:1.5px solid var(--border);
+  width:100%; background:var(--bg-card); border:1.5px solid var(--border);
   border-radius:var(--radius-sm); padding:10px 14px;
   font-size:var(--input-size); color:var(--text-dark);
   font-family:inherit; transition:all 0.2s;
@@ -313,14 +316,14 @@ h2, .section-title { font-size: var(--h2-size); font-weight: var(--h2-weight); c
   z-index:1000; display:flex; align-items:center;
   justify-content:center; padding:24px;
 }
-.modal-box { animation:slideUp 0.3s ease; background:#ffffff; border-radius:16px; box-shadow:0 20px 60px rgba(0,0,0,0.18); overflow:hidden; width:100%; max-height:90vh; overflow-y:auto; }
-.modal-header { display:flex; align-items:center; justify-content:space-between; padding:16px 20px; border-bottom:1px solid #f1f5f9; background:#ffffff; }
-.modal-body { padding:20px; background:#ffffff; }
+.modal-box { animation:slideUp 0.3s ease; background:var(--bg-card); border-radius:16px; box-shadow:0 20px 60px rgba(0,0,0,0.18); overflow:hidden; width:100%; max-height:90vh; overflow-y:auto; }
+.modal-header { display:flex; align-items:center; justify-content:space-between; padding:16px 20px; border-bottom:1px solid #f1f5f9; background:var(--bg-card); }
+.modal-body { padding:20px; background:var(--bg-card); }
 .modal-footer { display:flex; justify-content:flex-end; gap:12px; padding:14px 20px; border-top:1px solid #f1f5f9; background:#f8fafc; }
 
 
 /* ==================== PROGRESS STEPPER ==================== */
-.progress-container { width:100%; background:#E2E8F0; border-radius:var(--radius-full); height:6px; margin-bottom:28px; overflow:hidden; }
+.progress-container { width:100%; background:var(--border); border-radius:var(--radius-full); height:6px; margin-bottom:28px; overflow:hidden; }
 .progress-bar { height:100%; background:linear-gradient(90deg,var(--primary),#6366F1); transition:width 0.5s cubic-bezier(0.4,0,0.2,1); border-radius:var(--radius-full); }
 
 
@@ -329,7 +332,7 @@ h2, .section-title { font-size: var(--h2-size); font-weight: var(--h2-weight); c
 .tab-btn {
   padding:8px 18px; font-size:13px; font-weight:600;
   color:var(--text-gray); border:1px solid var(--border);
-  background:#fff; border-radius:var(--radius-full);
+  background:var(--bg-card); border-radius:var(--radius-full);
   cursor:pointer; white-space:nowrap; transition:all 0.2s;
 }
 .tab-btn:hover { background:var(--bg-main); color:var(--text-dark); }
@@ -362,7 +365,7 @@ h2, .section-title { font-size: var(--h2-size); font-weight: var(--h2-weight); c
 
 .login-card {
   width:100%; max-width:440px;
-  background:#fff;
+  background:var(--bg-card);
   border:1px solid var(--border);
   border-radius:var(--radius-xl);
   padding:40px;
@@ -374,9 +377,9 @@ h2, .section-title { font-size: var(--h2-size); font-weight: var(--h2-weight); c
   background:var(--bg-main); border-color:var(--border);
   color:var(--text-dark); padding:12px 16px;
 }
-.login-card .form-input:focus { background:#fff; border-color:var(--primary); box-shadow:0 0 0 3px var(--primary-100); }
+.login-card .form-input:focus { background:var(--bg-card); border-color:var(--primary); box-shadow:0 0 0 3px var(--primary-100); }
 .login-card .form-select { background-color:var(--bg-main); border-color:var(--border); color:var(--text-dark); padding:12px 16px; }
-.login-card .form-select option { background:#fff; color:var(--text-dark); }
+.login-card .form-select option { background:var(--bg-card); color:var(--text-dark); }
 
 
 /* ==================== PREMIUM UTILITIES ==================== */
@@ -551,3 +554,94 @@ svg.emo-ico, i.emo-ico { width:1.1em; height:1.1em; vertical-align:-0.17em; disp
 }
 /* Yorliq ichidagi ikonka matn bilan bir qatorda (Tailwind preflight svg ni block qiladi) */
 .form-label svg, .form-label i[data-lucide] { display:inline-block; vertical-align:-2px; margin-right:4px; }
+
+/* ==================== QORONG'I MAVZU (dark mode) ====================
+   <html data-theme="dark"> — topbar dagi tugma bilan yoqiladi (Theme, components.js).
+   Tokenlar shu yerda; Tailwind klasslari va inline stillar uchun qoidalar
+   avtomatik yaratiladigan css/dark.css da. */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg-main: #0B1220;
+  --bg-card: #111A2B;
+  --bg-subtle: #162135;
+  --bg-subtle-2: #1B283E;
+  --border: #26344B;
+  --border-light: #1D2A40;
+  --border-strong: #34445E;
+  --text-dark: #E5EAF2;
+  --text-body: #C6CFDC;
+  --text-gray: #9AA7B9;
+  --text-light: #8592A6;
+  --slate-600: #B4BFCE;
+  --slate-800: #E5EAF2;
+  --primary: #3B82F6;
+  --primary-dark: #93C5FD;
+  --primary-50: rgba(59,130,246,0.14);
+  --primary-100: rgba(59,130,246,0.22);
+  --primary-200: rgba(59,130,246,0.32);
+  --color-infarkt: #EF4444;
+  --color-infarkt-bg: rgba(239,68,68,0.14);
+  --color-insult: #A78BFA;
+  --color-insult-bg: rgba(139,92,246,0.16);
+  --color-danger: #F87171;
+  --color-danger-bg: rgba(239,68,68,0.14);
+  --color-success: #4ADE80;
+  --color-success-dark: #86EFAC;
+  --color-warning: #FBBF24;
+  --color-warning-dark: #FCD34D;
+  --color-green-bg: rgba(16,185,129,0.14);
+  --color-amber-bg: rgba(245,158,11,0.14);
+  --shadow-xs: 0 1px 2px rgba(0,0,0,0.4);
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.45);
+  --shadow-md: 0 4px 10px rgba(0,0,0,0.45);
+  --shadow-lg: 0 10px 20px rgba(0,0,0,0.5);
+}
+[data-theme="dark"] body { background: var(--bg-main) !important; color: var(--text-body) !important; }
+[data-theme="dark"] .card, [data-theme="dark"] .stat-card, [data-theme="dark"] .modal-box,
+[data-theme="dark"] .toast, [data-theme="dark"] header, [data-theme="dark"] aside { background-color: var(--bg-card); border-color: var(--border); }
+[data-theme="dark"] .form-input, [data-theme="dark"] .form-select, [data-theme="dark"] textarea,
+[data-theme="dark"] input:not([type="checkbox"]):not([type="radio"]), [data-theme="dark"] select {
+  background-color: var(--bg-subtle); color: var(--text-dark); border-color: var(--border);
+}
+[data-theme="dark"] .data-table th { background: var(--bg-subtle); color: var(--text-gray); }
+[data-theme="dark"] .data-table td, [data-theme="dark"] #admin-content .data-table tbody td { color: var(--text-body); border-color: var(--border-light); }
+[data-theme="dark"] .modal-overlay { background: rgba(0,0,0,0.65); }
+[data-theme="dark"] .btn-secondary { background: var(--bg-subtle); color: var(--text-body); border-color: var(--border); }
+[data-theme="dark"] .btn-ghost:hover { background: var(--bg-subtle-2); }
+/* SVG (yosh piramidasi, diagrammalar) dagi qattiq yozilgan ranglar */
+[data-theme="dark"] svg text[fill="#0f172a" i], [data-theme="dark"] svg text[fill="#1e293b" i] { fill: var(--text-dark); }
+[data-theme="dark"] svg text[fill="#475569" i], [data-theme="dark"] svg text[fill="#64748b" i] { fill: var(--text-gray); }
+[data-theme="dark"] svg rect[fill="#f1f5f9" i], [data-theme="dark"] svg rect[fill="#f8fafc" i] { fill: var(--bg-subtle-2); }
+[data-theme="dark"] svg line[stroke="#e2e8f0" i] { stroke: var(--border); }
+/* Qorong'i kartalar (bg-slate-700…900) yorug' mavzuda ham qorong'i — qorong'i mavzuda ajralib tursin */
+[data-theme="dark"] .bg-slate-700, [data-theme="dark"] .bg-slate-800, [data-theme="dark"] .bg-slate-900 { background-color: #1B283E; }
+.theme-toggle .ico-dark { display:none; }
+[data-theme="dark"] .theme-toggle .ico-light { display:none; }
+[data-theme="dark"] .theme-toggle .ico-dark { display:inline-flex; }
+/* Token ham matn, ham fon bo'lib ishlatilgan joylar (yorug' mavzudagi qorong'i
+   jadval sarlavhalari: slate-800 fon + och matn) — qorong'i mavzuda ham qorong'i/och */
+[data-theme="dark"] [style*="background:var(--slate-800)"] { background-color:#1B283E !important; color:#E5EAF2 !important; }
+[data-theme="dark"] [style*="background:var(--primary-dark)"] { background-color:#1D4ED8 !important; }
+[data-theme="dark"] .btn-primary:hover:not(:disabled) { background:#1D4ED8; }
+[data-theme="dark"] .bg-\[\#F8FAFC\] { background-color: var(--bg-main); }
+/* Yorug' mavzu uchun to'qlashtirilgan och klasslar — qorong'ida yana och */
+[data-theme="dark"] .text-slate-300 { color: var(--text-light); }
+[data-theme="dark"] .text-amber-400 { color: #fbbf24; }
+[data-theme="dark"] .text-indigo-400 { color: #a5b4fc; }
+[data-theme="dark"] .text-slate-400, [data-theme="dark"] .text-gray-400 { color: var(--text-light); }
+/* Token fon bo'lib ishlatilgan tugmalar: qorong'ida token ochiq bo'ladi, oq matn yo'qolmasin */
+[data-theme="dark"] .btn-insult { background:#7C3AED; }
+[data-theme="dark"] .btn-infarkt { background:#DC2626; }
+[data-theme="dark"] .btn-warning { background:#B45309; }
+[data-theme="dark"] [style*="background:var(--color-warning-dark)"] { background-color:#B45309 !important; }
+[data-theme="dark"] [style*="background:var(--color-insult)"]:not(.emo-dot):not(span) { background-color:#7C3AED !important; }
+/* pd-mask.js o'z <style> ini qo'shadi */
+[data-theme="dark"] .pd-toggle { background:var(--bg-subtle); border-color:var(--border); color:var(--text-body); }
+[data-theme="dark"] .pd-toggle:hover { background:var(--bg-subtle-2); }
+[data-theme="dark"] .pd-toggle.pd-open { background:rgba(249,115,22,0.14); border-color:rgba(249,115,22,0.4); color:#fdba74; }
+[data-theme="dark"] { --h-title: #BFDBFE; }
+[data-theme="dark"] .\!text-blue-900 { color: #BFDBFE !important; }
+[data-theme="dark"] svg text[fill="#b91c1c" i] { fill: #FCA5A5; }
+[data-theme="dark"] svg text[fill="#1d4ed8" i] { fill: #93C5FD; }
+/* "To'q qism — vafot" izohi: qora shaffof belgi qorong'i fonda ko'rinmaydi */
+[data-theme="dark"] [style*="background:rgba(0,0,0,0.3)"] { background:rgba(255,255,255,0.35) !important; }

@@ -630,8 +630,8 @@ const DashboardPage = {
         <div class="flex items-center justify-between mb-8">
           <h3 class="text-sm font-bold text-slate-800 uppercase tracking-wider">${t('dashboard.dailyAdmissions')}</h3>
           <div class="flex gap-4">
-            <div class="flex items-center gap-1.5"><span class="w-3 h-1 bg-red-500 rounded-full"></span> <span class="text-xs font-bold text-slate-500 uppercase">${t('glossary.infarction')}</span></div>
-            <div class="flex items-center gap-1.5"><span class="w-3 h-1 bg-blue-500 rounded-full"></span> <span class="text-xs font-bold text-slate-500 uppercase">${t('glossary.stroke')}</span></div>
+            <div class="flex items-center gap-1.5"><span class="w-3 h-1 rounded-full" style="background:var(--color-infarkt)"></span> <span class="text-xs font-bold text-slate-500 uppercase">${t('glossary.infarction')}</span></div>
+            <div class="flex items-center gap-1.5"><span class="w-3 h-1 rounded-full" style="background:var(--color-insult)"></span> <span class="text-xs font-bold text-slate-500 uppercase">${t('glossary.stroke')}</span></div>
           </div>
         </div>
         <div class="h-80"><canvas id="dynamicsChart"></canvas></div>
@@ -642,8 +642,8 @@ const DashboardPage = {
         <div class="flex items-center justify-between mb-8">
           <h3 class="text-sm font-bold text-slate-800 uppercase tracking-wider">${t('dashboard.monthlyAdmissions')}</h3>
           <div class="flex gap-4">
-            <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-sm bg-red-500"></span> <span class="text-xs font-bold text-slate-500 uppercase">${t('glossary.infarction')}</span></div>
-            <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-sm bg-blue-500"></span> <span class="text-xs font-bold text-slate-500 uppercase">${t('glossary.stroke')}</span></div>
+            <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-sm" style="background:var(--color-infarkt)"></span> <span class="text-xs font-bold text-slate-500 uppercase">${t('glossary.infarction')}</span></div>
+            <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-sm" style="background:var(--color-insult)"></span> <span class="text-xs font-bold text-slate-500 uppercase">${t('glossary.stroke')}</span></div>
           </div>
         </div>
         <div class="h-72"><canvas id="monthlyChart"></canvas></div>
@@ -1501,12 +1501,12 @@ const DashboardPage = {
           </div>` : '<div class="mt-2"></div>'}
           <div class="mt-auto pt-3 flex gap-2 relative z-10">
             <div class="flex-1 bg-red-500/10 border border-red-500/20 rounded-xl px-3 py-2.5">
-              <div class="flex items-center gap-1.5 mb-1"><span class="w-2 h-2 bg-red-400 rounded-full"></span><span class="text-xs font-bold text-red-300">${t('glossary.infarction')}</span></div>
+              <div class="flex items-center gap-1.5 mb-1"><span class="w-2 h-2 rounded-full" style="background:var(--color-infarkt)"></span><span class="text-xs font-bold text-red-300">${t('glossary.infarction')}</span></div>
               <div class="text-xl font-black text-white">${jamiInfarkt}</div>
               ${jamiAholi18 > 0 ? `<div class="text-xs text-red-400 font-semibold mt-0.5">${+((jamiInfarkt/jamiAholi18)*100000).toFixed(1)}/100k <span class="text-slate-500">18+</span>${jamiAholi30>0?' · '+((jamiInfarkt/jamiAholi30)*100000).toFixed(1)+'/100k <span class="text-slate-500">30+</span>':''}</div>` : ''}
             </div>
             <div class="flex-1 bg-blue-500/10 border border-blue-500/20 rounded-xl px-3 py-2.5">
-              <div class="flex items-center gap-1.5 mb-1"><span class="w-2 h-2 bg-blue-400 rounded-full"></span><span class="text-xs font-bold text-blue-300">${t('glossary.stroke')}</span></div>
+              <div class="flex items-center gap-1.5 mb-1"><span class="w-2 h-2 rounded-full" style="background:var(--color-insult)"></span><span class="text-xs font-bold text-violet-300">${t('glossary.stroke')}</span></div>
               <div class="text-xl font-black text-white">${jamiInsult}</div>
               ${jamiAholi18 > 0 ? `<div class="text-xs text-blue-400 font-semibold mt-0.5">${+((jamiInsult/jamiAholi18)*100000).toFixed(1)}/100k <span class="text-slate-500">18+</span>${jamiAholi30>0?' · '+((jamiInsult/jamiAholi30)*100000).toFixed(1)+'/100k <span class="text-slate-500">30+</span>':''}</div>` : ''}
             </div>
@@ -1549,11 +1549,11 @@ const DashboardPage = {
           <h3 class="text-5xl font-black text-white relative z-10 tracking-tight">${(chiqarilganInfarkt + chiqarilganInsult).toLocaleString()}</h3>
           <div class="mt-auto pt-3 flex flex-col gap-2 relative z-10">
             <div class="flex items-center justify-between h-9 px-3 bg-emerald-800/50 rounded-xl border border-emerald-700/50">
-              <div class="flex items-center gap-2"><span class="w-2 h-2 bg-red-400 rounded-full"></span><span class="text-[12px] font-bold text-emerald-100">${t('glossary.infarction')}</span></div>
+              <div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full" style="background:var(--color-infarkt)"></span><span class="text-[12px] font-bold text-emerald-100">${t('glossary.infarction')}</span></div>
               <span class="text-base font-black text-white">${chiqarilganInfarkt}</span>
             </div>
             <div class="flex items-center justify-between h-9 px-3 bg-emerald-800/50 rounded-xl border border-emerald-700/50">
-              <div class="flex items-center gap-2"><span class="w-2 h-2 bg-blue-400 rounded-full"></span><span class="text-[12px] font-bold text-emerald-100">${t('glossary.stroke')}</span></div>
+              <div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full" style="background:var(--color-insult)"></span><span class="text-[12px] font-bold text-emerald-100">${t('glossary.stroke')}</span></div>
               <span class="text-base font-black text-white">${chiqarilganInsult}</span>
             </div>
           </div>
@@ -1570,11 +1570,11 @@ const DashboardPage = {
           <h3 class="text-5xl font-black text-white relative z-10 tracking-tight">${(aktivInfarkt + aktivInsult).toLocaleString()}</h3>
           <div class="mt-auto pt-3 flex flex-col gap-2 relative z-10">
             <div class="flex items-center justify-between h-9 px-3 bg-sky-700/50 rounded-xl border border-sky-600/50">
-              <div class="flex items-center gap-2"><span class="w-2 h-2 bg-red-400 rounded-full"></span><span class="text-[12px] font-bold text-sky-100">${t('glossary.infarction')}</span></div>
+              <div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full" style="background:var(--color-infarkt)"></span><span class="text-[12px] font-bold text-sky-100">${t('glossary.infarction')}</span></div>
               <span class="text-base font-black text-white">${aktivInfarkt}</span>
             </div>
             <div class="flex items-center justify-between h-9 px-3 bg-sky-700/50 rounded-xl border border-sky-600/50">
-              <div class="flex items-center gap-2"><span class="w-2 h-2 bg-blue-300 rounded-full"></span><span class="text-[12px] font-bold text-sky-100">${t('glossary.stroke')}</span></div>
+              <div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full" style="background:var(--color-insult)"></span><span class="text-[12px] font-bold text-sky-100">${t('glossary.stroke')}</span></div>
               <span class="text-base font-black text-white">${aktivInsult}</span>
             </div>
           </div>
@@ -1593,14 +1593,14 @@ const DashboardPage = {
           <h3 class="text-5xl font-black text-white relative z-10 tracking-tight">${(vafotInfarkt + vafotInsult).toLocaleString()}</h3>
           <div class="mt-auto pt-3 flex flex-col gap-2 relative z-10">
             <div class="flex items-center justify-between h-9 px-3 bg-slate-800/50 rounded-xl border border-slate-700/50">
-              <div class="flex items-center gap-2"><span class="w-2 h-2 bg-red-500 rounded-full"></span><span class="text-[12px] font-bold text-slate-300">${t('glossary.infarction')}</span></div>
+              <div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full" style="background:var(--color-infarkt)"></span><span class="text-[12px] font-bold text-slate-300">${t('glossary.infarction')}</span></div>
               <div class="flex items-center gap-2">
                 <span class="text-xs font-bold text-rose-400">${jamiInfarkt > 0 ? (vafotInfarkt/jamiInfarkt*100).toFixed(1) : 0}%</span>
                 <span class="text-base font-black text-white">${vafotInfarkt}</span>
               </div>
             </div>
             <div class="flex items-center justify-between h-9 px-3 bg-slate-800/50 rounded-xl border border-slate-700/50">
-              <div class="flex items-center gap-2"><span class="w-2 h-2 bg-blue-500 rounded-full"></span><span class="text-[12px] font-bold text-slate-300">${t('glossary.stroke')}</span></div>
+              <div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full" style="background:var(--color-insult)"></span><span class="text-[12px] font-bold text-slate-300">${t('glossary.stroke')}</span></div>
               <div class="flex items-center gap-2">
                 <span class="text-xs font-bold text-rose-400">${jamiInsult > 0 ? (vafotInsult/jamiInsult*100).toFixed(1) : 0}%</span>
                 <span class="text-base font-black text-white">${vafotInsult}</span>
@@ -1622,14 +1622,14 @@ const DashboardPage = {
           <h3 class="text-5xl font-black text-white relative z-10 tracking-tight">${(otkazilganInfarkt + otkazilganInsult).toLocaleString()}</h3>
           <div class="mt-auto pt-3 flex flex-col gap-2 relative z-10">
             <div class="flex items-center justify-between h-9 px-3 bg-slate-800/50 rounded-xl border border-slate-700/50">
-              <div class="flex items-center gap-2"><span class="w-2 h-2 bg-red-500 rounded-full"></span><span class="text-[12px] font-bold text-slate-300">${t('glossary.infarction')}</span></div>
+              <div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full" style="background:var(--color-infarkt)"></span><span class="text-[12px] font-bold text-slate-300">${t('glossary.infarction')}</span></div>
               <div class="flex items-center gap-2">
                 <span class="text-xs font-bold text-amber-400">${jamiInfarkt > 0 ? (otkazilganInfarkt/jamiInfarkt*100).toFixed(1) : 0}%</span>
                 <span class="text-base font-black text-white">${otkazilganInfarkt}</span>
               </div>
             </div>
             <div class="flex items-center justify-between h-9 px-3 bg-slate-800/50 rounded-xl border border-slate-700/50">
-              <div class="flex items-center gap-2"><span class="w-2 h-2 bg-blue-500 rounded-full"></span><span class="text-[12px] font-bold text-slate-300">${t('glossary.stroke')}</span></div>
+              <div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full" style="background:var(--color-insult)"></span><span class="text-[12px] font-bold text-slate-300">${t('glossary.stroke')}</span></div>
               <div class="flex items-center gap-2">
                 <span class="text-xs font-bold text-amber-400">${jamiInsult > 0 ? (otkazilganInsult/jamiInsult*100).toFixed(1) : 0}%</span>
                 <span class="text-base font-black text-white">${otkazilganInsult}</span>

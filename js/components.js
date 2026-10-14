@@ -12,6 +12,78 @@ function stripStatusEmoji(text) {
   return String(text ?? '').replace(/^(?:[✅❌⚠✔✖ℹ\u{1F6AB}\u{1F534}\u{1F7E2}\u{1F7E1}]️?\s*)+/u, '');
 }
 
+// ==================== MAVZU (yorug' / qorong'i) ====================
+// <html data-theme> index.html dagi kichik skript tomonidan sahifa chizilishidan
+// OLDIN qo'yiladi (oq "chaqnash" bo'lmasin). Standart — yorug'; tanlov
+// localStorage da saqlanadi. Ranglar: css/style.css tokenlari + css/dark.css.
+const Theme = {
+  KEY: 'rshtyoim-theme',
+  get() { return document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light'; },
+  set(mode) {
+    document.documentElement.dataset.theme = mode;
+    try { localStorage.setItem(Theme.KEY, mode); } catch (e) {}
+    document.querySelectorAll('.theme-toggle').forEach(b => {
+      b.setAttribute('aria-pressed', String(mode === 'dark'));
+      b.setAttribute('aria-label', t(mode === 'dark' ? 'theme.light' : 'theme.dark'));
+      b.title = b.getAttribute('aria-label');
+    });
+    Theme.refreshCharts();
+  },
+  toggle() { Theme.set(Theme.get() === 'dark' ? 'light' : 'dark'); },
+  button() {
+    const dark = Theme.get() === 'dark';
+    return `<button type="button" class="icon-btn theme-toggle text-slate-500 hover:text-slate-900" aria-pressed="${dark}" aria-label="${dark ? t('theme.light') : t('theme.dark')}" title="${dark ? t('theme.light') : t('theme.dark')}" onclick="Theme.toggle()">
+      <span class="ico-light">${icon('moon', 20)}</span><span class="ico-dark">${icon('sun', 20)}</span></button>`;
+  },
+  // Chart.js canvas CSS o'zgaruvchini o'qiy olmaydi — o'q yozuvlari, to'r
+  // chiziqlari va izohlar rangini har chizishdan oldin mavzuga moslaymiz.
+  _pluginInstalled: false,
+  installChartPlugin() {
+    if (Theme._pluginInstalled || !window.Chart) return;
+    Theme._pluginInstalled = true;
+    const LIGHT_TEXT = /^#(64748b|94a3b8|475569|334155|1e293b|0f172a|687588|666|666666)$/i;
+    const LIGHT_GRID = /^(#(f1f5f9|e2e8f0|f8fafc|f3f4f6|e5e7eb)|rgba\(0,\s*0,\s*0,\s*0?\.\d+\))$/i;
+    Chart.register({
+      id: 'rshtyoimTheme',
+      beforeUpdate(chart) {
+        const dark = Theme.get() === 'dark';
+        const o = chart.options;
+        // Asl (yorug') qiymatlarni bir marta eslab qolamiz — qaytishda tiklash uchun
+        if (!chart.$themeOrig) {
+          chart.$themeOrig = {
+            scales: Object.fromEntries(Object.entries(o.scales || {}).map(([k, s]) => [k, {
+              tick: s.ticks?.color, grid: s.grid?.color, border: s.border?.color, title: s.title?.color }])),
+            legend: o.plugins?.legend?.labels?.color, title: o.plugins?.title?.color
+          };
+        }
+        const orig = chart.$themeOrig;
+        const txt = v => dark && (v == null || (typeof v === 'string' && LIGHT_TEXT.test(v))) ? '#9AA7B9' : v;
+        const grd = v => dark && (v == null || (typeof v === 'string' && LIGHT_GRID.test(v))) ? 'rgba(148,163,184,0.14)' : v;
+        Object.entries(o.scales || {}).forEach(([k, s]) => {
+          const r = orig.scales[k] || {};
+          if (s.ticks) s.ticks.color = txt(r.tick);
+          if (s.grid) s.grid.color = grd(r.grid);
+          if (s.border) s.border.color = grd(r.border);
+          if (s.title) s.title.color = txt(r.title);
+        });
+        if (o.plugins?.legend?.labels) o.plugins.legend.labels.color = txt(orig.legend);
+        if (o.plugins?.title) o.plugins.title.color = txt(orig.title);
+        // Donut bo'laklari orasidagi oq chegara qorong'i fonda "teshik" bo'lib ko'rinadi
+        (chart.data?.datasets || []).forEach(ds => {
+          if (ds.$origBorder === undefined) ds.$origBorder = ds.borderColor;
+          if (ds.$origBorder === '#fff' || ds.$origBorder === '#ffffff' || ds.$origBorder === 'white') ds.borderColor = dark ? '#111A2B' : ds.$origBorder;
+        });
+      }
+    });
+  },
+  refreshCharts() {
+    if (!window.Chart) return;
+    Theme.installChartPlugin();
+    // Plagindan oldin yaratilgan grafiklar plaginlar ro'yxatini keshlagan — yangilaymiz
+    Object.values(Chart.instances || {}).forEach(c => { try { c._plugins?.invalidate?.(); c.update('none'); } catch (e) {} });
+  }
+};
+
 // ==================== EMOJI → IKONKA ====================
 // Matnlarda (tarjimalar, shablonlar) ~700 ta emoji bor; ular Windows/Android/iOS
 // da har xil chiqadi va ekran o'quvchida "check mark button" deb o'qiladi.
@@ -468,6 +540,7 @@ const Components = {
             <span class="text-xs font-bold text-blue-600 uppercase">Real-time monitoring</span>
           </div>
 
+          ${Theme.button()}
           <div class="relative" id="notif-wrapper">
             <button class="relative w-10 h-10 flex items-center justify-center text-slate-500 hover:bg-slate-50 rounded-full transition-colors" onclick="Notifications.toggle()" aria-label="${t('common.notifications')}">
               ${icon('bell', 20)}
