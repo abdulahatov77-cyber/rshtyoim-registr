@@ -25,7 +25,9 @@ const BemorlarPage = {
     if (Router._params.search) BemorlarPage._filters.search = Router._params.search;
     if (Router._params.status) BemorlarPage._filters.status = Router._params.status;
     // Dashboard eslatmasidan: faqat chiqarilgan va varaqasi yo'q bemorlar
-    if (Router._params.varaqasiz) { BemorlarPage._filters.status = 'chiqarildi'; BemorlarPage._filters.missingExit = true; }
+    if (Router._params.varaqasiz) { BemorlarPage._filters.status = 'chiqarildi'; BemorlarPage._filters.missingExit = true; BemorlarPage._filters.longActive = false; }
+    // Dashboard eslatmasidan: 30 kundan ortiq "faol" turgan bemorlar
+    if (Router._params.uzoqFaol) { BemorlarPage._filters.status = 'active'; BemorlarPage._filters.longActive = true; BemorlarPage._filters.missingExit = false; }
     
     BemorlarPage.renderFilters();
     await BemorlarPage.loadData();
@@ -140,6 +142,12 @@ const BemorlarPage = {
                 style="width:16px;height:16px;accent-color:#ea580c;cursor:pointer"/>
               <span class="text-sm font-semibold text-orange-600">⚠️ Chiqarish varaqasi to'ldirilmagan</span>
             </label>
+            <label class="flex items-center gap-2 cursor-pointer select-none">
+              <input type="checkbox" id="f-long-active" onchange="BemorlarPage.applyFilter()"
+                ${f.longActive ? 'checked' : ''}
+                style="width:16px;height:16px;accent-color:#7c3aed;cursor:pointer"/>
+              <span class="text-sm font-semibold text-violet-700">🛏 ${t('patients.longActive')}</span>
+            </label>
           </div>
           <div class="flex gap-3">
             <button class="btn btn-secondary flex items-center gap-2" onclick="BemorlarPage.resetFilters()">
@@ -229,13 +237,14 @@ const BemorlarPage = {
     BemorlarPage._filters.search = document.getElementById('f-search')?.value || '';
     BemorlarPage._filters.missingTime = document.getElementById('f-missing-time')?.checked || false;
     BemorlarPage._filters.missingExit = document.getElementById('f-missing-exit')?.checked || false;
+    BemorlarPage._filters.longActive = document.getElementById('f-long-active')?.checked || false;
     BemorlarPage._currentPage = 1;
     BemorlarPage.loadData();
   },
 
   resetFilters() {
     BemorlarPage._filters = {
-      type: 'all', status: '', muassasa: '', tashxis: '', muolaja: '', search: '', date: '', dateTo: '', missingTime: false, missingExit: false,
+      type: 'all', status: '', muassasa: '', tashxis: '', muolaja: '', search: '', date: '', dateTo: '', missingTime: false, missingExit: false, longActive: false,
       viloyat: BemorlarPage._profile?.role === 'super_admin' ? '' : (BemorlarPage._profile?.viloyat || '')
     };
     BemorlarPage._currentPage = 1;
@@ -267,9 +276,12 @@ const BemorlarPage = {
       let totalCount = 0;
       // Chiqarish varaqasi yo'q bemorlar: ro'yxatni bazadan to'liq olamiz (sahifalab emas),
       // aks holda faqat birinchi sahifadagi 50 tasi ichidan qidirilib, ko'pi topilmay qolardi
-      if (f.missingExit) {
+      // Xuddi shu usul — 30 kundan ortiq "faol" turgan bemorlar uchun
+      if (f.missingExit || f.longActive) {
         const sb0 = getSupabase();
-        const { data: idRows, error: idErr } = await sb0.rpc('varaqasiz_bemorlar_idlari', { p_muassasa: null });
+        const { data: idRows, error: idErr } = f.missingExit
+          ? await sb0.rpc('varaqasiz_bemorlar_idlari', { p_muassasa: null })
+          : await sb0.rpc('uzoq_faol_bemorlar_idlari', { p_muassasa: null, p_kun: 30 });
         if (idErr) throw idErr;
         const byType = { infarkt: [], insult: [] };
         (idRows || []).forEach(r => { if (byType[r.tur]) byType[r.tur].push(r.id); });
