@@ -171,9 +171,10 @@ const DashboardPage = {
     if (p.role !== 'admin' && !mua) return;
     let n = 0;
     try {
-      const { data, error } = await getSupabase().rpc('uzoq_faol_bemorlar_idlari', { p_muassasa: mua, p_kun: 30 });
+      // Faqat sonini so'raymiz (1000 qator chegarasiga tushmaydi)
+      const { count, error } = await getSupabase().rpc('uzoq_faol_bemorlar_idlari', { p_muassasa: mua, p_kun: 30 }, { count: 'exact', head: true });
       if (error) return;
-      n = (data || []).length;
+      n = count || 0;
     } catch (e) { return; }
     if (!n) return;
     const inner = document.getElementById('dashboard-inner');
