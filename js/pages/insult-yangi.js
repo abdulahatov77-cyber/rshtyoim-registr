@@ -84,12 +84,12 @@ const InsultYangiPage = {
                 ${icon(sectionIcons[step], 24)}
               </div>
               <div>
-                <p class="text-[10px] font-black text-purple-600 uppercase tracking-widest mb-0.5">${t('wizard.section', { current: step + 1, total: 4 })}</p>
+                <p class="text-xs font-black text-purple-600 uppercase tracking-widest mb-0.5">${t('wizard.section', { current: step + 1, total: 4 })}</p>
                 <h3 class="text-base sm:text-xl font-black text-slate-800 tracking-tight">${sectionTitles[step]}</h3>
               </div>
             </div>
             <div class="hidden sm:block text-right">
-              <div class="text-[10px] font-bold text-slate-400 uppercase mb-1">${t('wizard.completion')}</div>
+              <div class="text-xs font-bold text-slate-400 uppercase mb-1">${t('wizard.completion')}</div>
               <div class="w-32 h-1.5 bg-slate-100 rounded-full overflow-hidden">
                 <div class="h-full bg-purple-500" style="width: ${(step+1)/4*100}%"></div>
               </div>
@@ -412,9 +412,9 @@ const InsultYangiPage = {
             <span class="text-xs text-slate-400 whitespace-nowrap">mm Hg</span>
           </div>
           <div class="flex gap-2 mt-1">
-            <span class="flex-1 text-[10px] text-slate-400 text-center">Sistolik</span>
+            <span class="flex-1 text-xs text-slate-400 text-center">Sistolik</span>
             <span class="w-3"></span>
-            <span class="flex-1 text-[10px] text-slate-400 text-center">Diastolik</span>
+            <span class="flex-1 text-xs text-slate-400 text-center">Diastolik</span>
             <span class="w-12"></span>
           </div>`;
         })(),true)}
@@ -496,11 +496,11 @@ const InsultYangiPage = {
           ${this.field('kt_vaqti','KT/MSKT o\'tkazilgan vaqt',`
             <div class="flex gap-2">
               <div class="flex-1">
-                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Sana *</label>
+                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Sana *</label>
                 <input id="kt_sana" type="date" class="form-input w-full" max="${new Date(Date.now()+5*3600000).toISOString().slice(0,10)}" value="${d.kt_vaqti?Utils.formatDateInput(d.kt_vaqti).slice(0,10):''}" onchange="InsultYangiPage.onVaqtChange('kt_sana','kt_soat','KT/MSKT vaqti')"/>
               </div>
               <div class="flex-1">
-                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Soat * (HH:MM)</label>
+                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Soat * (HH:MM)</label>
                 <input id="kt_soat" type="time" class="form-input w-full" value="${d.kt_vaqti?Utils.formatDateInput(d.kt_vaqti).slice(11,16):''}" onchange="InsultYangiPage.onVaqtChange('kt_sana','kt_soat','KT/MSKT vaqti')"/>
               </div>
             </div>`,true,'Door-to-CT mezonini hisoblash uchun')}
@@ -543,11 +543,11 @@ const InsultYangiPage = {
           ${this.field('trombolizis_vaqti','Trombolizis (TLT) o\'tkazilgan vaqt',`
             <div class="flex gap-2">
               <div class="flex-1">
-                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Sana *</label>
+                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Sana *</label>
                 <input id="trombolizis_sana" type="date" class="form-input w-full" max="${new Date(Date.now()+5*3600000).toISOString().slice(0,10)}" value="${d.trombolizis_vaqti?Utils.formatDateInput(d.trombolizis_vaqti).slice(0,10):''}" onchange="InsultYangiPage.onVaqtChange('trombolizis_sana','trombolizis_soat','Trombolizis vaqti')"/>
               </div>
               <div class="flex-1">
-                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Soat * (HH:MM)</label>
+                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Soat * (HH:MM)</label>
                 <input id="trombolizis_soat" type="time" class="form-input w-full" value="${d.trombolizis_vaqti?Utils.formatDateInput(d.trombolizis_vaqti).slice(11,16):''}" onchange="InsultYangiPage.onVaqtChange('trombolizis_sana','trombolizis_soat','Trombolizis vaqti')"/>
               </div>
             </div>`,true,'Door-to-needle mezonini hisoblash uchun')}
@@ -558,11 +558,11 @@ const InsultYangiPage = {
           ${this.field('trombektomiya_vaqti', trombektomiyaLabel, `
             <div class="flex gap-2">
               <div class="flex-1">
-                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Sana *</label>
+                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Sana *</label>
                 <input id="trombektomiya_sana" type="date" class="form-input w-full" max="${new Date(Date.now()+5*3600000).toISOString().slice(0,10)}" value="${d.trombektomiya_vaqti?Utils.formatDateInput(d.trombektomiya_vaqti).slice(0,10):''}" onchange="InsultYangiPage.onVaqtChange('trombektomiya_sana','trombektomiya_soat','Trombektomiya vaqti')"/>
               </div>
               <div class="flex-1">
-                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Soat * (HH:MM)</label>
+                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Soat * (HH:MM)</label>
                 <input id="trombektomiya_soat" type="time" class="form-input w-full" value="${d.trombektomiya_vaqti?Utils.formatDateInput(d.trombektomiya_vaqti).slice(11,16):''}" onchange="InsultYangiPage.onVaqtChange('trombektomiya_sana','trombektomiya_soat','Trombektomiya vaqti')"/>
               </div>
             </div>`,true,'Door-to-groin mezonini hisoblash uchun')}
@@ -632,11 +632,11 @@ const InsultYangiPage = {
           return `<div class="flex items-center gap-2 text-xs py-1 border-b border-amber-100 last:border-0">
             <span class="font-bold text-amber-900">${esc(p.fio)}</span>
             <span class="text-amber-600">·</span>
-            <span class="px-1.5 py-0.5 rounded text-[10px] font-bold ${p._t==='Infarkt'?'bg-red-100 text-red-700':'bg-purple-100 text-purple-700'}">${esc(p._t)}</span>
+            <span class="px-1.5 py-0.5 rounded text-xs font-bold ${p._t==='Infarkt'?'bg-red-100 text-red-700':'bg-purple-100 text-purple-700'}">${esc(p._t)}</span>
             <span class="text-amber-600">·</span>
             <span class="text-amber-700">${d} sanasida yotgan</span>
             <span class="text-amber-400">·</span>
-            <span class="font-mono text-amber-500 text-[10px]">${esc(p.kt_no)}</span>
+            <span class="font-mono text-amber-500 text-xs">${esc(p.kt_no)}</span>
           </div>`;
         }).join('');
         warn.innerHTML = `
@@ -723,14 +723,14 @@ const InsultYangiPage = {
 
         <p style="font-size:12px;color:#64748b;margin:-4px 0 12px">${t('aspects.instruction')}</p>
         <div style="margin-bottom:12px">
-          <div style="font-size:11px;font-weight:800;color:#7c3aed;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px">${t('aspects.ganglionic')}</div>
+          <div style="font-size:12px;font-weight:800;color:#7c3aed;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px">${t('aspects.ganglionic')}</div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
             ${ganglion.map(mkBox).join('')}
           </div>
         </div>
 
         <div style="margin-bottom:14px">
-          <div style="font-size:11px;font-weight:800;color:#7c3aed;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px">${t('aspects.supraganglionic')}</div>
+          <div style="font-size:12px;font-weight:800;color:#7c3aed;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px">${t('aspects.supraganglionic')}</div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
             ${supra.map(mkBox).join('')}
           </div>

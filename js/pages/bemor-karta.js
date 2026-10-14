@@ -1513,9 +1513,9 @@ const BemorKartaPage = {
             </div>
           </div>
           <div class="p-3">
-            <span class="text-[10px] font-bold text-blue-600 uppercase block mb-1">${esc(({ 'KT Natijasi': t('file.ctMriResult'), 'EKG': t('file.ecgImage'), 'Tahlil': t('file.labResults'), 'Boshqa': t('file.otherDocument') })[f.tur] || f.tur)}</span>
+            <span class="text-xs font-bold text-blue-600 uppercase block mb-1">${esc(({ 'KT Natijasi': t('file.ctMriResult'), 'EKG': t('file.ecgImage'), 'Tahlil': t('file.labResults'), 'Boshqa': t('file.otherDocument') })[f.tur] || f.tur)}</span>
             <p class="text-xs font-medium text-gray-800 line-clamp-2" title="${esc(f.nomi)}">${esc(f.nomi)}</p><!-- i18n-audit-allow: escaped uploaded file name -->
-            ${f.izoh ? `<p class="text-[10px] text-gray-500 mt-1 line-clamp-1">${esc(f.izoh)}</p>` : ''}
+            ${f.izoh ? `<p class="text-xs text-gray-500 mt-1 line-clamp-1">${esc(f.izoh)}</p>` : ''}
           </div>
         </div>
       `).join('') + '</div>';
@@ -2392,7 +2392,7 @@ const BemorKartaPage = {
           <div style="flex:1;background:white;border:1px solid #e2e8f0;border-radius:14px;padding:14px 16px;margin-bottom:${isLast?'0':'8px'}">
             <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
               <div>
-                <div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px">
+                <div style="font-size:12px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px">
                   ${isFirst ? 'Dastlabki qabul' : `${idx}-o'tkazish`}
                   ${log.sabab && !isFirst ? `· <span style="color:#059669">${esc(log.sabab)}</span>` : ''}
                 </div>
@@ -2401,7 +2401,7 @@ const BemorKartaPage = {
               </div>
               <div style="text-align:right;flex-shrink:0">
                 <div style="font-size:12px;font-weight:600;color:#334155">${fmtDate(log.sana)}</div>
-                ${!isFirst && canEdit ? `<button onclick="BemorKartaPage._deleteTransfer('${log.id}')" style="margin-top:6px;font-size:11px;color:#ef4444;background:none;border:none;cursor:pointer;padding:0">O'chirish</button>` : ''}
+                ${!isFirst && canEdit ? `<button onclick="BemorKartaPage._deleteTransfer('${log.id}')" style="margin-top:6px;font-size:12px;color:#ef4444;background:none;border:none;cursor:pointer;padding:0">O'chirish</button>` : ''}
               </div>
             </div>
             ${log.izoh ? `<div style="margin-top:8px;font-size:12px;color:#475569;background:#f8fafc;border-radius:8px;padding:6px 10px">${esc(log.izoh)}</div>` : ''}
@@ -2430,24 +2430,24 @@ const BemorKartaPage = {
           <p style="font-size:13px;font-weight:700;color:#0369a1;margin:0 0 12px">Yangi o'tkazish yozuvi</p>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
             <div>
-              <label style="font-size:11px;font-weight:700;color:#64748b;display:block;margin-bottom:4px">VILOYAT</label>
+              <label style="font-size:12px;font-weight:700;color:#64748b;display:block;margin-bottom:4px">VILOYAT</label>
               <select id="tr-viloyat" onchange="BemorKartaPage._onTrViloyat(this.value)" class="form-select" style="font-size:13px;padding:7px 10px">
                 <option value="">${t('select.placeholder')}</option>
                 ${viloyatOpts}
               </select>
             </div>
             <div>
-              <label style="font-size:11px;font-weight:700;color:#64748b;display:block;margin-bottom:4px">MUASSASA</label>
+              <label style="font-size:12px;font-weight:700;color:#64748b;display:block;margin-bottom:4px">MUASSASA</label>
               <select id="tr-muassasa" class="form-select" style="font-size:13px;padding:7px 10px">
                 <option value="">${t('select.regionFirst')}</option>
               </select>
             </div>
             <div>
-              <label style="font-size:11px;font-weight:700;color:#64748b;display:block;margin-bottom:4px">SANA</label>
+              <label style="font-size:12px;font-weight:700;color:#64748b;display:block;margin-bottom:4px">SANA</label>
               <input id="tr-sana" type="date" class="form-input" style="font-size:13px;padding:7px 10px" value="${new Date(Date.now()+5*3600000).toISOString().slice(0,10)}">
             </div>
             <div>
-              <label style="font-size:11px;font-weight:700;color:#64748b;display:block;margin-bottom:4px">SABAB</label>
+              <label style="font-size:12px;font-weight:700;color:#64748b;display:block;margin-bottom:4px">SABAB</label>
               <select id="tr-sabab" class="form-select" style="font-size:13px;padding:7px 10px">
                 <option value="Angiografiya uchun">${t('transfer.angiography')}</option>
                 <option value="Endovaskulyar muolaja">${t('transfer.endovascular')}</option>
@@ -2458,7 +2458,7 @@ const BemorKartaPage = {
               </select>
             </div>
             <div style="grid-column:1/-1">
-              <label style="font-size:11px;font-weight:700;color:#64748b;display:block;margin-bottom:4px">IZOH (ixtiyoriy)</label>
+              <label style="font-size:12px;font-weight:700;color:#64748b;display:block;margin-bottom:4px">IZOH (ixtiyoriy)</label>
               <input id="tr-izoh" type="text" class="form-input" placeholder="${t('transfer.notesPlaceholder')}" style="font-size:13px;padding:7px 10px">
             </div>
           </div>

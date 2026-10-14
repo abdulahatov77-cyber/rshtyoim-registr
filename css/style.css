@@ -44,6 +44,8 @@ html[data-locale="ru"] #sidebar, html[data-locale="en"] #sidebar { width:17.5rem
   --color-infarkt-bg: #FEF2F2;
   --color-insult: #7C3AED;
   --color-insult-bg: #F5F3FF;
+  --color-danger: #B91C1C;
+  --color-danger-bg: #FEF2F2;
   --color-green: #10B981;
   --color-green-bg: #ECFDF5;
   --color-amber: #F59E0B;
@@ -138,7 +140,7 @@ h2, .section-title { font-size: var(--h2-size); font-weight: var(--h2-weight); c
 .sidebar-nav { flex:1; padding: 16px 12px; overflow-y: auto; }
 .sidebar-nav::-webkit-scrollbar { width: 4px; }
 .sidebar-nav::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
-.sidebar-section { font-size:10px; font-weight:700; color:rgba(255,255,255,0.3); text-transform:uppercase; letter-spacing:1.5px; padding:16px 16px 8px; }
+.sidebar-section { font-size:12px; font-weight:700; color:rgba(255,255,255,0.3); text-transform:uppercase; letter-spacing:1.5px; padding:16px 16px 8px; }
 
 .nav-item {
   display: flex; align-items: center; gap: 12px;
@@ -167,7 +169,7 @@ h2, .section-title { font-size: var(--h2-size); font-weight: var(--h2-weight); c
   font-size:13px; font-weight:700; color:#fff; flex-shrink:0;
 }
 .sidebar-user-name { font-size:13px; font-weight:600; color:rgba(255,255,255,0.9); }
-.sidebar-user-role { font-size:11px; color:rgba(255,255,255,0.4); margin-top:1px; }
+.sidebar-user-role { font-size:12px; color:rgba(255,255,255,0.4); margin-top:1px; }
 .logout-btn {
   margin-left:auto; color:rgba(255,255,255,0.4);
   cursor:pointer; padding:6px; border-radius:6px;
@@ -239,7 +241,7 @@ h2, .section-title { font-size: var(--h2-size); font-weight: var(--h2-weight); c
 /* ==================== FORMS ==================== */
 .form-group { margin-bottom: 20px; }
 .form-label { display:block; font-size:var(--label-size); font-weight:var(--label-weight); color:var(--text-dark); margin-bottom:6px; }
-.form-label.required::after { content:' *'; color:var(--color-infarkt); font-weight:400; }
+.form-label.required::after { content:' *'; color:var(--color-danger); font-weight:400; }
 
 .form-input, .form-select, .form-textarea {
   width:100%; background:#fff; border:1.5px solid var(--border);
@@ -254,8 +256,8 @@ h2, .section-title { font-size: var(--h2-size); font-weight: var(--h2-weight); c
   border-color:var(--primary); outline:none;
   box-shadow: 0 0 0 3px var(--primary-100);
 }
-.form-error { border-color:var(--color-infarkt) !important; }
-.form-error-msg { font-size:12px; color:var(--color-infarkt); margin-top:4px; }
+.form-error { border-color:var(--color-danger) !important; }
+.form-error-msg { font-size:12px; color:var(--color-danger); margin-top:4px; }
 
 
 /* ==================== TABLES ==================== */
@@ -291,7 +293,7 @@ h2, .section-title { font-size: var(--h2-size); font-weight: var(--h2-weight); c
   border-left:4px solid var(--color-green);
   animation:slideUp 0.3s ease; pointer-events:auto;
 }
-.toast-error { border-left-color:var(--color-infarkt); }
+.toast-error { border-left-color:var(--color-danger); }
 
 
 /* ==================== MODAL ==================== */
@@ -402,7 +404,7 @@ body { overflow: hidden; } /* Let layout handles scrolling */
 #admin-content .data-table tbody tr:hover { background: rgba(37,99,235,0.06); }
 
 /* Status Badges refinement */
-.badge-status { padding: 4px 12px; border-radius: 8px; font-weight: 700; font-size: 11px; text-transform: uppercase; }
+.badge-status { padding: 4px 12px; border-radius: 8px; font-weight: 700; font-size: 12px; text-transform: uppercase; }
 
 @media (max-width: 1024px) {
   #sidebar.open { transform: translateX(0) !important; }
@@ -496,3 +498,13 @@ input:focus, select:focus {
     max-width: 140px;
   }
 }
+
+/* Klaviatura: onclick li qator/kartalar (A11y.mark) va toast yopish tugmasi */
+.kbd-click:focus-visible, button:focus-visible, a:focus-visible { outline:2px solid var(--primary); outline-offset:2px; border-radius:6px; }
+tr.kbd-click:focus-visible { outline-offset:-2px; }
+.toast-close { margin-left:8px; padding:2px; border:0; background:none; color:inherit; opacity:.55; cursor:pointer; display:inline-flex; }
+.toast-close:hover { opacity:1; }
+
+/* Emoji o'rnidagi ikonkalar (components.js → Emoji) — matn o'lchamiga moslashadi */
+svg.emo-ico, i.emo-ico { width:1.1em; height:1.1em; vertical-align:-0.17em; display:inline-block; flex-shrink:0; }
+.emo-dot { display:inline-block; width:.65em; height:.65em; border-radius:50%; vertical-align:.05em; flex-shrink:0; }

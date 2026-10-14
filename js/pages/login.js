@@ -20,7 +20,7 @@ const LoginPage = {
                 </div>
                 <div>
                   <h1 class="text-xl font-black text-slate-800 leading-none">INFARKT & INSULT</h1>
-                  <p class="text-[10px] font-bold text-blue-600 uppercase tracking-tighter mt-1">${t('nav.registryPlatform')}</p>
+                  <p class="text-xs font-bold text-blue-600 uppercase tracking-tighter mt-1">${t('nav.registryPlatform')}</p>
                 </div>
               </div>
 
@@ -83,7 +83,7 @@ const LoginPage = {
                     class="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-medium focus:bg-white outline-none cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed">
                   <option value="">${t('auth.chooseRegionFirst')}</option>
                   </select>
-                  <p class="text-[11px] text-slate-400 mt-1.5">
+                  <p class="text-xs text-slate-400 mt-1.5">
                     Ish joyingiz bir marta belgilanadi — keyin uni faqat administrator o'zgartira oladi.
                   </p>
                 </div>
@@ -115,7 +115,7 @@ const LoginPage = {
           </div>
           
           <div class="mt-8 text-center">
-            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">© 2026 Respublika Shoshilinch Tibbiy Yordam Ilmiy Markazi</p>
+            <p class="text-xs font-black text-slate-400 uppercase tracking-widest">© 2026 Respublika Shoshilinch Tibbiy Yordam Ilmiy Markazi</p>
           </div>
         </div>
       </div>

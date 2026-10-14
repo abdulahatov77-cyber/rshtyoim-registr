@@ -203,7 +203,7 @@ const MuassasaImkoniyatPage = {
             <td class="text-xs text-gray-400">${i + 1}</td>
             <td class="text-sm text-gray-600">${esc(I18n.translateText(r.viloyat || '—'))}</td>
             <td class="text-sm font-semibold text-gray-800">${esc(I18n.facilityName(r.nomi))}
-              ${y ? `<span class="badge" style="background:#f1f5f9;color:#64748b;margin-left:6px;font-size:10px">${t('facility.hidden')}</span>` : ''}
+              ${y ? `<span class="badge" style="background:#f1f5f9;color:#64748b;margin-left:6px;font-size:12px">${t('facility.hidden')}</span>` : ''}
             </td>
             <td>
               <select data-id="${r.id}" data-field="daraja"
@@ -276,7 +276,7 @@ const MuassasaImkoniyatPage = {
             <label class="form-label">${t('facility.nameLabel')} <span style="color:#dc2626">*</span></label>
             <input id="mi-a-nomi" class="form-input" style="width:100%" autocomplete="off"
                    placeholder="${t('institution.exampleName')}"/>
-            <div id="mi-a-ogoh" style="font-size:11px;color:#b45309;margin-top:4px;display:none"></div>
+            <div id="mi-a-ogoh" style="font-size:12px;color:#b45309;margin-top:4px;display:none"></div>
           </div>
           <div>
             <label class="form-label">${t('capabilities.levelHeading')}</label>

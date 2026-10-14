@@ -169,7 +169,7 @@ const HisobotPage = {
               ${Object.keys(APP_CONFIG.MUASSASALAR).map(v => `<option value="${v}">${v}</option>`).join('')}
             </select>` : `
             <input id="h-viloyat" type="hidden" value="${myViloyat}"/>
-            <div class="form-input bg-slate-100 text-blue-900 border-blue-200 font-semibold cursor-not-allowed opacity-80">${myViloyat || '—'} <span style="font-size:11px;color:#64748b">(qullangan)</span></div>`}
+            <div class="form-input bg-slate-100 text-blue-900 border-blue-200 font-semibold cursor-not-allowed opacity-80">${myViloyat || '—'} <span style="font-size:12px;color:#64748b">(qullangan)</span></div>`}
           </div>
           <div>
             <label class="form-label !text-blue-900 font-semibold mb-1 block">${icon('building-2', 14)} Muassasa (ixtiyoriy)</label>
@@ -654,7 +654,7 @@ const HisobotPage = {
                 <tr style="background:${i % 2 === 0 ? '#f8fafc' : '#fff'}">
                   <td class="p-2.5 font-semibold text-slate-800 border-b border-slate-200 align-top">
                     ${esc(I18n.facilityName(g.muassasa))}
-                    <div class="text-[11px] text-slate-400 font-normal">${esc(I18n.translateText(royxat[0]?.viloyat || ''))}</div>
+                    <div class="text-xs text-slate-400 font-normal">${esc(I18n.translateText(royxat[0]?.viloyat || ''))}</div>
                   </td>
                   <td class="p-2.5 text-center font-bold text-blue-700 border-b border-slate-200 align-top">${g.bemorlar.length}</td>
                   <td class="p-2.5 text-center font-bold border-b border-slate-200 align-top" style="color:${rang(eng)}">${t('reports.daysCount', { days: eng })}</td>
@@ -664,7 +664,7 @@ const HisobotPage = {
                         <button onclick="Router.go('bemor-karta',{kt_no:'${esc(b.kt_no)}',type:'${b._type}',id:'${esc(b.id || '')}'})"
                     title="${esc(b.kt_no)} · ${b._type}" data-i18n-skip data-i18n-audit="i18n-audit-allow: escaped record number and technical registry type"
                           style="border:1px solid #e2e8f0;background:#fff;border-radius:8px;padding:3px 8px;
-                                 font-size:11px;cursor:pointer;white-space:nowrap">
+                                 font-size:12px;cursor:pointer;white-space:nowrap">
                           ${esc(b.fio || '—')}
                           <span style="color:${rang(b.kunlar)};font-weight:700">${b.kunlar}k</span>
                         </button>`).join('')}
@@ -860,7 +860,7 @@ const HisobotPage = {
         const f = letallik(olgan, jami);
         const rang = f === null ? '#94a3b8' : f >= 20 ? '#b91c1c' : f >= 10 ? '#c2410c' : '#334155';
         return `<td class="p-2.5 text-center border-b border-slate-200" style="color:${rang};${bold?'font-weight:700':''}">
-          ${olgan}${f === null ? '' : ` <span style="font-size:11px;opacity:.85">(${f}%)</span>`}
+          ${olgan}${f === null ? '' : ` <span style="font-size:12px;opacity:.85">(${f}%)</span>`}
         </td>`;
       };
 
@@ -1888,8 +1888,8 @@ const HisobotPage = {
       `<div class="h-row">
         <span class="h-label flex items-center gap-2">${icon(iconName, 16)} ${label}</span>
         <span class="flex items-center gap-2 ml-auto">
-          ${davol !== null ? `<span class="flex items-center gap-1 text-[10px] font-bold text-green-600 bg-green-50 border border-green-200 rounded-md px-2 py-0.5">${icon('check-circle',12)} ${davol} davolandi</span>` : ''}
-          ${vafot !== null ? `<span class="flex items-center gap-1 text-[10px] font-bold text-red-600 bg-red-50 border border-red-200 rounded-md px-2 py-0.5">${icon('x-circle',12)} ${vafot} vafot</span>` : ''}
+          ${davol !== null ? `<span class="flex items-center gap-1 text-xs font-bold text-green-600 bg-green-50 border border-green-200 rounded-md px-2 py-0.5">${icon('check-circle',12)} ${davol} davolandi</span>` : ''}
+          ${vafot !== null ? `<span class="flex items-center gap-1 text-xs font-bold text-red-600 bg-red-50 border border-red-200 rounded-md px-2 py-0.5">${icon('x-circle',12)} ${vafot} vafot</span>` : ''}
           <span class="h-val ${colorClass} bg-white px-3 py-1 rounded-lg border border-slate-200 shadow-sm">${val}</span>
         </span>
       </div>`;
@@ -1990,7 +1990,7 @@ const HisobotPage = {
                 <h3 style="color:#ffffff;font-weight:800;font-size:18px;margin:0;display:flex;align-items:center;gap:8px">${icon('clock', 20)} Vaqt mezonlari — Median ko'rsatkichlar</h3>
                 <p style="color:#bfdbfe;font-size:12px;margin-top:4px">"Vaqt = miokard yoki miya". Har daqiqa muhim qoidasi!</p>
               </div>
-              <div style="color:#93c5fd;font-size:11px;text-align:right;white-space:nowrap">
+              <div style="color:#93c5fd;font-size:12px;text-align:right;white-space:nowrap">
                 <div style="font-weight:700">Yangilangan</div>
                 <div>${nowStr}</div>
                 <div style="margin-top:2px">${from} — ${to}</div>
@@ -2001,31 +2001,31 @@ const HisobotPage = {
             ${nstemiWindowNeeded ? `
             <!-- NSTEMI invaziv strategiya oynasi (GRACE bo'yicha) -->
             <div class="mb-5" style="background:#fff7ed;border-radius:14px;border:1px solid #fed7aa;padding:14px">
-              <div style="font-size:11px;font-weight:900;color:#c2410c;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:10px;display:flex;align-items:center;gap:6px">
+              <div style="font-size:12px;font-weight:900;color:#c2410c;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:10px;display:flex;align-items:center;gap:6px">
                 ${icon('activity',14)} NSTEMI — invaziv strategiya oynasi (GRACE: yuqori xavf &lt;24 soat, o'rta &lt;72 soat)
               </div>
               <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
-                <div style="text-align:center"><div style="font-size:26px;font-weight:800;color:#0f172a">${nstemiWindowNeeded}</div><div style="font-size:11px;color:#78716c;font-weight:600">PCI qilingan NSTEMI</div></div>
-                <div style="text-align:center"><div style="font-size:26px;font-weight:800;color:#16a34a">${nstemiWindowOk}</div><div style="font-size:11px;color:#78716c;font-weight:600">Muddatда bajarildi</div></div>
-                <div style="text-align:center"><div style="font-size:26px;font-weight:800;color:${nstemiWindowPct>=80?'#16a34a':nstemiWindowPct>=50?'#d97706':'#dc2626'}">${nstemiWindowPct}%</div><div style="font-size:11px;color:#78716c;font-weight:600">Oynaga ulgurish</div></div>
+                <div style="text-align:center"><div style="font-size:26px;font-weight:800;color:#0f172a">${nstemiWindowNeeded}</div><div style="font-size:12px;color:#78716c;font-weight:600">PCI qilingan NSTEMI</div></div>
+                <div style="text-align:center"><div style="font-size:26px;font-weight:800;color:#16a34a">${nstemiWindowOk}</div><div style="font-size:12px;color:#78716c;font-weight:600">Muddatда bajarildi</div></div>
+                <div style="text-align:center"><div style="font-size:26px;font-weight:800;color:${nstemiWindowPct>=80?'#16a34a':nstemiWindowPct>=50?'#d97706':'#dc2626'}">${nstemiWindowPct}%</div><div style="font-size:12px;color:#78716c;font-weight:600">Oynaga ulgurish</div></div>
               </div>
             </div>` : ''}
             <!-- Vaqt kiritilganlik darajasi -->
             <div class="mb-5" style="background:#f8fafc;border-radius:14px;border:1px solid #e2e8f0;padding:14px">
-              <div style="font-size:11px;font-weight:900;color:#0f172a;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:10px">
+              <div style="font-size:12px;font-weight:900;color:#0f172a;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:10px">
                 📋 Vaqt mezonlari to'ldirilganlik darajasi
               </div>
               ${(() => {
                 const pctBar = (filled, total) => {
-                  if (total === 0) return '<span style="color:#94a3b8;font-size:10px">—</span>';
+                  if (total === 0) return '<span style="color:#94a3b8;font-size:12px">—</span>';
                   const p = Math.round((filled/total)*100);
                   const clr = p>=80?'#16a34a':p>=50?'#d97706':'#dc2626';
                   return `<div style="display:flex;align-items:center;gap:6px">
                     <div style="flex:1;background:#e2e8f0;border-radius:99px;height:7px;overflow:hidden">
                       <div style="height:100%;width:${p}%;background:${clr};border-radius:99px"></div>
                     </div>
-                    <span style="font-size:10px;font-weight:700;color:${clr};min-width:32px">${filled}/${total}</span>
-                    <span style="font-size:10px;color:#64748b">(${p}%)</span>
+                    <span style="font-size:12px;font-weight:700;color:${clr};min-width:32px">${filled}/${total}</span>
+                    <span style="font-size:12px;color:#64748b">(${p}%)</span>
                   </div>`;
                 };
                 const rows = [
@@ -2036,7 +2036,7 @@ const HisobotPage = {
                   ['◎ Insult — Trombolizis vaqti',  nTLT_ins_filled, nTLT_ins_total],
                   ['◎ Insult — Trombektomiya vaqti',nTromb_filled,   nTromb_total],
                 ];
-                return `<table style="width:100%;border-collapse:collapse;font-size:11px">
+                return `<table style="width:100%;border-collapse:collapse;font-size:12px">
                   <thead><tr style="background:#e2e8f0">
                     <th style="padding:6px 10px;text-align:left;font-weight:700;color:#475569;border-radius:6px 0 0 0">Mezon</th>
                     <th style="padding:6px 10px;text-align:center;font-weight:700;color:#475569">To'ldirilgan</th>
@@ -2055,7 +2055,7 @@ const HisobotPage = {
             </div>
             <!-- Infarkt mezonlari -->
             <div class="mb-4">
-              <div style="font-size:11px;font-weight:900;color:#b91c1c;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:10px;display:flex;align-items:center;gap:4px">
+              <div style="font-size:12px;font-weight:900;color:#b91c1c;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:10px;display:flex;align-items:center;gap:4px">
                 ♥ Infarkt vaqt mezonlari
               </div>
               <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -2066,13 +2066,13 @@ const HisobotPage = {
                 ].map(([label, stats, target, nTotal]) => {
                   if (!stats) {
                     const badge = nTotal === 0
-                      ? `<span style="display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;background:#f1f5f9;color:#94a3b8">N/A</span>`
-                      : `<span style="display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;background:#fef3c7;color:#92400e">MA'LUMOT YETARLI EMAS</span>`;
+                      ? `<span style="display:inline-block;padding:2px 8px;border-radius:20px;font-size:12px;font-weight:700;background:#f1f5f9;color:#94a3b8">N/A</span>`
+                      : `<span style="display:inline-block;padding:2px 8px;border-radius:20px;font-size:12px;font-weight:700;background:#fef3c7;color:#92400e">MA'LUMOT YETARLI EMAS</span>`;
                     return `<div style="padding:12px;background:#f8fafc;border-radius:14px;border:1px solid #e2e8f0;text-align:center">
-                      <div style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;margin-bottom:6px">${label}</div>
+                      <div style="font-size:12px;font-weight:700;color:#64748b;text-transform:uppercase;margin-bottom:6px">${label}</div>
                       <div style="font-size:22px;font-weight:900;color:#cbd5e1;margin:4px 0">—</div>
                       <div style="margin:6px 0">${badge}</div>
-                      <div style="font-size:10px;color:#94a3b8">${nTotal > 0 ? t('report.treatmentTimeMissing', {count: nTotal}) : t('report.treatmentNotPerformed')}</div>
+                      <div style="font-size:12px;color:#94a3b8">${nTotal > 0 ? t('report.treatmentTimeMissing', {count: nTotal}) : t('report.treatmentNotPerformed')}</div>
                     </div>`;
                   }
                   const pct = Math.min(100, Math.round((stats.median / target) * 100));
@@ -2081,19 +2081,19 @@ const HisobotPage = {
                   const bgClr = ok ? '#f0fdf4' : (stats.median <= target * 1.5 ? '#fffbeb' : '#fef2f2');
                   const borderClr = ok ? '#bbf7d0' : (stats.median <= target * 1.5 ? '#fde68a' : '#fecaca');
                   const badge = ok
-                    ? `<span style="display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;background:#dcfce7;color:#15803d">✓ MAQSADDA</span>`
-                    : `<span style="display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;background:#fee2e2;color:#b91c1c">✗ KRITIK</span>`;
+                    ? `<span style="display:inline-block;padding:2px 8px;border-radius:20px;font-size:12px;font-weight:700;background:#dcfce7;color:#15803d">✓ MAQSADDA</span>`
+                    : `<span style="display:inline-block;padding:2px 8px;border-radius:20px;font-size:12px;font-weight:700;background:#fee2e2;color:#b91c1c">✗ KRITIK</span>`;
                   const barFill = ok ? '#22c55e' : (stats.median <= target * 1.5 ? '#f59e0b' : '#ef4444');
                   return `<div style="padding:12px;background:${bgClr};border-radius:14px;border:1px solid ${borderClr};text-align:center">
-                    <div style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;margin-bottom:4px">${label}</div>
-                    <div style="font-size:24px;font-weight:900;color:${clr};line-height:1.1">${stats.median}<span style="font-size:11px;font-weight:500;color:#94a3b8"> min</span></div>
-                    <div style="font-size:10px;color:#94a3b8;margin:2px 0">IQR: ${stats.q1}–${stats.q3} min · n=${stats.n}</div>
+                    <div style="font-size:12px;font-weight:700;color:#64748b;text-transform:uppercase;margin-bottom:4px">${label}</div>
+                    <div style="font-size:24px;font-weight:900;color:${clr};line-height:1.1">${stats.median}<span style="font-size:12px;font-weight:500;color:#94a3b8"> min</span></div>
+                    <div style="font-size:12px;color:#94a3b8;margin:2px 0">IQR: ${stats.q1}–${stats.q3} min · n=${stats.n}</div>
                     <div style="margin:6px 0;background:#e2e8f0;border-radius:99px;height:6px;overflow:hidden">
                       <div style="height:100%;width:${pct}%;background:${barFill};border-radius:99px;transition:width 0.5s"></div>
                     </div>
                     <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px">
                       ${badge}
-                      <span style="font-size:10px;color:#94a3b8">Maqsad ≤${target} min</span>
+                      <span style="font-size:12px;color:#94a3b8">Maqsad ≤${target} min</span>
                     </div>
                   </div>`;
                 }).join('')}
@@ -2101,7 +2101,7 @@ const HisobotPage = {
             </div>
             <!-- Insult mezonlari -->
             <div>
-              <div style="font-size:11px;font-weight:900;color:#1d4ed8;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:10px;display:flex;align-items:center;gap:4px">
+              <div style="font-size:12px;font-weight:900;color:#1d4ed8;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:10px;display:flex;align-items:center;gap:4px">
                 ◎ Insult vaqt mezonlari
               </div>
               <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -2112,13 +2112,13 @@ const HisobotPage = {
                 ].map(([label, stats, target, nTotal]) => {
                   if (!stats) {
                     const badge = nTotal === 0
-                      ? `<span style="display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;background:#f1f5f9;color:#94a3b8">N/A</span>`
-                      : `<span style="display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;background:#fef3c7;color:#92400e">MA'LUMOT YETARLI EMAS</span>`;
+                      ? `<span style="display:inline-block;padding:2px 8px;border-radius:20px;font-size:12px;font-weight:700;background:#f1f5f9;color:#94a3b8">N/A</span>`
+                      : `<span style="display:inline-block;padding:2px 8px;border-radius:20px;font-size:12px;font-weight:700;background:#fef3c7;color:#92400e">MA'LUMOT YETARLI EMAS</span>`;
                     return `<div style="padding:12px;background:#f8fafc;border-radius:14px;border:1px solid #e2e8f0;text-align:center">
-                      <div style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;margin-bottom:6px">${label}</div>
+                      <div style="font-size:12px;font-weight:700;color:#64748b;text-transform:uppercase;margin-bottom:6px">${label}</div>
                       <div style="font-size:22px;font-weight:900;color:#cbd5e1;margin:4px 0">—</div>
                       <div style="margin:6px 0">${badge}</div>
-                      <div style="font-size:10px;color:#94a3b8">${nTotal > 0 ? t('report.treatmentTimeMissing', {count: nTotal}) : t('report.treatmentNotPerformed')}</div>
+                      <div style="font-size:12px;color:#94a3b8">${nTotal > 0 ? t('report.treatmentTimeMissing', {count: nTotal}) : t('report.treatmentNotPerformed')}</div>
                     </div>`;
                   }
                   const pct = Math.min(100, Math.round((stats.median / target) * 100));
@@ -2127,19 +2127,19 @@ const HisobotPage = {
                   const bgClr = ok ? '#f0fdf4' : (stats.median <= target * 1.5 ? '#fffbeb' : '#fef2f2');
                   const borderClr = ok ? '#bbf7d0' : (stats.median <= target * 1.5 ? '#fde68a' : '#fecaca');
                   const badge = ok
-                    ? `<span style="display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;background:#dcfce7;color:#15803d">✓ MAQSADDA</span>`
-                    : `<span style="display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;background:#fee2e2;color:#b91c1c">✗ KRITIK</span>`;
+                    ? `<span style="display:inline-block;padding:2px 8px;border-radius:20px;font-size:12px;font-weight:700;background:#dcfce7;color:#15803d">✓ MAQSADDA</span>`
+                    : `<span style="display:inline-block;padding:2px 8px;border-radius:20px;font-size:12px;font-weight:700;background:#fee2e2;color:#b91c1c">✗ KRITIK</span>`;
                   const barFill = ok ? '#22c55e' : (stats.median <= target * 1.5 ? '#f59e0b' : '#ef4444');
                   return `<div style="padding:12px;background:${bgClr};border-radius:14px;border:1px solid ${borderClr};text-align:center">
-                    <div style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;margin-bottom:4px">${label}</div>
-                    <div style="font-size:24px;font-weight:900;color:${clr};line-height:1.1">${stats.median}<span style="font-size:11px;font-weight:500;color:#94a3b8"> min</span></div>
-                    <div style="font-size:10px;color:#94a3b8;margin:2px 0">IQR: ${stats.q1}–${stats.q3} min · n=${stats.n}</div>
+                    <div style="font-size:12px;font-weight:700;color:#64748b;text-transform:uppercase;margin-bottom:4px">${label}</div>
+                    <div style="font-size:24px;font-weight:900;color:${clr};line-height:1.1">${stats.median}<span style="font-size:12px;font-weight:500;color:#94a3b8"> min</span></div>
+                    <div style="font-size:12px;color:#94a3b8;margin:2px 0">IQR: ${stats.q1}–${stats.q3} min · n=${stats.n}</div>
                     <div style="margin:6px 0;background:#e2e8f0;border-radius:99px;height:6px;overflow:hidden">
                       <div style="height:100%;width:${pct}%;background:${barFill};border-radius:99px;transition:width 0.5s"></div>
                     </div>
                     <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px">
                       ${badge}
-                      <span style="font-size:10px;color:#94a3b8">Maqsad ≤${target} min</span>
+                      <span style="font-size:12px;color:#94a3b8">Maqsad ≤${target} min</span>
                     </div>
                   </div>`;
                 }).join('')}
@@ -2153,7 +2153,7 @@ const HisobotPage = {
       ${(() => {
         // Har bir bemor uchun to'g'ri turi belgilash yordamchisi
         const turi = (p, isInf) => isInf ? 'Infarkt' : 'Insult';
-        const turiBadge = (isInf) => `<span class="px-2 py-0.5 rounded-full text-[11px] font-bold ${isInf?'bg-red-100 text-red-700':'bg-purple-100 text-purple-700'}">${isInf?'Infarkt':'Insult'}</span>`;
+        const turiBadge = (isInf) => `<span class="px-2 py-0.5 rounded-full text-xs font-bold ${isInf?'bg-red-100 text-red-700':'bg-purple-100 text-purple-700'}">${isInf?'Infarkt':'Insult'}</span>`;
 
         // 1. Boshqa muassasadan KELGAN bemorlar
         const kelganInf = infs.filter(p => p.yuborgan_muassasa).map(p => ({...p, _isInf: true}));
@@ -2199,8 +2199,8 @@ const HisobotPage = {
         HisobotPage._shifokorData = shifokorMap;
         const shifokorlar = Object.values(shifokorMap).sort((a,b) => (b.infarkt+b.insult)-(a.infarkt+a.insult));
 
-        const tableHead = (cols) => `<thead><tr class="bg-slate-50 text-[11px] font-bold text-slate-500 uppercase">${cols.map(c=>`<th class="p-3 text-${c.align||'left'} border-b border-slate-100">${c.label}</th>`).join('')}</tr></thead>`;
-        const badge = (val, color) => `<span class="px-2 py-0.5 rounded-full text-[11px] font-bold ${color}">${val}</span>`;
+        const tableHead = (cols) => `<thead><tr class="bg-slate-50 text-xs font-bold text-slate-500 uppercase">${cols.map(c=>`<th class="p-3 text-${c.align||'left'} border-b border-slate-100">${c.label}</th>`).join('')}</tr></thead>`;
+        const badge = (val, color) => `<span class="px-2 py-0.5 rounded-full text-xs font-bold ${color}">${val}</span>`;
 
         return `
         <!-- Boshqa muassasadan KELGAN bemorlar -->
@@ -2211,7 +2211,7 @@ const HisobotPage = {
           </div>
           <div class="grid grid-cols-1 lg:grid-cols-2">
             <div class="border-r border-slate-100 flex flex-col">
-              <div class="p-3 bg-slate-50 border-b border-slate-100 text-[11px] font-bold text-slate-400 uppercase sticky top-0 z-10">Yuborgan muassasa</div>
+              <div class="p-3 bg-slate-50 border-b border-slate-100 text-xs font-bold text-slate-400 uppercase sticky top-0 z-10">Yuborgan muassasa</div>
               <div style="max-height:400px;overflow-y:auto">
                 <table class="w-full text-sm">
                   ${tableHead([{label:'Muassasa'},{label:'Infarkt',align:'center'},{label:'Insult',align:'center'},{label:'Jami',align:'center'}])}
@@ -2226,7 +2226,7 @@ const HisobotPage = {
               </div>
             </div>
             <div class="flex flex-col">
-              <div class="p-3 bg-slate-50 border-b border-slate-100 text-[11px] font-bold text-slate-400 uppercase sticky top-0 z-10">Bemorlar ro'yxati</div>
+              <div class="p-3 bg-slate-50 border-b border-slate-100 text-xs font-bold text-slate-400 uppercase sticky top-0 z-10">Bemorlar ro'yxati</div>
               <div style="max-height:400px;overflow-y:auto">
                 <table class="w-full text-sm">
                   ${tableHead([{label:'F.I.Sh'},{label:'Turi'},{label:'Qabul'},{label:'Yuborgan muassasa'}])}
@@ -2251,7 +2251,7 @@ const HisobotPage = {
           </div>
           <div class="grid grid-cols-1 lg:grid-cols-2">
             <div class="border-r border-slate-100 flex flex-col">
-              <div class="p-3 bg-slate-50 border-b border-slate-100 text-[11px] font-bold text-slate-400 uppercase sticky top-0 z-10">O'tkazilgan muassasa</div>
+              <div class="p-3 bg-slate-50 border-b border-slate-100 text-xs font-bold text-slate-400 uppercase sticky top-0 z-10">O'tkazilgan muassasa</div>
               <div style="max-height:400px;overflow-y:auto">
                 <table class="w-full text-sm">
                   ${tableHead([{label:'Muassasa'},{label:'Infarkt',align:'center'},{label:'Insult',align:'center'},{label:'Jami',align:'center'}])}
@@ -2266,7 +2266,7 @@ const HisobotPage = {
               </div>
             </div>
             <div class="flex flex-col">
-              <div class="p-3 bg-slate-50 border-b border-slate-100 text-[11px] font-bold text-slate-400 uppercase sticky top-0 z-10">Bemorlar ro'yxati</div>
+              <div class="p-3 bg-slate-50 border-b border-slate-100 text-xs font-bold text-slate-400 uppercase sticky top-0 z-10">Bemorlar ro'yxati</div>
               <div style="max-height:400px;overflow-y:auto">
                 <table class="w-full text-sm">
                   ${tableHead([{label:'F.I.Sh'},{label:'Turi'},{label:'Qabul'},{label:'O\'tkazilgan muassasa'}])}
@@ -2300,16 +2300,16 @@ const HisobotPage = {
                   <td class="p-3 font-semibold text-slate-800">${esc(s.fio)}</td>
                   <td class="p-3 text-center">
                     ${s.infarkt > 0
-                      ? `<button class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-red-100 text-red-700 hover:bg-red-200 cursor-pointer transition-colors" onclick="HisobotPage.showShifokorBemorlar('${esc(s.fio).replace(/'/g,"\\'")}','infarkt')">${s.infarkt}</button>`
+                      ? `<button class="px-2 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-700 hover:bg-red-200 cursor-pointer transition-colors" onclick="HisobotPage.showShifokorBemorlar('${esc(s.fio).replace(/'/g,"\\'")}','infarkt')">${s.infarkt}</button>`
                       : badge(0,'bg-slate-100 text-slate-400')}
                   </td>
                   <td class="p-3 text-center">
                     ${s.insult > 0
-                      ? `<button class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-purple-100 text-purple-700 hover:bg-purple-200 cursor-pointer transition-colors" onclick="HisobotPage.showShifokorBemorlar('${esc(s.fio).replace(/'/g,"\\'")}','insult')">${s.insult}</button>`
+                      ? `<button class="px-2 py-0.5 rounded-full text-xs font-bold bg-purple-100 text-purple-700 hover:bg-purple-200 cursor-pointer transition-colors" onclick="HisobotPage.showShifokorBemorlar('${esc(s.fio).replace(/'/g,"\\'")}','insult')">${s.insult}</button>`
                       : badge(0,'bg-slate-100 text-slate-400')}
                   </td>
                   <td class="p-3 text-center">
-                    <button class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-teal-100 text-teal-700 hover:bg-teal-200 cursor-pointer transition-colors" onclick="HisobotPage.showShifokorBemorlar('${esc(s.fio).replace(/'/g,"\\'")}','jami')">${s.infarkt+s.insult}</button>
+                    <button class="px-2 py-0.5 rounded-full text-xs font-bold bg-teal-100 text-teal-700 hover:bg-teal-200 cursor-pointer transition-colors" onclick="HisobotPage.showShifokorBemorlar('${esc(s.fio).replace(/'/g,"\\'")}','jami')">${s.infarkt+s.insult}</button>
                   </td>
                   <td class="p-3 text-center">${badge(s.chiqarildi,'bg-green-100 text-green-700')}</td>
                   <td class="p-3 text-center">${badge(s.vafot, s.vafot>0?'bg-red-100 text-red-700':'bg-slate-100 text-slate-400')}</td>
@@ -2357,7 +2357,7 @@ const HisobotPage = {
         <td style="padding:10px 14px;color:#475569">${esc(t('dashboard.ageYears', { age }))} · ${esc(I18n.translateText(p.jins || '—'))}</td>
         <td style="padding:10px 14px;color:#475569;font-size:12px">${esc(I18n.translateText(p.viloyat || '—'))}</td>
         <td style="padding:10px 14px;font-size:12px;color:#475569">${Utils.formatDate(p.qabul_vaqt)}</td>
-        <td style="padding:10px 14px"><span style="background:${sc}20;color:${sc};font-size:11px;font-weight:800;padding:3px 10px;border-radius:8px;text-transform:uppercase">${esc(({ active: t('status.active'), chiqarildi: t('status.discharged'), vafot: t('status.dead'), otkazildi: t('status.transferred') })[p.status] || p.status || '—')}</span></td>
+        <td style="padding:10px 14px"><span style="background:${sc}20;color:${sc};font-size:12px;font-weight:800;padding:3px 10px;border-radius:8px;text-transform:uppercase">${esc(({ active: t('status.active'), chiqarildi: t('status.discharged'), vafot: t('status.dead'), otkazildi: t('status.transferred') })[p.status] || p.status || '—')}</span></td>
       </tr>`;
     }).join('');
 
@@ -2377,12 +2377,12 @@ const HisobotPage = {
           <table style="width:100%;border-collapse:collapse">
             <thead style="position:sticky;top:0;background:#f8fafc">
               <tr style="border-bottom:2px solid #e2e8f0">
-                <th style="padding:12px 14px;text-align:left;font-size:11px;color:#64748b;text-transform:uppercase;font-weight:800">K/T No</th>
-                <th style="padding:12px 14px;text-align:left;font-size:11px;color:#64748b;text-transform:uppercase;font-weight:800">F.I.O</th>
-                <th style="padding:12px 14px;text-align:left;font-size:11px;color:#64748b;text-transform:uppercase;font-weight:800">Yosh / Jins</th>
-                <th style="padding:12px 14px;text-align:left;font-size:11px;color:#64748b;text-transform:uppercase;font-weight:800">Viloyat</th>
-                <th style="padding:12px 14px;text-align:left;font-size:11px;color:#64748b;text-transform:uppercase;font-weight:800">Qabul</th>
-                <th style="padding:12px 14px;text-align:left;font-size:11px;color:#64748b;text-transform:uppercase;font-weight:800">Holat</th>
+                <th style="padding:12px 14px;text-align:left;font-size:12px;color:#64748b;text-transform:uppercase;font-weight:800">K/T No</th>
+                <th style="padding:12px 14px;text-align:left;font-size:12px;color:#64748b;text-transform:uppercase;font-weight:800">F.I.O</th>
+                <th style="padding:12px 14px;text-align:left;font-size:12px;color:#64748b;text-transform:uppercase;font-weight:800">Yosh / Jins</th>
+                <th style="padding:12px 14px;text-align:left;font-size:12px;color:#64748b;text-transform:uppercase;font-weight:800">Viloyat</th>
+                <th style="padding:12px 14px;text-align:left;font-size:12px;color:#64748b;text-transform:uppercase;font-weight:800">Qabul</th>
+                <th style="padding:12px 14px;text-align:left;font-size:12px;color:#64748b;text-transform:uppercase;font-weight:800">Holat</th>
               </tr>
             </thead>
             <tbody>${rows || '<tr><td colspan="6" style="padding:40px;text-align:center;color:#94a3b8">Bemor topilmadi</td></tr>'}</tbody>
@@ -2415,10 +2415,10 @@ const HisobotPage = {
         ? (p.infarkt_turi || '—')
         : (p.insult_turi || '—');
       const muolaja = p.muolaja_turi || '—';
-      const status = p.status === 'active' ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-green-100 text-green-700">Aktiv</span>`
-        : p.status === 'vafot' ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-100 text-red-700">Vafot</span>`
-        : p.status === 'chiqarildi' ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-700">Davolandi</span>`
-        : `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-500">${esc(p.status||'—')}</span>`;
+      const status = p.status === 'active' ? `<span class="px-2 py-0.5 rounded-full text-xs font-bold bg-green-100 text-green-700">Aktiv</span>`
+        : p.status === 'vafot' ? `<span class="px-2 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-700">Vafot</span>`
+        : p.status === 'chiqarildi' ? `<span class="px-2 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-700">Davolandi</span>`
+        : `<span class="px-2 py-0.5 rounded-full text-xs font-bold bg-slate-100 text-slate-500">${esc(p.status||'—')}</span>`;
       return `<tr class="${i%2===0?'bg-white':'bg-slate-50'}">
         <td class="p-3 text-slate-400 text-xs">${i+1}</td>
         <td class="p-3 font-mono text-xs text-slate-400">${esc(p.kt_no||'')}</td>
@@ -2440,12 +2440,12 @@ const HisobotPage = {
             <h3 class="font-bold text-slate-800 flex items-center gap-2">${icon('stethoscope',20)} ${esc(sh.fio)}</h3>
             <p class="text-xs text-slate-500 mt-0.5">${esc(I18n.translateText(sh.viloyat))} · <span class="${color} font-semibold">${title} — ${t('report.patientCountShort', {count: bemorlar.length})}</span></p>
           </div>
-          <button onclick="this.closest('.fixed').remove()" class="p-2 hover:bg-teal-100 rounded-xl transition-colors">${icon('x',20)}</button>
+          <button onclick="this.closest('.fixed').remove()" aria-label="${t('common.close')}" class="p-2 hover:bg-teal-100 rounded-xl transition-colors">${icon('x',20)}</button>
         </div>
         <div class="overflow-auto flex-1">
           <table class="w-full text-sm">
             <thead class="sticky top-0 bg-slate-50 z-10">
-              <tr class="text-[11px] font-bold text-slate-500 uppercase">
+              <tr class="text-xs font-bold text-slate-500 uppercase">
                 <th class="p-3 text-left border-b border-slate-100">#</th>
                 <th class="p-3 text-left border-b border-slate-100">K/T No</th>
                 <th class="p-3 text-left border-b border-slate-100">F.I.Sh</th>
@@ -2519,8 +2519,8 @@ const HisobotPage = {
 
     const row = (label, val, davol = null, vafot = null) => `<tr>
       <td style="padding:6px 10px;border-bottom:1px solid #e2e8f0;color:#334155">${label}</td>
-      ${davol !== null ? `<td style="padding:6px 10px;border-bottom:1px solid #e2e8f0;color:#16a34a;font-size:11px">${davol} davolandi</td>` : '<td></td>'}
-      ${vafot !== null ? `<td style="padding:6px 10px;border-bottom:1px solid #e2e8f0;color:#dc2626;font-size:11px">${vafot} vafot</td>` : '<td></td>'}
+      ${davol !== null ? `<td style="padding:6px 10px;border-bottom:1px solid #e2e8f0;color:#16a34a;font-size:12px">${davol} davolandi</td>` : '<td></td>'}
+      ${vafot !== null ? `<td style="padding:6px 10px;border-bottom:1px solid #e2e8f0;color:#dc2626;font-size:12px">${vafot} vafot</td>` : '<td></td>'}
       <td style="padding:6px 10px;border-bottom:1px solid #e2e8f0;font-weight:700;text-align:right">${val}</td>
     </tr>`;
     const w = window.open('','_blank');
@@ -2539,8 +2539,8 @@ const HisobotPage = {
   .summary{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:20px}
   .stat{border:1px solid #e2e8f0;border-radius:10px;padding:12px 18px;text-align:center;min-width:120px}
   .stat-num{font-size:26px;font-weight:900;color:#1e3a8a}
-  .stat-lbl{font-size:11px;color:#64748b;margin-top:2px}
-  .footer{margin-top:20px;font-size:11px;color:#94a3b8;border-top:1px solid #e2e8f0;padding-top:10px}
+  .stat-lbl{font-size:12px;color:#64748b;margin-top:2px}
+  .footer{margin-top:20px;font-size:12px;color:#94a3b8;border-top:1px solid #e2e8f0;padding-top:10px}
   @media print{body{margin:10px}}
 </style></head><body>
 <h1>Statistik Hisobot</h1>

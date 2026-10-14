@@ -164,7 +164,7 @@ const MarshrutPage = {
         <div>
           <div class="stat-value" style="color:${color}">${value}</div>
           <div class="stat-label">${esc(label)}</div>
-          <div style="font-size:11px;color:#94a3b8;margin-top:2px">${esc(hint)}</div>
+          <div style="font-size:12px;color:#94a3b8;margin-top:2px">${esc(hint)}</div>
         </div>
       </div>`;
   },

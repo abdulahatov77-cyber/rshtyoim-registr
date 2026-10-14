@@ -62,7 +62,7 @@ const InsultReyestriPage = {
     let html = `
       <div class="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div class="flex items-center gap-4">
-          ${this._viloyat && (this._profile?.role === 'admin' || this._profile?.role === 'super_admin') ? `<button class="p-2 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors shadow-sm" onclick="InsultReyestriPage.goBack()">${icon('arrow-left', 20)}</button>` : ''}
+          ${this._viloyat && (this._profile?.role === 'admin' || this._profile?.role === 'super_admin') ? `<button class="p-2 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors shadow-sm" onclick="InsultReyestriPage.goBack()" aria-label="${t('common.back')}">${icon('arrow-left', 20)}</button>` : ''}
           <div>
             <h2 class="text-xl font-black text-slate-800 leading-none">${title}</h2>
             <p class="text-xs font-bold text-slate-400 uppercase mt-1">Insult patologiyasi bo'yicha</p>
@@ -83,13 +83,13 @@ const InsultReyestriPage = {
           <table class="w-full border-collapse">
             <thead>
               <tr class="bg-slate-50/50 border-b border-slate-100">
-                <th class="px-6 py-5 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">${this._viloyat ? 'Muassasa' : 'Viloyat'}</th>
-                <th class="px-6 py-5 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest">Jami</th>
-                <th class="px-6 py-5 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest">Aktiv</th>
-                <th class="px-6 py-5 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest">Vafot</th>
-                <th class="px-6 py-5 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest">Chiqarildi</th>
-                <th class="px-6 py-5 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest">O'tkazildi</th>
-                <th class="px-6 py-5 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest">O'lim %</th>
+                <th class="px-6 py-5 text-left text-xs font-black text-slate-400 uppercase tracking-widest">${this._viloyat ? 'Muassasa' : 'Viloyat'}</th>
+                <th class="px-6 py-5 text-center text-xs font-black text-slate-400 uppercase tracking-widest">Jami</th>
+                <th class="px-6 py-5 text-center text-xs font-black text-slate-400 uppercase tracking-widest">Aktiv</th>
+                <th class="px-6 py-5 text-center text-xs font-black text-slate-400 uppercase tracking-widest">Vafot</th>
+                <th class="px-6 py-5 text-center text-xs font-black text-slate-400 uppercase tracking-widest">Chiqarildi</th>
+                <th class="px-6 py-5 text-center text-xs font-black text-slate-400 uppercase tracking-widest">O'tkazildi</th>
+                <th class="px-6 py-5 text-center text-xs font-black text-slate-400 uppercase tracking-widest">O'lim %</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-slate-50">
@@ -108,23 +108,23 @@ const InsultReyestriPage = {
                     </td>
                     <td class="px-6 py-5 text-center font-black text-slate-900">${r.jami}</td>
                     <td class="px-6 py-5 text-center">
-                      <span class="px-2.5 py-1 bg-green-50 text-green-600 rounded-lg text-[10px] font-black uppercase tracking-wider border border-green-100 hover:bg-green-100 transition-colors" onclick="event.stopPropagation(); InsultReyestriPage._badgeClick(this,'active')">${r.aktiv}</span>
+                      <span class="px-2.5 py-1 bg-green-50 text-green-600 rounded-lg text-xs font-black uppercase tracking-wider border border-green-100 hover:bg-green-100 transition-colors" onclick="event.stopPropagation(); InsultReyestriPage._badgeClick(this,'active')">${r.aktiv}</span>
                     </td>
                     <td class="px-6 py-5 text-center">
-                      <span class="px-2.5 py-1 bg-red-50 text-red-600 rounded-lg text-[10px] font-black uppercase tracking-wider border border-red-100 hover:bg-red-100 transition-colors" onclick="event.stopPropagation(); InsultReyestriPage._badgeClick(this,'vafot')">${r.vafot}</span>
+                      <span class="px-2.5 py-1 bg-red-50 text-red-600 rounded-lg text-xs font-black uppercase tracking-wider border border-red-100 hover:bg-red-100 transition-colors" onclick="event.stopPropagation(); InsultReyestriPage._badgeClick(this,'vafot')">${r.vafot}</span>
                     </td>
                     <td class="px-6 py-5 text-center">
-                      <span class="px-2.5 py-1 bg-blue-50 text-blue-600 rounded-lg text-[10px] font-black uppercase tracking-wider border border-blue-100 hover:bg-blue-100 transition-colors" onclick="event.stopPropagation(); InsultReyestriPage._badgeClick(this,'chiqarildi')">${r.chiqarildi}</span>
+                      <span class="px-2.5 py-1 bg-blue-50 text-blue-600 rounded-lg text-xs font-black uppercase tracking-wider border border-blue-100 hover:bg-blue-100 transition-colors" onclick="event.stopPropagation(); InsultReyestriPage._badgeClick(this,'chiqarildi')">${r.chiqarildi}</span>
                     </td>
                     <td class="px-6 py-5 text-center">
-                      <span class="px-2.5 py-1 bg-amber-50 text-amber-600 rounded-lg text-[10px] font-black uppercase tracking-wider border border-amber-100 hover:bg-amber-100 transition-colors" onclick="event.stopPropagation(); InsultReyestriPage._badgeClick(this,'otkazildi')">${r.otkazildi}</span>
+                      <span class="px-2.5 py-1 bg-amber-50 text-amber-600 rounded-lg text-xs font-black uppercase tracking-wider border border-amber-100 hover:bg-amber-100 transition-colors" onclick="event.stopPropagation(); InsultReyestriPage._badgeClick(this,'otkazildi')">${r.otkazildi}</span>
                     </td>
                     <td class="px-6 py-5 text-center">
                       <div class="flex items-center justify-center gap-3">
                         <div class="w-12 h-1.5 bg-slate-100 rounded-full overflow-hidden">
                           <div class="h-full bg-red-500" style="width: ${mortality}%"></div>
                         </div>
-                        <span class="text-[11px] font-black text-red-600">${mortality}%</span>
+                        <span class="text-xs font-black text-red-600">${mortality}%</span>
                       </div>
                     </td>
                   </tr>

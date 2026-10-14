@@ -6,6 +6,133 @@ function initIcons() {
   if (window.lucide) lucide.createIcons();
 }
 
+// Toast va matnli xabarlar boshidagi holat emojisi (⚠️ ✅ ❌ …) — toastda
+// o'z ikonkasi bor, emoji takror bo'ladi va qurilmaga qarab har xil chiqadi.
+function stripStatusEmoji(text) {
+  return String(text ?? '').replace(/^(?:[✅❌⚠✔✖ℹ\u{1F6AB}\u{1F534}\u{1F7E2}\u{1F7E1}]️?\s*)+/u, '');
+}
+
+// ==================== EMOJI → IKONKA ====================
+// Matnlarda (tarjimalar, shablonlar) ~700 ta emoji bor; ular Windows/Android/iOS
+// da har xil chiqadi va ekran o'quvchida "check mark button" deb o'qiladi.
+// Satrlarni o'zgartirmasdan, chizilgan DOM dagi emojini Lucide ikonkaga
+// almashtiramiz. Telegram/Excel matnlari DOM ga tushmaydi — ular emoji bilan qoladi.
+const Emoji = {
+  MAP: {
+    '⚠':'alert-triangle', '✅':'check-circle', '❌':'x-circle', '✔':'check', '✖':'x', '✕':'x',
+    '📊':'bar-chart-3', '🧠':'brain', '🚑':'ambulance', '📋':'clipboard-list', '🫀':'heart-pulse',
+    '❤':'heart', '🧮':'calculator', '🚫':'ban', '👤':'user', '👥':'users', '🔄':'refresh-cw',
+    '➕':'plus', '🗑':'trash-2', '🛡':'shield', '🏥':'hospital', '👨':'user', '💊':'pill',
+    '⏱':'timer', '⏳':'hourglass', '🕐':'clock', '⏰':'alarm-clock', '💡':'lightbulb', '❓':'help-circle',
+    'ℹ':'info', '👑':'crown', '🚪':'log-out', '📤':'upload', '📥':'download', '👁':'eye',
+    '🔍':'search', '📍':'map-pin', '🗺':'map', '📅':'calendar', '📆':'calendar', '📈':'trending-up',
+    '📉':'trending-down', '🔒':'lock', '🔑':'key', '✏':'pencil', '📝':'file-pen', '📄':'file-text',
+    '📁':'folder', '💾':'save', '🔔':'bell', '📞':'phone', '📱':'smartphone', '✉':'mail', '💬':'message-square',
+    '⭐':'star', '🎯':'target', '⚡':'zap', '🔥':'flame', '🩺':'stethoscope', '💉':'syringe',
+    '🧪':'flask-conical', '🩸':'droplet', '⚙':'settings', '🔧':'wrench', '🏠':'home', '🚨':'siren',
+    '🔴':'●danger', '🟢':'●success', '🟡':'●warning', '🟠':'●warning', '🔵':'●info', '⚪':'●muted'
+  },
+  DOT: { danger:'#dc2626', success:'#16a34a', warning:'#d97706', info:'#2563eb', muted:'#94a3b8' },
+  RE: /(\p{Extended_Pictographic})️?(?:‍\p{Extended_Pictographic}️?)*\s?/u,
+  _pending: false,
+  _icon(ch) {
+    const name = Emoji.MAP[ch];
+    if (!name) return null;
+    const i = document.createElement('i');
+    i.setAttribute('aria-hidden', 'true');
+    i.className = 'emo-ico';
+    if (name.startsWith('●')) {
+      i.className = 'emo-dot';
+      i.style.background = Emoji.DOT[name.slice(1)];
+      return i;
+    }
+    i.setAttribute('data-lucide', name);
+    return i;
+  },
+  convert(root) {
+    if (!root || (root.nodeType !== 1 && root.nodeType !== 3)) return;
+    const host = root.nodeType === 1 ? root : root.parentElement;
+    if (!host || host.closest('option,select,textarea,script,style,[contenteditable="true"]')) return;
+    const nodes = [];
+    if (root.nodeType === 3) nodes.push(root);
+    else {
+      const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+        acceptNode: n => Emoji.RE.test(n.data) && !n.parentElement?.closest('option,select,textarea,script,style')
+          ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT
+      });
+      while (w.nextNode()) nodes.push(w.currentNode);
+    }
+    let made = false;
+    for (const n of nodes) {
+      if (!n.parentNode || !Emoji.RE.test(n.data)) continue;
+      const frag = document.createDocumentFragment();
+      let rest = n.data, m, here = false;
+      while ((m = rest.match(Emoji.RE))) {
+        const ico = Emoji._icon(m[1]);
+        if (!ico) { frag.append(rest.slice(0, m.index + m[0].length)); rest = rest.slice(m.index + m[0].length); continue; }
+        if (m.index) frag.append(rest.slice(0, m.index));
+        frag.append(ico, ' ');
+        rest = rest.slice(m.index + m[0].length);
+        here = true;
+      }
+      // Faqat ro'yxatdagi emoji bo'lsa qayta yozamiz — aks holda observer
+      // shu tugunni yana ko'rib, cheksiz aylanib qoladi.
+      if (!here) continue;
+      if (rest) frag.append(rest);
+      n.parentNode.replaceChild(frag, n);
+      made = true;
+    }
+    // <option> ichida ikonka bo'lmaydi — boshidagi emojini olib tashlaymiz
+    if (root.nodeType === 1) root.querySelectorAll('option').forEach(o => {
+      const clean = o.text.replace(/^(?:\p{Extended_Pictographic}️?\s*)+/u, '');
+      if (clean !== o.text) o.text = clean;
+    });
+    if (made && !Emoji._pending && window.lucide) {
+      Emoji._pending = true;
+      requestAnimationFrame(() => { Emoji._pending = false; lucide.createIcons(); });
+    }
+  }
+};
+
+// ==================== KLAVIATURA (accessibility) ====================
+// onclick li <tr>/<div>/<span> lar sichqonchasiz ochilmasdi. Ularga Tab bilan
+// o'tish va Enter/Space bilan bosishni global qo'shamiz — har sahifani alohida
+// o'zgartirmasdan. Fon qatlamlari va faqat stopPropagation qiluvchilar chetda.
+const A11y = {
+  _skip(el) {
+    const h = el.getAttribute('onclick') || '';
+    return el.matches('button,a,input,select,textarea,label,summary,.modal-overlay,#sidebar-overlay')
+      || /^\s*event\.stopPropagation\(\);?\s*$/.test(h);
+  },
+  mark(root) {
+    if (!root || root.nodeType !== 1) return;
+    const list = root.matches('[onclick]') ? [root] : [];
+    list.push(...root.querySelectorAll('[onclick]'));
+    for (const el of list) {
+      if (el.hasAttribute('tabindex') || A11y._skip(el)) continue;
+      el.tabIndex = 0;
+      if (el.tagName !== 'TR') el.setAttribute('role', 'button');
+      el.classList.add('kbd-click');
+    }
+  },
+  init() {
+    Emoji.convert(document.body);
+    document.addEventListener('keydown', e => {
+      const el = e.target;
+      if ((e.key === 'Enter' || e.key === ' ') && el?.classList?.contains('kbd-click')) {
+        e.preventDefault();
+        el.click();
+      }
+    });
+    A11y.mark(document.body);
+    new MutationObserver(ms => {
+      for (const m of ms) for (const n of m.addedNodes) { A11y.mark(n); Emoji.convert(n); }
+    }).observe(document.body, { childList: true, subtree: true });
+  }
+};
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', A11y.init);
+else A11y.init();
+
 // ==================== GLOBAL HELPERS ====================
 function showToast(msg, type = 'info', duration = 4000) {
   const container = document.getElementById('toast-container');
@@ -20,14 +147,14 @@ function showToast(msg, type = 'info', duration = 4000) {
   el.className = `toast toast-${type}`;
   let color = 'var(--color-blue)';
   if (type === 'success') color = 'var(--color-green)';
-  if (type === 'error') color = 'var(--color-infarkt)';
+  if (type === 'error') color = 'var(--color-danger)';
   if (type === 'warning') color = '#F59E0B';
   el.style.borderLeftColor = color;
   const looksTechnical = /duplicate key|unique constraint|sqlstate|pgrst|postgrest|schema cache|jwt|fetch failed|networkerror|typeerror|undefined is not/i.test(String(msg));
-  const localizedMessage = window.I18n
+  const localizedMessage = stripStatusEmoji(window.I18n
     ? (type === 'error' && looksTechnical ? I18n.friendlyError(msg) : I18n.translateText(msg))
-    : msg;
-  el.innerHTML = `<span style="color:${color}">${icon(icons[type]||'info', 20)}</span> <span>${esc(localizedMessage)}</span> <span style="cursor:pointer;margin-left:8px;opacity:0.5" onclick="this.parentElement.remove()">✕</span>`;
+    : msg);
+  el.innerHTML = `<span style="color:${color}">${icon(icons[type]||'info', 20)}</span> <span>${esc(localizedMessage)}</span> <button type="button" class="toast-close" aria-label="${window.t ? t('common.close') : 'Yopish'}" onclick="this.parentElement.remove()">${icon('x', 16)}</button>`;
   container.appendChild(el);
   setTimeout(() => { el.style.animation = 'slideInRight 0.3s ease reverse'; setTimeout(() => el.remove(), 300); }, duration);
   initIcons();
@@ -81,7 +208,7 @@ function reperfuziyaSababSora(nomi, oyna) {
             <option value="">— ${t('form.selectReason')} —</option>
             ${DB.REPERFUZIYA_SABABLARI.map(s => `<option value="${esc(s)}">${esc(s)}</option>`).join('')}
           </select>
-          <p style="font-size:11px;color:#94a3b8;margin-top:8px">
+          <p style="font-size:12px;color:#94a3b8;margin-top:8px">
             Bu ma'lumot respublika bo'yicha jamlanadi va reperfuziya qamrovini
             oshirish choralarini belgilashda ishlatiladi.
           </p>
@@ -233,7 +360,7 @@ const Components = {
       if (item.writeOnly && isRahbar) return;
 
       if (item.section && item.section !== currentSection) {
-        menuHtml += `<p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-6 mt-6 mb-2">${item.section}</p>`;
+        menuHtml += `<p class="text-xs font-bold text-slate-400 uppercase tracking-widest px-6 mt-6 mb-2">${item.section}</p>`;
         currentSection = item.section;
       }
       
@@ -256,7 +383,7 @@ const Components = {
           </div>
           <div>
             <div class="text-sm font-black text-slate-800 leading-none">INFARKT & INSULT</div>
-            <div class="text-[10px] font-bold text-blue-600 tracking-tighter mt-1 uppercase">Reyestri platformasi</div>
+            <div class="text-xs font-bold text-blue-600 tracking-tighter mt-1 uppercase">Reyestri platformasi</div>
           </div>
         </div>
 
@@ -269,8 +396,8 @@ const Components = {
           <button onclick="Components.showFeedbackModal()" class="w-full mb-3 flex items-center gap-2 px-3 py-2.5 bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-700 rounded-xl text-xs font-bold transition-all group">
             <span class="w-6 h-6 bg-amber-100 group-hover:bg-amber-200 rounded-lg flex items-center justify-center flex-shrink-0">${icon('message-circle', 14)}</span>
             <span>${t('nav.feedback')}</span>
-            <span id="sidebar-unread-badge" style="display:none;background:#ef4444;color:white;font-size:10px;font-weight:800;border-radius:999px;padding:1px 6px;margin-left:auto;line-height:16px"></span>
-            <span id="sidebar-reply-badge" style="display:none;background:#16a34a;color:white;font-size:10px;font-weight:800;border-radius:999px;padding:1px 7px;margin-left:auto;line-height:16px">Javob ✓</span>
+            <span id="sidebar-unread-badge" style="display:none;background:#ef4444;color:white;font-size:12px;font-weight:800;border-radius:999px;padding:1px 6px;margin-left:auto;line-height:16px"></span>
+            <span id="sidebar-reply-badge" style="display:none;background:#16a34a;color:white;font-size:12px;font-weight:800;border-radius:999px;padding:1px 7px;margin-left:auto;line-height:16px">Javob ✓</span>
             ${icon('chevron-right', 14, 'ml-auto opacity-50')}
           </button>
           <div class="bg-slate-50 rounded-xl p-3 flex items-center gap-3 border border-slate-100">
@@ -278,7 +405,7 @@ const Components = {
                  style="background: ${isSuperAdmin ? 'linear-gradient(135deg,#7c3aed,#4f46e5)' : isAdmin ? 'linear-gradient(135deg,#0ea5e9,#2563eb)' : '#2563eb'}">${initials}</div>
             <div class="flex-1 min-w-0">
               <p class="text-xs font-bold text-slate-800 truncate">${esc(displayName)}</p>
-              <p class="text-[10px] font-medium text-slate-500 uppercase">${roleLabel}</p>
+              <p class="text-xs font-medium text-slate-500 uppercase">${roleLabel}</p>
             </div>
             <button class="text-slate-400 hover:text-red-500 transition-colors" onclick="App.logout()">
               ${icon('log-out', 16)}
@@ -314,13 +441,13 @@ const Components = {
           ${window.I18n ? I18n.renderSwitcher(true) : ''}
           <div class="hidden sm:flex flex-col items-end mr-2">
             <span id="top-clock" class="text-sm font-black text-slate-800 tracking-wider">--:--:--</span>
-            <span class="text-[9px] font-bold text-blue-600 uppercase">Real-time monitoring</span>
+            <span class="text-xs font-bold text-blue-600 uppercase">Real-time monitoring</span>
           </div>
 
           <div class="relative" id="notif-wrapper">
             <button class="relative w-10 h-10 flex items-center justify-center text-slate-500 hover:bg-slate-50 rounded-full transition-colors" onclick="Notifications.toggle()" aria-label="${t('common.notifications')}">
               ${icon('bell', 20)}
-              <span id="notif-badge" class="hidden absolute top-2 right-2 w-4 h-4 bg-red-500 text-white text-[9px] font-bold flex items-center justify-center rounded-full border-2 border-white">0</span>
+              <span id="notif-badge" class="hidden absolute top-2 right-2 w-4 h-4 bg-red-500 text-white text-xs font-bold flex items-center justify-center rounded-full border-2 border-white">0</span>
             </button>
             <div id="notif-dropdown" class="hidden absolute right-0 top-12 w-80 bg-white rounded-2xl shadow-xl border border-slate-200 z-50 overflow-hidden">
               <div class="p-5 text-center text-slate-400">
@@ -383,12 +510,12 @@ const Components = {
                   ${data.map(r => `
                     <div style="border:1px solid ${r.javob ? '#bbf7d0' : '#e2e8f0'};border-radius:12px;padding:12px;background:${r.javob ? '#f0fdf4' : '#f8fafc'}">
                       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-                        <span style="font-size:11px;font-weight:700;color:#64748b">${r.tur} · ${fmtDate(r.created_at)}</span>
-                        ${r.javob ? '<span style="font-size:10px;font-weight:800;background:#16a34a;color:white;border-radius:999px;padding:2px 8px">Javob keldi ✓</span>' : '<span style="font-size:10px;font-weight:700;color:#94a3b8">Kutilmoqda...</span>'}
+                        <span style="font-size:12px;font-weight:700;color:#64748b">${r.tur} · ${fmtDate(r.created_at)}</span>
+                        ${r.javob ? '<span style="font-size:12px;font-weight:800;background:#16a34a;color:white;border-radius:999px;padding:2px 8px">Javob keldi ✓</span>' : '<span style="font-size:12px;font-weight:700;color:#94a3b8">Kutilmoqda...</span>'}
                       </div>
                       <p style="font-size:13px;color:#334155;margin:0 0 8px">${esc(r.xabar)}</p>
                       ${r.javob ? `<div style="background:#dcfce7;border-radius:8px;padding:8px 10px;margin-top:4px">
-                        <p style="font-size:11px;font-weight:700;color:#15803d;margin:0 0 4px">Admin javobi · ${fmtDate(r.javob_vaqt)}</p>
+                        <p style="font-size:12px;font-weight:700;color:#15803d;margin:0 0 4px">Admin javobi · ${fmtDate(r.javob_vaqt)}</p>
                         <p style="font-size:13px;color:#166534;margin:0">${esc(r.javob)}</p>
                       </div>` : ''}
                     </div>
@@ -427,7 +554,7 @@ const Components = {
             <textarea id="fb-text" rows="4" placeholder="${t('feedback.placeholder')}"
               class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"></textarea>
           </div>
-          <p class="text-[11px] text-slate-400">Yuboruvchi: <b>${sender}</b> · ${viloyat} · ${role}</p>
+          <p class="text-xs text-slate-400">Yuboruvchi: <b>${sender}</b> · ${viloyat} · ${role}</p>
           ${historyHtml}
         </div>
       `,
@@ -552,7 +679,7 @@ const Components = {
           <div class="w-7 h-7 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-xs sm:text-sm font-bold border-2 mb-1 sm:mb-2 transition-all ${isActive ? 'bg-blue-600 text-white border-blue-600 shadow-md ring-2 sm:ring-4 ring-blue-100' : isDone ? 'bg-green-500 text-white border-green-500' : 'bg-white text-gray-400 border-gray-300'}">
             ${isDone ? icon('check', 14) : (i + 1)}
           </div>
-          <span class="text-[10px] sm:text-xs text-center ${clr} leading-tight">${st}</span>
+          <span class="text-xs sm:text-xs text-center ${clr} leading-tight">${st}</span>
         </div>
       `;
     });
@@ -735,7 +862,7 @@ const Notifications = {
                 </div>
                 <p class="text-sm text-slate-700 truncate font-medium">${n.body}</p>
                 ${n.sub ? `<p class="text-xs text-slate-400 truncate">${n.sub}</p>` : ''}
-                <p class="text-[10px] text-slate-400 mt-1">${Utils.relativeTime(n.time)}</p>
+                <p class="text-xs text-slate-400 mt-1">${Utils.relativeTime(n.time)}</p>
               </div>
             </div>`;
         }).join('');

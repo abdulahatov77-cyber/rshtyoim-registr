@@ -220,17 +220,17 @@ const Utils = {
       otkazildi: ['bg-orange-50 text-orange-700 border-orange-100', 'share-2', 'O\'tkazildi']
     };
     const [cls, ic, label] = map[status] || ['bg-slate-50 text-slate-500 border-slate-100', 'help-circle', status];
-    return `<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border ${cls} text-[10px] font-bold uppercase tracking-wider shadow-sm">
+    return `<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border ${cls} text-xs font-bold uppercase tracking-wider shadow-sm">
       <i data-lucide="${ic}" class="w-3 h-3"></i> ${label}
     </span>`;
   },
 
   // Type badge
   typeBadge(type) {
-    if (type === 'infarkt') return `<span class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-red-50 text-red-700 border border-red-100 rounded-lg text-[10px] font-bold uppercase tracking-wider">
+    if (type === 'infarkt') return `<span class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-red-50 text-red-700 border border-red-100 rounded-lg text-xs font-bold uppercase tracking-wider">
       <i data-lucide="heart" class="w-3 h-3"></i> Infarkt
     </span>`;
-    return `<span class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-blue-50 text-blue-700 border border-blue-100 rounded-lg text-[10px] font-bold uppercase tracking-wider">
+    return `<span class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-violet-50 text-violet-700 border border-violet-100 rounded-lg text-xs font-bold uppercase tracking-wider">
       <i data-lucide="brain" class="w-3 h-3"></i> Insult
     </span>`;
   },

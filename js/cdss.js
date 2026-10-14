@@ -720,7 +720,7 @@
     + '.cdss-body{padding:14px}'
     + '.cdss-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}'
     + '.cdss-ball{border:1px solid #e5e7eb;border-left-width:4px;border-radius:8px;padding:8px 10px;background:#fff}'
-    + '.cdss-ball b{display:block;font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:.04em;font-weight:600}'
+    + '.cdss-ball b{display:block;font-size:12px;color:#6b7280;text-transform:uppercase;letter-spacing:.04em;font-weight:600}'
     + '.cdss-ball s{display:block;text-decoration:none;font-size:18px;font-weight:700;margin:2px 0}'
     + '.cdss-ball i{font-style:normal;font-size:12px;color:#4b5563}'
     + '.cdss-xul{margin-top:14px;padding:12px 14px;border-radius:8px;border-left:4px solid;background:#f9fafb}'
@@ -851,7 +851,7 @@
       r.ogohlantirish.forEach(function (x) { h += '<div>⚠️ ' + esc(display(x)) + '</div>'; });
       h += '</div>';
     }
-    h += '<div style="margin-top:12px;font-size:11px;color:#6b7280">' + esc(tr('cdss.disclaimer', 'Tavsiyalar milliy klinik protokol asosida avtomatik shakllantirildi (CDSS v' + r.versiya + '). Yakuniy qarorni davolovchi shifokor qabul qiladi.', { version: r.versiya })) + '</div>';
+    h += '<div style="margin-top:12px;font-size:12px;color:#6b7280">' + esc(tr('cdss.disclaimer', 'Tavsiyalar milliy klinik protokol asosida avtomatik shakllantirildi (CDSS v' + r.versiya + '). Yakuniy qarorni davolovchi shifokor qabul qiladi.', { version: r.versiya })) + '</div>';
     h += '</div></div></div>';
     return h;
   }

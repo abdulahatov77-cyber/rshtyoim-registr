@@ -84,12 +84,12 @@ const InfarktYangiPage = {
                 ${icon(sectionIcons[step], 24)}
               </div>
               <div>
-                <p class="text-[10px] font-black text-red-600 uppercase tracking-widest mb-0.5">${t('wizard.section', { current: step + 1, total: 4 })}</p>
+                <p class="text-xs font-black text-red-600 uppercase tracking-widest mb-0.5">${t('wizard.section', { current: step + 1, total: 4 })}</p>
                 <h3 class="text-base sm:text-xl font-black text-slate-800 tracking-tight">${sectionTitles[step]}</h3>
               </div>
             </div>
             <div class="hidden sm:block text-right">
-              <div class="text-[10px] font-bold text-slate-400 uppercase mb-1">${t('wizard.completion')}</div>
+              <div class="text-xs font-bold text-slate-400 uppercase mb-1">${t('wizard.completion')}</div>
               <div class="w-32 h-1.5 bg-slate-100 rounded-full overflow-hidden">
                 <div class="h-full bg-red-500" style="width: ${(step+1)/4*100}%"></div>
               </div>
@@ -219,11 +219,11 @@ const InfarktYangiPage = {
           return `<div class="flex items-center gap-2 text-xs py-1 border-b border-amber-100 last:border-0">
             <span class="font-bold text-amber-900">${esc(p.fio)}</span>
             <span class="text-amber-600">·</span>
-            <span class="px-1.5 py-0.5 rounded text-[10px] font-bold ${p._t==='Infarkt'?'bg-red-100 text-red-700':'bg-purple-100 text-purple-700'}">${esc(p._t)}</span>
+            <span class="px-1.5 py-0.5 rounded text-xs font-bold ${p._t==='Infarkt'?'bg-red-100 text-red-700':'bg-purple-100 text-purple-700'}">${esc(p._t)}</span>
             <span class="text-amber-600">·</span>
             <span class="text-amber-700">${esc(d)} sanasida yotgan</span>
             <span class="text-amber-400">·</span>
-            <span class="font-mono text-amber-500 text-[10px]">${esc(p.kt_no)}</span>
+            <span class="font-mono text-amber-500 text-xs">${esc(p.kt_no)}</span>
           </div>`;
         }).join('');
         warn.innerHTML = `
@@ -497,9 +497,9 @@ const InfarktYangiPage = {
             <span class="text-xs text-slate-400 whitespace-nowrap">mm Hg</span>
           </div>
           <div class="flex gap-2 mt-1">
-            <span class="flex-1 text-[10px] text-slate-400 text-center">Sistolik</span>
+            <span class="flex-1 text-xs text-slate-400 text-center">Sistolik</span>
             <span class="w-3"></span>
-            <span class="flex-1 text-[10px] text-slate-400 text-center">Diastolik</span>
+            <span class="flex-1 text-xs text-slate-400 text-center">Diastolik</span>
             <span class="w-12"></span>
           </div>`;
         })(),true)}
@@ -564,11 +564,11 @@ const InfarktYangiPage = {
           ${this.field('tlt_vaqt','TLT (trombolitik terapiya) o\'tkazilgan vaqt',`
             <div class="flex gap-2">
               <div class="flex-1">
-                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Sana *</label>
+                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Sana *</label>
                 <input id="tlt_sana" type="date" class="form-input w-full" max="${new Date(Date.now()+5*3600000).toISOString().slice(0,10)}" value="${d.tlt_vaqt?Utils.formatDateInput(d.tlt_vaqt).slice(0,10):''}" onchange="InfarktYangiPage.onVaqtChange('tlt_sana','tlt_soat','TLT vaqti')"/>
               </div>
               <div class="flex-1">
-                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Soat * (HH:MM)</label>
+                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Soat * (HH:MM)</label>
                 <input id="tlt_soat" type="time" class="form-input w-full" value="${d.tlt_vaqt?Utils.formatDateInput(d.tlt_vaqt).slice(11,16):''}" onchange="InfarktYangiPage.onVaqtChange('tlt_sana','tlt_soat','TLT vaqti')"/>
               </div>
             </div>`,true,'Door-to-needle mezonini hisoblash uchun')}
@@ -579,11 +579,11 @@ const InfarktYangiPage = {
           ${this.field('pci_vaqt', pciLabel, `
             <div class="flex gap-2">
               <div class="flex-1">
-                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Sana *</label>
+                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Sana *</label>
                 <input id="pci_sana" type="date" class="form-input w-full" max="${new Date(Date.now()+5*3600000).toISOString().slice(0,10)}" value="${d.pci_vaqt?Utils.formatDateInput(d.pci_vaqt).slice(0,10):''}" onchange="InfarktYangiPage.onVaqtChange('pci_sana','pci_soat','PCI/KAG vaqti')"/>
               </div>
               <div class="flex-1">
-                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Soat * (HH:MM)</label>
+                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Soat * (HH:MM)</label>
                 <input id="pci_soat" type="time" class="form-input w-full" value="${d.pci_vaqt?Utils.formatDateInput(d.pci_vaqt).slice(11,16):''}" onchange="InfarktYangiPage.onVaqtChange('pci_sana','pci_soat','PCI/KAG vaqti')"/>
               </div>
             </div>`,true,'Door-to-groin mezonini hisoblash uchun')}

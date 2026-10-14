@@ -373,10 +373,10 @@ const KengHisobotPage = {
           const c = k === 'i24p'  ? (p >= 20 ? '#b91c1c' : '#a16207')      // kech kelish — yomon
                   : idx === 0     ? (p >= 40 ? '#15803d' : p < 20 ? '#b91c1c' : '#0891b2')
                   : '#475569';                                            // oraliq — neytral
-          return `<div style="font-size:11px;color:#64748b">${nom}:
+          return `<div style="font-size:12px;color:#64748b">${nom}:
             <span style="color:${c};font-weight:700">${n} (${foiz(n, b.aniq)}%)</span></div>`;
         }).join('')}
-        ${b.vaqtsiz ? `<div style="font-size:10px;color:#a16207;margin-top:3px">vaqti aniqmas ${b.vaqtsiz}</div>` : ''}
+        ${b.vaqtsiz ? `<div style="font-size:12px;color:#a16207;margin-top:3px">vaqti aniqmas ${b.vaqtsiz}</div>` : ''}
       </td>`;
     };
 
@@ -398,10 +398,10 @@ const KengHisobotPage = {
         <div class="overflow-x-auto" style="max-height:70vh">
           <table class="w-full text-xs border-collapse" style="min-width:640px">
             <thead style="position:sticky;top:0;z-index:1"><tr>
-              <th style="background:#1e293b;color:#e2e8f0;padding:8px;text-align:left;font-size:10px">Viloyat</th>
-              <th style="background:#1e293b;color:#e2e8f0;padding:8px;text-align:left;font-size:10px">Muassasa</th>
+              <th style="background:#1e293b;color:#e2e8f0;padding:8px;text-align:left;font-size:12px">Viloyat</th>
+              <th style="background:#1e293b;color:#e2e8f0;padding:8px;text-align:left;font-size:12px">Muassasa</th>
               ${ustunlar.map(([, nom]) => `<th style="background:${rang};color:#fff;padding:8px;
-                font-size:11px;border-left:2px solid rgba(255,255,255,.25)">${nom}</th>`).join('')}
+                font-size:12px;border-left:2px solid rgba(255,255,255,.25)">${nom}</th>`).join('')}
             </tr></thead>
             <tbody>
               ${list.map((x, i) => `
@@ -507,7 +507,7 @@ const KengHisobotPage = {
         <div class="overflow-x-auto">
           <table class="w-full text-xs border-collapse">
             <thead><tr>${cols.map(c => `<th style="background:#1e293b;color:#e2e8f0;padding:7px;
-              font-size:10px;text-align:${c === 'Viloyat' ? 'left' : 'center'}">${esc(c)}</th>`).join('')}</tr></thead>
+              font-size:12px;text-align:${c === 'Viloyat' ? 'left' : 'center'}">${esc(c)}</th>`).join('')}</tr></thead>
             <tbody>
               ${rows.map((r, i) => `<tr style="background:${i % 2 ? '#fff' : '#f8fafc'}">
                 ${cols.map(c => {
@@ -595,12 +595,12 @@ const KengHisobotPage = {
             <thead style="position:sticky;top:0;z-index:2">
               <tr>
                 ${guruhlar.map(g => `<th colspan="${g[2].length}"
-                  style="background:${g[1]};color:#fff;padding:6px 8px;font-size:11px;text-align:center;
+                  style="background:${g[1]};color:#fff;padding:6px 8px;font-size:12px;text-align:center;
                          border-right:2px solid rgba(255,255,255,.3)">${esc(g[0])}</th>`).join('')}
               </tr>
               <tr>
                 ${ustunlar.map((u, i) => `<th style="background:#1e293b;color:#e2e8f0;padding:6px 6px;
-                  font-size:10px;font-weight:600;text-align:${u[2] === 't' ? 'left' : 'center'};
+                  font-size:12px;font-weight:600;text-align:${u[2] === 't' ? 'left' : 'center'};
                   ${i === 1 ? 'position:sticky;left:0;z-index:1' : ''}">${esc(u[1])}</th>`).join('')}
               </tr>
             </thead>
@@ -668,7 +668,7 @@ const KengHisobotPage = {
         <div class="overflow-x-auto">
           <table class="w-full text-xs border-collapse">
             <thead><tr>${cols.map(c => `<th style="background:#1e293b;color:#e2e8f0;padding:7px;
-              font-size:10px;text-align:${c === 'Viloyat' ? 'left' : 'center'}">${esc(c)}</th>`).join('')}</tr></thead>
+              font-size:12px;text-align:${c === 'Viloyat' ? 'left' : 'center'}">${esc(c)}</th>`).join('')}</tr></thead>
             <tbody>
               ${rows.map((r, i) => `<tr style="background:${i % 2 ? '#fff' : '#f8fafc'}">
                 ${cols.map(c => {
@@ -714,7 +714,7 @@ const KengHisobotPage = {
           <table class="w-full text-xs border-collapse">
             <thead><tr>
               <th style="background:#1e293b;color:#e2e8f0;padding:6px;text-align:left;position:sticky;left:0">Yuborgan \\ Qabul</th>
-              ${qabul.map(q => `<th style="background:#1e293b;color:#e2e8f0;padding:6px;font-size:10px">${esc(qisqa(q))}</th>`).join('')}
+              ${qabul.map(q => `<th style="background:#1e293b;color:#e2e8f0;padding:6px;font-size:12px">${esc(qisqa(q))}</th>`).join('')}
               <th style="background:#1d4ed8;color:#fff;padding:6px">JAMI</th>
             </tr></thead>
             <tbody>
@@ -778,7 +778,7 @@ const KengHisobotPage = {
         <div class="overflow-x-auto" style="max-height:60vh">
           <table class="w-full text-xs border-collapse">
             <thead style="position:sticky;top:0;z-index:1"><tr>
-              ${cols.map(c => `<th style="background:#1e293b;color:#e2e8f0;padding:6px;font-size:10px;
+              ${cols.map(c => `<th style="background:#1e293b;color:#e2e8f0;padding:6px;font-size:12px;
                 text-align:${c[2] === 't' ? 'left' : 'center'}">${esc(c[1])}</th>`).join('')}
             </tr></thead>
             <tbody>

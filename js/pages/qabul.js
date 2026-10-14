@@ -307,7 +307,7 @@ const QabulPage = {
                       style="border:1px solid ${r._mavjud.aniq ? '#86efac' : '#fcd34d'};
                              background:${r._mavjud.aniq ? '#f0fdf4' : '#fffbeb'};
                              color:${r._mavjud.aniq ? '#15803d' : '#b45309'};border-radius:8px;
-                             padding:5px 9px;font-size:11px;font-weight:700;cursor:pointer;
+                             padding:5px 9px;font-size:12px;font-weight:700;cursor:pointer;
                              display:flex;align-items:center;gap:5px;white-space:nowrap">
                 ${icon('user-check', 13)} ${t('pending.alreadyAtFacility')}
               </button>` : ''}
@@ -315,21 +315,21 @@ const QabulPage = {
               <button onclick="QabulPage.kelmadiModal(${i})"
               title="${t('pending.closeTitle')}"
                       style="border:1px solid #e2e8f0;background:#f8fafc;color:#64748b;
-                             border-radius:8px;padding:5px 9px;font-size:11px;font-weight:700;
+                             border-radius:8px;padding:5px 9px;font-size:12px;font-weight:700;
                              cursor:pointer;display:flex;align-items:center;gap:5px;white-space:nowrap">
                 ${icon('user-x', 13)} ${t('pending.didNotArrive')}
               </button>` : ''}
             </div>`}
           </div>
           ${kechikkan ? `
-          <div class="mb-3 text-[11px] font-semibold ${kutganKun >= 5 ? 'text-red-600' : 'text-amber-600'}">
+          <div class="mb-3 text-xs font-semibold ${kutganKun >= 5 ? 'text-red-600' : 'text-amber-600'}">
             ${icon('clock', 12)} ${t('pending.waitingDays', { days: kutganKun })}
           </div>` : ''}
           ${r._mavjud ? `
           <div class="mb-3 p-2.5 rounded-lg"
                style="background:${r._mavjud.aniq ? '#f0fdf4' : '#fffbeb'};
                       border:1px solid ${r._mavjud.aniq ? '#bbf7d0' : '#fde68a'}">
-            <div class="text-[11px] ${r._mavjud.aniq ? 'text-green-800' : 'text-amber-800'}">
+            <div class="text-xs ${r._mavjud.aniq ? 'text-green-800' : 'text-amber-800'}">
               ${t('pending.similarRecord')}
               <b>${esc(r._mavjud.fio || '—')}</b> ·
               <span class="font-mono">${esc(r._mavjud.kt_no || '—')}</span> ·
@@ -351,7 +351,7 @@ const QabulPage = {
             ${sabab ? `<div><span class="text-gray-400">${t('pending.reasonLabel')}</span>
                  <span class="text-orange-700 font-semibold">${esc(I18n.translateText(sabab))}</span></div>` : ''}
           </div>
-          <div class="mt-2 text-[11px] text-gray-400">
+          <div class="mt-2 text-xs text-gray-400">
             ${t('pending.readOnlyReferralNotice')}
           </div>
         </div>
@@ -376,8 +376,8 @@ const QabulPage = {
           <thead>
             <tr style="background:#f1f5f9">
               <th></th>
-              <th style="padding:6px 8px;font-size:11px;color:#475569;text-align:left">${t('pending.sent')}</th>
-              <th style="padding:6px 8px;font-size:11px;color:#475569;text-align:left">${t('pending.atYourFacility')}</th>
+              <th style="padding:6px 8px;font-size:12px;color:#475569;text-align:left">${t('pending.sent')}</th>
+              <th style="padding:6px 8px;font-size:12px;color:#475569;text-align:left">${t('pending.atYourFacility')}</th>
             </tr>
           </thead>
           <tbody>
@@ -505,13 +505,13 @@ const QabulPage = {
         <label class="form-label required">${t('pending.arrivalQuestion')}</label>
         <div class="flex gap-2">
           <div class="flex-1">
-            <div class="text-[10px] font-bold text-slate-500 uppercase mb-1">${t('common.date')}</div>
+            <div class="text-xs font-bold text-slate-500 uppercase mb-1">${t('common.date')}</div>
             <input id="qb-sana" type="date" class="form-input w-full"
                    min="${yuborilgan.slice(0, 10)}" max="${endi.slice(0, 10)}"
                    value="${endi.slice(0, 10)}"/>
           </div>
           <div class="flex-1">
-            <div class="text-[10px] font-bold text-slate-500 uppercase mb-1">${t('pending.timeLabel')}</div>
+            <div class="text-xs font-bold text-slate-500 uppercase mb-1">${t('pending.timeLabel')}</div>
             <input id="qb-soat" type="time" class="form-input w-full" value="${endi.slice(11, 16)}"/>
           </div>
         </div>
