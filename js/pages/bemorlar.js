@@ -279,10 +279,17 @@ const BemorlarPage = {
       // Xuddi shu usul — 30 kundan ortiq "faol" turgan bemorlar uchun
       if (f.missingExit || f.longActive) {
         const sb0 = getSupabase();
-        const { data: idRows, error: idErr } = f.missingExit
-          ? await sb0.rpc('varaqasiz_bemorlar_idlari', { p_muassasa: null })
-          : await sb0.rpc('uzoq_faol_bemorlar_idlari', { p_muassasa: null, p_kun: 30 });
-        if (idErr) throw idErr;
+        // Supabase bitta javobda ko'pi bilan 1000 qator qaytaradi — qolganini sahifalab olamiz
+        const idRows = [];
+        for (let from = 0; ; from += 1000) {
+          const q = f.missingExit
+            ? sb0.rpc('varaqasiz_bemorlar_idlari', { p_muassasa: null })
+            : sb0.rpc('uzoq_faol_bemorlar_idlari', { p_muassasa: null, p_kun: 30 });
+          const { data: part, error: idErr } = await q.order('id').range(from, from + 999);
+          if (idErr) throw idErr;
+          idRows.push(...(part || []));
+          if (!part || part.length < 1000) break;
+        }
         const byType = { infarkt: [], insult: [] };
         (idRows || []).forEach(r => { if (byType[r.tur]) byType[r.tur].push(r.id); });
         const loadType = async (tur) => {
