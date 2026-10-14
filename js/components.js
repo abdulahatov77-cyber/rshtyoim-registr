@@ -104,8 +104,32 @@ const A11y = {
     return el.matches('button,a,input,select,textarea,label,summary,.modal-overlay,#sidebar-overlay')
       || /^\s*event\.stopPropagation\(\);?\s*$/.test(h);
   },
+  // Yorliq bor, lekin maydonga bog'lanmagan (for yo'q yoki for yashirin
+  // inputga qaraydi, masalan sana + soat). Yorliqni ko'rinadigan maydonlarga
+  // ulaymiz: bosilganda maydon faollashadi, ekran o'quvchi nomini aytadi.
+  _uid: 0,
+  labels(root) {
+    const CTRL = 'input:not([type=hidden]),select,textarea';
+    root.querySelectorAll('label').forEach(lab => {
+      const box = lab.parentElement;
+      if (!box) return;
+      const target = lab.htmlFor && document.getElementById(lab.htmlFor);
+      if (target && target.matches(CTRL)) return;
+      if (lab.querySelector(CTRL)) return; // maydon yorliq ichida — allaqachon bog'langan
+      const ctrls = [...box.querySelectorAll(CTRL)].filter(c =>
+        !(c.labels && c.labels.length) && !c.hasAttribute('aria-label') && !c.hasAttribute('aria-labelledby')
+        && !['checkbox', 'radio'].includes(c.type));
+      // Faqat yorliq va maydon(lar)ning kichik guruhi — katta konteynerda
+      // boshqa maydonlarga noto'g'ri nom berib qo'ymaslik uchun.
+      if (!ctrls.length || ctrls.length > 3 || box.querySelectorAll('label').length > 1) return;
+      if (ctrls.length === 1 && ctrls[0].id && !lab.htmlFor) { lab.htmlFor = ctrls[0].id; return; }
+      if (!lab.id) lab.id = 'lbl-' + (++A11y._uid);
+      ctrls.forEach(c => c.setAttribute('aria-labelledby', lab.id));
+    });
+  },
   mark(root) {
     if (!root || root.nodeType !== 1) return;
+    A11y.labels(root);
     const list = root.matches('[onclick]') ? [root] : [];
     list.push(...root.querySelectorAll('[onclick]'));
     for (const el of list) {
@@ -407,7 +431,7 @@ const Components = {
               <p class="text-xs font-bold text-slate-800 truncate">${esc(displayName)}</p>
               <p class="text-xs font-medium text-slate-500 uppercase">${roleLabel}</p>
             </div>
-            <button class="text-slate-400 hover:text-red-500 transition-colors" onclick="App.logout()">
+            <button type="button" class="icon-btn text-slate-400 hover:text-red-500 transition-colors" aria-label="${t('common.logout')}" title="${t('common.logout')}" onclick="App.logout()">
               ${icon('log-out', 16)}
             </button>
           </div>
@@ -424,7 +448,7 @@ const Components = {
     return `
       <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 shrink-0 sticky top-0 z-30">
         <div class="flex items-center gap-6 flex-1">
-          <button class="lg:hidden text-slate-500 hover:text-slate-900" onclick="openSidebar()">
+          <button type="button" class="icon-btn lg:hidden text-slate-500 hover:text-slate-900" aria-label="${t('common.menu')}" onclick="openSidebar()">
             ${icon('menu', 24)}
           </button>
           
@@ -456,7 +480,7 @@ const Components = {
             </div>
           </div>
           
-          <div class="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-bold shadow-md cursor-pointer" onclick="Router.go('settings')" title="${t('common.settings')}">
+          <div class="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-bold shadow-md cursor-pointer" aria-label="${t('common.settings')}" title="${t('common.settings')}" onclick="Router.go('settings')" title="${t('common.settings')}">
             ${initials}
           </div>
         </div>
