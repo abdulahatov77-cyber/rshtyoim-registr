@@ -52,3 +52,18 @@ for (const directory of ['css', 'img', 'js']) {
     }
   }
 }
+
+// APP_BUILD — ochiq turgan tablarga "Tizim yangilandi" xabarini chiqaradigan versiya.
+// Qo'lda oshirish esdan chiqsa, eski kod ochiq tablarda kunlab ishlab qoladi —
+// shuning uchun uni ham bootstrap.js xeshidan (u butun zanjirni o'z ichiga oladi) qo'yamiz.
+{
+  const { readFile, writeFile } = await import('node:fs/promises');
+  const indexPath = path.join(outputDir, 'index.html');
+  const html = await readFile(indexPath, 'utf8');
+  const m = html.match(/bootstrap\.js\?v=([\w.-]+)/);
+  if (m) {
+    const out = html.replace(/APP_BUILD\s*=\s*'[^']*'/, `APP_BUILD = '${m[1]}'`);
+    if (out === html) throw new Error('APP_BUILD topilmadi');
+    await writeFile(indexPath, out);
+  }
+}
