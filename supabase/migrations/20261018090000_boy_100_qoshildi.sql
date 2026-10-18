@@ -13,3 +13,8 @@ UPDATE public.infarkt_qabul q SET boy = f.boy + 100 FROM f WHERE q.id = f.id;
 WITH f AS (SELECT id, boy FROM public.insult_qabul WHERE boy BETWEEN 40 AND 99),
 b AS (INSERT INTO public.boy_100_backup_20261018 SELECT 'insult', id, boy FROM f ON CONFLICT DO NOTHING RETURNING id)
 UPDATE public.insult_qabul q SET boy = f.boy + 100 FROM f WHERE q.id = f.id;
+
+-- Qo'shimcha (foydalanuvchi qarori): bo'yi 230 sm dan katta 2 ta insult bemori (247 va 250 sm) — 165 sm qilindi.
+-- Eski qiymatlar o'sha backup jadvalida (t='insult').
+INSERT INTO public.boy_100_backup_20261018 SELECT 'insult', id, boy FROM public.insult_qabul WHERE boy > 230 ON CONFLICT DO NOTHING;
+UPDATE public.insult_qabul SET boy = 165 WHERE boy > 230;
