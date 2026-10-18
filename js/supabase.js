@@ -1305,6 +1305,14 @@ const DB = {
       if (dateFrom) q = q.gte('qabul_vaqt', dateFrom);
       if (dateTo) q = q.lte('qabul_vaqt', dateTo);
       if (source !== null) q = q.in('murojaat_yoli', variants(source));
+      // Bog'langan o'tkazilgan bemor (davomi boshqa muassasada) — dashboard RPC lari bilan bir xil qoida:
+      // super_admin/rahbar/admin uchun respublikada har doim, viloyatda davomi ham o'sha viloyatda bo'lsa
+      // bir marta sanaladi; muassasa kesimida va shifokor (user) uchun o'zgarmaydi.
+      if (!overrideMuassasa && ['super_admin', 'rahbar', 'admin'].includes(p.role)) {
+        q = viloyat
+          ? q.or(`davomi_qabul_id.is.null,davomi_viloyat.is.null,davomi_viloyat.neq."${String(viloyat).replace(/"/g, '\\"')}"`)
+          : q.is('davomi_qabul_id', null);
+      }
       return q;
     });
     const counts = new Map();
