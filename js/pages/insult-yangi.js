@@ -399,8 +399,46 @@ const InsultYangiPage = {
           <div id="gcs-tavsiya">${Calculators.tavsiyaHtml(Calculators.gcsTavsiya(d.gcs_bali), d.gcs_bali, 'Glazgo (GCS)')}</div>`,true)}
         ${this.field('birlamchi_yoki_takroriy','Birlamchi yoki takroriy?',`<select id="birlamchi_yoki_takroriy" class="form-select">
           ${this.selectOptions(APP_CONFIG.BIRLAMCHI_TAKROIRIY, d.birlamchi_yoki_takroriy||'')}</select>`,true)}
-        ${this.field('insult_turi','Insult turi',`<select id="insult_turi" class="form-select border-purple-300 focus:border-purple-500" onchange="InsultYangiPage.saveCurrentStep();InsultYangiPage._updateAspectsVisibility();Calculators.tavsiyaniYangilash('nihss_qabul', document.getElementById('nihss_qabul')?.value)">
-          ${this.selectOptions(APP_CONFIG.INSULT_TURLARI, d.insult_turi||'')}</select>`,true)}
+        ${this.field('mskt', t('imaging.question'), `
+          <div class="flex gap-3">
+            <button type="button" id="mskt-ha" onclick="InsultYangiPage.onMsktChange(&quot;Ha – o&apos;tkazildi&quot;)"
+              class="flex-1 py-2.5 rounded-xl font-bold text-sm border-2 transition-all ${Utils.msktDone(d.mskt) ? 'bg-purple-600 text-white border-purple-600' : 'bg-white text-slate-600 border-slate-200 hover:border-purple-400'}">
+              ✅ ${t('common.yes')}
+            </button>
+            <button type="button" id="mskt-yoq" onclick="InsultYangiPage.onMsktChange(&quot;Yo&apos;q – boshqa sabab&quot;)"
+              class="flex-1 py-2.5 rounded-xl font-bold text-sm border-2 transition-all ${d.mskt && !Utils.msktDone(d.mskt) ? 'bg-slate-600 text-white border-slate-600' : 'bg-white text-slate-600 border-slate-200 hover:border-slate-400'}">
+              ❌ ${t('common.no')}
+            </button>
+          </div>
+          <div id="mskt-vaqt-div" class="mt-3" style="display:${Utils.msktDone(d.mskt)?'block':'none'}">
+            <div class="flex gap-2 flex-wrap">
+              <div style="min-width:110px">
+                <label class="block text-xs font-bold text-slate-500 uppercase mb-1" for="tasvir_turi">${t('imaging.type')} *</label>
+                <select id="tasvir_turi" class="form-select w-full" onchange="InsultYangiPage.saveCurrentStep()">
+                  <option value="MSKT" ${d.tasvir_turi!=='MRT'?'selected':''}>${t('imaging.ct')}</option>
+                  <option value="MRT" ${d.tasvir_turi==='MRT'?'selected':''}>${t('imaging.mri')}</option>
+                </select>
+              </div>
+              <div class="flex-1" style="min-width:130px">
+                <label class="block text-xs font-bold text-slate-500 uppercase mb-1" for="kt_sana">${t('imaging.date')} *</label>
+                <input id="kt_sana" type="date" class="form-input w-full" max="${new Date(Date.now()+5*3600000).toISOString().slice(0,10)}" value="${d.kt_vaqti?Utils.formatDateInput(d.kt_vaqti).slice(0,10):''}" onchange="InsultYangiPage.onVaqtChange('kt_sana','kt_soat','KT/MSKT vaqti')"/>
+              </div>
+              <div class="flex-1" style="min-width:110px">
+                <label class="block text-xs font-bold text-slate-500 uppercase mb-1" for="kt_soat">${t('imaging.time')} *</label>
+                <input id="kt_soat" type="time" class="form-input w-full" value="${d.kt_vaqti?Utils.formatDateInput(d.kt_vaqti).slice(11,16):''}" onchange="InsultYangiPage.onVaqtChange('kt_sana','kt_soat','KT/MSKT vaqti')"/>
+              </div>
+            </div>
+            <input id="kt_vaqti" type="hidden" value="${d.kt_vaqti||''}"/>
+          </div>
+          <div id="tasvir-yoq-div" class="mt-3" style="display:${d.mskt && !Utils.msktDone(d.mskt)?'block':'none'}">
+            <label class="block text-xs font-bold text-slate-500 uppercase mb-1" for="tasvir_yoq_sababi">${t('imaging.whyNot')} *</label>
+            <select id="tasvir_yoq_sababi" class="form-select w-full" onchange="InsultYangiPage.saveCurrentStep()">
+              ${this.selectOptions(APP_CONFIG.TASVIR_YOQ_SABABLARI, d.tasvir_yoq_sababi||'')}
+            </select>
+          </div>`, true)}
+        ${this.field('insult_turi', `${t('imaging.strokeType')} <span id="tur-holat">${InsultYangiPage._turHolatHtml()}</span>`, `<select id="insult_turi" class="form-select border-purple-300 focus:border-purple-500" onchange="InsultYangiPage.saveCurrentStep();InsultYangiPage._updateAspectsVisibility();Calculators.tavsiyaniYangilash('nihss_qabul', document.getElementById('nihss_qabul')?.value)">
+          ${InsultYangiPage._turOptions()}</select>
+          <div id="tur-izoh" class="text-xs mt-1" style="color:#92400e;font-weight:600;display:${d.mskt && !Utils.msktDone(d.mskt)?'block':'none'}">${t('imaging.unconfirmedHint')}</div>`, true)}
         ${this.field('qon_bosimi','Qon bosimi (qabul paytida)',(() => {
           const [sys, dia] = (d.qon_bosimi || '').split('/');
           return `<div class="flex items-center gap-2">
@@ -480,33 +518,6 @@ const InsultYangiPage = {
 
     return `
       <div class="grid grid-cols-1 gap-x-6">
-        ${this.field('mskt','MSKT (KT) o\'tkazilganmi?',`
-          <div class="flex gap-3">
-            <button type="button" id="mskt-ha" onclick="InsultYangiPage.onMsktChange(&quot;Ha – o&apos;tkazildi&quot;)"
-              class="flex-1 py-2.5 rounded-xl font-bold text-sm border-2 transition-all ${Utils.msktDone(d.mskt) ? 'bg-purple-600 text-white border-purple-600' : 'bg-white text-slate-600 border-slate-200 hover:border-purple-400'}">
-              ✅ ${t('common.yes')}
-            </button>
-            <button type="button" id="mskt-yoq" onclick="InsultYangiPage.onMsktChange(&quot;Yo&apos;q – boshqa sabab&quot;)"
-              class="flex-1 py-2.5 rounded-xl font-bold text-sm border-2 transition-all ${d.mskt && !Utils.msktDone(d.mskt) ? 'bg-slate-600 text-white border-slate-600' : 'bg-white text-slate-600 border-slate-200 hover:border-slate-400'}">
-              ❌ ${t('common.no')}
-            </button>
-          </div>`,true)}
-
-        <div id="mskt-vaqt-div" style="display:${showMsktVaqt?'block':'none'}">
-          ${this.field('kt_vaqti','KT/MSKT o\'tkazilgan vaqt',`
-            <div class="flex gap-2">
-              <div class="flex-1">
-                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Sana *</label>
-                <input id="kt_sana" type="date" class="form-input w-full" max="${new Date(Date.now()+5*3600000).toISOString().slice(0,10)}" value="${d.kt_vaqti?Utils.formatDateInput(d.kt_vaqti).slice(0,10):''}" onchange="InsultYangiPage.onVaqtChange('kt_sana','kt_soat','KT/MSKT vaqti')"/>
-              </div>
-              <div class="flex-1">
-                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Soat * (HH:MM)</label>
-                <input id="kt_soat" type="time" class="form-input w-full" value="${d.kt_vaqti?Utils.formatDateInput(d.kt_vaqti).slice(11,16):''}" onchange="InsultYangiPage.onVaqtChange('kt_sana','kt_soat','KT/MSKT vaqti')"/>
-              </div>
-            </div>`,true,'Door-to-CT mezonini hisoblash uchun')}
-          <input id="kt_vaqti" type="hidden" value="${d.kt_vaqti||''}"/>
-        </div>
-
         <!-- MSKT Angiografiya savoli — faqat MSKT o'tkazilgan + Ishemik insult -->
         <div id="mskt-angio-div" style="display:${showAngio?'block':'none'}">
           ${this.field('mskt_angiografiya','MSKT Angiografiya qilindimi?',`
@@ -800,7 +811,40 @@ const InsultYangiPage = {
     InsultYangiPage.cdssYangilash();
   },
 
+  // Insult turi: tasvir o'tkazilgan bo'lsa — tasdiqlangan, aks holda klinik taxmin
+  _turHolatHtml() {
+    const m = InsultYangiPage._data.mskt;
+    if (!m) return '';
+    return Utils.msktDone(m)
+      ? `<span style="background:#dcfce7;color:#166534;font-size:11px;font-weight:700;border-radius:999px;padding:2px 9px;margin-left:6px;white-space:nowrap">✓ ${t('imaging.confirmed')}</span>`
+      : `<span style="background:#fef3c7;color:#92400e;font-size:11px;font-weight:700;border-radius:999px;padding:2px 9px;margin-left:6px;white-space:nowrap">! ${t('imaging.unconfirmed')}</span>`;
+  },
+  // Tasvirsiz bo'lsa "Aniqlanmagan (tasvirsiz)" varianti ham tanlanadi
+  _turOptions() {
+    const d = InsultYangiPage._data;
+    const yoq = d.mskt && !Utils.msktDone(d.mskt);
+    const arr = yoq ? [...APP_CONFIG.INSULT_TURLARI, APP_CONFIG.INSULT_TURI_ANIQLANMAGAN] : APP_CONFIG.INSULT_TURLARI;
+    return InsultYangiPage.selectOptions(arr, d.insult_turi || '');
+  },
+  _turYangila() {
+    const d = InsultYangiPage._data;
+    const yoq = d.mskt && !Utils.msktDone(d.mskt);
+    // Tasvir o'tkazilgan bo'lsa "Aniqlanmagan" qolmaydi — shifokor aniq turni tanlaydi
+    if (!yoq && d.insult_turi === APP_CONFIG.INSULT_TURI_ANIQLANMAGAN) d.insult_turi = '';
+    const sel = document.getElementById('insult_turi');
+    if (sel) sel.innerHTML = InsultYangiPage._turOptions();
+    const h = document.getElementById('tur-holat');
+    if (h) h.innerHTML = InsultYangiPage._turHolatHtml();
+    const iz = document.getElementById('tur-izoh');
+    if (iz) iz.style.display = yoq ? 'block' : 'none';
+    const yd = document.getElementById('tasvir-yoq-div');
+    if (yd) yd.style.display = yoq ? 'block' : 'none';
+    if (yoq) { d.tasvir_turi = ''; d.kt_vaqti = ''; }
+    else { d.tasvir_yoq_sababi = ''; const ys = document.getElementById('tasvir_yoq_sababi'); if (ys) ys.value = ''; }
+  },
+
   onMsktChange(val) {
+    InsultYangiPage.saveCurrentStep();
     InsultYangiPage._data.mskt = val;
     // MSKT "Yo'q" bosilsa angiografiya va ASPECTS ni ham tozalaymiz
     if (val !== "Ha – o'tkazildi") {
@@ -812,26 +856,22 @@ const InsultYangiPage = {
         ? (InsultYangiPage._data.boshqa_muassasa || '')
         : (InsultYangiPage._data.muassasa || '');
       DB.getMuassasaImkoniyat(muassasa).then(imk => {
-        if (imk && imk.mskt_bor === false) {
-          // Rad etamiz — tanlovni bekor qilib, tugmalarni boshlang'ich holatga qaytaramiz
-          InsultYangiPage._data.mskt = '';
-          InsultYangiPage._data.mskt_angiografiya = '';
-          const div = document.getElementById('mskt-vaqt-div');
-          if (div && !(InsultYangiPage._data.muolaja_turi || '').toLowerCase().includes('mskt')) div.style.display = 'none';
-          const haB = document.getElementById('mskt-ha');
-          const yoB = document.getElementById('mskt-yoq');
-          if (haB) haB.className = 'flex-1 py-2.5 rounded-xl font-bold text-sm border-2 transition-all bg-white text-slate-600 border-slate-200 hover:border-purple-400';
-          if (yoB) yoB.className = 'flex-1 py-2.5 rounded-xl font-bold text-sm border-2 transition-all bg-white text-slate-600 border-slate-200 hover:border-slate-400';
-          InsultYangiPage._updateAspectsVisibility();
-          showToast(t('facility.msctUnavailable', { institution: muassasa }), 'error', 8000);
+        if (imk && imk.mskt_bor === false && InsultYangiPage._data.tasvir_turi !== 'MRT') {
+          // Muassasada MSKT apparati yo'q — tasvir faqat MRT bo'lishi mumkin
+          InsultYangiPage._data.tasvir_turi = 'MRT';
+          const ts = document.getElementById('tasvir_turi');
+          if (ts) { ts.value = 'MRT'; const o = ts.querySelector('option[value="MSKT"]'); if (o) o.disabled = true; }
+          showToast(t('imaging.noCtUseMri', { institution: muassasa }), 'warning', 9000);
         }
       });
     }
     const muolaja = (InsultYangiPage._data.muolaja_turi || '').toLowerCase();
-    const show = val === "Ha – o'tkazildi" || muolaja.includes('mskt');
+    const show = val === "Ha – o'tkazildi";
     const div = document.getElementById('mskt-vaqt-div');
     if (div) div.style.display = show ? 'block' : 'none';
+    InsultYangiPage._turYangila();
     InsultYangiPage._updateAspectsVisibility();
+    Calculators.tavsiyaniYangilash('nihss_qabul', document.getElementById('nihss_qabul')?.value);
     const haBtn = document.getElementById('mskt-ha');
     const yoqBtn = document.getElementById('mskt-yoq');
     if (haBtn) haBtn.className = `flex-1 py-2.5 rounded-xl font-bold text-sm border-2 transition-all ${show ? 'bg-purple-600 text-white border-purple-600' : 'bg-white text-slate-600 border-slate-200 hover:border-purple-400'}`;
@@ -979,7 +1019,7 @@ const InsultYangiPage = {
      'tez_yordam_kelgan_vaqt',
      'fio','vazn','boy','simptom_vaqt','gcs_bali','birlamchi_yoki_takroriy','insult_turi','aha_bali','nihss_qabul','puls',
      'yashash_viloyat','yashash_tuman','chet_el_davlati',
-     'mskt','mskt_angiografiya','okklyuziya_segmenti','otkazilgan_muassasa','otkazilgan_boshqa','otkazish_sana','otkazish_soat','shifokor_fio','shifokor_tel']
+     'mskt','tasvir_turi','tasvir_yoq_sababi','mskt_angiografiya','okklyuziya_segmenti','otkazilgan_muassasa','otkazilgan_boshqa','otkazish_sana','otkazish_soat','shifokor_fio','shifokor_tel']
     .forEach(id => {
       const el = document.getElementById(id);
       if (el) InsultYangiPage._data[id] = el.value;
@@ -1113,9 +1153,9 @@ const InsultYangiPage = {
       else required.push('yashash_viloyat','yashash_tuman');
     }
     // qon_bosimi bu ro'yxatда yo'q — sistolik/diastolik orqali alohida tekshiriladi
-    if (this._step === 2) required = ['aha_bali','simptom_vaqt','nihss_qabul','gcs_bali','birlamchi_yoki_takroriy','insult_turi','puls'];
+    if (this._step === 2) required = ['aha_bali','simptom_vaqt','nihss_qabul','gcs_bali','birlamchi_yoki_takroriy','mskt','insult_turi','puls'];
     if (this._step === 3) {
-      required = ['mskt','muolaja_turi','shifokor_fio','shifokor_tel'];
+      required = ['muolaja_turi','shifokor_fio','shifokor_tel'];
       if ((this._data.muolaja_turi || '').startsWith("Boshqa muassasaga o'tkazildi")) required.push('otkazilgan_muassasa','otkazish_sana','otkazish_soat');
     }
 
@@ -1142,6 +1182,55 @@ const InsultYangiPage = {
         if (grp) grp.classList.add('border', 'border-red-500', 'rounded-xl', 'p-2', 'err-red');
         const errEl = document.getElementById('err-xavf_omillari');
         if (errEl) { errEl.textContent = t('validation.riskFactorInline'); errEl.classList.remove('hidden'); }
+      }
+    }
+    // 3-bo'lim: tasvir (MSKT/MRT) — vaqti yoki o'tkazilmagan sababi majburiy
+    if (this._step === 2 && valid) {
+      const now = new Date();
+      const qv = (() => { try { return this._data.qabul_vaqt ? new Date(this._data.qabul_vaqt + (this._data.qabul_vaqt.includes('T') ? ':00+05:00' : '')) : null; } catch(e) { return null; } })();
+      if (Utils.msktDone(this._data.mskt)) {
+        if (this._data.tasvir_turi !== 'MRT') this._data.tasvir_turi = 'MSKT';
+        this._data.tasvir_yoq_sababi = '';
+        if (this._data.insult_turi === APP_CONFIG.INSULT_TURI_ANIQLANMAGAN) {
+          valid = false;
+          document.getElementById('insult_turi')?.classList.add('border-red-500');
+          showToast(t('imaging.typeRequiredAfterImaging'), 'error', 7000);
+        }
+        const ktSana = document.getElementById('kt_sana')?.value;
+        const ktSoat = document.getElementById('kt_soat')?.value;
+        if (!ktSana) {
+          valid = false;
+          document.getElementById('kt_sana')?.classList.add('border-red-500');
+          document.getElementById('kt_sana')?.focus();
+          showToast(t('validation.ctDate'), 'error', 5000);
+        } else if (!ktSoat) {
+          valid = false;
+          document.getElementById('kt_soat')?.classList.add('border-red-500');
+          document.getElementById('kt_soat')?.focus();
+          showToast(t('validation.ctTime'), 'error', 5000);
+        } else {
+          const ktDt = new Date(`${ktSana}T${ktSoat}:00+05:00`);
+          if (ktDt > now) {
+            valid = false;
+            document.getElementById('kt_sana')?.classList.add('border-red-500');
+            document.getElementById('kt_soat')?.classList.add('border-red-500');
+            showToast(t('validation.ctFuture'), 'error', 5000);
+          } else if (qv && ktDt < qv) {
+            valid = false;
+            document.getElementById('kt_sana')?.classList.add('border-red-500');
+            document.getElementById('kt_soat')?.classList.add('border-red-500');
+            showToast(t('validation.ctBeforeAdmission'), 'error', 6000);
+          }
+        }
+      } else {
+        // Tasvir o'tkazilmagan — vaqt va turi tozalanadi, sababi majburiy
+        this._data.kt_vaqti = '';
+        this._data.tasvir_turi = '';
+        if (!this._data.tasvir_yoq_sababi) {
+          valid = false;
+          document.getElementById('tasvir_yoq_sababi')?.classList.add('border-red-500');
+          showToast(t('imaging.reasonRequired'), 'error', 6000);
+        }
       }
     }
     // "Boshqa" muassasa tanlanganda nomi qo'lda yozilishi shart
@@ -1373,39 +1462,12 @@ const InsultYangiPage = {
       // O'tkazish variantlarida muolaja vaqtlari talab qilinmaydi
       const isTLT = !isOtkM && (muolajaL.includes('trombolizis') || muolajaL.includes('tlt'));
       const isTrombektomiya = !isOtkM && (muolajaL.includes('trombektomiya') || muolajaL.includes('tromboekstraksiya') || muolajaL.includes('tromboaspiratsiya') || muolajaL.includes('kombinatsiya') || muolajaL.includes('angiografiya') || muolajaL.includes('stentlash') || muolajaL.includes('tlbap'));
-      const isMskt = Utils.msktDone(this._data.mskt) || (!isOtkM && muolajaL.includes('mskt'));
 
-      // KT/MSKT vaqti majburiy (MSKT o'tkazilganda) — sana VA soat ikkalasi ham shart
-      if (isMskt) {
-        const ktSana = document.getElementById('kt_sana')?.value;
-        const ktSoat = document.getElementById('kt_soat')?.value;
-        if (!ktSana) {
-          valid = false;
-          document.getElementById('kt_sana')?.classList.add('border-red-500');
-          document.getElementById('kt_sana')?.focus();
-          showToast(t('validation.ctDate'), 'error', 5000);
-        } else if (!ktSoat) {
-          valid = false;
-          document.getElementById('kt_soat')?.classList.add('border-red-500');
-          document.getElementById('kt_soat')?.focus();
-          showToast(t('validation.ctTime'), 'error', 5000);
-        } else {
-          const ktDt = new Date(`${ktSana}T${ktSoat}:00+05:00`);
-          if (ktDt > now) {
-            valid = false;
-            document.getElementById('kt_sana')?.classList.add('border-red-500');
-            document.getElementById('kt_soat')?.classList.add('border-red-500');
-          showToast(t('validation.ctFuture'), 'error', 5000);
-          } else if (qv && ktDt < qv) {
-            valid = false;
-            document.getElementById('kt_sana')?.classList.add('border-red-500');
-            document.getElementById('kt_soat')?.classList.add('border-red-500');
-          showToast(t('validation.ctBeforeAdmission'), 'error', 6000);
-          }
-        }
-      } else {
-        // MSKT tanlanmagan — stale qiymatni tozalaymiz
-        InsultYangiPage._data.kt_vaqti = '';
+      // Tasvir (MSKT/MRT) va uning vaqti 3-bo'limda kiritiladi. Muolaja MSKT angiografiya bo'lsa-yu,
+      // tasvir "Yo'q" deb belgilangan bo'lsa — ziddiyat.
+      if (!isOtkM && muolajaL.includes('mskt') && !Utils.msktDone(this._data.mskt)) {
+        valid = false;
+        showToast(t('imaging.treatmentNeedsImaging'), 'error', 8000);
       }
 
       // Trombolizis vaqti majburiy (TLT muolajasi tanlanganda)
@@ -1524,7 +1586,9 @@ const InsultYangiPage = {
       if (payload.shifokor_fio) payload.shifokor_fio = Utils.toTitleCase(payload.shifokor_fio);
 
       // MSKT "Ha" — bemor yotgan muassasada MSKT apparati borligini yakuniy tekshiruv
-      if (Utils.msktDone(payload.mskt)) {
+      payload.tasvir_turi = Utils.msktDone(payload.mskt) ? (payload.tasvir_turi === 'MRT' ? 'MRT' : 'MSKT') : null;
+      payload.tasvir_yoq_sababi = Utils.msktDone(payload.mskt) ? null : (payload.tasvir_yoq_sababi || null);
+      if (Utils.msktDone(payload.mskt) && payload.tasvir_turi !== 'MRT') {
         const imk = await DB.getMuassasaImkoniyat(payload.muassasa).catch(() => null);
         if (imk && imk.mskt_bor === false) {
           showToast(t('facility.msctSaveBlocked', { institution: payload.muassasa }), 'error', 8000);
