@@ -409,8 +409,6 @@ const APP_CONFIG = {
     "Gemorragik insult",
     "TIA (Tranzitor ishemik ataka)"
   ],
-  // Tasvir (MSKT/MRT) o'tkazilmaganda tanlanadigan qo'shimcha tur — INSULT_TURLARI ga kirmaydi
-  INSULT_TURI_ANIQLANMAGAN: "Aniqlanmagan (tasvirsiz)",
   TASVIR_YOQ_SABABLARI: [
     "Muassasada uskuna yo'q",
     "Uskuna ishlamayapti",

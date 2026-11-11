@@ -1905,7 +1905,7 @@ const BemorKartaPage = {
           <div class="form-group">
             <label class="form-label">${isInf ? 'Infarkt turi' : 'Insult turi'}</label>
             <select id="edit-turi" class="form-select">
-              ${(isInf ? APP_CONFIG.INFARKT_TURLARI : [...APP_CONFIG.INSULT_TURLARI, APP_CONFIG.INSULT_TURI_ANIQLANMAGAN]).map(t => `<option value="${t}" ${(isInf?p.infarkt_turi:p.insult_turi)===t?'selected':''}>${t}</option>`).join('')}
+              ${(isInf ? APP_CONFIG.INFARKT_TURLARI : APP_CONFIG.INSULT_TURLARI).map(x => `<option value="${x}" data-nom="${x}" ${(isInf?p.infarkt_turi:p.insult_turi)===x?'selected':''}>${x}${!isInf && !Utils.msktDone(p.mskt) ? ` (${t('imaging.unconfirmedSuffix')})` : ''}</option>`).join('')}
             </select>
           </div>
           ${isInf ? '' : `<div class="form-group">
@@ -2069,10 +2069,6 @@ const BemorKartaPage = {
     if (!isInf && g('edit-tasvir')) {
       const tv = g('edit-tasvir').value;
       if (tv === 'MSKT' || tv === 'MRT') {
-        if (g('edit-turi')?.value === APP_CONFIG.INSULT_TURI_ANIQLANMAGAN) {
-          g('edit-turi')?.classList.add('border-red-500');
-          showToast(t('imaging.typeRequiredAfterImaging'), 'error', 7000); return;
-        }
         if (!g('edit-kt-vaqti-d')?.value) { g('edit-kt-vaqti-d')?.classList.add('border-red-500'); showToast(t('validation.ctDate'), 'error', 5000); return; }
         if (!g('edit-kt-vaqti-t')?.value) { g('edit-kt-vaqti-t')?.classList.add('border-red-500'); showToast(t('validation.ctTime'), 'error', 5000); return; }
         // MSKT deb belgilash uchun muassasada apparat bo'lishi kerak (avval "Yo'q" yoki MRT bo'lgan bo'lsa)
@@ -2286,6 +2282,10 @@ const BemorKartaPage = {
     const sb = document.getElementById('edit-tasvir-sabab');
     if (vq) vq.style.display = done ? 'flex' : 'none';
     if (sb) sb.style.display = done ? 'none' : 'block';
+    // Tasvirsiz bo'lsa tur nomi yonida "(tasdiqlanmagan)"
+    document.querySelectorAll('#edit-turi option[data-nom]').forEach(o => {
+      o.textContent = o.dataset.nom + (done ? '' : ` (${t('imaging.unconfirmedSuffix')})`);
+    });
   },
 
   async chiqarishSave() {

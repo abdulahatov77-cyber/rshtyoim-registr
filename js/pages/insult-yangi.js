@@ -819,18 +819,16 @@ const InsultYangiPage = {
       ? `<span style="background:#dcfce7;color:#166534;font-size:11px;font-weight:700;border-radius:999px;padding:2px 9px;margin-left:6px;white-space:nowrap">✓ ${t('imaging.confirmed')}</span>`
       : `<span style="background:#fef3c7;color:#92400e;font-size:11px;font-weight:700;border-radius:999px;padding:2px 9px;margin-left:6px;white-space:nowrap">! ${t('imaging.unconfirmed')}</span>`;
   },
-  // Tasvirsiz bo'lsa "Aniqlanmagan (tasvirsiz)" varianti ham tanlanadi
+  // Tasvirsiz bo'lsa tur nomi yonida "(tasdiqlanmagan)" ko'rsatiladi; saqlanadigan qiymat o'zgarmaydi
   _turOptions() {
     const d = InsultYangiPage._data;
     const yoq = d.mskt && !Utils.msktDone(d.mskt);
-    const arr = yoq ? [...APP_CONFIG.INSULT_TURLARI, APP_CONFIG.INSULT_TURI_ANIQLANMAGAN] : APP_CONFIG.INSULT_TURLARI;
-    return InsultYangiPage.selectOptions(arr, d.insult_turi || '');
+    const qosh = yoq ? ` (${t('imaging.unconfirmedSuffix')})` : '';
+    return `<option value="">${t('select.placeholder')}</option>` + APP_CONFIG.INSULT_TURLARI.map(a => `<option value="${a}" ${d.insult_turi===a?'selected':''}>${I18n.translateText(a)}${qosh}</option>`).join('');
   },
   _turYangila() {
     const d = InsultYangiPage._data;
     const yoq = d.mskt && !Utils.msktDone(d.mskt);
-    // Tasvir o'tkazilgan bo'lsa "Aniqlanmagan" qolmaydi — shifokor aniq turni tanlaydi
-    if (!yoq && d.insult_turi === APP_CONFIG.INSULT_TURI_ANIQLANMAGAN) d.insult_turi = '';
     const sel = document.getElementById('insult_turi');
     if (sel) sel.innerHTML = InsultYangiPage._turOptions();
     const h = document.getElementById('tur-holat');
@@ -1191,11 +1189,6 @@ const InsultYangiPage = {
       if (Utils.msktDone(this._data.mskt)) {
         if (this._data.tasvir_turi !== 'MRT') this._data.tasvir_turi = 'MSKT';
         this._data.tasvir_yoq_sababi = '';
-        if (this._data.insult_turi === APP_CONFIG.INSULT_TURI_ANIQLANMAGAN) {
-          valid = false;
-          document.getElementById('insult_turi')?.classList.add('border-red-500');
-          showToast(t('imaging.typeRequiredAfterImaging'), 'error', 7000);
-        }
         const ktSana = document.getElementById('kt_sana')?.value;
         const ktSoat = document.getElementById('kt_soat')?.value;
         if (!ktSana) {
