@@ -210,6 +210,20 @@ const HisobotPage = {
         <div id="tt-results" class="mt-3"></div>
       </div>
 
+      <!-- Reperfuziya nega qilinmadi -->
+      <div class="h-card">
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-2">
+          <div>
+            <h3 class="h-title !mb-1">${icon('help-circle', 18)} ${t('reperf.reportTitle')}</h3>
+            <p class="text-sm text-slate-500">${t('reperf.reportHint')}</p>
+          </div>
+          <button class="btn btn-primary shadow-md hover:shadow-lg flex items-center gap-2 px-4 rounded-xl" onclick="HisobotPage.loadReperfSabab()">
+            ${icon('bar-chart-2', 16)} ${t('reports.generate')}
+          </button>
+        </div>
+        <div id="rs-results" class="mt-3"></div>
+      </div>
+
       <!-- Yosh guruhlari bo'yicha hisobot -->
       <div class="h-card">
         <div class="mb-3">
@@ -1059,6 +1073,70 @@ const HisobotPage = {
       <tbody>${rows.map(r => tr(I18n.translateText(r.insult_turi), r, false)).join('')}</tbody>
       <tfoot>${tr(t('reports.total'), tot, true)}</tfoot></table></div>
       ${sababHtml ? `<div class="mt-3"><div class="text-xs font-bold text-slate-500 uppercase mb-2">${t('imaging.whyNot')}</div>${sababHtml}</div>` : ''}`;
+  },
+
+  // ── Reperfuziya nega qilinmadi ─────────────────────────────────────────────
+  // Davr, viloyat va muassasa sahifa tepasidagi asosiy filtrdan olinadi.
+  async loadReperfSabab() {
+    const box = document.getElementById('rs-results');
+    if (!box) return;
+    const from = document.getElementById('h-from')?.value;
+    const to = document.getElementById('h-to')?.value;
+    if (!from || !to || from > to) { showToast(t('reports.invalidDateRange'), 'warning'); return; }
+    box.innerHTML = `<p class="text-sm text-slate-500">${t('dashboard.loading')}</p>`;
+    const { data, error } = await getSupabase().rpc('get_hisobot_reperfuziya_sabab', {
+      p_from: from, p_to: to,
+      p_viloyat: document.getElementById('h-viloyat')?.value || null,
+      p_muassasa: document.getElementById('h-muassasa')?.value || null
+    });
+    if (error) { box.innerHTML = `<p class="text-sm text-red-600">${esc(error.message)}</p>`; return; }
+    const all = data || [];
+    if (!all.length) { box.innerHTML = `<p class="text-sm text-slate-500">${t('reports.noData')}</p>`; return; }
+    const pct = (a, b) => b ? `${(a / b * 100).toFixed(1)}%` : '—';
+    const blok = (reg, sarlavha, rang) => {
+      const rows = all.filter(r => r.registr === reg);
+      if (!rows.length) return '';
+      const oynada = rows.reduce((n, r) => n + r.oynada, 0);
+      const qilingan = rows.reduce((n, r) => n + r.qilingan, 0);
+      const qilinmagan = rows.reduce((n, r) => n + r.qilinmagan, 0);
+      const sabab = {};
+      rows.forEach(r => Object.entries(r.sabab || {}).forEach(([k, v]) => { sabab[k] = (sabab[k] || 0) + v; }));
+      const sababRows = Object.entries(sabab).sort((a, b) => b[1] - a[1]).map(([k, v]) => `
+        <tr class="border-b border-slate-100">
+          <td class="p-2 font-semibold text-slate-800">${esc(I18n.translateText(k))}</td>
+          <td class="p-2 text-right">${v}</td>
+          <td class="p-2 text-right font-semibold">${pct(v, qilinmagan)}</td>
+          <td class="p-2" style="min-width:120px"><div style="height:8px;border-radius:999px;background:#e2e8f0"><div style="height:8px;border-radius:999px;background:${rang};width:${qilinmagan ? Math.round(v / qilinmagan * 100) : 0}%"></div></div></td>
+        </tr>`).join('');
+      const muRows = rows.filter(r => r.oynada > 0).map(r => {
+        const top = Object.entries(r.sabab || {}).sort((a, b) => b[1] - a[1])[0];
+        return `<tr class="border-b border-slate-100">
+          <td class="p-2 font-semibold text-slate-800">${esc(I18n.facilityName(r.muassasa))}</td>
+          <td class="p-2 text-right">${r.oynada}</td>
+          <td class="p-2 text-right" style="color:#166534">${r.qilingan}</td>
+          <td class="p-2 text-right font-semibold">${pct(r.qilingan, r.oynada)}</td>
+          <td class="p-2 text-right" style="color:#b91c1c">${r.qilinmagan}</td>
+          <td class="p-2 text-slate-600">${top ? `${esc(I18n.translateText(top[0]))} (${top[1]})` : '—'}</td></tr>`;
+      }).join('');
+      return `
+        <div class="mb-6">
+          <div class="font-bold text-slate-900 mb-2" style="border-left:4px solid ${rang};padding-left:8px">${sarlavha}</div>
+          <div class="flex flex-wrap gap-2 mb-3 text-sm">
+            <span class="bg-slate-100 rounded-lg px-3 py-1 font-semibold">${t('reperf.inWindow')}: ${oynada}</span>
+            <span class="rounded-lg px-3 py-1 font-semibold" style="background:#dcfce7;color:#166534">${t('reperf.done')}: ${qilingan} (${pct(qilingan, oynada)})</span>
+            <span class="rounded-lg px-3 py-1 font-semibold" style="background:#fee2e2;color:#b91c1c">${t('reperf.notDone')}: ${qilinmagan} (${pct(qilinmagan, oynada)})</span>
+          </div>
+          ${sababRows ? `<div class="overflow-x-auto"><table class="w-full text-sm mb-3">
+            <thead><tr class="bg-slate-800 text-white text-xs"><th class="p-2 text-left">${t('reperf.reason')}</th><th class="p-2 text-right">${t('reperf.count')}</th><th class="p-2 text-right">${t('reperf.share')}</th><th class="p-2"></th></tr></thead>
+            <tbody>${sababRows}</tbody></table></div>` : ''}
+          <details><summary class="text-sm font-semibold text-blue-700 cursor-pointer">${t('reperf.byFacility')} (${rows.length})</summary>
+            <div class="overflow-x-auto mt-2" style="max-height:420px;overflow-y:auto"><table class="w-full text-sm">
+              <thead><tr class="bg-slate-100 text-slate-600 text-xs"><th class="p-2 text-left">${t('reperf.facility')}</th><th class="p-2 text-right">${t('reperf.inWindow')}</th><th class="p-2 text-right">${t('reperf.done')}</th><th class="p-2 text-right">%</th><th class="p-2 text-right">${t('reperf.notDone')}</th><th class="p-2 text-left">${t('reperf.topReason')}</th></tr></thead>
+              <tbody>${muRows}</tbody></table></div>
+          </details>
+        </div>`;
+    };
+    box.innerHTML = blok('insult', t('reperf.strokeTitle'), '#7c3aed') + blok('infarkt', t('reperf.miTitle'), '#dc2626');
   },
 
   // ── Yosh guruhlari hisoboti ──────────────────────────────────────────────
