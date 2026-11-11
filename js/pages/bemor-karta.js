@@ -447,14 +447,16 @@ const BemorKartaPage = {
                 return `${t('card.scorePoints', { score: gb })} <span style="color:${r[1]}">(${r[0]})</span>`;
               })()) : ''}
             `: `
-              ${row('Insult turi', p.insult_turi)}
+              ${row('Insult turi', p.insult_turi ? `${esc(I18n.translateText(p.insult_turi))} ${p.mskt ? (Utils.msktDone(p.mskt)
+                ? `<span style="background:#dcfce7;color:#166534;font-size:11px;font-weight:700;border-radius:999px;padding:2px 9px;margin-left:4px;white-space:nowrap">✓ ${t('imaging.confirmed')}</span>`
+                : `<span style="background:#fef3c7;color:#92400e;font-size:11px;font-weight:700;border-radius:999px;padding:2px 9px;margin-left:4px;white-space:nowrap">! ${t('imaging.unconfirmed')}</span>`) : ''}` : null)}
               ${row('NIHSS (qabul)', p.nihss_qabul!=null ? p.nihss_qabul+' ball' : null)}
               ${p.nihss_qabul!=null ? Calculators.tavsiyaHtml(Calculators.nihssTavsiya(p.nihss_qabul, p.insult_turi), p.nihss_qabul, 'NIHSS') : ''}
               ${row('GCS (Glazgo)', p.gcs_bali!=null ? p.gcs_bali+' ball' : null)}
               ${p.gcs_bali!=null ? Calculators.tavsiyaHtml(Calculators.gcsTavsiya(p.gcs_bali), p.gcs_bali, 'Glazgo (GCS)') : ''}
               ${row('Puls', p.puls || null)}
               ${row('AHA bali', p.aha_bali!=null ? p.aha_bali+' ball' : null)}
-              ${row('MSKT o\'tkazilganmi?', p.mskt ? I18n.translateText(p.mskt) : null)}
+              ${row(t('imaging.editBlock'), p.mskt ? `${I18n.translateText(p.mskt)}${Utils.msktDone(p.mskt) ? ` (${p.tasvir_turi === 'MRT' ? t('imaging.mri') : t('imaging.ct')})` : (p.tasvir_yoq_sababi ? ' — ' + esc(I18n.translateText(p.tasvir_yoq_sababi)) : '')}` : null)}
               ${p.mskt_angiografiya ? row('MSKT angiografiya', p.mskt_angiografiya) : ''}
               ${p.aspects_ball!=null ? row('ASPECTS', p.aspects_ball + ' / 10') : ''}
               ${p.okklyuziya_segmenti ? row('Okklyuziya segmenti', p.okklyuziya_segmenti) : ''}
@@ -1903,9 +1905,27 @@ const BemorKartaPage = {
           <div class="form-group">
             <label class="form-label">${isInf ? 'Infarkt turi' : 'Insult turi'}</label>
             <select id="edit-turi" class="form-select">
-              ${(isInf ? APP_CONFIG.INFARKT_TURLARI : APP_CONFIG.INSULT_TURLARI).map(t => `<option value="${t}" ${(isInf?p.infarkt_turi:p.insult_turi)===t?'selected':''}>${t}</option>`).join('')}
+              ${(isInf ? APP_CONFIG.INFARKT_TURLARI : [...APP_CONFIG.INSULT_TURLARI, APP_CONFIG.INSULT_TURI_ANIQLANMAGAN]).map(t => `<option value="${t}" ${(isInf?p.infarkt_turi:p.insult_turi)===t?'selected':''}>${t}</option>`).join('')}
             </select>
           </div>
+          ${isInf ? '' : `<div class="form-group">
+            <label class="form-label" for="edit-tasvir">${t('imaging.editBlock')}</label>
+            <select id="edit-tasvir" class="form-select" onchange="BemorKartaPage.onEditTasvir(this.value)">
+              <option value="yoq" ${Utils.msktDone(p.mskt) ? '' : 'selected'}>${t('imaging.notDone')}</option>
+              <option value="MSKT" ${Utils.msktDone(p.mskt) && p.tasvir_turi !== 'MRT' ? 'selected' : ''}>${t('imaging.done')} — ${t('imaging.ct')}</option>
+              <option value="MRT" ${Utils.msktDone(p.mskt) && p.tasvir_turi === 'MRT' ? 'selected' : ''}>${t('imaging.done')} — ${t('imaging.mri')}</option>
+            </select>
+            <div id="edit-tasvir-vaqt" class="flex gap-2 mt-2" style="display:${Utils.msktDone(p.mskt) || p.kt_vaqti ? 'flex' : 'none'}">
+              <input id="edit-kt-vaqti-d" type="date" class="form-input" max="${new Date(Date.now()+5*3600000).toISOString().slice(0,10)}" value="${Utils.formatDateInput(p.kt_vaqti)?.slice(0,10)||''}" aria-label="${t('imaging.date')}"/>
+              <input id="edit-kt-vaqti-t" type="time" class="form-input" value="${Utils.formatDateInput(p.kt_vaqti)?.slice(11,16)||''}" aria-label="${t('imaging.time')}"/>
+            </div>
+            <div id="edit-tasvir-sabab" class="mt-2" style="display:${Utils.msktDone(p.mskt) ? 'none' : 'block'}">
+              <select id="edit-tasvir-yoq-sababi" class="form-select" aria-label="${t('imaging.whyNot')}">
+                <option value="">${t('imaging.whyNot')}</option>
+                ${APP_CONFIG.TASVIR_YOQ_SABABLARI.map(x => `<option value="${x}" ${p.tasvir_yoq_sababi===x?'selected':''}>${esc(I18n.translateText(x))}</option>`).join('')}
+              </select>
+            </div>
+          </div>`}
           <div class="form-group">
             <label class="form-label">Muolaja turi</label>
             <select id="edit-muolaja" class="form-select">
@@ -1975,18 +1995,10 @@ const BemorKartaPage = {
           </div>
           ${(()=>{
             const mt = (p.muolaja_turi||'').toLowerCase();
-            const showKt = Utils.msktDone(p.mskt) || mt.includes('mskt') || mt.includes('angiografiya');
             const showTlt = mt.includes('trombolizis') || mt.includes('tlt') || mt.includes('trombolitik');
             const showTromb = mt.includes('trombektomiya') || mt.includes('tromboekstraksiya') || mt.includes('tromboaspiratsiya') || mt.includes('kombinatsiyalangan');
             const today2 = new Date(Date.now()+5*3600000).toISOString().slice(0,10);
             return `
-          ${showKt ? `<div class="form-group">
-            <label class="form-label">KT/MSKT vaqti</label>
-            <div class="flex gap-2">
-              <input id="edit-kt-vaqti-d" type="date" class="form-input" max="${today2}" value="${Utils.formatDateInput(p.kt_vaqti)?.slice(0,10)||''}"/>
-              <input id="edit-kt-vaqti-t" type="time" class="form-input" value="${Utils.formatDateInput(p.kt_vaqti)?.slice(11,16)||''}"/>
-            </div>
-          </div>` : ''}
           ${showTlt ? `<div class="form-group">
             <label class="form-label">Trombolizis vaqti</label>
             <div class="flex gap-2">
@@ -2053,6 +2065,23 @@ const BemorKartaPage = {
       if (!d || !t) return null;
       return new Date(`${d}T${t}:00+05:00`).toISOString();
     };
+    // Insult: tasvir (MSKT/MRT) va insult turi mosligi
+    if (!isInf && g('edit-tasvir')) {
+      const tv = g('edit-tasvir').value;
+      if (tv === 'MSKT' || tv === 'MRT') {
+        if (g('edit-turi')?.value === APP_CONFIG.INSULT_TURI_ANIQLANMAGAN) {
+          g('edit-turi')?.classList.add('border-red-500');
+          showToast(t('imaging.typeRequiredAfterImaging'), 'error', 7000); return;
+        }
+        if (!g('edit-kt-vaqti-d')?.value) { g('edit-kt-vaqti-d')?.classList.add('border-red-500'); showToast(t('validation.ctDate'), 'error', 5000); return; }
+        if (!g('edit-kt-vaqti-t')?.value) { g('edit-kt-vaqti-t')?.classList.add('border-red-500'); showToast(t('validation.ctTime'), 'error', 5000); return; }
+        // MSKT deb belgilash uchun muassasada apparat bo'lishi kerak (avval "Yo'q" yoki MRT bo'lgan bo'lsa)
+        if (tv === 'MSKT' && !(Utils.msktDone(p.mskt) && p.tasvir_turi !== 'MRT')) {
+          const imk = await DB.getMuassasaImkoniyat(p.muassasa).catch(() => null);
+          if (imk && imk.mskt_bor === false) { showToast(t('facility.msctSaveBlocked', { institution: p.muassasa }), 'error', 8000); return; }
+        }
+      }
+    }
     // Vaqt mezonlari validatsiyasi (EKG ham qabul vaqtiga tekshiriladi)
     const vaqtFields = (isInf
       ? [['edit-ekg-vaqti-d','edit-ekg-vaqti-t','EKG vaqti'],['edit-tlt-vaqt-d','edit-tlt-vaqt-t','TLT vaqti'],['edit-pci-vaqt-d','edit-pci-vaqt-t','PCI vaqti']]
@@ -2150,6 +2179,16 @@ const BemorKartaPage = {
       updates.nihss_qabul         = g('edit-nihss')?.value ? parseInt(g('edit-nihss').value) : null;
       updates.gcs_bali            = g('edit-gcs')?.value ? parseInt(g('edit-gcs').value) : null;
       updates.kt_vaqti            = splitToUTC('edit-kt-vaqti-d', 'edit-kt-vaqti-t');
+      const tv = g('edit-tasvir')?.value;
+      if (tv === 'MSKT' || tv === 'MRT') {
+        updates.mskt = "Ha – o'tkazildi";
+        updates.tasvir_turi = tv;
+        updates.tasvir_yoq_sababi = null;
+      } else if (tv === 'yoq') {
+        updates.mskt = "Yo'q – boshqa sabab";
+        updates.tasvir_turi = null;
+        updates.tasvir_yoq_sababi = g('edit-tasvir-yoq-sababi')?.value || null;
+      }
       updates.trombolizis_vaqti   = splitToUTC('edit-trombolizis-vaqti-d', 'edit-trombolizis-vaqti-t');
       updates.trombektomiya_vaqti = splitToUTC('edit-trombektomiya-vaqti-d', 'edit-trombektomiya-vaqti-t');
     }
@@ -2238,6 +2277,15 @@ const BemorKartaPage = {
     Router._current = 'bemor-karta';
     Router._params = { kt_no: p.kt_no, type: p._type, id: p.id };
     BemorKartaPage.render({ kt_no: p.kt_no, type: p._type, id: p.id });
+  },
+
+  // Tahrirlash: tasvir tanlovi o'zgarganda vaqt / sabab maydonlarini ko'rsatish
+  onEditTasvir(v) {
+    const done = v === 'MSKT' || v === 'MRT';
+    const vq = document.getElementById('edit-tasvir-vaqt');
+    const sb = document.getElementById('edit-tasvir-sabab');
+    if (vq) vq.style.display = done ? 'flex' : 'none';
+    if (sb) sb.style.display = done ? 'none' : 'block';
   },
 
   async chiqarishSave() {

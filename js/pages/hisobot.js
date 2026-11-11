@@ -196,6 +196,20 @@ const HisobotPage = {
         </div>
       </div>
 
+      <!-- Insult turi: tasvir bilan tasdiqlanganligi -->
+      <div class="h-card">
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-2">
+          <div>
+            <h3 class="h-title !mb-1">${icon('scan-line', 18)} ${t('imaging.reportTitle')}</h3>
+            <p class="text-sm text-slate-500">${t('imaging.reportHint')}</p>
+          </div>
+          <button class="btn btn-primary shadow-md hover:shadow-lg flex items-center gap-2 px-4 rounded-xl" onclick="HisobotPage.loadTurTasdiq()">
+            ${icon('bar-chart-2', 16)} ${t('reports.generate')}
+          </button>
+        </div>
+        <div id="tt-results" class="mt-3"></div>
+      </div>
+
       <!-- Yosh guruhlari bo'yicha hisobot -->
       <div class="h-card">
         <div class="mb-3">
@@ -1001,6 +1015,50 @@ const HisobotPage = {
   _dmy(iso) {
     const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(iso || ''));
     return m ? `${m[3]}.${m[2]}.${m[1]}` : String(iso || '');
+  },
+
+  // ── Insult turi: tasvir (MSKT/MRT) bilan tasdiqlanganligi ──────────────────
+  // Davr, viloyat va muassasa sahifa tepasidagi asosiy filtrdan olinadi.
+  async loadTurTasdiq() {
+    const box = document.getElementById('tt-results');
+    if (!box) return;
+    const from = document.getElementById('h-from')?.value;
+    const to = document.getElementById('h-to')?.value;
+    if (!from || !to || from > to) { showToast(t('reports.invalidDateRange'), 'warning'); return; }
+    box.innerHTML = `<p class="text-sm text-slate-500">${t('dashboard.loading')}</p>`;
+    const { data, error } = await getSupabase().rpc('get_hisobot_tur_tasdiq', {
+      p_from: from, p_to: to,
+      p_viloyat: document.getElementById('h-viloyat')?.value || null,
+      p_muassasa: document.getElementById('h-muassasa')?.value || null
+    });
+    if (error) { box.innerHTML = `<p class="text-sm text-red-600">${esc(error.message)}</p>`; return; }
+    const rows = data || [];
+    if (!rows.length) { box.innerHTML = `<p class="text-sm text-slate-500">${t('reports.noData')}</p>`; return; }
+    const sum = k => rows.reduce((n, r) => n + (r[k] || 0), 0);
+    const pct = (a, b) => b ? `${(a / b * 100).toFixed(1)}%` : '—';
+    const tr = (name, r, bold) => {
+      const jami = r.tasdiqlangan + r.taxminiy;
+      return `<tr class="border-b border-slate-100 ${bold ? 'bg-blue-50 font-bold' : ''}">
+        <td class="p-2 ${bold ? '' : 'font-semibold text-slate-800'}">${esc(name)}</td>
+        <td class="p-2 text-right">${jami}</td>
+        <td class="p-2 text-right" style="color:#166534">${r.tasdiqlangan}</td>
+        <td class="p-2 text-right text-slate-500">${r.mskt} / ${r.mrt}</td>
+        <td class="p-2 text-right" style="color:#92400e">${r.taxminiy}</td>
+        <td class="p-2 text-right font-semibold">${pct(r.taxminiy, jami)}</td></tr>`;
+    };
+    const tot = { tasdiqlangan: sum('tasdiqlangan'), taxminiy: sum('taxminiy'), mskt: sum('mskt'), mrt: sum('mrt') };
+    const sabab = {};
+    rows.forEach(r => Object.entries(r.sabab || {}).forEach(([k, v]) => { sabab[k] = (sabab[k] || 0) + v; }));
+    const sababHtml = Object.entries(sabab).sort((a, b) => b[1] - a[1])
+      .map(([k, v]) => `<span class="inline-block bg-slate-100 text-slate-700 rounded-lg px-2 py-1 mr-2 mb-2 text-xs font-semibold">${esc(I18n.translateText(k))}: ${v}</span>`).join('');
+    box.innerHTML = `<div class="overflow-x-auto"><table class="w-full text-sm">
+      <thead><tr class="bg-slate-800 text-white text-xs">
+        <th class="p-2 text-left">${t('imaging.strokeType')}</th><th class="p-2 text-right">${t('reports.total')}</th>
+        <th class="p-2 text-right">${t('imaging.confirmed')}</th><th class="p-2 text-right">${t('imaging.ct')} / ${t('imaging.mri')}</th>
+        <th class="p-2 text-right">${t('imaging.unconfirmed')}</th><th class="p-2 text-right">${t('imaging.unconfirmedShare')}</th></tr></thead>
+      <tbody>${rows.map(r => tr(I18n.translateText(r.insult_turi), r, false)).join('')}</tbody>
+      <tfoot>${tr(t('reports.total'), tot, true)}</tfoot></table></div>
+      ${sababHtml ? `<div class="mt-3"><div class="text-xs font-bold text-slate-500 uppercase mb-2">${t('imaging.whyNot')}</div>${sababHtml}</div>` : ''}`;
   },
 
   // ── Yosh guruhlari hisoboti ──────────────────────────────────────────────

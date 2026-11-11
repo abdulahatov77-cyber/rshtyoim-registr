@@ -409,6 +409,16 @@ const APP_CONFIG = {
     "Gemorragik insult",
     "TIA (Tranzitor ishemik ataka)"
   ],
+  // Tasvir (MSKT/MRT) o'tkazilmaganda tanlanadigan qo'shimcha tur — INSULT_TURLARI ga kirmaydi
+  INSULT_TURI_ANIQLANMAGAN: "Aniqlanmagan (tasvirsiz)",
+  TASVIR_YOQ_SABABLARI: [
+    "Muassasada uskuna yo'q",
+    "Uskuna ishlamayapti",
+    "Bemor ahvoli og'ir",
+    "Boshqa muassasaga yuborildi",
+    "Bemor yoki yaqinlari rad etdi",
+    "Boshqa sabab"
+  ],
 
   // MKB-10 (XKT-10) kodlari — kasallik turi tanlanganda avtomatik aniqlanadi.
   // Kalitlar INFARKT_TURLARI va INSULT_TURLARI qiymatlari bilan bir xil bo'lishi shart.
