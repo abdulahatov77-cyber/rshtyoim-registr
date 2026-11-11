@@ -473,6 +473,7 @@ const BemorKartaPage = {
           <div class="card-body p-5">
             ${row('Kasallik turi', p.birlamchi_yoki_takroriy)}
             ${row('Simptomlar boshlanishi', p.simptom_vaqt)}
+            ${p.reperfuziya_rad_sababi ? row(t('card.reperfusionReason'), esc(p.reperfuziya_rad_sababi)) : ''}
             ${row('Shifoxonaga keldi', Utils.formatDateTime(p.qabul_vaqt))}
             ${type==='infarkt' ? `
               ${row('Tez yordam yetib keldi', Utils.formatDateTime(p.tez_yordam_kelgan_vaqt))}
@@ -1855,7 +1856,7 @@ const BemorKartaPage = {
           <div class="form-group">
             <label class="form-label">Murojaat yo'li</label>
             <select id="edit-murojaat" class="form-select">
-              ${APP_CONFIG.MUROJAAT_YOLLARI.map(m => `<option value="${m}" ${p.murojaat_yoli===m?'selected':''}>${m}</option>`).join('')}
+              ${BemorKartaPage._joriyOpt(APP_CONFIG.MUROJAAT_YOLLARI, p.murojaat_yoli)}${APP_CONFIG.MUROJAAT_YOLLARI.map(m => `<option value="${m}" ${p.murojaat_yoli===m?'selected':''}>${m}</option>`).join('')}
             </select>
           </div>
           <div class="form-group">
@@ -1891,9 +1892,23 @@ const BemorKartaPage = {
           </div>
           <div class="form-group">
             <label class="form-label">Simptom vaqti</label>
-            <select id="edit-simptom" class="form-select">
-              ${(isInf ? APP_CONFIG.SIMPTOM_VAQTLAR : APP_CONFIG.SIMPTOM_VAQTLAR_INSULT).map(s => `<option value="${s}" ${p.simptom_vaqt===s?'selected':''}>${s}</option>`).join('')}
-            </select>
+            ${(() => {
+              // Aniq soat ("8 soat") saqlanadi. Oldin bu yerda faqat oraliqlar ro'yxati bo'lib,
+              // tahrirlashda aniq soat jimgina birinchi oraliqqa almashib qolardi.
+              const m = /^\s*(\d+)\s*soat\s*$/i.exec(p.simptom_vaqt || '');
+              const maxsus = isInf ? ["24 soatdan ko'p", "Noma'lum"] : ["24 soatdan ortiq", "Uyquda boshlangan"];
+              const joriy = (!m && p.simptom_vaqt && !maxsus.includes(p.simptom_vaqt)) ? p.simptom_vaqt : '';
+              return `<div class="flex gap-2">
+                <input id="edit-simptom-soat" type="number" min="1" max="999" class="form-input" style="max-width:110px" value="${m ? m[1] : ''}" placeholder="${t('placeholder.hour')}"
+                  oninput="if(this.value){var s=document.getElementById('edit-simptom'); if(s) s.value='';}"/>
+                <select id="edit-simptom" class="form-select" aria-label="${t('edit.symptomOther')}"
+                  onchange="if(this.value){var i=document.getElementById('edit-simptom-soat'); if(i) i.value='';}">
+                  <option value="" ${m || !p.simptom_vaqt ? 'selected' : ''}>${t('edit.symptomByHours')}</option>
+                  ${joriy ? `<option value="${esc(joriy)}" selected>${esc(joriy)}</option>` : ''}
+                  ${maxsus.map(x => `<option value="${esc(x)}" ${p.simptom_vaqt===x?'selected':''}>${esc(x)}</option>`).join('')}
+                </select>
+              </div>`;
+            })()}
           </div>
           <div class="form-group">
             <label class="form-label">Birlamchi yoki takroriy?</label>
@@ -1905,7 +1920,7 @@ const BemorKartaPage = {
           <div class="form-group">
             <label class="form-label">${isInf ? 'Infarkt turi' : 'Insult turi'}</label>
             <select id="edit-turi" class="form-select">
-              ${(isInf ? APP_CONFIG.INFARKT_TURLARI : APP_CONFIG.INSULT_TURLARI).map(x => `<option value="${x}" data-nom="${x}" ${(isInf?p.infarkt_turi:p.insult_turi)===x?'selected':''}>${x}${!isInf && !Utils.msktDone(p.mskt) ? ` (${t('imaging.unconfirmedSuffix')})` : ''}</option>`).join('')}
+              ${BemorKartaPage._joriyOpt((isInf ? APP_CONFIG.INFARKT_TURLARI : APP_CONFIG.INSULT_TURLARI), (isInf?p.infarkt_turi:p.insult_turi))}${(isInf ? APP_CONFIG.INFARKT_TURLARI : APP_CONFIG.INSULT_TURLARI).map(x => `<option value="${x}" data-nom="${x}" ${(isInf?p.infarkt_turi:p.insult_turi)===x?'selected':''}>${x}${!isInf && !Utils.msktDone(p.mskt) ? ` (${t('imaging.unconfirmedSuffix')})` : ''}</option>`).join('')}
             </select>
           </div>
           ${isInf ? '' : `<div class="form-group">
@@ -1929,14 +1944,14 @@ const BemorKartaPage = {
           <div class="form-group">
             <label class="form-label">Muolaja turi</label>
             <select id="edit-muolaja" class="form-select">
-              ${(isInf ? APP_CONFIG.INFARKT_MUOLAJALARI : APP_CONFIG.INSULT_MUOLAJALARI).map(m => `<option value="${m}" ${p.muolaja_turi===m?'selected':''}>${m}</option>`).join('')}
+              ${BemorKartaPage._joriyOpt((isInf ? APP_CONFIG.INFARKT_MUOLAJALARI : APP_CONFIG.INSULT_MUOLAJALARI), p.muolaja_turi)}${(isInf ? APP_CONFIG.INFARKT_MUOLAJALARI : APP_CONFIG.INSULT_MUOLAJALARI).map(m => `<option value="${m}" ${p.muolaja_turi===m?'selected':''}>${m}</option>`).join('')}
             </select>
           </div>
           ${isInf ? `
           <div class="form-group">
             <label class="form-label">Killip klassifikatsiyasi</label>
             <select id="edit-killip" class="form-select">
-              ${APP_CONFIG.KILLIP_KLASSLAR.map(k => `<option value="${k}" ${p.killip===k?'selected':''}>${k}</option>`).join('')}
+              ${BemorKartaPage._joriyOpt(APP_CONFIG.KILLIP_KLASSLAR, p.killip)}${APP_CONFIG.KILLIP_KLASSLAR.map(k => `<option value="${k}" ${p.killip===k?'selected':''}>${k}</option>`).join('')}
             </select>
           </div>
           <div class="form-group">
@@ -2059,6 +2074,18 @@ const BemorKartaPage = {
       showToast(t('validation.admissionFuture'), 'error', 5000);
       return;
     }
+    // Simptom vaqti: soat kiritilgan bo'lsa "N soat"; maxsus qiymat tanlangan bo'lsa o'sha; aks holda o'zgarmaydi
+    let simptomYangi = p.simptom_vaqt || null;
+    if (g('edit-simptom') || g('edit-simptom-soat')) {
+      const ss = (g('edit-simptom-soat')?.value || '').trim();
+      if (ss !== '') {
+        const n = parseInt(ss);
+        if (!(n >= 1 && n <= 999)) { g('edit-simptom-soat')?.classList.add('border-red-500'); showToast(t('validation.symptomZero'), 'error', 5000); return; }
+        simptomYangi = n > 24 ? (isInf ? "24 soatdan ko'p" : "24 soatdan ortiq") : `${n} soat`;
+      } else if (g('edit-simptom')?.value) {
+        simptomYangi = g('edit-simptom').value;
+      }
+    }
     // Sana+vaqt inputlardan UTC ISO string olish
     const splitToUTC = (dId, tId) => {
       const d = g(dId)?.value, t = g(tId)?.value;
@@ -2150,7 +2177,7 @@ const BemorKartaPage = {
       qabul_vaqt:    qabulVaqt,
       qon_bosimi:    g('edit-qb')?.value || null,
       aha_bali:      g('edit-aha')?.value !== '' ? parseInt(g('edit-aha').value) : null,
-      simptom_vaqt:  g('edit-simptom')?.value || null,
+      simptom_vaqt:  simptomYangi,
       muolaja_turi:  g('edit-muolaja')?.value || null,
       birlamchi_yoki_takroriy: g('edit-birlamchi')?.value || null,
     };
@@ -2187,6 +2214,17 @@ const BemorKartaPage = {
       }
       updates.trombolizis_vaqti   = splitToUTC('edit-trombolizis-vaqti-d', 'edit-trombolizis-vaqti-t');
       updates.trombektomiya_vaqti = splitToUTC('edit-trombektomiya-vaqti-d', 'edit-trombektomiya-vaqti-t');
+    }
+    // Tahrirdan keyin bemor reperfuziyaga nomzod bo'lib qolsa (oynada kelgan, muolaja qilinmagan) —
+    // yangi formadagi kabi sababi so'raladi. Oldin tahrirlash bu savolni chetlab o'tardi.
+    if (!p.reperfuziya_rad_sababi) {
+      const oldin = DB.reperfuziyaNomzodi(type, p);
+      const keyin = DB.reperfuziyaNomzodi(type, { ...p, ...updates });
+      if (keyin && !oldin) {
+        const sabab = await reperfuziyaSababSora(keyin.nomi, keyin.oyna);
+        if (!sabab) return;
+        updates.reperfuziya_rad_sababi = sabab;
+      }
     }
     try {
       // Avval K/T raqamini ko'chiramiz (band bo'lsa xato beradi va hech narsa o'zgarmaydi)
@@ -2276,6 +2314,13 @@ const BemorKartaPage = {
   },
 
   // Tahrirlash: tasvir tanlovi o'zgarganda vaqt / sabab maydonlarini ko'rsatish
+  // Tahrirlash ro'yxatlarida bazadagi joriy qiymat saqlanadi: ro'yxatda yo'q (eski) qiymat yoki bo'sh
+  // qiymat bo'lsa, brauzer jimgina birinchi variantni tanlab, saqlashda ma'lumotni o'zgartirib yubormasin.
+  _joriyOpt(list, cur) {
+    if (cur && list.includes(cur)) return '';
+    return cur ? `<option value="${esc(cur)}" selected>${esc(cur)}</option>` : `<option value="" selected>${t('common.notSelected')}</option>`;
+  },
+
   onEditTasvir(v) {
     const done = v === 'MSKT' || v === 'MRT';
     const vq = document.getElementById('edit-tasvir-vaqt');
