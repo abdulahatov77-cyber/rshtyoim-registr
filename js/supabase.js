@@ -291,7 +291,8 @@ const DB = {
     if (soat === null || soat > 24) return null;
     const mm = ((d.muolaja_turi || '') + ' ' + (d.dinamika_muolaja_turi || '')).toLowerCase();
     if (turi === 'insult') {
-      const ishemik = /ishemik/i.test(d.insult_turi || '');
+      // TIA nomida ham "ishemik" so'zi bor, lekin unga trombolizis qilinmaydi — nomzod emas
+      const ishemik = /ishemik/i.test(d.insult_turi || '') && !/tia|tranzitor/i.test(d.insult_turi || '');
       if (!ishemik || soat > 4) return null;
       const qilingan = d.trombolizis_vaqti || d.trombektomiya_vaqti ||
         /tlt|trombolit|trombektomiya|tromboekstr|tromboaspir/.test(mm);

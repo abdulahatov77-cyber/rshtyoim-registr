@@ -304,6 +304,9 @@ function reperfuziyaSababSora(nomi, oyna) {
             <option value="">— ${t('form.selectReason')} —</option>
             ${DB.REPERFUZIYA_SABABLARI.map(s => `<option value="${esc(s)}">${esc(s)}</option>`).join('')}
           </select>
+          <div id="rs-izoh-div" style="display:none;margin-top:10px">
+            <input id="rs-izoh" class="form-input" style="width:100%" maxlength="200" placeholder="${t('reperf.otherPlaceholder')}"/>
+          </div>
           <p style="font-size:12px;color:var(--text-light);margin-top:8px">
             Bu ma'lumot respublika bo'yicha jamlanadi va reperfuziya qamrovini
             oshirish choralarini belgilashda ishlatiladi.
@@ -317,9 +320,21 @@ function reperfuziyaSababSora(nomi, oyna) {
     document.body.appendChild(el);
     const yop = v => { el.remove(); resolve(v); };
     el.querySelector('#rs-bekor').onclick = () => yop(null);
+    // "Boshqa sabab" — izohsiz hech narsa aytmaydi, shuning uchun izoh majburiy
+    const BOSHQA = 'Boshqa sabab';
+    el.querySelector('#rs-sabab').onchange = e => {
+      el.querySelector('#rs-izoh-div').style.display = e.target.value === BOSHQA ? 'block' : 'none';
+      if (e.target.value === BOSHQA) el.querySelector('#rs-izoh').focus();
+    };
     el.querySelector('#rs-ok').onclick = () => {
       const v = el.querySelector('#rs-sabab').value;
       if (!v) { showToast(t('validation.selectReason'), 'warning'); return; }
+      if (v === BOSHQA) {
+        const izoh = el.querySelector('#rs-izoh').value.replace(/\s+/g, ' ').trim();
+        if (izoh.length < 5) { el.querySelector('#rs-izoh').classList.add('border-red-500'); showToast(t('reperf.otherRequired'), 'warning', 5000); return; }
+        yop(`${BOSHQA}: ${izoh}`);
+        return;
+      }
       yop(v);
     };
   });
