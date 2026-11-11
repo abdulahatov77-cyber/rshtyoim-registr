@@ -6,7 +6,7 @@
 --   tasvir_yoq_sababi  — tasvir o'tkazilmagan sababi
 --   tur_tasdiqlangan   — hisoblanadigan ustun: tasvir o'tkazilgan bo'lsa true, aks holda insult turi klinik taxmin
 -- Eski yozuvlar: MSKT qilinganlarga tasvir_turi = 'MSKT'. insult_turi qiymatlari o'zgartirilmagan.
--- Yangi tur qiymati "Aniqlanmagan (tasvirsiz)" faqat tasvir o'tkazilmaganda tanlanadi.
+-- Tasvirsiz tanlangan tur formada "(tasdiqlanmagan)" bilan ko'rsatiladi; saqlanadigan qiymat o'zgarmaydi.
 -- Sinov: yangi qiymatlar bilan Bosh sahifa solishtirish tekshiruvlari 5 kesimda — xato 0 (rollback).
 ALTER TABLE public.insult_qabul ADD COLUMN IF NOT EXISTS tasvir_turi text;
 ALTER TABLE public.insult_qabul ADD COLUMN IF NOT EXISTS tasvir_yoq_sababi text;
