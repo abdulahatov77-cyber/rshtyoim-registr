@@ -409,6 +409,7 @@ const APP_CONFIG = {
     "Gemorragik insult",
     "TIA (Tranzitor ishemik ataka)"
   ],
+  TASVIR_YOQ_YUBORILDI: "Boshqa muassasaga yuborildi",
   TASVIR_YOQ_SABABLARI: [
     "Muassasada uskuna yo'q",
     "Uskuna ishlamayapti",

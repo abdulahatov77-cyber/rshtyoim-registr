@@ -106,13 +106,7 @@ const InsultYangiPage = {
             </button>
             <div class="flex gap-2 sm:gap-4">
               <button class="px-3 py-2 sm:px-6 sm:py-3 rounded-xl font-bold text-xs sm:text-sm text-slate-400 hover:text-purple-600 hover:bg-purple-50 transition-all hidden sm:block" onclick="Router.go('dashboard')">Bekor qilish</button>
-              ${step < InsultYangiPage.STEPS.length-1
-                ? `<button class="flex items-center gap-1 px-4 py-2 sm:px-8 sm:py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-bold text-xs sm:text-sm shadow-md transition-all active:scale-95" onclick="InsultYangiPage.nextStep()">Keyingi ${icon('arrow-right', 16)}</button>`
-                : (() => {
-                    const isOtk = (InsultYangiPage._data.muolaja_turi || '').startsWith("Boshqa muassasaga o'tkazildi");
-                    return `<button class="flex items-center gap-1 px-4 py-2 sm:px-8 sm:py-3 ${isOtk ? 'bg-orange-500 hover:bg-orange-600' : 'bg-green-600 hover:bg-green-700'} text-white rounded-xl font-bold text-xs sm:text-sm shadow-md transition-all active:scale-95" id="save-btn" onclick="InsultYangiPage.save()">${icon(isOtk ? 'log-out' : 'save', 16)} ${isOtk ? 'Chiqarish' : 'Saqlash'}</button>`;
-                  })()
-              }
+              <span id="footer-asosiy" class="flex">${InsultYangiPage._footerBtnHtml()}</span>
             </div>
           </div>
         </div>
@@ -432,9 +426,10 @@ const InsultYangiPage = {
           </div>
           <div id="tasvir-yoq-div" class="mt-3" style="display:${d.mskt && !Utils.msktDone(d.mskt)?'block':'none'}">
             <label class="block text-xs font-bold text-slate-500 uppercase mb-1" for="tasvir_yoq_sababi">${t('imaging.whyNot')} *</label>
-            <select id="tasvir_yoq_sababi" class="form-select w-full" onchange="InsultYangiPage.saveCurrentStep()">
+            <select id="tasvir_yoq_sababi" class="form-select w-full" onchange="InsultYangiPage.onTasvirSabab()">
               ${this.selectOptions(APP_CONFIG.TASVIR_YOQ_SABABLARI, d.tasvir_yoq_sababi||'')}
             </select>
+            <div id="yuborish-div" class="mt-3 p-3 rounded-xl" style="display:${InsultYangiPage._yuborish()?'block':'none'};background:#fff7ed;border:1px solid #fdba74">${InsultYangiPage._yuborish() ? InsultYangiPage._yuborishHtml() : ''}</div>
           </div>`, true)}
         ${this.field('insult_turi', `${t('imaging.strokeType')} <span id="tur-holat">${InsultYangiPage._turHolatHtml()}</span>`, `<select id="insult_turi" class="form-select border-purple-300 focus:border-purple-500" onchange="InsultYangiPage.saveCurrentStep();InsultYangiPage._updateAspectsVisibility();Calculators.tavsiyaniYangilash('nihss_qabul', document.getElementById('nihss_qabul')?.value)">
           ${InsultYangiPage._turOptions()}</select>
@@ -811,6 +806,77 @@ const InsultYangiPage = {
     InsultYangiPage.cdssYangilash();
   },
 
+  // ===== Tasvir o'tkazilmadi: "Boshqa muassasaga yuborildi" — shu bo'limning o'zida o'tkazish =====
+  _yuborish() {
+    const d = InsultYangiPage._data;
+    return !!d.mskt && !Utils.msktDone(d.mskt) && d.tasvir_yoq_sababi === APP_CONFIG.TASVIR_YOQ_YUBORILDI;
+  },
+  _otkazishSabablari() {
+    return APP_CONFIG.INSULT_MUOLAJALARI.filter(m => m.startsWith("Boshqa muassasaga o'tkazildi"));
+  },
+  _footerBtnHtml() {
+    const step = InsultYangiPage._step;
+    const yub = step === 2 && InsultYangiPage._yuborish();
+    if (step < InsultYangiPage.STEPS.length-1 && !yub) {
+      return `<button class="flex items-center gap-1 px-4 py-2 sm:px-8 sm:py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-bold text-xs sm:text-sm shadow-md transition-all active:scale-95" onclick="InsultYangiPage.nextStep()">Keyingi ${icon('arrow-right', 16)}</button>`;
+    }
+    const isOtk = yub || (InsultYangiPage._data.muolaja_turi || '').startsWith("Boshqa muassasaga o'tkazildi");
+    return `<button class="flex items-center gap-1 px-4 py-2 sm:px-8 sm:py-3 ${isOtk ? 'bg-orange-500 hover:bg-orange-600' : 'bg-green-600 hover:bg-green-700'} text-white rounded-xl font-bold text-xs sm:text-sm shadow-md transition-all active:scale-95" id="save-btn" onclick="InsultYangiPage.save()">${icon(isOtk ? 'log-out' : 'save', 16)} ${yub ? t('referral.save') : (isOtk ? 'Chiqarish' : 'Saqlash')}</button>`;
+  },
+  _yuborishHtml() {
+    const d = InsultYangiPage._data;
+    const sabablar = InsultYangiPage._otkazishSabablari();
+    return `
+      <div class="text-xs font-bold mb-2" style="color:#9a3412">${t('referral.title')}</div>
+      ${this.field('otkazilgan_muassasa', t('referral.facility'), `<select id="otkazilgan_muassasa" class="form-select" onchange="InsultYangiPage.onOtkazilganMuassasa(this.value)">
+        <option value="">${t('institution.choose')}</option>
+        ${this.getAllMuassasalar().map(m => `<option value="${esc(m)}" ${d.otkazilgan_muassasa===m?'selected':''}>${esc(I18n.facilityName(m))}</option>`).join('')}
+        <option value="__boshqa__" ${d.otkazilgan_muassasa==='__boshqa__'?'selected':''}>${t('institution.otherManual')}</option>
+      </select>`, true)}
+      <div id="otkazilgan-boshqa-div" style="display:${d.otkazilgan_muassasa==='__boshqa__'?'block':'none'}">
+        ${this.field('otkazilgan_boshqa', t('referral.facilityManual'), `<input id="otkazilgan_boshqa" class="form-input" value="${esc(d.otkazilgan_boshqa||'')}" placeholder="${t('institution.enterName')}"/>`)}
+      </div>
+      ${this.field('muolaja_turi', t('referral.reason'), `<select id="muolaja_turi" class="form-select" onchange="InsultYangiPage._data.muolaja_turi=this.value">
+        <option value="">${t('select.placeholder')}</option>
+        ${sabablar.map(m => `<option value="${esc(m)}" ${d.muolaja_turi===m?'selected':''}>${esc(I18n.translateText(m))}</option>`).join('')}
+      </select>`, true)}
+      ${this.field('otkazish_sana', t('referral.dateTime'), `
+        <div class="grid grid-cols-2 gap-3">
+          <input id="otkazish_sana" type="date" class="form-input" value="${d.otkazish_sana||''}"
+            min="${(d.qabul_vaqt||'').slice(0,10)}"
+            max="${new Date(Date.now()+5*3600000).toISOString().slice(0,10)}"/>
+          <input id="otkazish_soat" type="time" class="form-input" value="${d.otkazish_soat||''}"/>
+        </div>`, true)}
+      ${this.field('shifokor_fio', t('referral.doctorName'), `<input id="shifokor_fio" class="form-input" value="${esc(d.shifokor_fio||'')}" placeholder="${t('placeholder.fullName')}"/>`, true)}
+      ${this.field('shifokor_tel', t('referral.doctorPhone'), `<input id="shifokor_tel" class="form-input" value="${esc(d.shifokor_tel||'')}" placeholder="+998 90 000 00 00" type="tel"/>`, true)}
+      <div class="text-xs mt-1" style="color:#9a3412;font-weight:600">${t('referral.hint')}</div>`;
+  },
+  // Sabab o'zgarganda: o'tkazish bloki va pastdagi tugma (Keyingi ↔ Saqlash) yangilanadi
+  _yuborishYangila() {
+    const d = InsultYangiPage._data;
+    const yub = InsultYangiPage._yuborish();
+    const div = document.getElementById('yuborish-div');
+    if (div) {
+      const ochiq = div.style.display !== 'none' && div.innerHTML.trim() !== '';
+      if (yub && !ochiq) {
+        if (!(d.muolaja_turi || '').startsWith("Boshqa muassasaga o'tkazildi")) d.muolaja_turi = '';
+        div.innerHTML = InsultYangiPage._yuborishHtml(); div.style.display = 'block';
+      }
+      if (!yub && ochiq) {
+        div.innerHTML = ''; div.style.display = 'none';
+        // Shu yerda tanlangan o'tkazish ma'lumotlari bekor qilinadi
+        if ((d.muolaja_turi || '').startsWith("Boshqa muassasaga o'tkazildi")) d.muolaja_turi = '';
+        d.otkazilgan_muassasa = ''; d.otkazilgan_boshqa = ''; d.otkazish_sana = ''; d.otkazish_soat = '';
+      }
+    }
+    const f = document.getElementById('footer-asosiy');
+    if (f) { f.innerHTML = InsultYangiPage._footerBtnHtml(); if (typeof initIcons === 'function') initIcons(); }
+  },
+  onTasvirSabab() {
+    InsultYangiPage.saveCurrentStep();
+    InsultYangiPage._yuborishYangila();
+  },
+
   // Insult turi: tasvir o'tkazilgan bo'lsa — tasdiqlangan, aks holda klinik taxmin
   _turHolatHtml() {
     const m = InsultYangiPage._data.mskt;
@@ -839,6 +905,7 @@ const InsultYangiPage = {
     if (yd) yd.style.display = yoq ? 'block' : 'none';
     if (yoq) { d.tasvir_turi = ''; d.kt_vaqti = ''; }
     else { d.tasvir_yoq_sababi = ''; const ys = document.getElementById('tasvir_yoq_sababi'); if (ys) ys.value = ''; }
+    InsultYangiPage._yuborishYangila();
   },
 
   onMsktChange(val) {
@@ -1151,7 +1218,15 @@ const InsultYangiPage = {
       else required.push('yashash_viloyat','yashash_tuman');
     }
     // qon_bosimi bu ro'yxatда yo'q — sistolik/diastolik orqali alohida tekshiriladi
+    // "Boshqa muassasaga yuborildi" — bemor 3-bo'limning o'zida o'tkaziladi (4-bo'lim so'ralmaydi)
+    const yub = this._step === 2 && InsultYangiPage._yuborish();
     if (this._step === 2) required = ['aha_bali','simptom_vaqt','nihss_qabul','gcs_bali','birlamchi_yoki_takroriy','mskt','insult_turi','puls'];
+    if (yub) {
+      // 4-bo'limda avval tanlangan muolaja bo'lsa — bekor qilinadi, bu yerda faqat o'tkazish sababi tanlanadi
+      if (!(this._data.muolaja_turi || '').startsWith("Boshqa muassasaga o'tkazildi")) this._data.muolaja_turi = '';
+      this._data.trombolizis_vaqti = ''; this._data.trombektomiya_vaqti = '';
+    }
+    if (yub) required.push('otkazilgan_muassasa','muolaja_turi','otkazish_sana','otkazish_soat','shifokor_fio','shifokor_tel');
     if (this._step === 3) {
       required = ['muolaja_turi','shifokor_fio','shifokor_tel'];
       if ((this._data.muolaja_turi || '').startsWith("Boshqa muassasaga o'tkazildi")) required.push('otkazilgan_muassasa','otkazish_sana','otkazish_soat');
@@ -1227,7 +1302,7 @@ const InsultYangiPage = {
       }
     }
     // "Boshqa" muassasa tanlanganda nomi qo'lda yozilishi shart
-    if (this._step === 3 && valid && this._data.otkazilgan_muassasa === '__boshqa__') {
+    if ((this._step === 3 || yub) && valid && this._data.otkazilgan_muassasa === '__boshqa__') {
       if (!(this._data.otkazilgan_boshqa || '').trim()) {
         valid = false;
         document.getElementById('otkazilgan_boshqa')?.classList.add('border-red-500', 'err-red');
@@ -1235,7 +1310,7 @@ const InsultYangiPage = {
       }
     }
     // O'tkazish vaqti — qabuldan oldin va kelajakda bo'lishi mumkin emas
-    if (this._step === 3 && valid && (this._data.muolaja_turi || '').startsWith("Boshqa muassasaga o'tkazildi")) {
+    if ((this._step === 3 || yub) && valid && (this._data.muolaja_turi || '').startsWith("Boshqa muassasaga o'tkazildi")) {
       const otkDT = `${this._data.otkazish_sana}T${this._data.otkazish_soat}`;
       const nowTk = new Date(Date.now() + 5*3600000).toISOString().slice(0, 16);
       if (this._data.qabul_vaqt && otkDT < this._data.qabul_vaqt.slice(0, 16)) {
