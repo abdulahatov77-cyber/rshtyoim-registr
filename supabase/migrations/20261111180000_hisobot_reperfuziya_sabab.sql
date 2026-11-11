@@ -1,7 +1,8 @@
 -- Hisobot: reperfuziya nega qilinmadi (2026-11-11, bazaga qo'llangan).
 -- "Oynada kelgan" ta'rifi formadagi savol bilan bir xil (js/supabase.js reperfuziyaNomzodi):
---   insult  — turi "ishemik", simptomdan 4 soatgacha; qilingan = trombolizis/trombektomiya vaqti yoki muolaja nomi
+--   insult  — turi "ishemik" (TIA kirmaydi), simptomdan 4 soatgacha; qilingan = trombolizis/trombektomiya vaqti yoki muolaja nomi
 --   infarkt — STEMI (NSTEMI emas), simptomdan 12 soatgacha; qilingan = PCI/TLT vaqti yoki muolaja nomi
+-- "Boshqa sabab: izoh" ko'rinishidagi yozuvlar "Boshqa sabab" ga jamlanadi.
 -- Har bir (registr, muassasa) uchun: oynada kelgan, qilingan, qilinmagan va sabablar (jsonb).
 -- Rol chegarasi boshqa hisobotlar bilan bir xil: super_admin/rahbar — hammasi, admin — o'z viloyati, user — o'z muassasasi.
 CREATE OR REPLACE FUNCTION public.get_hisobot_reperfuziya_sabab(p_from date, p_to date, p_viloyat text DEFAULT NULL, p_muassasa text DEFAULT NULL)
@@ -25,7 +26,7 @@ begin
   return query
   with x as (
     select 'insult'::text r, q.muassasa m, q.viloyat v, q.qabul_vaqt qv, q.simptom_vaqt sv, q.reperfuziya_rad_sababi rs, 4 oyna,
-           (coalesce(q.insult_turi,'') ~* 'ishemik') tur_ok,
+           (coalesce(q.insult_turi,'') ~* 'ishemik' and coalesce(q.insult_turi,'') !~* 'tia|tranzitor') tur_ok,
            (q.trombolizis_vaqti is not null or q.trombektomiya_vaqti is not null
              or (coalesce(q.muolaja_turi,'') || ' ' || coalesce(q.dinamika_muolaja_turi,'')) ~* 'tlt|trombolit|trombektomiya|tromboekstr|tromboaspir') ok
     from public.insult_qabul q
@@ -37,7 +38,7 @@ begin
     from public.infarkt_qabul q),
   f as (
     select x.r, coalesce(nullif(btrim(x.m), ''), 'Qayd etilmagan') m, x.ok,
-           coalesce(nullif(btrim(x.rs), ''), 'Sabab yozilmagan') s
+           case when x.rs ~* '^\s*Boshqa sabab\s*:' then 'Boshqa sabab' else coalesce(nullif(btrim(x.rs), ''), 'Sabab yozilmagan') end s
     from x
     where x.tur_ok
       and (x.qv at time zone 'Asia/Tashkent')::date between p_from and p_to
